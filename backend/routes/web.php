@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HelperNgrok;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -12,7 +13,14 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
-
 Route::get('/', function () {
-    return redirect("http://frontend:4567");
+    $helperNgrok = new HelperNgrok();
+    $ngrokUrl = $helperNgrok->getNgrokUrl();
+
+    if ($ngrokUrl) {
+        return redirect($ngrokUrl);
+    }
+
+    // Fallback nếu không tìm thấy Ngrok URL
+    return redirect(env('FRONTEND_URL', 'http://localhost:4567'));
 });
