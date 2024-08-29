@@ -22,7 +22,7 @@ services:
     image: ngrok/ngrok:alpine
     environment:
       NGROK_AUTHTOKEN: '2kxXXacpwvMVRJJO5Q8Voa0fNq0_4WCFKCCUVTzNfBXxSEGWL'
-    command: 'http nginx:80'
+    command: 'http frontend:4567'
     networks:
       - laravel-network
     ports:
