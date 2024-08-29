@@ -14,5 +14,5 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return redirect("http://localhost:4567");
+    return redirect("http://frontend:4567");
 });
