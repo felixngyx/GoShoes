@@ -6,12 +6,21 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
+    public $bindings = [
+        'App\Services\ServiceInterfaces\UserServiceInterface' => 'App\Services\UserService',
+        'App\Services\ServiceInterfaces\AuthServiceInterface' => 'App\Services\AuthService',
+    ];
     /**
      * Register any application services.
      */
     public function register(): void
     {
-        //
+        foreach($this->bindings as $key => $val)
+        {
+            $this->app->bind($key, $val);
+        }
+
+        $this->app->register(RepositoryServiceProvider::class);
     }
 
     /**
@@ -19,6 +28,5 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
     }
 }
