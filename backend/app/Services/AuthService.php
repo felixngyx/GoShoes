@@ -33,7 +33,6 @@ class AuthService implements AuthServiceInterface
 
             return [
                 'message' => 'Login successful',
-                'user_id' => auth()->id(),
                 'token' => $token,
                 'token_type'=>"Bearer"
             ];
