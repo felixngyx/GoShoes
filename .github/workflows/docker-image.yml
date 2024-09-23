@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build and run Docker Compose
+        run: |
+          docker-compose -f docker-compose.yml up -d
+          docker-compose -f docker-compose.yml exec app php artisan migrate --force
+          docker-compose -f docker-compose.yml exec frontend npm install
+          docker-compose -f docker-compose.yml exec frontend npm run build
+
+      - name: Run tests
+        run: |
+          docker-compose -f docker-compose.yml exec app php artisan test
+
+      - name: Shutdown Docker Compose
+        run: |
+          docker-compose -f docker-compose.yml down
