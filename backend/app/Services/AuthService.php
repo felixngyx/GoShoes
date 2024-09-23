@@ -44,11 +44,6 @@ class AuthService implements AuthServiceInterface
 
     public function logout(array $request)
     {
-        if (!auth()->user()) {
-            return response()->json([
-                'message' => 'User not logged in'
-            ], 401);
-        }
         try {
             auth()->user()->tokens()->delete();
             return response()->json([
