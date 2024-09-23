@@ -34,11 +34,8 @@ class AuthService implements AuthServiceInterface
 
             return [
                 'message' => 'Login successful',
-                'user' => [
-                    'name' => $user->name,
-                    'email' => $user->email
-                ],
-                'token' => $token
+                'token' => $token,
+                'token_type'=>"Bearer"
             ];
         } catch (\Exception $e) {
             return $e->getMessage();
@@ -47,6 +44,11 @@ class AuthService implements AuthServiceInterface
 
     public function logout(array $request)
     {
+        if (!auth()->user()) {
+            return response()->json([
+                'message' => 'User not logged in'
+            ], 401);
+        }
         try {
             auth()->user()->tokens()->delete();
             return response()->json([
@@ -64,7 +66,6 @@ class AuthService implements AuthServiceInterface
             $user =  $this->userService->create($request);
             return response()->json([
                 'message' => 'User created successfully',
-                'user' => $user
             ], 201);
         } catch (\Exception $e) {
             return $e->getMessage();
