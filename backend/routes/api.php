@@ -16,12 +16,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-
-// This route is Authenticated
+// This route is Public
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// This route is Authenticated
 Route::group([
     'middleware' => 'auth:sanctum',
 ], function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 });
+
+
