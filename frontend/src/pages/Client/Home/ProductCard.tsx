@@ -1,9 +1,19 @@
-import { IoStar } from 'react-icons/io5';
+import { IoHeartOutline, IoStar, IoCart } from 'react-icons/io5';
 
 const ProductCard = () => {
 	return (
-		<div className="col-span-1 border border-gray-[#F6F7F8] rounded-lg">
-			<img src="demo.png" alt="Product 1" />
+		<div className="col-span-1 border border-gray-[#F6F7F8] rounded-lg group">
+			<div className="relative">
+				<img src="demo.png" alt="Product 1" />
+				<div className="absolute hidden group-hover:flex w-[90%] h-[90%] top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-white justify-center items-center gap-2">
+					<IoHeartOutline
+						className="cursor-pointer"
+						size={30}
+						color="#40BFFF"
+					/>
+					<IoCart className="cursor-pointer" size={30} color="#40BFFF" />
+				</div>
+			</div>
 			<p className="text-center text-[#223263] text-xl font-bold mt-2">
 				Nike Air Max 270
 			</p>

@@ -1,19 +1,19 @@
 import { FaShippingFast } from 'react-icons/fa';
-import ProductTab from './ProductTab';
 import { RiRefund2Line } from 'react-icons/ri';
 import { MdOutlineSupportAgent } from 'react-icons/md';
 import { IoStar } from 'react-icons/io5';
+import ProductCard from './ProductCard';
 
 const Homepage = () => {
 	return (
 		<>
 			{/* Banner */}
-			<div className="max-w-7xl mx-auto grid grid-cols-2 grid-rows-2 gap-10 mt-10 relative z-0">
-				<div className="col-span-1 row-span-2 relative z-0">
+			<div className="max-w-7xl mx-auto grid grid-cols-2 grid-rows-2 gap-10 mt-10 relative z-0 h-fit">
+				<div className="col-span-1 row-span-2 relative z-0 rounded-xl h-full overflow-hidden group">
 					<img
 						src="images/Banner 1.png"
 						alt="Banner"
-						className="rounded-xl"
+						className="transition-transform duration-300 transform group-hover:scale-105"
 					/>
 					<p className="text-black text-5xl font-bold absolute bottom-40 left-10">
 						Stylish shoes <br /> for Women
@@ -22,11 +22,11 @@ const Homepage = () => {
 						Shop Now
 					</p>
 				</div>
-				<div className="col-span-1 relative z-0">
+				<div className="col-span-1 relative z-0 rounded-xl overflow-hidden group">
 					<img
 						src="images/Banner 2.png"
 						alt="Banner"
-						className="rounded-xl"
+						className="transition-transform duration-300 transform group-hover:scale-105"
 					/>
 					<p className="text-white text-5xl font-bold absolute top-[50%] translate-y-[-50%] left-10">
 						Sports Wear
@@ -35,11 +35,11 @@ const Homepage = () => {
 						Shop Now
 					</p>
 				</div>
-				<div className="col-span-1 relative z-0">
+				<div className="col-span-1 relative z-0 rounded-xl overflow-hidden group">
 					<img
 						src="images/Banner 3.png"
 						alt="Banner"
-						className="rounded-xl"
+						className="rounded-xl transition-transform duration-300 transform group-hover:scale-105"
 					/>
 					<p className="text-black text-5xl font-bold absolute bottom-[50%] translate-y-[-50%] left-10">
 						Fashion Shoes
@@ -68,22 +68,24 @@ const Homepage = () => {
 			</div>
 
 			{/* Latest Product */}
-			<p className="text-black text-3xl font-bold text-center">
+			<p className="text-black text-3xl font-bold text-center mt-20">
 				Best Seller
 			</p>
 			<div className="container max-w-7xl mx-auto">
-				<div role="tablist" className="tabs tabs-bordered mt-10">
-					<ProductTab ariaLabel="All" defaultChecked={true} />
-					<ProductTab ariaLabel="Women" />
-					<ProductTab ariaLabel="Men" />
-					<ProductTab ariaLabel="Kids" />
-					<ProductTab ariaLabel="Sale" />
-					<ProductTab ariaLabel="Trending" />
+				<div className="grid grid-cols-4 gap-10 mt-10">
+					{Array(8)
+						.fill(null)
+						.map((_, index) => (
+							<ProductCard key={index} />
+						))}
 				</div>
+				<p className="text-center text-[#40BFFF] cursor-pointer underline text-xl font-bold mt-10">
+					Load More
+				</p>
 			</div>
 
 			{/* Category */}
-			<div className="container max-w-7xl grid grid-cols-2 gap-10 mx-auto my-10">
+			<div className="container max-w-7xl grid grid-cols-2 gap-10 mx-auto my-20">
 				<div className="col-span-1 relative rounded-xl overflow-hidden">
 					<img src="images/Banner 5.png" alt="Category" />
 					<p className="text-black text-5xl font-extrabold absolute bottom-40 left-10">
@@ -161,12 +163,12 @@ const Homepage = () => {
 					{Array(3)
 						.fill(null)
 						.map((_) => (
-							<div className="col-span-1">
+							<div className="col-span-1 shadow-md cursor-pointer">
 								<div className="grid grid-cols-2 gap-5">
 									<div className="col-span-1">
 										<img src="demo 2.png" alt="Featured Product" />
 									</div>
-									<div className="col-span-1 flex flex-col justify-start">
+									<div className="col-span-1 flex flex-col justify-start my-2">
 										<p className="text-black text-xl font-normal">
 											Blue Swade Nike Sneakers
 										</p>

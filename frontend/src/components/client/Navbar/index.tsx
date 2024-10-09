@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { IoSearch } from 'react-icons/io5';
 import { MdOutlineShoppingCart } from 'react-icons/md';
+import { Link } from 'react-router-dom';
 
 const useDebounce = (value: string, delay: number) => {
 	const [debouncedValue, setDebouncedValue] = useState(value);
@@ -38,11 +39,13 @@ const Navbar = () => {
 					<div className="shadow-md w-full">
 						<div className="max-w-7xl mx-auto navbar bg-base-100 py-4">
 							<div className="navbar-start">
-								<img
-									src="/vector-logo/default-monochrome.svg"
-									className="w-20"
-									alt=""
-								/>
+								<Link to="/">
+									<img
+										src="/vector-logo/default-monochrome.svg"
+										className="w-20"
+										alt=""
+									/>
+								</Link>
 							</div>
 
 							<div className="navbar-center hidden lg:flex">
@@ -93,10 +96,20 @@ const Navbar = () => {
 										className="dropdown-content menu bg-base-100 rounded-box z-[1] w-40 p-2 shadow font-semibold"
 									>
 										<li>
-											<a className="flex flex-row gap-2">Login</a>
+											<Link
+												to="/signin"
+												className="flex flex-row gap-2"
+											>
+												Sign in
+											</Link>
 										</li>
 										<li>
-											<a>Register</a>
+											<Link
+												to="/signup"
+												className="flex flex-row gap-2"
+											>
+												Sign up
+											</Link>
 										</li>
 									</ul>
 								</div>

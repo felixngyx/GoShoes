@@ -47,7 +47,11 @@ const Footer = () => {
 					<p className="text-black">
 						© 2024 GoShoes. All rights reserved.
 					</p>
-					<p className="text-black">Privacy Policy</p>
+					<div className="flex flex-row gap-5">
+						<img className="w-10" src="images/VISA-Logo.png" alt="" />
+						<img className="w-10" src="images/Paypal.png" alt="" />
+						<img className="w-10" src="images/Master_card.png" alt="" />
+					</div>
 				</div>
 			</div>
 		</div>
