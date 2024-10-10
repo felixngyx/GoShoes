@@ -42,6 +42,46 @@ const Footer = () => {
 						</li>
 					</ul>
 				</div>
+
+				<div className="grid grid-cols-4 gap-10 mt-14">
+					<ul className="col-span-1">
+						<li className="text-lg font-semibold capitalize mb-5">
+							<p>Quick Links</p>
+						</li>
+						<li className="text-md">About Us</li>
+						<li className="text-md">Information</li>
+						<li className="text-md">Policy & Privacy</li>
+						<li className="text-md">Terms & Conditions</li>
+					</ul>
+					<ul className="col-span-1">
+						<li className="text-lg font-semibold capitalize mb-5">
+							<p>Information</p>
+						</li>
+						<li className="text-md">About Us</li>
+						<li className="text-md">Information</li>
+						<li className="text-md">Policy & Privacy</li>
+						<li className="text-md">Terms & Conditions</li>
+					</ul>
+					<ul className="col-span-1">
+						<li className="text-lg font-semibold capitalize mb-5">
+							<p>Service</p>
+						</li>
+						<li className="text-md">About Us</li>
+						<li className="text-md">Information</li>
+						<li className="text-md">Policy & Privacy</li>
+						<li className="text-md">Terms & Conditions</li>
+					</ul>
+					<ul className="col-span-1">
+						<li className="text-lg font-semibold capitalize mb-5">
+							<p>Get in touch</p>
+						</li>
+						<li className="text-md">About Us</li>
+						<li className="text-md">Information</li>
+						<li className="text-md">Policy & Privacy</li>
+						<li className="text-md">Terms & Conditions</li>
+					</ul>
+				</div>
+
 				<div className="bg-white h-[1px] w-full mt-10" />
 				<div className="flex flex-row justify-between mt-5">
 					<p className="text-black">

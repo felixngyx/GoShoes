@@ -2,7 +2,7 @@ import { FaShippingFast } from 'react-icons/fa';
 import { RiRefund2Line } from 'react-icons/ri';
 import { MdOutlineSupportAgent } from 'react-icons/md';
 import { IoStar } from 'react-icons/io5';
-import ProductCard from './ProductCard';
+import ProductCard from '../ProductCard';
 
 const Homepage = () => {
 	return (
@@ -162,8 +162,11 @@ const Homepage = () => {
 				<div className="grid grid-cols-3 gap-10 mt-10">
 					{Array(3)
 						.fill(null)
-						.map((_) => (
-							<div className="col-span-1 shadow-md cursor-pointer">
+						.map((_, index) => (
+							<div
+								key={index}
+								className="col-span-1 shadow-md cursor-pointer"
+							>
 								<div className="grid grid-cols-2 gap-5">
 									<div className="col-span-1">
 										<img src="demo 2.png" alt="Featured Product" />

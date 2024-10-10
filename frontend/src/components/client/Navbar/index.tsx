@@ -51,22 +51,22 @@ const Navbar = () => {
 							<div className="navbar-center hidden lg:flex">
 								<ul className="flex flex-row gap-8 font-semibold">
 									<li>
-										<a>Man</a>
+										<Link to="/products">Man</Link>
 									</li>
 									<li>
-										<a>Women's</a>
+										<Link to="/products">Women's</Link>
 									</li>
 									<li>
-										<a>Kids</a>
+										<Link to="/products">Kids</Link>
 									</li>
 									<li>
-										<a>Sale</a>
+										<Link to="/products">Sale</Link>
 									</li>
 									<li>
-										<a>New Arrivals</a>
+										<Link to="/products">New Arrivals</Link>
 									</li>
 									<li>
-										<a>Brands</a>
+										<Link to="/products">Brands</Link>
 									</li>
 								</ul>
 							</div>
@@ -84,10 +84,7 @@ const Navbar = () => {
 									<MdOutlineShoppingCart size={24} />
 								</div>
 
-								<div
-									className="dropdown dropdown-end w-fit"
-									data-theme="corporate"
-								>
+								<div className="dropdown dropdown-end w-fit">
 									<div tabIndex={0} role="button" className="">
 										<FaUser size={24} />
 									</div>
