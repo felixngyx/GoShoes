@@ -3,10 +3,7 @@ import { Link } from 'react-router-dom';
 
 const ProductCard = () => {
 	return (
-		<Link
-			to={`/products/1`}
-			className="col-span-1 border border-gray-[#F6F7F8] rounded-lg group overflow-hidden"
-		>
+		<div className="col-span-1 border border-gray-[#F6F7F8] rounded-lg group overflow-hidden">
 			<div className="relative">
 				<img src="demo.png" alt="Product 1" />
 				<div className="absolute hidden group-hover:flex w-[90%] h-[90%] top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-white justify-center items-center gap-2 z-1">
@@ -21,9 +18,11 @@ const ProductCard = () => {
 					HOT
 				</div>
 			</div>
-			<p className="text-center text-[#223263] text-xl font-bold mt-2">
-				Nike Air Max 270
-			</p>
+			<Link to={`/products/1`}>
+				<p className="text-center text-[#223263] text-xl font-bold mt-2">
+					Nike Air Max 270
+				</p>
+			</Link>
 			<div className="flex flex-row items-center justify-center gap-1 mx-auto my-1">
 				<IoStar color="yellow" />
 				<IoStar color="yellow" />
@@ -38,7 +37,7 @@ const ProductCard = () => {
 				</p>
 				<p className="text-[#E71D36] text-xm font-bold">-10%</p>
 			</div>
-		</Link>
+		</div>
 	);
 };
 
