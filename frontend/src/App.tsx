@@ -19,6 +19,10 @@ import Chart from './pages/Admin/Chart';
 import Alerts from './pages/Admin/UiElements/Alerts';
 import Buttons from './pages/Admin/UiElements/Buttons';
 import { useEffect } from 'react';
+import SignInAdmin from './pages/Admin/Authentication/SignIn';
+import SignUpAdmin from './pages/Admin/Authentication/SignUp';
+import ProfileAdmin from './pages/Admin/Profile';
+
 function App() {
 	const { pathname } = useLocation();
 
@@ -63,7 +67,7 @@ function App() {
 						element={
 							<>
 								<PageTitle title="Profile | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-								<Profile />
+								<ProfileAdmin />
 							</>
 						}
 					/>
@@ -135,7 +139,7 @@ function App() {
 						element={
 							<>
 								<PageTitle title="Signin | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-								<SignIn />
+								<SignInAdmin />
 							</>
 						}
 					/>
@@ -144,7 +148,7 @@ function App() {
 						element={
 							<>
 								<PageTitle title="Signup | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-								<SignUp />
+								<SignUpAdmin />
 							</>
 						}
 					/>
