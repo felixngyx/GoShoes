@@ -108,6 +108,14 @@ const Navbar = () => {
 												Sign up
 											</Link>
 										</li>
+										<li>
+											<Link
+												to="/account"
+												className="flex flex-row gap-2"
+											>
+												Account
+											</Link>
+										</li>
 									</ul>
 								</div>
 							</div>

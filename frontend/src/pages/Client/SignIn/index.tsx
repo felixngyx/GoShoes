@@ -1,6 +1,7 @@
 import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 import Navbar from '../../../components/client/Navbar';
 import { useState } from 'react'; // Add this import
+import { Link } from 'react-router-dom';
 
 const SignIn = () => {
 	const [showPassword, setShowPassword] = useState(false); // Add state for password visibility
@@ -10,18 +11,22 @@ const SignIn = () => {
 			<div className="h-screen">
 				<Navbar />
 				<div className="flex justify-between items-center container max-w-5xl mx-auto h-full">
-					<div className="flex flex-col justify-center items-start relative w-2/3 h-full">
-						<h1 className="text-5xl font-bold">Sign in to</h1>
-						<h1 className="text-4xl font-bold">Lorem Ipsum is simply</h1>
-						<p className="text-md text-black text-left mt-5">
-							If you don't have an account <br />
-							You can{' '}
-							<span className="text-[#40BFFF] font-bold">
-								Register here!
-							</span>
-						</p>
+					<div className=" relative w-2/3 h-full">
+						<div className="absolute top-1/3 left-0">
+							<h1 className="text-5xl font-bold">Sign in to</h1>
+							<h1 className="text-4xl font-bold">
+								Lorem Ipsum is simply
+							</h1>
+							<p className="text-md text-black text-left mt-5">
+								If you don't have an account <br />
+								You can{' '}
+								<Link to="/signup" className="text-[#40BFFF] font-bold">
+									Register here!
+								</Link>
+							</p>
+						</div>
 						<img
-							className="absolute top-1/2 right-20"
+							className="absolute top-0 right-0 w-100px"
 							src="user_login.svg"
 							alt=""
 						/>

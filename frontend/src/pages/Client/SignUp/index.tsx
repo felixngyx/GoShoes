@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 import Navbar from '../../../components/client/Navbar';
+import { Link } from 'react-router-dom';
 
 const SignUp = () => {
 	const [showPassword, setShowPassword] = useState(false); // Add state for password visibility
@@ -17,9 +18,9 @@ const SignUp = () => {
 						<p className="text-md text-black text-left mt-5">
 							If you already have an account <br />
 							You can{' '}
-							<span className="text-[#40BFFF] font-bold">
+							<Link to="/signin" className="text-[#40BFFF] font-bold">
 								Sign in here!
-							</span>
+							</Link>
 						</p>
 						<img
 							className="absolute top-48 right-20"

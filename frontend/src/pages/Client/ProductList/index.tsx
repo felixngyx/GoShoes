@@ -1,10 +1,10 @@
-import Banner from '../../components/client/Banner';
+import Banner from '../../../components/client/Banner';
 import { FaListUl } from 'react-icons/fa';
 import { BsGrid3X3GapFill } from 'react-icons/bs';
-import ProductCard from '../Client/ProductCard';
 import { useState } from 'react';
+import Breadcrumb from '../../../components/client/Breadcrumb';
+import ProductCard from '../ProductCard';
 import ProductCardList from './ProductCardList';
-import Breadcrumb from '../../components/client/Breadcrumb';
 
 const ProductList = () => {
 	const [layout, setLayout] = useState<'grid' | 'list'>('grid');
