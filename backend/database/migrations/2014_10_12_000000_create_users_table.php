@@ -13,11 +13,17 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->nullable();
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('phone')->nullable();
             $table->string('password')->nullable();
+            $table->boolean('is_admin')->default(false);
+            $table->boolean('is_deleted')->default(false);
+            $table->enum('auth_provider', ['local', 'facebook'])->default('local');
+            $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
+            $table->string('avt')->nullable();
+            $table->string('facebook_id')->nullable();
             $table->timestamps();
         });
     }
