@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\API\Auth\AuthController;
 use App\Http\Controllers\API\Home\TestController;
+use App\Http\Controllers\API\Payments\MomoPaymentController;
+use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -26,5 +28,9 @@ Route::group([
 ], function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 });
+
+Route::post('/payment', [ZaloPaymentController::class, 'paymentMomo']);
+
+Route::get('/payment/callback', [ZaloPaymentController::class, 'callback']);
 
 
