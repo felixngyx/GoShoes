@@ -16,8 +16,6 @@ return new class extends Migration
             $table->string('image');
             $table->timestamp('start_date');
             $table->timestamp('end_date');
-            $table->time('display_start_time');
-            $table->time('display_end_time');
             $table->integer('position');
             $table->timestamps();
         });
