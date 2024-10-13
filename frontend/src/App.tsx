@@ -25,6 +25,7 @@ import ProfileAdmin from "./pages/Admin/Profile";
 import Order from "./pages/Client/User/Order";
 import NotfoundPage from "./pages/Client/NotfoundPage";
 import OrderDetail from "./pages/Client/User/OrderDetail";
+import Address from "./pages/Client/User/Address";
 
 function App() {
   const { pathname } = useLocation();
@@ -42,8 +43,9 @@ function App() {
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/account" element={<Account />}>
             <Route index element={<Profile />} />
-            <Route path="order" element={<Order />} />
-            <Route path="order/:id" element={<OrderDetail />} />
+            <Route path="my-order" element={<Order />} />
+            <Route path="my-order/:id" element={<OrderDetail />} />
+            <Route path="my-address" element={<Address />} />
           </Route>
           <Route path="*" element={<NotfoundPage />} />
         </Route>

@@ -1,8 +1,9 @@
+import OrderTracking from "./Ordertracking";
+
 const OrderDetail = () => {
   return (
-    <div className="w-[1200px]">
-      <div className=" md:px-6 2xl:px-20 2xl:container 2xl:mx-auto">
-        {/*- more free and premium Tailwind CSS components at https://tailwinduikit.com/ -*/}
+    <div className="col-span-9">
+      <div className="md:px-6 2xl:px-20 2xl:container 2xl:mx-auto shadow-lg border pt-9">
         <div className="flex justify-start item-start space-y-2 flex-col">
           <h1 className="text-3xl dark:text-white lg:text-4xl font-semibold leading-7 lg:leading-9 text-gray-800">
             Order #13432
@@ -11,8 +12,9 @@ const OrderDetail = () => {
             21st Mart 2021 at 10:34 PM
           </p>
         </div>
+        <OrderTracking />
 
-        <div className="mt-10 flex flex-col xl:flex-row jusitfy-center items-stretch w-full xl:space-x-8 space-y-4 md:space-y-6 xl:space-y-0">
+        <div className="flex flex-col xl:flex-row jusitfy-center items-stretch w-full xl:space-x-8 space-y-4 md:space-y-6 xl:space-y-0">
           <div className="flex flex-col justify-start items-start w-full space-y-4 md:space-y-6 xl:space-y-8">
             <div className="flex flex-col justify-start items-start dark:bg-gray-800 bg-gray-50 px-4 py-4 md:py-6 md:p-6 xl:p-8 w-full">
               <p className="text-lg md:text-xl dark:text-white font-semibold leading-6 xl:leading-5 text-gray-800">
@@ -39,31 +41,25 @@ const OrderDetail = () => {
                     <div className="flex justify-start items-start flex-col space-y-2">
                       <p className="text-sm dark:text-white leading-none text-gray-800">
                         <span className="dark:text-gray-400 text-gray-300">
-                          Style:{" "}
-                        </span>{" "}
-                        Phong Cách
-                      </p>
-                      <p className="text-sm dark:text-white leading-none text-gray-800">
-                        <span className="dark:text-gray-400 text-gray-300">
-                          Size:{" "}
-                        </span>{" "}
+                          Size:
+                        </span>
                         41
                       </p>
                       <p className="text-sm dark:text-white leading-none text-gray-800">
                         <span className="dark:text-gray-400 text-gray-300">
-                          Color:{" "}
-                        </span>{" "}
+                          Color:
+                        </span>
                         White
                       </p>
                     </div>
                   </div>
                   <div className="flex justify-between space-x-8 items-start w-full">
                     <p className="text-base dark:text-white xl:text-lg leading-6">
-                      $20.00{" "}
+                      $20.00
                       <span className="text-red-300 line-through"> $45.00</span>
                     </p>
                     <p className="text-base dark:text-white xl:text-lg leading-6 text-gray-800">
-                      01
+                      X1
                     </p>
                     <p className="text-base dark:text-white xl:text-lg font-semibold leading-6 text-gray-800">
                       $20.00
@@ -72,7 +68,7 @@ const OrderDetail = () => {
                 </div>
               </div>
             </div>
-            <div className="flex justify-center flex-col md:flex-row flex-col items-stretch w-full space-y-4 md:space-y-0 md:space-x-6 xl:space-x-8">
+            <div className="flex justify-center md:flex-row flex-col items-stretch w-full space-y-4 md:space-y-0 md:space-x-6 xl:space-x-8">
               <div className="flex flex-col px-4 py-6 md:p-6 xl:p-8 w-full bg-gray-50 dark:bg-gray-800 space-y-6">
                 <h3 className="text-xl dark:text-white font-semibold leading-5 text-gray-800">
                   Summary
@@ -88,7 +84,7 @@ const OrderDetail = () => {
                   </div>
                   <div className="flex justify-between items-center w-full">
                     <p className="text-base dark:text-white leading-4 text-gray-800">
-                      Discount{" "}
+                      Discount
                       <span className="bg-gray-200 p-1 text-xs font-medium dark:bg-white dark:text-gray-800 leading-3 text-gray-800">
                         STUDENT
                       </span>
@@ -113,39 +109,6 @@ const OrderDetail = () => {
                   <p className="text-base dark:text-gray-300 font-semibold leading-4 text-gray-600">
                     $18.00
                   </p>
-                </div>
-              </div>
-              <div className="flex flex-col justify-center px-4 py-6 md:p-6 xl:p-8 w-full bg-gray-50 dark:bg-gray-800 space-y-6">
-                <h3 className="text-xl dark:text-white font-semibold leading-5 text-gray-800">
-                  Shipping
-                </h3>
-                <div className="flex justify-between items-start w-full">
-                  <div className="flex justify-center items-center space-x-4">
-                    <div className="w-8 h-8">
-                      <img
-                        className="w-full h-full"
-                        alt="logo"
-                        src="https://i.ibb.co/L8KSdNQ/image-3.png"
-                      />
-                    </div>
-                    <div className="flex flex-col justify-start items-center">
-                      <p className="text-lg leading-6 dark:text-white font-semibold text-gray-800">
-                        DPD Delivery
-                        <br />
-                        <span className="font-normal">
-                          Delivery with 24 Hours
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-lg font-semibold leading-6 dark:text-white text-gray-800">
-                    $8.00
-                  </p>
-                </div>
-                <div className="w-full flex justify-center items-center">
-                  <button className="hover:bg-black dark:bg-white dark:text-gray-800 dark:hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 py-5 w-96 md:w-full bg-gray-800 text-base font-medium leading-4 text-white">
-                    View Carrier Details
-                  </button>
                 </div>
               </div>
             </div>

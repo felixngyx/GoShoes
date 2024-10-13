@@ -11,7 +11,11 @@ const Sidebar = () => {
         </ul>
         <li className="font-semibold text-lg mt-5">My orders</li>
         <ul className="flex flex-col gap-2 pl-5 mt-2 text-md text-gray-500">
-          <Link to="order">Orders</Link>
+          <Link to="my-order">Orders</Link>
+        </ul>
+        <li className="font-semibold text-lg mt-5">My Address</li>
+        <ul className="flex flex-col gap-2 pl-5 mt-2 text-md text-gray-500">
+          <Link to="my-address">Address</Link>
         </ul>
       </ul>
     </div>
