@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\ServiceInterfaces;
+namespace App\Services\ServiceInterfaces\Auth;
 
 Interface AuthServiceInterface
 {

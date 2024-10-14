@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\User;
 
-use App\Models\User;
-use App\Repositories\RepositoryInterfaces\UserRepositoryInterface;
-use App\Services\ServiceInterfaces\UserServiceInterface;
+use App\Repositories\RepositoryInterfaces\UserRepositoryInterface as UserRepository;
+use App\Services\ServiceInterfaces\User\UserServiceInterface;
 
 class UserService implements UserServiceInterface
 {
     private $userRepository;
 
     public function __construct(
-        UserRepositoryInterface $userRepository
+        UserRepository $userRepository
     )
     {
         $this->userRepository = $userRepository;
@@ -62,7 +61,6 @@ class UserService implements UserServiceInterface
             return $e->getMessage();
         }
     }
-
 
 
 }

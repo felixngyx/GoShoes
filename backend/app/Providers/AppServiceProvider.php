@@ -7,8 +7,8 @@ use Illuminate\Support\ServiceProvider;
 class AppServiceProvider extends ServiceProvider
 {
     public $bindings = [
-        'App\Services\ServiceInterfaces\UserServiceInterface' => 'App\Services\UserService',
-        'App\Services\ServiceInterfaces\AuthServiceInterface' => 'App\Services\AuthService',
+        'App\Services\ServiceInterfaces\User\UserServiceInterface' => 'App\Services\User\UserService',
+        'App\Services\ServiceInterfaces\Auth\AuthServiceInterface' => 'App\Services\Auth\AuthService',
     ];
     /**
      * Register any application services.

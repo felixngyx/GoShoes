@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\API\Auth\AuthController;
-use App\Http\Controllers\API\Home\TestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,8 +16,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 // This route is Public
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::group([ 'prefix' => 'auth'], function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/auth/verify-token', [AuthController::class, 'verifyToken']);
+    Route::post('/auth/reset-password', [AuthController::class, 'reset-password']);
+});
 
 // This route is Authenticated
 Route::group([
