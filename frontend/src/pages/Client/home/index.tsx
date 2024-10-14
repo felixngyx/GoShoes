@@ -8,8 +8,8 @@ const Homepage = () => {
 	return (
 		<>
 			{/* Banner */}
-			<div className="max-w-7xl mx-auto grid grid-cols-2 grid-rows-2 gap-10 mt-10 relative z-0 h-fit">
-				<div className="col-span-1 row-span-2 relative z-0 rounded-xl h-full overflow-hidden group">
+			<div className="max-w-7xl mx-auto grid grid-cols-2 grid-rows-2 gap-10 mt-10 relative z-0 ">
+				<div className="col-span-1 row-span-2 relative z-0 rounded-xl h-fit overflow-hidden group">
 					<img
 						src="images/Banner 1.png"
 						alt="Banner"
@@ -22,7 +22,7 @@ const Homepage = () => {
 						Shop Now
 					</p>
 				</div>
-				<div className="col-span-1 relative z-0 rounded-xl overflow-hidden group">
+				<div className="col-span-1 relative z-0 rounded-xl h-fit max-h-[260px] overflow-hidden group">
 					<img
 						src="images/Banner 2.png"
 						alt="Banner"
@@ -35,11 +35,11 @@ const Homepage = () => {
 						Shop Now
 					</p>
 				</div>
-				<div className="col-span-1 relative z-0 rounded-xl overflow-hidden group">
+				<div className="col-span-1 relative z-0 rounded-xl h-fit max-h-[260px] overflow-hidden group">
 					<img
 						src="images/Banner 3.png"
 						alt="Banner"
-						className="rounded-xl transition-transform duration-300 transform group-hover:scale-105"
+						className="rounded-xl h-full transition-transform duration-300 transform group-hover:scale-105"
 					/>
 					<p className="text-black text-5xl font-bold absolute bottom-[50%] translate-y-[-50%] left-10">
 						Fashion Shoes
@@ -86,8 +86,12 @@ const Homepage = () => {
 
 			{/* Category */}
 			<div className="container max-w-7xl grid grid-cols-2 gap-10 mx-auto my-20">
-				<div className="col-span-1 relative rounded-xl overflow-hidden">
-					<img src="images/Banner 5.png" alt="Category" />
+				<div className="col-span-1 relative rounded-xl overflow-hidden group">
+					<img
+						src="images/Banner 5.png"
+						alt="Category"
+						className="transition-transform duration-300 transform group-hover:scale-105"
+					/>
 					<p className="text-black text-5xl font-extrabold absolute bottom-40 left-10">
 						Minimal <br /> Collection
 					</p>
@@ -95,8 +99,12 @@ const Homepage = () => {
 						Shop Now
 					</p>
 				</div>
-				<div className="col-span-1 relative rounded-xl overflow-hidden">
-					<img src="images/Banner 6.png" alt="Category" />
+				<div className="col-span-1 relative rounded-xl overflow-hidden group">
+					<img
+						src="images/Banner 6.png"
+						alt="Category"
+						className="transition-transform duration-300 transform group-hover:scale-105"
+					/>
 					<p className="text-black text-5xl font-extrabold absolute bottom-40 left-10">
 						Sneaker
 					</p>
