@@ -74,4 +74,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Cart::class);
     }
+
+    public function password_change_history()
+    {
+        return $this->hasMany(PasswordChangeHistory::class);
+    }
 }

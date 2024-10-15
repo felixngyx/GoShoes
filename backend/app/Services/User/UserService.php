@@ -35,7 +35,7 @@ class UserService implements UserServiceInterface
         }
     }
 
-    public function update(array $data, $id)
+    public function update(array $data, int $id)
     {
         try {
             return $this->userRepository->update($data, $id);
@@ -44,7 +44,7 @@ class UserService implements UserServiceInterface
         }
     }
 
-    public function delete($id)
+    public function delete(int $id)
     {
         try {
             return $this->userRepository->delete($id);
@@ -53,7 +53,7 @@ class UserService implements UserServiceInterface
         }
     }
 
-    public function findById($id)
+    public function findById(int $id)
     {
         try {
             return $this->userRepository->findById($id);
@@ -62,5 +62,15 @@ class UserService implements UserServiceInterface
         }
     }
 
-
+    public function findByEmail(string $email)
+    {
+        try {
+            return $this->userRepository->findByEmail($email);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode());
+        }
+    }
 }

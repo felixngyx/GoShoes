@@ -13,14 +13,12 @@ return new class extends Migration
     {
         Schema::create('password_change_history', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->text('token_reset');
+            $table->longText('token_reset');
+            $table->unsignedBigInteger('user_id')->index();
             $table->boolean('is_used')->default(false);
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
 
-            $table->unique(['user_id', 'token_reset']);
-            $table->index(['user_id', 'token_reset']);
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

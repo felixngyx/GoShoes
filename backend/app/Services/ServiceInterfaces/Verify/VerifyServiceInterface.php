@@ -3,5 +3,7 @@
 namespace App\Services\ServiceInterfaces\Verify;
 interface VerifyServiceInterface
 {
-    public function generateLinkVerification(array $user, string $type) : string;
+    public static function generateLinkVerification(object $user, string $type) : string;
+
+    public function verifyTokenService(array $request) : \Illuminate\Http\JsonResponse;
 }

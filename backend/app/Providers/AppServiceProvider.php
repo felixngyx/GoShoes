@@ -9,6 +9,8 @@ class AppServiceProvider extends ServiceProvider
     public $bindings = [
         'App\Services\ServiceInterfaces\User\UserServiceInterface' => 'App\Services\User\UserService',
         'App\Services\ServiceInterfaces\Auth\AuthServiceInterface' => 'App\Services\Auth\AuthService',
+        'App\Services\ServiceInterfaces\Verify\VerifyServiceInterface' => 'App\Services\Verify\VerifyService',
+        'App\Services\ServiceInterfaces\PasswordChangeHistory\PasswordChangeHistoryServiceInterface' => 'App\Services\PasswordChangeHistory\PasswordChangeHistoryService',
     ];
     /**
      * Register any application services.

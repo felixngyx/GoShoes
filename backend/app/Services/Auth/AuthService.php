@@ -1,8 +1,10 @@
 <?php
 
 namespace App\Services\Auth;
+use App\Services\ServiceInterfaces\PasswordChangeHistory\PasswordChangeHistoryServiceInterface as PasswordChangeHistoryService;
 use App\Services\ServiceInterfaces\Auth\AuthServiceInterface;
-use App\Services\ServiceInterfaces\User\UserServiceInterface;
+use App\Services\ServiceInterfaces\User\UserServiceInterface as UserService;
+use App\Services\ServiceInterfaces\Verify\VerifyServiceInterface as VerifyService;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -10,14 +12,42 @@ use Illuminate\Support\Facades\Mail;
 class AuthService implements AuthServiceInterface
 {
     private $userService;
+
+    private static $verifyService;
+
+    private static $passwordChangeHistoryService;
+
     public function __construct(
-        UserServiceInterface $userService
+        UserService $userService
     )
     {
         $this->userService = $userService;
+        self::setPasswordChangeHistoryService(app(PasswordChangeHistoryService::class));
+        self::setVerifyService(app(VerifyService::class));
     }
 
-    public function login(array $request) : \Illuminate\Http\JsonResponse
+    public static function getVerifyService(): VerifyService
+    {
+        return self::$verifyService;
+    }
+
+    public static function setVerifyService(VerifyService $verifyService): void
+    {
+        self::$verifyService = $verifyService;
+    }
+
+    public static function getPasswordChangeHistoryService(): PasswordChangeHistoryService
+    {
+        return self::$passwordChangeHistoryService;
+    }
+
+    public static function setPasswordChangeHistoryService(PasswordChangeHistoryService $passwordChangeHistoryService): void
+    {
+        self::$passwordChangeHistoryService = $passwordChangeHistoryService;
+    }
+
+
+    public function loginService(array $request) : \Illuminate\Http\JsonResponse
     {
         try {
             $data = [
@@ -44,7 +74,14 @@ class AuthService implements AuthServiceInterface
             $token = $user->createToken('token')->plainTextToken;
 
             return response()->json([
+                'success' => true,
                 'message' => 'Login successful',
+                'user' => [
+                    'user' => $user->name,
+                    'email' => $user->email,
+                    'email_is_verified' => (bool)$user->email_verified_at,
+                    'is_admin' => $user->is_admin
+                ],
                 'token' => $token,
                 'token_type'=>"Bearer"
             ], 200);
@@ -56,7 +93,7 @@ class AuthService implements AuthServiceInterface
         }
     }
 
-    public function logout(array $request) : \Illuminate\Http\JsonResponse
+    public function logoutService(array $request) : \Illuminate\Http\JsonResponse
     {
         try {
             auth()->user()->tokens()->delete();
@@ -72,12 +109,11 @@ class AuthService implements AuthServiceInterface
         }
     }
 
-    public function register(array $request) : \Illuminate\Http\JsonResponse
+    public function registerService(array $request) : \Illuminate\Http\JsonResponse
     {
         try {
             $user =  $this->userService->create($request);
-            Log::info('INFO: Register user by'.$request['email'].' successfully');
-            $verificationLink = (new \App\Services\Verify\VerifyService())->generateLinkVerification($user, 'register');
+            $verificationLink = (self::getVerifyService()->generateLinkVerification($user, 'register'));
             Mail::to($user->email)->send(new \App\Mail\RegisterMail($verificationLink));
             return response()->json([
                 'success' => true,
@@ -85,7 +121,7 @@ class AuthService implements AuthServiceInterface
                 'data' => [
                     'user' => $user->name,
                     'email' => $user->email,
-                    'email_verified_at' => $user->email_verified_at
+                    'email_is_verified' => (bool)$user->email_verified_at
                 ]
             ], 201);
         } catch (\Exception $e) {
@@ -97,47 +133,93 @@ class AuthService implements AuthServiceInterface
         }
     }
 
-    public function verifyToken(array $request)
+    public function sendResetPasswordRequestService(array $request) : \Illuminate\Http\JsonResponse
     {
         try {
-            $decrypted = Crypt::decrypt($request->token);
-            $tokenData = json_decode($decrypted, true);
+            // Check if email exists
+            $user = $this->userService->findByEmail($request['email']);
 
-            // Check if token is expired
-            if (now()->timestamp > $tokenData->expires_at) {
-                return response()->json(
-                    [
-                        'success' => false,
-                        'message' => 'Token is expired'
-                    ], 400);
-            }
-            
-            return response()->json([
-                'message' => 'Token is passed',
-                ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Token is invalid'
-            ], 400);
-        }
-    }
-
-    public function resetPassword(array $request) : \Illuminate\Http\JsonResponse
-    {
-        try {
-            $user = auth()->user()->token();
+            // If email not found
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'User not found'
+                    'message' => 'Email not found'
                 ], 404);
             }
-            $verificationLink = (new \App\Services\Verify\VerifyService())->generateLinkVerification($user, 'reset-password');
+
+            //  If user is admin
+            // Admin cannot reset password
+            if ($user->is_admin) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Admin cannot reset password'
+                ], 403);
+            }
+
+            // Generate verification link
+            $verificationLink = (self::getVerifyService()->generateLinkVerification($user, 'reset-password'));
+
+            // Send email
             Mail::to($user->email)->send(new \App\Mail\ResetPasswordMail($verificationLink));
+
+            // Return response
             return response()->json([
                 'success' => true,
-                'message' => 'Reset password link sent to your email'
+                'message' => 'Reset password link sent to your email',
+                'data' => [
+                    'email' => $user->email,
+                    'verification_link' => $verificationLink
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function resetPasswordService(array $request) : \Illuminate\Http\JsonResponse
+    {
+        try {
+            $decrypted = self::getVerifyService()->decryptTokenService($request['token']);
+
+            // Check if token is expired
+            if (now()->timestamp > $decrypted->expires_at) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token is expired'
+                ], 400);
+            }
+
+            // Check if email exists
+            $user = $this->userService->findById($decrypted->user_id);
+
+            // If email not found
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email not found'
+                ], 404);
+            }
+
+            //  If user is admin
+            // Admin cannot reset password
+            if ($user->is_admin) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Admin cannot reset password'
+                ], 403);
+            }
+
+            // Update password
+            $user->password = bcrypt($request['password']);
+            $this->userService->update(['password' => $user->password], $user->id);
+            self::getPasswordChangeHistoryService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
+            // Return response
+            return response()->json([
+                'success' => true,
+                'message' => 'Password reset successfully'
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -146,6 +228,59 @@ class AuthService implements AuthServiceInterface
             ], $e->getCode());
         }
     }
+    public function registerVerifyService(array $request) : \Illuminate\Http\JsonResponse
+    {
+        try {
+            $decrypted = self::getVerifyService()->decryptTokenService($request['token']);
 
+            // Check if token is expired
+            if (now()->timestamp > $decrypted->expires_at) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token is expired'
+                ], 400);
+            }
 
+            if ($decrypted->type !== 'register') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid token'
+                ], 400);
+            }
+
+            // Check if email exists
+            $user = $this->userService->findById($decrypted->user_id);
+
+            // If email not found
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email not found'
+                ], 404);
+            }
+
+            //  If user is admin
+            // Admin cannot verify email
+            if ($user->is_admin) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Admin cannot verify email'
+                ], 403);
+            }
+
+            // Update email_verified_at
+            $this->userService->update(['email_verified_at' => now()], $user->id);
+
+            // Return response
+            return response()->json([
+                'success' => true,
+                'message' => 'Email verified successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode());
+        }
+    }
 }

@@ -8,10 +8,12 @@ Interface UserServiceInterface
 
     public function create(array $request);
 
-    public function update(array $data, $id);
+    public function update(array $data, int $id);
 
-    public function delete($id);
+    public function delete(int $id);
 
-    public function findById($id);
+    public function findById(int $id);
+
+    public function findByEmail(string $email);
 
 }
