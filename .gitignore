@@ -2,7 +2,5 @@ composer.phar
 .osp
 .idea
 
-./frontend/package-lock.json
-./backend/.env
-./backend/composer.lock
-./backend/vendor
+
+frontend/package-lock.json
