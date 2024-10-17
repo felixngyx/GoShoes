@@ -19,14 +19,20 @@ use Illuminate\Support\Facades\Route;
 */
 
 // This route is Public
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::group([ 'prefix' => 'auth'], function () {
+    Route::post('/register', [AuthController::class, 'registerController']);
+    Route::post('/register-verify', [AuthController::class, 'registerVerifyController']);
+    Route::post('/login', [AuthController::class, 'loginController']);
+    Route::post('/reset-password-request', [AuthController::class, 'sendResetPasswordRequestController']);
+    Route::post('/reset-password', [AuthController::class, 'resetPasswordController']);
+    Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
+});
 
 // This route is Authenticated
 Route::group([
     'middleware' => 'auth:sanctum',
 ], function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/logout', [AuthController::class, 'logoutController']);
 });
 
 
