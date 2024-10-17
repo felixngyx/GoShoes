@@ -6,6 +6,7 @@ use App\Http\Controllers\API\Payments\MomoPaymentController;
 use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\Categories\CategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,4 +48,9 @@ Route::prefix('payment')->middleware('auth:sanctum')->group(function () {
     });
 });
 
+Route::get('categories', [CategoryController::class, 'index']); 
+Route::post('categories', [CategoryController::class, 'store']);
+Route::get('categories/{id}', [CategoryController::class, 'show']);
+Route::put('categories/{id}', [CategoryController::class, 'update']);
+Route::delete('categories/{id}', [CategoryController::class, 'destroy']); 
 
