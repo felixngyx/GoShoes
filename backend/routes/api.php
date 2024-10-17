@@ -20,19 +20,33 @@ use App\Http\Controllers\API\Categories\CategoryController;
 */
 
 // This route is Public
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::group([ 'prefix' => 'auth'], function () {
+    Route::post('/register', [AuthController::class, 'registerController']);
+    Route::post('/register-verify', [AuthController::class, 'registerVerifyController']);
+    Route::post('/login', [AuthController::class, 'loginController']);
+    Route::post('/reset-password-request', [AuthController::class, 'sendResetPasswordRequestController']);
+    Route::post('/reset-password', [AuthController::class, 'resetPasswordController']);
+    Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
+});
 
 // This route is Authenticated
 Route::group([
     'middleware' => 'auth:sanctum',
 ], function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/logout', [AuthController::class, 'logoutController']);
 });
 
-Route::post('/payment', [ZaloPaymentController::class, 'paymentMomo']);
 
-Route::get('/payment/callback', [ZaloPaymentController::class, 'callback']);
+// This route is Payment with ZaloPay
+Route::prefix('payment')->middleware('auth:sanctum')->group(function () {
+    Route::post('/', [ZaloPaymentController::class, 'paymentZalo']);
+    Route::get('/callback', [ZaloPaymentController::class, 'callback']);
+    
+    Route::prefix('check')->group(function () {
+        Route::post('/status', [ZaloPaymentController::class, 'searchStatus']);
+        Route::post('/list-status', [ZaloPaymentController::class, 'batchSearchStatus']);
+    });
+});
 
 Route::get('categories', [CategoryController::class, 'index']); 
 Route::post('categories', [CategoryController::class, 'store']);

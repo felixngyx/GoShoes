@@ -12,6 +12,7 @@ class RepositoryServiceProvider extends ServiceProvider
 
      public $bindings = [
        'App\Repositories\RepositoryInterfaces\UserRepositoryInterface' => 'App\Repositories\UserRepository',
+        'App\Repositories\RepositoryInterfaces\PasswordChangeHistoryRepositoryInterface' => 'App\Repositories\PasswordChangeHistoryRepository',
     ];
 
     public function register(): void

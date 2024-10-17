@@ -1,3 +1,6 @@
 composer.phar
 .osp
 .idea
+
+
+frontend/package-lock.json
