@@ -54,7 +54,7 @@ class VerifyService extends VerifyAbstract implements VerifyServiceInterface
     {
         try {
             // get frontend url from .env
-            $FE_URL = env('APP_FE_URL');
+            $FE_URL = env('FRONTEND_URL');
             // generate token
             $token = VerifyService::encryptToken($user, $type);
             self::getPasswordChangeHistoryService()->create([
