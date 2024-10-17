@@ -35,8 +35,16 @@ Route::group([
     Route::post('/logout', [AuthController::class, 'logoutController']);
 });
 
-Route::post('/payment', [ZaloPaymentController::class, 'paymentMomo']);
 
-Route::get('/payment/callback', [ZaloPaymentController::class, 'callback']);
+// This route is Payment with ZaloPay
+Route::prefix('payment')->middleware('auth:sanctum')->group(function () {
+    Route::post('/', [ZaloPaymentController::class, 'paymentZalo']);
+    Route::get('/callback', [ZaloPaymentController::class, 'callback']);
+    
+    Route::prefix('check')->group(function () {
+        Route::post('/status', [ZaloPaymentController::class, 'searchStatus']);
+        Route::post('/list-status', [ZaloPaymentController::class, 'batchSearchStatus']);
+    });
+});
 
 
