@@ -212,10 +212,18 @@ class AuthService implements AuthServiceInterface
                 ], 403);
             }
 
+            $changePasswordHistoryIsUsed = self::getPasswordChangeHistoryService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
+            if ($changePasswordHistoryIsUsed){
+                return response()->json([
+                    'success'=> false,
+                    'message'=>'Token is already used'
+                ], 403);
+            }
+
             // Update password
             $user->password = bcrypt($request['password']);
             $this->userService->update(['password' => $user->password], $user->id);
-            self::getPasswordChangeHistoryService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
+
             // Return response
             return response()->json([
                 'success' => true,
@@ -265,6 +273,14 @@ class AuthService implements AuthServiceInterface
                 return response()->json([
                     'success' => false,
                     'message' => 'Admin cannot verify email'
+                ], 403);
+            }
+
+            $changePasswordHistoryIsUsed = self::getPasswordChangeHistoryService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
+            if ($changePasswordHistoryIsUsed){
+                return response()->json([
+                    'success'=> false,
+                    'message'=>'Token is already used'
                 ], 403);
             }
 

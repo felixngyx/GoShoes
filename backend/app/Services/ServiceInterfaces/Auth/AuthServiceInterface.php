@@ -14,4 +14,6 @@ Interface AuthServiceInterface
 
     public function resetPasswordService(array $request) : \Illuminate\Http\JsonResponse;
 
+    public function registerVerifyService(array $request) : \Illuminate\Http\JsonResponse;
+
 }
