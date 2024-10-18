@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\API\Auth\AuthController;
 use App\Http\Controllers\API\Home\TestController;
+use App\Http\Controllers\API\Payments\MomoPaymentController;
+use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +27,18 @@ Route::group([
     'middleware' => 'auth:sanctum',
 ], function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+});
+
+
+// This route is Payment with ZaloPay
+Route::prefix('payment')->middleware('auth:sanctum')->group(function () {
+    Route::post('/', [ZaloPaymentController::class, 'paymentZalo']);
+    Route::get('/callback', [ZaloPaymentController::class, 'callback']);
+    
+    Route::prefix('check')->group(function () {
+        Route::post('/status', [ZaloPaymentController::class, 'searchStatus']);
+        Route::post('/list-status', [ZaloPaymentController::class, 'batchSearchStatus']);
+    });
 });
 
 
