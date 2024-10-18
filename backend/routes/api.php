@@ -6,6 +6,7 @@ use App\Http\Controllers\API\Payments\MomoPaymentController;
 use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\Auth\SocialAuthController\FacebookAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,11 +41,15 @@ Route::group([
 Route::prefix('payment')->middleware('auth:sanctum')->group(function () {
     Route::post('/', [ZaloPaymentController::class, 'paymentZalo']);
     Route::get('/callback', [ZaloPaymentController::class, 'callback']);
-    
+
     Route::prefix('check')->group(function () {
         Route::post('/status', [ZaloPaymentController::class, 'searchStatus']);
         Route::post('/list-status', [ZaloPaymentController::class, 'batchSearchStatus']);
     });
 });
+
+
+Route::get('auth/facebook', [FacebookAuthController::class, 'redirectToFacebook'])->middleware('web');
+Route::get('auth/facebook/callback', [FacebookAuthController::class, 'handleFacebookCallback'])->middleware('web');
 
 

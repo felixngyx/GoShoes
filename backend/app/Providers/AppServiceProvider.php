@@ -23,6 +23,16 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->app->register(RepositoryServiceProvider::class);
+
+
+        $this->app->bind('GuzzleHttp\Client', function($app) {
+            return new \GuzzleHttp\Client([
+                'verify' => true,
+                'curl' => [
+                    CURLOPT_SSL_VERIFYPEER => true,
+                ],
+            ]);
+        });
     }
 
     /**
@@ -30,5 +40,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if(config('app.env') === 'local') {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
     }
 }
