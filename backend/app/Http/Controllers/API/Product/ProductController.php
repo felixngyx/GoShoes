@@ -12,11 +12,9 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-    public function index(){
+    public function index() {}
 
-    }
 
-    
     public function store(Request $request)
     {
         // Validate request input
@@ -66,20 +64,24 @@ class ProductController extends Controller
 
         // Save product variants
         foreach ($request->variants as $key => $variantData) {
-            // Handle image for variant
             if ($request->hasFile("variants.$key.image_variant")) {
                 $imagePath = $request->file("variants.$key.image_variant")->store('product_variants', 'public');
             } else {
-                $imagePath = null; // Handle case where image is not provided
+                return response()->json([
+                    'message' => "Hình ảnh cho biến thể {$key} không tồn tại.",
+                    'errors' => [
+                        "variants.$key.image_variant" => ["The variants.$key.image_variant field is required."]
+                    ]
+                ], 422);
             }
-        
+
             // Create product variant
             ProductVariant::create([
                 'product_id' => $product->id,
                 'color_id' => $variantData['color_id'],
                 'size_id' => $variantData['size_id'],
                 'quantity' => $variantData['quantity'],
-                'image_variant' => $imagePath, // Ensure this line is uncommented
+                'image_variant' => $imagePath,
             ]);
         }
 

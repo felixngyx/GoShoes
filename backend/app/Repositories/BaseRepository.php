@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BaseRepository implements BaseRepositoryInterface
 {
-    private $model;
+    protected $model;
 
     public function __construct(
         Model $model
@@ -26,18 +26,18 @@ class BaseRepository implements BaseRepositoryInterface
         return $this->model->create($data);
     }
 
-    public function update(array $data, $id)
+    public function update(array $data,int $id)
     {
         $record = $this->model->find($id);
         return $record->update($data);
     }
 
-    public function delete($id)
+    public function delete(int $id)
     {
         return $this->model->destroy($id);
     }
 
-    public function findById($id)
+    public function findById(int $id)
     {
         return $this->model->find($id);
     }

@@ -49,4 +49,16 @@ class Handler extends ExceptionHandler
     protected function shouldReturnJson($request, Throwable $e){
         return true;
     }
+
+    public function render($request, Throwable $e)
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+
+        return parent::render($request, $e);
+    }
+
 }
