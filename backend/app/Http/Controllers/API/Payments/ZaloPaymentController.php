@@ -20,7 +20,7 @@ class ZaloPaymentController extends Controller
     public function paymentZalo(Request $request)
     {
 
-        $order_id = "8QHD";
+        $order_id = "8QHABD";
 
 
 

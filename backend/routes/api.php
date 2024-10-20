@@ -39,7 +39,7 @@ Route::group([
 
 
 // This route is Payment with ZaloPay
-Route::prefix('payment')->middleware('auth:sanctum')->group(function () {
+Route::prefix('payment')->group(function () {
     Route::post('/', [ZaloPaymentController::class, 'paymentZalo']);
     Route::get('/callback', [ZaloPaymentController::class, 'callback']);
 
