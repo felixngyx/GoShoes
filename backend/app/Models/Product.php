@@ -10,6 +10,7 @@ class Product extends Model
     use HasFactory;
     protected $fillable = [
         'name',
+        'brand_id',
         'description',
         'price',
         'stock_quantity',
@@ -49,5 +50,9 @@ class Product extends Model
     public function discounts()
     {
         return $this->belongsToMany(Discount::class, 'discount_products');
+    }
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
     }
 }
