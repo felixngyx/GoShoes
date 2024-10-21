@@ -11,7 +11,7 @@ class AppServiceProvider extends ServiceProvider
         'App\Services\ServiceInterfaces\Auth\AuthServiceInterface' => 'App\Services\Auth\AuthService',
         'App\Services\ServiceInterfaces\Verify\VerifyServiceInterface' => 'App\Services\Verify\VerifyService',
         'App\Services\ServiceInterfaces\PasswordChangeHistory\PasswordChangeHistoryServiceInterface' => 'App\Services\PasswordChangeHistory\PasswordChangeHistoryService',
-        'App\Repositories\RepositoryInterfaces\CategoryRepositoryInterface' => 'App\Repositories\CategoryRepository',
+        'App\Services\ServiceInterfaces\Category\CategoryServiceInterface' => 'App\Services\Category\CategoryService',
     ];
     /**
      * Register any application services.
