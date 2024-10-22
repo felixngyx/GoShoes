@@ -29,11 +29,10 @@ class ProductController extends Controller
     {
         $products = Product::paginate(2);
 
-      return response()->json([
-        'message' => 'Danh sách sản phẩm',
-        'product' => $products
-    ], 201);
-
+        return response()->json([
+            'message' => 'Danh sách sản phẩm',
+            'product' => $products
+        ], 201);
     }
 
     /**
@@ -43,10 +42,6 @@ class ProductController extends Controller
     {
         //
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
 
     public function store(StoreProductRequest $request)
     {
@@ -92,7 +87,7 @@ class ProductController extends Controller
     public function update(UpdateProductRequest $request, string $id)
     {
 
-   
+
         // // Xác thực dữ liệu đầu vào
         // $validated = $request->validate([
         //     'name' => 'required|string|max:255',

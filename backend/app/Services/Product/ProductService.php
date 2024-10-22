@@ -121,15 +121,15 @@ class ProductService
 
         // Cập nhật các trường khác của sản phẩm
         $product->update([
-            'name' => $data['name'],
-            'description' => $data['description'],
-            'price' => $data['price'],
-            'stock_quantity' => $data['stock_quantity'],
-            'promotional_price' => $data['promotional_price'],
-            'status' => $data['status'],
-            'sku' => $data['sku'],
-            'hagtag' => $data['hagtag'] ?? null,
-            'brand_id' => $data['brand_id'],
+            'name' => $validated['name'] ?? $product->name,
+            'description' => $validated['description'] ?? $product->description,
+            'price' => $validated['price'] ?? $product->price,
+            'stock_quantity' => $validated['stock_quantity'] ?? $product->stock_quantity,
+            'promotional_price' => $validated['promotional_price'] ?? $product->promotional_price,
+            'status' => $validated['status'] ?? $product->status,
+            'brand_id' => $validated['brand_id'] ?? $product->brand_id,
+            'sku' => $validated['sku'] ?? $product->sku,
+            'hagtag' => $validated['hagtag'] ?? $product->hagtag,
         ]);
 
         // Cập nhật danh mục sản phẩm
