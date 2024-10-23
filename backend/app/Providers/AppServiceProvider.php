@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Repositories\ProductRepository;
+use App\Repositories\RepositoryInterfaces\ProductRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->app->register(RepositoryServiceProvider::class);
-
+        $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
 
         $this->app->bind('GuzzleHttp\Client', function($app) {
             return new \GuzzleHttp\Client([

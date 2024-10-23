@@ -2,12 +2,13 @@
 
 use App\Http\Controllers\API\Auth\AuthController;
 use App\Http\Controllers\API\Home\TestController;
-use App\Http\Controllers\API\Payments\MomoPaymentController;
-use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\Categories\CategoryController;
 use App\Http\Controllers\API\Auth\SocialAuthController\FacebookAuthController;
+use App\Http\Controllers\API\Payments\ZaloPaymentController;
+use App\Http\Controllers\API\Products\ProductController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -29,6 +30,12 @@ Route::group([ 'prefix' => 'auth'], function () {
     Route::post('/reset-password', [AuthController::class, 'resetPasswordController']);
     Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
 });
+
+Route::get('/products', [ProductController::class, 'index']);
+Route::post('/products', [ProductController::class, 'store']);
+Route::get('/products/{id}', [ProductController::class, 'show']);
+Route::put('/products/{id}', [ProductController::class, 'update']);
+Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
 // This route is Authenticated
 Route::group([
