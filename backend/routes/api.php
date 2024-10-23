@@ -7,6 +7,7 @@ use App\Http\Controllers\API\Auth\SocialAuthController\FacebookAuthController;
 use App\Http\Controllers\API\Order\OrderController;
 use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use App\Http\Controllers\API\Product\ProductController;
+use App\Http\Controllers\Discount\DiscountController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,7 +21,7 @@ use App\Http\Controllers\API\Product\ProductController;
 */
 
 // This route is Public
-Route::group([ 'prefix' => 'auth'], function () {
+Route::group(['prefix' => 'auth'], function () {
     Route::post('/register', [AuthController::class, 'registerController']);
     Route::post('/register-verify', [AuthController::class, 'registerVerifyController']);
     Route::post('/login', [AuthController::class, 'loginController']);
@@ -35,14 +36,22 @@ Route::group([
 ], function () {
     Route::post('/logout', [AuthController::class, 'logoutController']);
 
-Route::prefix('orders')->group(function () {
-    Route::get('/', [OrderController::class, 'index']);
-    Route::post('/', [OrderController::class, 'store']);
-    Route::get('/{id}', [OrderController::class, 'show']);
-    Route::put('/{id}', [OrderController::class, 'update']);
-    Route::get('/{id}/check-payment', [OrderController::class, 'checkPaymentStatus']);
-});
+    Route::prefix('orders')->group(function () {
+        Route::get('/', [OrderController::class, 'index']);
+        Route::post('/', [OrderController::class, 'store']);
+        Route::get('/{id}', [OrderController::class, 'show']);
+        Route::put('/{id}', [OrderController::class, 'update']);
+        Route::get('/{id}/check-payment', [OrderController::class, 'checkPaymentStatus']);
+    });
 
+    Route::prefix('discounts')->group(function () {
+        Route::get('/', [DiscountController::class, 'index']);
+        Route::post('/', [DiscountController::class, 'store']);
+        Route::get('/{id}', [DiscountController::class, 'show']);
+        Route::put('/{id}', [DiscountController::class, 'update']);
+        Route::delete('/{id}', [DiscountController::class, 'destroy']);
+        Route::post('/validate', [DiscountController::class, 'validateCode']);
+    });
 });
 
 
@@ -65,4 +74,3 @@ Route::post('categories', [CategoryController::class, 'store']);
 Route::get('categories/{id}', [CategoryController::class, 'show']);
 Route::put('categories/{id}', [CategoryController::class, 'update']);
 Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
-

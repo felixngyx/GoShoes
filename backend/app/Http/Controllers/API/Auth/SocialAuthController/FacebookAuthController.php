@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
-use Illuminate\Support\Facades\Http;
 class FacebookAuthController extends Controller
 {
     public function redirectToFacebook()
@@ -54,6 +53,7 @@ class FacebookAuthController extends Controller
             Log::error('Facebook login error: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
+                'status'=>false,
                 'error' => 'An error occurred during login',
                 'message' => $e->getMessage()
             ], 500);

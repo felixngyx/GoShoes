@@ -26,11 +26,23 @@ class OrderController extends Controller
 
     public function index()
     {
-        $orders = Order::with(['items.product', 'items.variant.size', 'items.variant.color', 'shipping', 'payment.method'])
-            ->where('user_id', auth()->user()->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
-        return response()->json($orders);
+        try {
+            $orders = Order::with(['items.product', 'items.variant.size', 'items.variant.color', 'shipping', 'payment.method'])
+                ->where('user_id', auth()->user()->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'status' => true,
+                'data' => $orders
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Có lỗi xảy ra khi lấy danh sách đơn hàng',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function store(OrderStoreRequest $request)
