@@ -16,9 +16,6 @@ class FacebookAuthController extends Controller
 {
     public function redirectToFacebook()
     {
-        $client = new Client([
-            'verify' => false  // Tắt SSL verify
-        ]);
         return Socialite::driver('facebook')->redirect();
     }
 
