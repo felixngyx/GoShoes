@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -54,5 +55,23 @@ class Product extends Model
     public function brand()
     {
         return $this->belongsTo(Brand::class);
+    }
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Tự động tạo slug khi tạo mới
+        static::creating(function ($product) {
+            if (empty($product->slug)) {
+                $product->slug = Str::slug($product->name, '-');
+            }
+        });
+
+        // Tự động cập nhật slug khi cập nhật
+        static::updating(function ($product) {
+            if (empty($product->slug) || $product->isDirty('name')) {
+                $product->slug = Str::slug($product->name, '-');
+            }
+        });
     }
 }
