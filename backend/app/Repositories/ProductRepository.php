@@ -35,7 +35,28 @@ class ProductRepository implements ProductRepositoryInterface
     }
     public function findProductWithRelations(string $id)
     {
-        return Product::with(['variants', 'images', 'categories'])->find($id);
+        // return Product::with(['variants', 'images', 'categories' , 'brand'])->find($id);
+        // Truy vấn sản phẩm cùng với các quan hệ
+        $product = Product::with(['variants.color', 'variants.size', 'images', 'categories', 'brand'])->find($id);
+        if (!$product) {
+            return null; 
+        }
+        $variantDetails = $product->variants->map(function ($variant) {
+            return [
+                'color' => $variant->color->color, // Lấy tên màu sắc
+                'size' => $variant->size->size, // Lấy tên kích thước
+            ];
+        });
+        $brandName = $product->brand ? $product->brand->name : null;
+        
+        $categoryNames = $product->categories->pluck('name')->toArray(); 
+
+        return [
+            'product' => $product,
+            'variantDetails' => $variantDetails,
+            'brandName' => $brandName,
+            'categoryNames' => $categoryNames, // Lấy tên danh mục sản phẩm
+        ];
     }
     public function deleteProduct(Product $product)
 
@@ -47,5 +68,4 @@ class ProductRepository implements ProductRepositoryInterface
     {
         return Product::findOrFail($id);
     }
-
 }
