@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { IoSearch } from 'react-icons/io5';
 import { MdOutlineShoppingCart } from 'react-icons/md';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../../store/index';
+import { logout } from '../../../store/client/userSlice';
+import Cookies from 'js-cookie';
 
 const useDebounce = (value: string, delay: number) => {
 	const [debouncedValue, setDebouncedValue] = useState(value);
-
 	useEffect(() => {
 		const handler = setTimeout(() => {
 			setDebouncedValue(value);
@@ -23,12 +26,15 @@ const useDebounce = (value: string, delay: number) => {
 const Navbar = () => {
 	const [searchTerm, setSearchTerm] = useState('');
 	const debouncedSearchTerm = useDebounce(searchTerm, 500);
+	const dispatch = useDispatch();
+	const user = useSelector((state: RootState) => state.client.user);
+	const navigate = useNavigate();
 
-	useEffect(() => {
-		if (debouncedSearchTerm) {
-			console.log(debouncedSearchTerm);
-		}
-	}, [debouncedSearchTerm]);
+	const logoutHandler = () => {
+		dispatch(logout());
+		Cookies.remove('access_token');
+		navigate('/');
+	};
 
 	return (
 		<>
@@ -92,30 +98,45 @@ const Navbar = () => {
 										tabIndex={0}
 										className="dropdown-content menu bg-base-100 rounded-box z-[1] w-40 p-2 shadow font-semibold"
 									>
-										<li>
-											<Link
-												to="/signin"
-												className="flex flex-row gap-2"
-											>
-												Sign in
-											</Link>
-										</li>
-										<li>
-											<Link
-												to="/signup"
-												className="flex flex-row gap-2"
-											>
-												Sign up
-											</Link>
-										</li>
-										<li>
-											<Link
-												to="/account"
-												className="flex flex-row gap-2"
-											>
-												Account
-											</Link>
-										</li>
+										{user.username ? (
+											<>
+												<li>
+													<Link
+														to="/account"
+														className="flex flex-row gap-2"
+													>
+														Account
+													</Link>
+												</li>
+												<li>
+													<button
+														className="flex flex-row gap-2"
+														onClick={logoutHandler}
+													>
+														Logout
+													</button>
+												</li>
+											</>
+										) : (
+											<>
+												<li>
+													<Link
+														to="/signin"
+														className="flex flex-row gap-2"
+													>
+														Sign in
+													</Link>
+												</li>
+												<li>
+													<Link
+														to="/signup"
+														className="flex flex-row gap-2"
+													>
+														Sign up
+													</Link>
+												</li>
+											</>
+										)}
 									</ul>
 								</div>
 							</div>

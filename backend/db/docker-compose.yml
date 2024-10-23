@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+    kraken_local:
+        image: mysql:8.0
+        container_name: goshoes_mysql
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: admin@123
+            MYSQL_DATABASE: goshoes
+            MYSQL_USER: goshoes
+            MYSQL_PASSWORD: goshoes
+        ports:
+            - "3307:3306"
+        volumes:
+            - db_data:/var/lib/mysql
+
+volumes:
+    db_data:

@@ -7,7 +7,18 @@
 	"compilerOptions": {
 		"baseUrl": "./",
 		"paths": {
-			"@/*": ["./*"]
-		}
-	}
+			"@/*": ["./*"],
+			"@components/*": ["./src/components/*"],
+			"@hooks/*": ["./src/hooks/*"],
+			"@store/*": ["./src/store/*"],
+			"@utils/*": ["./src/utils/*"],
+			"@assets/*": ["./src/assets/*"],
+			"@services/*": ["./src/services/*"]
+		},
+		"module": "esnext",
+		"moduleResolution": "node",
+		"lib": ["ES2015", "DOM"],
+		"target": "ES2015"
+	},
+	"include": ["src/**/*.ts", "src/**/*.tsx"]
 }

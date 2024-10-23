@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->text('description');
             $table->timestamp('valid_from');
-            $table->timestamp('valid_to');
+            $table->timestamp('valid_to')->nullable();
             $table->decimal('min_order_amount', 10, 2);
             $table->integer('usage_limit');
             $table->float('percent');

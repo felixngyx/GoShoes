@@ -77,7 +77,14 @@ const User = () => {
 					</thead>
 					<tbody>
 						{userData.map((user, key) => (
-							<tr className="bg-white dark:bg-slate-800" key={key}>
+							<tr
+								className={`bg-white dark:bg-slate-800 ${
+									key !== userData.length - 1
+										? 'border-b border-stroke'
+										: ''
+								}`}
+								key={key}
+							>
 								<td className="px-6 py-3">
 									<div className="flex items-center gap-2">
 										<img

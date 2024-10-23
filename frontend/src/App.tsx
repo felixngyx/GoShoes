@@ -27,6 +27,11 @@ import NotfoundPage from './pages/Client/NotfoundPage';
 import OrderDetail from './pages/Client/User/OrderDetail';
 import Address from './pages/Client/User/Address';
 import User from './pages/Admin/User';
+import Category from './pages/Admin/Category';
+import ResetPassword from './pages/Client/ResetPassword';
+import ForgetPassword from './pages/Client/ForgetPassword';
+import Product from './pages/Admin/Product';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
 	const { pathname } = useLocation();
@@ -48,6 +53,8 @@ function App() {
 						<Route path="my-order/:id" element={<OrderDetail />} />
 						<Route path="my-address" element={<Address />} />
 					</Route>
+					<Route path="/reset-password" element={<ResetPassword />} />
+					<Route path="/forget-password" element={<ForgetPassword />} />
 					<Route path="*" element={<NotfoundPage />} />
 				</Route>
 				<Route path="/signin" element={<SignIn />} />
@@ -63,6 +70,8 @@ function App() {
 						}
 					/>
 					<Route path="user" element={<User />} />
+					<Route path="category" element={<Category />} />
+					<Route path="product" element={<Product />} />
 					<Route
 						path="calendar" // Changed from "/calendar" to "calendar"
 						element={
@@ -164,6 +173,7 @@ function App() {
 					/>
 				</Route>
 			</Routes>
+			<Toaster position="top-right" reverseOrder={false} />
 		</>
 	);
 }
