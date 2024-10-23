@@ -75,6 +75,7 @@ class ProductService
         return $this->productRepository->findProductForDeletion($id);
     }
 
+    // chi tiết sản phẩm có 
     public function findProductWithRelations(string $id)
     {
         return $this->productRepository->findProductWithRelations($id);
@@ -82,20 +83,45 @@ class ProductService
     public function deleteProduct(Product $product)
     {
         try {
-
+            // Xóa ảnh thumbnail của sản phẩm
+            if ($product->thumbnail) {
+                if (Storage::disk('public')->exists($product->thumbnail)) {
+                    Storage::disk('public')->delete($product->thumbnail);
+                }
+            }
+    
+            // Xóa ảnh của các biến thể
+            foreach ($product->variants as $variant) {
+                if ($variant->image_variant) {
+                    if (Storage::disk('public')->exists($variant->image_variant)) {
+                        Storage::disk('public')->delete($variant->image_variant);
+                    }
+                }
+            }
+    
+            // Xóa các ảnh phụ của sản phẩm
+            foreach ($product->images as $image) {
+                if ($image->image_path) {
+                    if (Storage::disk('public')->exists($image->image_path)) {
+                        Storage::disk('public')->delete($image->image_path);
+                    }
+                }
+            }
+    
+            // Xóa các biến thể và ảnh trong database
             $product->variants()->delete();
             $product->images()->delete();
-
-
+            
+            // Xóa sản phẩm
             $this->productRepository->deleteProduct($product);
-
+    
             return response()->json([
                 'message' => 'Sản phẩm đã được xóa thành công!',
             ], 200);
+    
         } catch (\Exception $e) {
-            // Ghi log lỗi và trả về thông báo lỗi
             Log::error('Error deleting product: ' . $e->getMessage());
-
+    
             return response()->json([
                 'message' => 'Có lỗi xảy ra khi xóa sản phẩm.',
                 'error' => $e->getMessage(),

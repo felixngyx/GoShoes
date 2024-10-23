@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class OrderPayment extends Model
 {
     use HasFactory;
+    protected $primaryKey = 'order_id';
+    public $incrementing = false;
     protected $fillable = ['order_id', 'method_id', 'status'];
 
     public function order()
