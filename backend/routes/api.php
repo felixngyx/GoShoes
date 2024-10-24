@@ -4,6 +4,10 @@ use App\Http\Controllers\API\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\Categories\CategoryController;
 use App\Http\Controllers\API\Auth\SocialAuthController\FacebookAuthController;
+
+use App\Http\Controllers\API\Colors\ColorController;
+use App\Http\Controllers\API\Sizes\SizeController;
+use App\Http\Controllers\API\Brands\BrandController;
 use App\Http\Controllers\API\Order\OrderController;
 use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use App\Http\Controllers\API\Products\ProductController;
@@ -37,6 +41,21 @@ Route::post('/products', [ProductController::class, 'store']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::put('/products/{id}', [ProductController::class, 'update']);
 Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+
+// API Size
+Route::get('/sizes', [SizeController::class, 'index']);
+Route::post('/sizes', [SizeController::class, 'store']);
+Route::get('/sizes/{id}', [SizeController::class, 'show']);
+Route::put('/sizes/{id}', [SizeController::class, 'update']);
+Route::delete('/sizes/{id}', [SizeController::class, 'destroy']);
+
+Route::get('/brands', [BrandController::class, 'index']);
+Route::post('/brands', [BrandController::class, 'store']);
+Route::get('/brands/{id}', [BrandController::class, 'show']);
+Route::put('/brands/{id}', [BrandController::class, 'update']);
+Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
+
+
 
 // This route is Authenticated
 Route::group([
