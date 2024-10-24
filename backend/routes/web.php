@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return redirect("/docs");
+   return "Hello World";
 });
 
 Route::get('/ngRok', function () {
