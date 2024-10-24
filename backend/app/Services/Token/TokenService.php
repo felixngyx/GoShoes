@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Services\PasswordChangeHistory;
+namespace App\Services\Token;
 
-use App\Repositories\RepositoryInterfaces\PasswordChangeHistoryRepositoryInterface as PasswordChangeHistoryRepository;
-use App\Services\ServiceAbstracts\PasswordChangeHistory\PasswordChangeHistoryAbstract;
-use App\Services\ServiceInterfaces\PasswordChangeHistory\PasswordChangeHistoryServiceInterface;
+use App\Repositories\RepositoryInterfaces\TokenRepositoryInterface as PasswordChangeHistoryRepository;
+use App\Services\ServiceAbstracts\Token\TokenAbstract;
+use App\Services\ServiceInterfaces\Token\TokenServiceInterface;
 
-class PasswordChangeHistoryService extends PasswordChangeHistoryAbstract implements PasswordChangeHistoryServiceInterface
+class TokenService extends TokenAbstract implements TokenServiceInterface
 {
     private $passwordChangeHistoryRepository;
     public function __construct(

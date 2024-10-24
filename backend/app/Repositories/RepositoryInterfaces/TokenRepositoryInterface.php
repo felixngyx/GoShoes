@@ -2,7 +2,7 @@
 
 namespace App\Repositories\RepositoryInterfaces;
 
-interface PasswordChangeHistoryRepositoryInterface
+interface TokenRepositoryInterface
 {
     public function findByTokenAndUserIdIsUsed(string $token, int $userId);
 
