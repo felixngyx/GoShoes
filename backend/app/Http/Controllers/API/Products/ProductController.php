@@ -18,9 +18,6 @@ class ProductController extends Controller
     {
         $this->productService = $productService;
     }
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $products = Product::paginate(2);
@@ -31,9 +28,7 @@ class ProductController extends Controller
         ], 201);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+  
     public function create()
     {
         //
@@ -52,9 +47,6 @@ class ProductController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         // Tìm sản phẩm theo ID
@@ -67,13 +59,10 @@ class ProductController extends Controller
             'product' => $product['product'],
             'variantDetails' => $product['variantDetails'],
             'brandName' => $product['brandName'],
-            'categoryNames' => $product['categoryNames'], 
+            'categoryNames' => $product['categoryNames'],
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
         //
@@ -107,11 +96,20 @@ class ProductController extends Controller
 
         $validated = $request->validated();
         $product = $this->productService->updateProduct($id, $validated);
-
+        $product_findID = $this->productService->findProductWithRelations($id);
+        if (!$product) {
+            return response()->json(['message' => 'Sản phẩm không tồn tại!'], 404);
+        }
         return response()->json([
-            'message' => 'Sản phẩm đã được cập nhật thành công!',
-            'product' => $product
-        ], 200);
+            'product' => $product_findID['product'],
+            'variantDetails' => $product_findID['variantDetails'],
+            'brandName' => $product_findID['brandName'],
+            'categoryNames' => $product_findID['categoryNames'],
+        ]);
+        // return response()->json([
+        //     'message' => 'Sản phẩm đã được cập nhật thành công!',
+        //     'product' => $product
+        // ], 200);
     }
 
     /**

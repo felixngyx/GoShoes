@@ -77,13 +77,8 @@ class BrandController extends Controller
     {
         //
     }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
-
         $brand = $this->brandService->findBrandId($id);
 
         if (!$brand) {
