@@ -13,7 +13,7 @@ use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use App\Http\Controllers\API\Products\ProductController;
 
 
-use App\Http\Controllers\Discount\DiscountController;
+use App\Http\Controllers\API\Discount\DiscountController;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,7 +66,7 @@ Route::group([
     Route::post('/logout', [AuthController::class, 'logoutController']);
 
     Route::prefix('orders')->group(function () {
-        Route::get('/', [OrderController::class, 'index']);
+        Route::get('/', [OrderController::class, 'OrderOneUser']);
         Route::post('/', [OrderController::class, 'store']);
         Route::get('/{id}', [OrderController::class, 'show']);
         Route::put('/{id}', [OrderController::class, 'update']);
