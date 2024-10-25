@@ -16,4 +16,6 @@ Interface AuthServiceInterface
 
     public function registerVerifyService(array $request) : \Illuminate\Http\JsonResponse;
 
+    public function refreshTokenService() : \Illuminate\Http\JsonResponse;
+
 }

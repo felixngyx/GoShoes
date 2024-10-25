@@ -38,6 +38,8 @@ Route::group(['prefix' => 'auth'], function () {
     Route::get('/me', [AuthController::class, 'me'])->middleware('jwt.verify');
 });
 
+Route::get('/redis', [AuthController::class, 'redis']);
+
 Route::get('/products', [ProductController::class, 'index']);
 Route::post('/products', [ProductController::class, 'store']);
 Route::get('/products/{id}', [ProductController::class, 'show']);

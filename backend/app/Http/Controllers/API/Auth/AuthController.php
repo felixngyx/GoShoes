@@ -11,6 +11,7 @@ use App\Http\Requests\Auth\VerifyTokenRequest;
 use App\Services\ServiceInterfaces\Auth\AuthServiceInterface as AuthService;
 use App\Services\ServiceInterfaces\Verify\VerifyServiceInterface as VerifyService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
@@ -83,5 +84,11 @@ class AuthController extends Controller
     {
         $usu = JWTAuth::parseToken()->authenticate();
         return $usu;
+    }
+
+    public function redis()
+    {
+        Redis::set('name', 'Taylor');
+        return Redis::get('name');
     }
 }
