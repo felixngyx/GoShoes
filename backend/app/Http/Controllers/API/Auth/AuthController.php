@@ -79,16 +79,4 @@ class AuthController extends Controller
     {
         return $this->authService->refreshTokenService($request->all());
     }
-
-    public function me(Request $request)
-    {
-        $usu = JWTAuth::parseToken()->authenticate();
-        return $usu;
-    }
-
-    public function redis()
-    {
-        Redis::set('name', 'Taylor');
-        return Redis::get('name');
-    }
 }
