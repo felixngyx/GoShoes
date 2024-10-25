@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 // import SidebarLinkGroup from './SidebarLinkGroup';
 import Logo from '../../../images/logo/logo.svg';
 import { FaClipboardList, FaUser } from 'react-icons/fa';
-import { Box } from 'lucide-react';
+import { Box, Boxes } from 'lucide-react';
 import { useRef, useEffect } from 'react';
 interface SidebarProps {
 	sidebarOpen: boolean;
@@ -238,6 +238,19 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 								>
 									<Box size={18} />
 									Product
+								</NavLink>
+							</li>
+
+							<li>
+								<NavLink
+									to="/admin/variant"
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+										pathname.includes('variant') &&
+										'bg-graydark dark:bg-meta-4'
+									}`}
+								>
+									<Boxes />
+									Variant
 								</NavLink>
 							</li>
 

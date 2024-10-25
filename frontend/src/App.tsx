@@ -1,6 +1,5 @@
 import { Route, Routes, useLocation } from 'react-router-dom';
 import Layout from './components/client/layout';
-import Homepage from './pages/Client/Home';
 import SignIn from './pages/Client/SignIn';
 import SignUp from './pages/Client/SignUp';
 import ProductList from './pages/Client/ProductList';
@@ -32,6 +31,8 @@ import ResetPassword from './pages/Client/ResetPassword';
 import ForgetPassword from './pages/Client/ForgetPassword';
 import Product from './pages/Admin/Product';
 import { Toaster } from 'react-hot-toast';
+import Variant from './pages/Admin/Variant';
+import Homepage from './pages/Client/home';
 
 function App() {
 	const { pathname } = useLocation();
@@ -72,6 +73,7 @@ function App() {
 					<Route path="user" element={<User />} />
 					<Route path="category" element={<Category />} />
 					<Route path="product" element={<Product />} />
+					<Route path="variant" element={<Variant />} />
 					<Route
 						path="calendar" // Changed from "/calendar" to "calendar"
 						element={
