@@ -61,7 +61,7 @@ Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
 
 // This route is Authenticated
 Route::group([
-    'middleware' => 'auth:sanctum',
+    'middleware' => 'jwt.auth',
 ], function () {
     Route::post('/logout', [AuthController::class, 'logoutController']);
 
