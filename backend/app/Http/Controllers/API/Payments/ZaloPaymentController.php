@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\API\Payments;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\OrderPayment;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ZaloPaymentController extends Controller
 {
@@ -16,51 +19,51 @@ class ZaloPaymentController extends Controller
         "endpoint" => "https://sb-openapi.zalopay.vn/v2/create",
     ];
 
-    public function __construct() {}
     public function paymentZalo(Request $request)
     {
+        try {
+            $order = Order::where('sku', $request->order_id)->firstOrFail();
 
-        $order_id = "8QHD";
+            $embeddata = [
+                "redirecturl" => 'http://localhost:8000/api/payment/callback',
+            ];
 
+            $items = json_encode([]);
 
+            $order_data = [
+                "app_id" => $this->config["app_id"],
+                "app_time" => round(microtime(true) * 1000),
+                "app_trans_id" => date("ymd") . "_" . $order->sku,
+                "app_user" => "user" . $order->user_id,
+                "item" => $items,
+                "embed_data" => json_encode($embeddata),
+                "amount" => $request->amount,
+                "description" => "Thanh toán đơn hàng #" . $order->sku,
+                "bank_code" => "",
+                "callback_url" => route('payment.callback'),
+            ];
 
-        $embeddata = [
-            "redirecturl" => "http://localhost:8000/api/payment/callback",
-        ];
+            $data = $order_data["app_id"] . "|" . $order_data["app_trans_id"] . "|" . $order_data["app_user"] . "|" . $order_data["amount"]
+                . "|" . $order_data["app_time"] . "|" . $order_data["embed_data"] . "|" . $order_data["item"];
+            $order_data["mac"] = hash_hmac("sha256", $data, $this->config["key1"]);
 
-        $embeddatafinal = json_encode($embeddata);
+            $response = Http::withOptions(['verify' => false])->post($this->config['endpoint'], $order_data);
 
-        $items = '[]';
-
-        $transID = $order_id;
-        $order = [
-            "app_id" => $this->config["app_id"],
-            "app_time" => round(microtime(true) * 1000), // miliseconds
-            "app_trans_id" => date("ymd") . "_" . $transID, // translation missing: vi.docs.shared.sample_code.comments.app_trans_id
-            "app_user" => "",
-            "item" => $items,
-            "embed_data" => $embeddatafinal,
-            "amount" => 50000,
-            "description" => "GoShoes - Payment for the order #$transID",
-            "bank_code" => "",
-            "callback_url" => env('NRGOK_URL' . '/api/payment/callback', ''),
-        ];
-
-        $data = $order["app_id"] . "|" . $order["app_trans_id"] . "|" . $order["app_user"] . "|" . $order["amount"]
-            . "|" . $order["app_time"] . "|" . $order["embed_data"] . "|" . $order["item"];
-        $order["mac"] = hash_hmac("sha256", $data,  $this->config["key1"]);
-
-        $context = stream_context_create([
-            "http" => [
-                "header" => "Content-type: application/x-www-form-urlencoded\r\n",
-                "method" => "POST",
-                "content" => http_build_query($order)
-            ]
-        ]);
-
-        $resp = file_get_contents($this->config['endpoint'], false, $context);
-        $result = json_decode($resp, true);
-        return response()->json($result);
+            if ($response->successful()) {
+                $result = $response->json();
+                if ($result['return_code'] == 1) {
+                    return response()->json($result); // Đảm bảo trả về đối tượng JSON
+                } else {
+                    throw new Exception('ZaloPay returned error: ' . $result['return_message']);
+                }
+            } else {
+                Log::error('ZaloPay response: ' . $response->body()); // Ghi lại nội dung phản hồi nếu có lỗi
+                throw new Exception('Failed to connect to ZaloPay');
+            }
+        } catch (Exception $e) {
+            Log::error('ZaloPay payment initiation failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Payment initiation failed', 'message' => $e->getMessage()], 500);
+        }
     }
 
     public function callback(Request $request)
@@ -112,82 +115,83 @@ class ZaloPaymentController extends Controller
             $result["return_message"] = $e->getMessage();
             error_log("ZaloPay Callback Error: " . $e->getMessage());
         }
+        $apptrans = strstr($data["apptransid"],'_');
 
+        $sku = ltrim($apptrans,'_');
+        if (empty($sku)) {
+            return redirect()->away(env('FRONTEND_URL') . '/payment-fail?message=Invalid SKU');
+        }
+
+        $order = Order::where("sku", $sku)->first();
+        Log::info("". $order->id ."") ;
+
+        if (!$order) {
+            return redirect()->away(env('FRONTEND_URL') . '/payment-fail?message=Order not found');
+        }
+        $order->update(['status' => 'processing']);
+        $payment = OrderPayment::where('order_id', $order->id)->first();
         //if return_code = 1 thì redirect về frontend với message "transaction successful"
-        if ($result["return_code"] == 1) {
-            return redirect()->away(env('FRONTEND_URL') . '/payment-success?message=Transaction successful');
+        if (!$payment) {
+            return redirect()->away(env('FRONTEND_URL') . '/payment-fail?message=Payment information not found');
         }
-        // nếu return_code = 0 thì redirect về frontend với message "Thanh toán thất bại"
-        if ($result["return_code"] == 0) {
-            return redirect()->away(env('FRONTEND_URL') . '/payment-fail?message=Transaction failed');
-        }
-        // nếu return_code = -1 thì redirect về frontend với message "Checksum verification failed"
-        if ($result["return_code"] == -1) {
-            return redirect()->away(env('FRONTEND_URL') . '/payment-fail?message=Checksum verification failed');
+
+        // Xử lý kết quả thanh toán
+        switch ($result["return_code"]) {
+            case 1:
+                $order->update(["status" => "completed"]);
+                $payment->update(['status' => 'success']);
+                return redirect()->away(env('FRONTEND_URL') . '/payment-success?message=Transaction successful');
+
+            case 0:
+            case -1:
+                $order->update(["status" => "cancelled"]);
+                $payment->update(['status' => 'failed']);
+                $message = ($result["return_code"] == 0) ? 'Transaction failed' : 'Checksum verification failed';
+                return redirect()->away(env('FRONTEND_URL') . '/payment-fail?message=' . $message);
         }
     }
 
+
     public function searchStatus(Request $request)
     {
-        $enpointSearch = "https://sb-openapi.zalopay.vn/v2/query";
-        $request->validate([
-            'app_trans_id' => 'required|string',
-        ]);
+        try {
+            $payment = OrderPayment::findOrFail($request->app_trans_id);
+            $order = $payment->order;
 
-        $app_trans_id = $request->input('app_trans_id');
+            $data = $this->config["app_id"] . "|" . $order->sku . "|" . $this->config["key1"];
 
-        $data = $this->config["app_id"] . "|" . $app_trans_id . "|" . $this->config["key1"];
+            $params = [
+                "app_id" => $this->config["app_id"],
+                "app_trans_id" => $order->sku,
+                "mac" => hash_hmac("sha256", $data, $this->config["key1"])
+            ];
 
-        $params = [
-            "app_id" => $this->config["app_id"],
-            "app_trans_id" => $app_trans_id,
-            "mac" => hash_hmac("sha256", $data, $this->config["key1"])
-        ];
+            $response = Http::asForm()->post("https://sb-openapi.zalopay.vn/v2/query", $params);
 
-        $response = Http::asForm()->post($enpointSearch, $params);
-
-        if ($response->successful()) {
-            $result = $response->json();
-            return response()->json($result);
-        } else {
-            return response()->json([
-                'error' => 'Failed to query transaction',
-                'details' => $response->body()
-            ], $response->status());
+            if ($response->successful()) {
+                $result = $response->json();
+                return response()->json($result);
+            } else {
+                throw new Exception('Failed to query transaction status from ZaloPay');
+            }
+        } catch (Exception $e) {
+            Log::error('ZaloPay status check failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to check payment status', 'message' => $e->getMessage()], 500);
         }
     }
 
     public function batchSearchStatus(Request $request)
     {
-        $endpointSearch = "https://sb-openapi.zalopay.vn/v2/query";
-
         $request->validate([
             'app_trans_ids' => 'required|array',
             'app_trans_ids.*' => 'string',
         ]);
 
-        $app_trans_ids = $request->input('app_trans_ids');
         $results = [];
 
-        foreach ($app_trans_ids as $app_trans_id) {
-            $data = $this->config["app_id"] . "|" . $app_trans_id . "|" . $this->config["key1"];
-
-            $params = [
-                "app_id" => $this->config["app_id"],
-                "app_trans_id" => $app_trans_id,
-                "mac" => hash_hmac("sha256", $data, $this->config["key1"])
-            ];
-
-            $response = Http::asForm()->post($endpointSearch, $params);
-
-            if ($response->successful()) {
-                $results[$app_trans_id] = $response->json();
-            } else {
-                $results[$app_trans_id] = [
-                    'error' => 'Failed to query transaction',
-                    'details' => $response->body()
-                ];
-            }
+        foreach ($request->app_trans_ids as $app_trans_id) {
+            $statusRequest = new Request(['app_trans_id' => $app_trans_id]);
+            $results[$app_trans_id] = $this->searchStatus($statusRequest)->original;
         }
 
         return response()->json($results);

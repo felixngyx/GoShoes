@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Shipping extends Model
 {
     use HasFactory;
+    protected $table = 'shipping';
     protected $fillable = [
         'user_id',
         'address',

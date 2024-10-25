@@ -2,13 +2,13 @@
 
 namespace App\Repositories;
 
-use App\Models\PasswordChangeHistory;
-use App\Repositories\RepositoryInterfaces\PasswordChangeHistoryRepositoryInterface;
+use App\Models\Token;
+use App\Repositories\RepositoryInterfaces\TokenRepositoryInterface;
 
-class PasswordChangeHistoryRepository extends BaseRepository implements PasswordChangeHistoryRepositoryInterface
+class TokenRepository extends BaseRepository implements TokenRepositoryInterface
 {
     public function __construct(
-        PasswordChangeHistory $model
+        Token $model
     )
     {
         parent::__construct($model);
