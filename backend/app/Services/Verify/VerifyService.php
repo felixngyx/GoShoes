@@ -2,7 +2,7 @@
 
 namespace App\Services\Verify;
 
-use App\Services\ServiceInterfaces\PasswordChangeHistory\PasswordChangeHistoryServiceInterface as PasswordChangeHistoryService;
+use App\Services\ServiceInterfaces\Token\TokenServiceInterface as PasswordChangeHistoryService;
 use App\Services\ServiceAbstracts\Verify\VerifyAbstract;
 use App\Services\ServiceInterfaces\Verify\VerifyServiceInterface;
 use Illuminate\Support\Facades\Crypt;

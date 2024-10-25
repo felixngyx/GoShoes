@@ -6,13 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
-use App\Models\ProductImage;
-use App\Models\ProductVariant;
 use App\Services\Product\ProductService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+
 
 class ProductController extends Controller
 {
@@ -46,7 +42,7 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request)
     {
         $validated = $request->validated();
-        Log::info($validated);
+        // Log::info($validated);
         // $validated = $request->validated();
         $product = $this->productService->storeProduct($validated);
 
@@ -67,13 +63,12 @@ class ProductController extends Controller
         if (!$product) {
             return response()->json(['message' => 'Sản phẩm không tồn tại!'], 404);
         }
-
         return response()->json([
-            'product' => $product,
-            'categories' => $product->categories,
-            'variants' => $product->variants,
-            'images' => $product->images,
-        ], 200);
+            'product' => $product['product'],
+            'variantDetails' => $product['variantDetails'],
+            'brandName' => $product['brandName'],
+            'categoryNames' => $product['categoryNames'], 
+        ]);
     }
 
     /**

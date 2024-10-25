@@ -19,9 +19,9 @@ const Breadcrumb = ({ items }: { items: BreadcrumbProps[] }) => {
 							}`}
 						>
 							{item.name}
+							{index < items.length - 1 && <span> / </span>}
 						</p>
 					</Link>
-					{index < items.length - 1 && <span> / </span>}
 				</div>
 			))}
 		</nav>

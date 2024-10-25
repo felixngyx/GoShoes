@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services\ServiceAbstracts\PasswordChangeHistory;
+namespace App\Services\ServiceAbstracts\Token;
 
-abstract class PasswordChangeHistoryAbstract
+abstract class TokenAbstract
 {
     protected abstract function create(array $data) : object;
 
