@@ -23,7 +23,6 @@ class OrderStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'total' => ['required', 'numeric', 'min:0'],
             'shipping_id' => [
                 'required',
                 'exists:shipping,id',
@@ -36,7 +35,6 @@ class OrderStoreRequest extends FormRequest
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'items.*.variant_id' => [
-                'required',
                 'integer',
                 'exists:product_variants,id',
             ],

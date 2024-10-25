@@ -13,7 +13,7 @@ use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use App\Http\Controllers\API\Products\ProductController;
 
 
-use App\Http\Controllers\Discount\DiscountController;
+use App\Http\Controllers\API\Discount\DiscountController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,14 +34,23 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('/reset-password-request', [AuthController::class, 'sendResetPasswordRequestController']);
     Route::post('/reset-password', [AuthController::class, 'resetPasswordController']);
     Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
+    Route::post('/refresh-token', [AuthController::class, 'refreshTokenController'])->middleware('jwt.refresh.token');
 });
 
+// API Product
 Route::get('/products', [ProductController::class, 'index']);
 Route::post('/products', [ProductController::class, 'store']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::put('/products/{id}', [ProductController::class, 'update']);
 Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
+// API Color
+
+Route::get('/colors', [ColorController::class, 'index']);
+Route::post('/colors', [ColorController::class, 'store']);
+Route::get('/colors/{id}', [ColorController::class, 'show']);
+Route::put('/colors/{id}', [ColorController::class, 'update']);
+Route::delete('/colors/{id}', [ColorController::class, 'destroy']);
 // API Size
 Route::get('/sizes', [SizeController::class, 'index']);
 Route::post('/sizes', [SizeController::class, 'store']);
@@ -59,12 +68,12 @@ Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
 
 // This route is Authenticated
 Route::group([
-    'middleware' => 'auth:sanctum',
+    'middleware' => 'jwt.auth',
 ], function () {
     Route::post('/logout', [AuthController::class, 'logoutController']);
 
     Route::prefix('orders')->group(function () {
-        Route::get('/', [OrderController::class, 'index']);
+        Route::get('/', [OrderController::class, 'OrderOneUser']);
         Route::post('/', [OrderController::class, 'store']);
         Route::get('/{id}', [OrderController::class, 'show']);
         Route::put('/{id}', [OrderController::class, 'update']);

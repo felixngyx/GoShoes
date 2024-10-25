@@ -1,13 +1,15 @@
 <?php
 
 namespace App\Services\Auth;
-use App\Services\ServiceInterfaces\PasswordChangeHistory\PasswordChangeHistoryServiceInterface as PasswordChangeHistoryService;
+use App\Services\ServiceInterfaces\Token\TokenServiceInterface as TokenService;
 use App\Services\ServiceInterfaces\Auth\AuthServiceInterface;
 use App\Services\ServiceInterfaces\User\UserServiceInterface as UserService;
 use App\Services\ServiceInterfaces\Verify\VerifyServiceInterface as VerifyService;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthService implements AuthServiceInterface
 {
@@ -15,14 +17,14 @@ class AuthService implements AuthServiceInterface
 
     private static $verifyService;
 
-    private static $passwordChangeHistoryService;
+    private static $tokenService;
 
     public function __construct(
         UserService $userService
     )
     {
         $this->userService = $userService;
-        self::setPasswordChangeHistoryService(app(PasswordChangeHistoryService::class));
+        self::setTokenService(app(TokenService::class));
         self::setVerifyService(app(VerifyService::class));
     }
 
@@ -36,14 +38,14 @@ class AuthService implements AuthServiceInterface
         self::$verifyService = $verifyService;
     }
 
-    public static function getPasswordChangeHistoryService(): PasswordChangeHistoryService
+    public static function getTokenService(): TokenService
     {
-        return self::$passwordChangeHistoryService;
+        return self::$tokenService;
     }
 
-    public static function setPasswordChangeHistoryService(PasswordChangeHistoryService $passwordChangeHistoryService): void
+    public static function setTokenService(TokenService $tokenService): void
     {
-        self::$passwordChangeHistoryService = $passwordChangeHistoryService;
+        self::$tokenService = $tokenService;
     }
 
 
@@ -54,42 +56,51 @@ class AuthService implements AuthServiceInterface
                 'email' => $request['email'],
                 'password' => $request['password']
             ];
-            if (!auth()->attempt($data)) {
+
+            if (!auth('api')->attempt($data)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid login details'
                 ], 401);
             }
 
-            $user = auth()->user();
+            $user = auth('api')->user();
 
-            /// đoạn này phải xem xét lại, nếu user chưa verify email thì có nên cho login không, nếu có thì phải thêm điều kiện gì ở các action khác không
-//            if (!$user->email_verified_at) {
-//                return response()->json([
-//                    'success' => false,
-//                    'message' => 'You need to verify your email'
-//                ], 401);
-//            }
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
 
-            $token = $user->createToken('token')->plainTextToken;
+            // Set access token TTL to 30 minutes
+            config(['jwt.ttl' => 30]);
+            // Add token type "access" to the access token
+            $accessToken = JWTAuth::claims(['token_type' => 'access'])->fromUser($user);
+
+            // Set refresh token TTL to 30 days
+            config(['jwt.refresh_ttl' => 30 * 24 * 60]);
+            // Add token type "refresh" to the refresh token
+            $refreshToken = JWTAuth::claims(['token_type' => 'refresh'])->fromUser($user);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful',
                 'user' => [
-                    'user' => $user->name,
+                    'name' => $user->name,
                     'email' => $user->email,
                     'email_is_verified' => (bool)$user->email_verified_at,
                     'is_admin' => $user->is_admin
                 ],
-                'token' => $token,
-                'token_type'=>"Bearer"
+                'access_token' => $accessToken,
+                'refresh_token' => $refreshToken,
+                'token_type' => 'Bearer'
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], $e->getCode());
+            ]);
         }
     }
 
@@ -111,8 +122,10 @@ class AuthService implements AuthServiceInterface
 
     public function registerService(array $request) : \Illuminate\Http\JsonResponse
     {
+        DB::beginTransaction();
         try {
             $user =  $this->userService->create($request);
+            DB::commit();
             $verificationLink = (self::getVerifyService()->generateLinkVerification($user, 'register'));
             Mail::to($user->email)->send(new \App\Mail\RegisterMail($verificationLink));
             return response()->json([
@@ -121,15 +134,18 @@ class AuthService implements AuthServiceInterface
                 'data' => [
                     'user' => $user->name,
                     'email' => $user->email,
-                    'email_is_verified' => (bool)$user->email_verified_at
+                    'email_is_verified' => (bool)$user->email_verified_at,
+                    'is_admin' => $user->is_admin,
+                    'verification_link' => $verificationLink
                 ]
             ], 201);
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('ERROR: Register user error by'.$e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], $e->getCode());
+            ], 200);
         }
     }
 
@@ -181,6 +197,7 @@ class AuthService implements AuthServiceInterface
 
     public function resetPasswordService(array $request) : \Illuminate\Http\JsonResponse
     {
+        DB::beginTransaction();
         try {
             $decrypted = self::getVerifyService()->decryptTokenService($request['token']);
 
@@ -212,7 +229,7 @@ class AuthService implements AuthServiceInterface
                 ], 403);
             }
 
-            $changePasswordHistoryIsUsed = self::getPasswordChangeHistoryService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
+            $changePasswordHistoryIsUsed = self::getTokenService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
             if ($changePasswordHistoryIsUsed){
                 return response()->json([
                     'success'=> false,
@@ -223,13 +240,14 @@ class AuthService implements AuthServiceInterface
             // Update password
             $user->password = bcrypt($request['password']);
             $this->userService->update(['password' => $user->password], $user->id);
-
+            DB::commit();
             // Return response
             return response()->json([
                 'success' => true,
                 'message' => 'Password reset successfully'
             ], 200);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -238,6 +256,7 @@ class AuthService implements AuthServiceInterface
     }
     public function registerVerifyService(array $request) : \Illuminate\Http\JsonResponse
     {
+        DB::beginTransaction();
         try {
             $decrypted = self::getVerifyService()->decryptTokenService($request['token']);
 
@@ -276,7 +295,7 @@ class AuthService implements AuthServiceInterface
                 ], 403);
             }
 
-            $changePasswordHistoryIsUsed = self::getPasswordChangeHistoryService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
+            $changePasswordHistoryIsUsed = self::getTokenService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
             if ($changePasswordHistoryIsUsed){
                 return response()->json([
                     'success'=> false,
@@ -286,11 +305,39 @@ class AuthService implements AuthServiceInterface
 
             // Update email_verified_at
             $this->userService->update(['email_verified_at' => now()], $user->id);
-
+            DB::commit();
             // Return response
             return response()->json([
                 'success' => true,
                 'message' => 'Email verified successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $e->getCode());
+        }
+    }
+
+    public function refreshTokenService() : \Illuminate\Http\JsonResponse
+    {
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+
+            $accessToken = JWTAuth::claims(['token_type' => 'access'])->fromUser($user);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid refresh token'
+                ], 401);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Access token refreshed successfully',
+                'access_token' => $accessToken,
+                'token_type' => 'Bearer'
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

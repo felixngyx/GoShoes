@@ -2,28 +2,31 @@
 
 namespace App\Mail;
 
+use App\Models\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Address as AddressMail;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class RegisterMail extends Mailable implements ShouldQueue
+class OrderCreated extends Mailable
 {
     use Queueable, SerializesModels;
-
-    private string $verificationLink;
-
+    public $order;
     /**
      * Create a new message instance.
      */
-    public function __construct(string $verificationLink)
+    public function __construct(Order $order)
     {
-        $this->verificationLink = $verificationLink;
+        $this->order = $order;
     }
 
+    public function build()
+    {
+        return $this->markdown('emails.orders.created')
+                    ->subject('Đơn hàng #' . $this->order->sku . ' đã được tạo thành công');
+    }
 
     /**
      * Get the message envelope.
@@ -31,7 +34,7 @@ class RegisterMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Verify your email address',
+            subject: 'Order confirmation - GoShoes',
         );
     }
 
@@ -41,10 +44,7 @@ class RegisterMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'auth.email.register_account',
-            with: [
-                'verificationLink' => $this->verificationLink
-            ]
+            markdown: 'mail.order-created',
         );
     }
 
