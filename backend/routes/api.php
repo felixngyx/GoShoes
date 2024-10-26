@@ -38,12 +38,20 @@ Route::group(['prefix' => 'auth'], function () {
     Route::get('/me', [AuthController::class, 'me'])->middleware('jwt.verify');
 });
 
+// API Product
 Route::get('/products', [ProductController::class, 'index']);
 Route::post('/products', [ProductController::class, 'store']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::put('/products/{id}', [ProductController::class, 'update']);
 Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
+// API Color
+
+Route::get('/colors', [ColorController::class, 'index']);
+Route::post('/colors', [ColorController::class, 'store']);
+Route::get('/colors/{id}', [ColorController::class, 'show']);
+Route::put('/colors/{id}', [ColorController::class, 'update']);
+Route::delete('/colors/{id}', [ColorController::class, 'destroy']);
 // API Size
 Route::get('/sizes', [SizeController::class, 'index']);
 Route::post('/sizes', [SizeController::class, 'store']);
