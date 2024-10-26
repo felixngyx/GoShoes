@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class VariantColor extends Model
 {
     use HasFactory;
-    protected $fillable = ['color', 'hex_code'];
+    protected $fillable = ['color', 'link_image'];
 
     public function variants()
     {
