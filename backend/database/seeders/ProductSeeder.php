@@ -12,7 +12,7 @@ class ProductSeeder extends Seeder
     public function run()
     {
         // Tạo 10 sản phẩm mẫu với các thông tin khác nhau
-        for ($i = 1; $i <= 30; $i++) {
+        for ($i = 1; $i <= 20; $i++) {
             Product::create([
                 'brand_id' => rand(1, 5), // Ví dụ tạo ngẫu nhiên brand_id từ 1 đến 5
                 'name' => 'Sample Product ' . $i, // Tên sản phẩm khác nhau cho mỗi vòng lặp
@@ -25,7 +25,7 @@ class ProductSeeder extends Seeder
                 'is_deleted' => false,
                 'rating_count' => rand(1, 5), // Số đánh giá ngẫu nhiên từ 1 đến 5
                 'slug' => Str::slug('Sample Product ' . $i, '-'), // Slug dựa trên tên sản phẩm
-                'thumbnail' => 'products/sample-product-' . $i . '.jpg', // Hình ảnh sản phẩm khác nhau
+                'thumbnail' => 'https://placehold.co/600x400', // Hình ảnh sản phẩm khác nhau
                 'hagtag' => '#sample #product' . $i,
                 'scheduled_at' => Carbon::now()->addDays(rand(1, 10)), // Ngày lên lịch ngẫu nhiên
                 'published_at' => Carbon::now(),
