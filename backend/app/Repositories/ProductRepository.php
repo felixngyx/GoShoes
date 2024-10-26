@@ -43,6 +43,11 @@ class ProductRepository implements ProductRepositoryInterface
         }
         $variantDetails = $product->variants->map(function ($variant) {
             return [
+                'id' => $variant->id,
+                'quantity' => $variant->quantity,
+                'image_variant' => $variant->image_variant, // Lấy ảnh biến thể
+                'color_id' => $variant->color_id,
+                'size_id' => $variant->size_id,
                 'color' => $variant->color->color, // Lấy tên màu sắc
                 'size' => $variant->size->size, // Lấy tên kích thước
             ];
