@@ -1,0 +1,14 @@
+@tailwind base; /* eslint-disable-next-line no-use-before-define */
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+	font-family: 'poppins';
+	src: url('fonts/Poppins-Regular.ttf') format('ttf');
+	font-weight: normal;
+	font-style: normal;
+}
+
+body {
+	font-family: 'poppins', sans-serif;
+}
