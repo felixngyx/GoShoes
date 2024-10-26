@@ -20,7 +20,8 @@ class AppServiceProvider extends ServiceProvider
         'App\Services\ServiceInterfaces\Verify\VerifyServiceInterface' => 'App\Services\Verify\VerifyService',
         'App\Services\ServiceInterfaces\Token\TokenServiceInterface' => 'App\Services\Token\TokenService',
         'App\Repositories\RepositoryInterfaces\CategoryRepositoryInterface' => 'App\Repositories\CategoryRepository',
-       
+        'App\Services\C'
+
     ];
     /**
      * Register any application services.

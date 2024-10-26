@@ -15,4 +15,8 @@ Interface BaseRepositoryInterface
 
     public function findById(int $id);
 
+    public function upsert(array $data, array $condition);
+
+    public function forceDelete(int $id);
+
 }

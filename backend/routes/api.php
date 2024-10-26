@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\API\Auth\AuthController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\Categories\CategoryController;
 use App\Http\Controllers\API\Auth\SocialAuthController\FacebookAuthController;
@@ -36,6 +38,10 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
     Route::post('/refresh-token', [AuthController::class, 'refreshTokenController'])->middleware('jwt.refresh.token');
 });
+
+
+Route::resource('wishlist', WishlistController::class);
+Route::resource('cart', CartController::class);
 
 // API Product
 Route::get('/products', [ProductController::class, 'index']);

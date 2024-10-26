@@ -11,9 +11,9 @@ class RepositoryServiceProvider extends ServiceProvider
      */
 
      public $bindings = [
-       'App\Repositories\RepositoryInterfaces\UserRepositoryInterface' => 'App\Repositories\UserRepository',
+        'App\Repositories\RepositoryInterfaces\UserRepositoryInterface' => 'App\Repositories\UserRepository',
         'App\Repositories\RepositoryInterfaces\TokenRepositoryInterface' => 'App\Repositories\TokenRepository',
-    ];
+     ];
 
     public function register(): void
     {
