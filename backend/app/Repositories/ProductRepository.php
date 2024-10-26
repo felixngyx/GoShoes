@@ -41,26 +41,26 @@ class ProductRepository implements ProductRepositoryInterface
         if (!$product) {
             return null; 
         }
-        $variantDetails = $product->variants->map(function ($variant) {
-            return [
-                'id' => $variant->id,
-                'quantity' => $variant->quantity,
-                'image_variant' => $variant->image_variant, // Lấy ảnh biến thể
-                'color_id' => $variant->color_id,
-                'size_id' => $variant->size_id,
-                'color' => $variant->color->color, // Lấy tên màu sắc
-                'size' => $variant->size->size, // Lấy tên kích thước
-            ];
-        });
-        $brandName = $product->brand ? $product->brand->name : null;
+        // $variantDetails = $product->variants->map(function ($variant) {
+        //     return [
+        //         'id' => $variant->id,
+        //         'quantity' => $variant->quantity,
+        //         'image_variant' => $variant->image_variant, // Lấy ảnh biến thể
+        //         'color_id' => $variant->color_id,
+        //         'size_id' => $variant->size_id,
+        //         'colorDetails' => $variant->color, // Lấy tên màu sắc
+        //         'size' => $variant->size, // Lấy tên kích thước
+        //     ];
+        // });
+        // $brandName = $product->brand ? $product->brand->name : null;
         
-        $categoryNames = $product->categories->pluck('name')->toArray(); 
+        // $categoryNames = $product->categories->pluck('name')->toArray(); 
 
         return [
             'product' => $product,
-            'variantDetails' => $variantDetails,
-            'brandName' => $brandName,
-            'categoryNames' => $categoryNames, // Lấy tên danh mục sản phẩm
+            // 'variantDetails' => $variantDetails,
+            // 'brandName' => $brandName,
+            // 'categoryNames' => $categoryNames, // Lấy tên danh mục sản phẩm
         ];
     }
     public function deleteProduct(Product $product)
