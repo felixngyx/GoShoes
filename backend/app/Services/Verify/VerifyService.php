@@ -2,28 +2,29 @@
 
 namespace App\Services\Verify;
 
-use App\Services\ServiceInterfaces\Token\TokenServiceInterface as PasswordChangeHistoryService;
+use App\Services\ServiceInterfaces\Token\TokenServiceInterface as TokenService;
 use App\Services\ServiceAbstracts\Verify\VerifyAbstract;
 use App\Services\ServiceInterfaces\Verify\VerifyServiceInterface;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 
 class VerifyService extends VerifyAbstract implements VerifyServiceInterface
 {
     private static $passwordChangeHistoryService;
 
     public function __construct(
-        PasswordChangeHistoryService $passwordChangeHistoryService
+        TokenService $passwordChangeHistoryService
     )
     {
-        self::setPasswordChangeHistoryService($passwordChangeHistoryService);
+        self::setTokenService($passwordChangeHistoryService);
     }
 
-    public static function getPasswordChangeHistoryService(): PasswordChangeHistoryService
+    public static function getTokenService(): TokenService
     {
         return self::$passwordChangeHistoryService;
     }
 
-    public static function setPasswordChangeHistoryService(PasswordChangeHistoryService $passwordChangeHistoryService): void
+    public static function setTokenService(TokenService $passwordChangeHistoryService): void
     {
         self::$passwordChangeHistoryService = $passwordChangeHistoryService;
     }
@@ -52,18 +53,31 @@ class VerifyService extends VerifyAbstract implements VerifyServiceInterface
     // token will expire in 5 minutes
     public static function generateLinkVerification(object $user, string $type) : string
     {
+        DB::beginTransaction();
         try {
             // get frontend url from .env
             $FE_URL = env('FRONTEND_URL');
             // generate token
             $token = VerifyService::encryptToken($user, $type);
-            self::getPasswordChangeHistoryService()->create([
-                'user_id' => $user->id,
+            $created = self::getTokenService()->create([
                 'token' => $token,
+                'user_id' => (int) $user->id,
+                'is_used' => false
             ]);
+
+            if (!$created) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create token'
+                ], 500);
+            }
+
+            DB::commit();
             // return link for verification
-            return $FE_URL.'/verify-account?token='.$token.'&type='.$type;
+            return env('FRONTEND_URL') . '/verify-email?token=' . $token;
         }catch (\Error $e){
+            DB::rollBack();
             return $e->getMessage();
         }
     }
@@ -76,7 +90,7 @@ class VerifyService extends VerifyAbstract implements VerifyServiceInterface
             // decrypt token
            $decrypted = VerifyService::decryptToken($request['token']);
 
-           $checkTokenIsUsed = self::getPasswordChangeHistoryService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
+           $checkTokenIsUsed = self::getTokenService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
 
            if ($checkTokenIsUsed) {
                return response()->json([

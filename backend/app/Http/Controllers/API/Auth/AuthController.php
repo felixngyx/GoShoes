@@ -11,6 +11,7 @@ use App\Http\Requests\Auth\VerifyTokenRequest;
 use App\Services\ServiceInterfaces\Auth\AuthServiceInterface as AuthService;
 use App\Services\ServiceInterfaces\Verify\VerifyServiceInterface as VerifyService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
@@ -77,11 +78,5 @@ class AuthController extends Controller
     public function refreshTokenController(Request $request): \Illuminate\Http\JsonResponse
     {
         return $this->authService->refreshTokenService($request->all());
-    }
-
-    public function me(Request $request)
-    {
-        $usu = JWTAuth::parseToken()->authenticate();
-        return $usu;
     }
 }
