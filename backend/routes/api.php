@@ -35,7 +35,6 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('/reset-password', [AuthController::class, 'resetPasswordController']);
     Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
     Route::post('/refresh-token', [AuthController::class, 'refreshTokenController'])->middleware('jwt.refresh.token');
-    Route::get('/me', [AuthController::class, 'me'])->middleware('jwt.verify');
 });
 
 // API Product

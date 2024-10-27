@@ -30,10 +30,6 @@ class RegisterMail extends Mailable implements ShouldQueue
      */
     public function envelope(): Envelope
     {
-        if (env('MAIL_FROM_ADDRESS') === null) {
-            throw new \Exception('MAIL_FROM_ADDRESS is not set in .env file');
-        }
-
         return new Envelope(
             subject: 'Verify your email address',
         );

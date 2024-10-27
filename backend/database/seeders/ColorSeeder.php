@@ -14,7 +14,7 @@ class ColorSeeder extends Seeder
         foreach ($colors as $color) {
             VariantColor::create([
                 'color' => $color,
-                'hex_code' => '#' . substr(md5(uniqid()), 0, 6),
+                'link_image' => 'https://placehold.co/600x400',
             ]);
         }
     }
