@@ -14,6 +14,7 @@ class RepositoryServiceProvider extends ServiceProvider
        'App\Repositories\RepositoryInterfaces\UserRepositoryInterface' => 'App\Repositories\UserRepository',
         'App\Repositories\RepositoryInterfaces\PasswordChangeHistoryRepositoryInterface' => 'App\Repositories\PasswordChangeHistoryRepository',
         'App\Repositories\RepositoryInterfaces\CategoryRepositoryInterface' => 'App\Repositories\CategoryRepository',
+        'App\Repositories\RepositoryInterfaces\TokenRepositoryInterface' => 'App\Repositories\TokenRepository',
     ];
 
     public function register(): void

@@ -16,18 +16,12 @@ class RegisterMail extends Mailable implements ShouldQueue
 
     private string $verificationLink;
 
-    private string $MAIL_FROM_ADDRESS;
-
-    private string $MAIL_FROM_NAME;
-
     /**
      * Create a new message instance.
      */
     public function __construct(string $verificationLink)
     {
         $this->verificationLink = $verificationLink;
-        $this->MAIL_FROM_ADDRESS = env('MAIL_FROM_ADDRESS');
-        $this->MAIL_FROM_NAME = env('MAIL_FROM_NAME');
     }
 
 
@@ -36,13 +30,8 @@ class RegisterMail extends Mailable implements ShouldQueue
      */
     public function envelope(): Envelope
     {
-        if (env('MAIL_FROM_ADDRESS') === null) {
-            throw new \Exception('MAIL_FROM_ADDRESS is not set in .env file');
-        }
-
         return new Envelope(
-            subject: 'Reset Password Mail',
-            from: new AddressMail($this->MAIL_FROM_ADDRESS, $this->MAIL_FROM_NAME)
+            subject: 'Verify your email address',
         );
     }
 

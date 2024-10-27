@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PasswordChangeHistory extends Model
+class Token extends Model
 {
     use HasFactory;
 
-    protected $table = 'password_change_history';
+    protected $table = 'token';
 
     protected $fillable = [
-        'token_reset',
+        'token',
         'user_id',
         'is_used'
     ];
