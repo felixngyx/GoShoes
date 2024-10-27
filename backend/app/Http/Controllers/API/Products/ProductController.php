@@ -57,9 +57,9 @@ class ProductController extends Controller
         }
         return response()->json([
             'product' => $product['product'],
-            'variantDetails' => $product['variantDetails'],
-            'brandName' => $product['brandName'],
-            'categoryNames' => $product['categoryNames'],
+            // 'variantDetails' => $product['variantDetails'],
+            // 'brandName' => $product['brandName'],
+            // 'categoryNames' => $product['categoryNames'],
         ]);
     }
 
@@ -89,9 +89,9 @@ class ProductController extends Controller
         // Trả về thông tin sản phẩm đã được cập nhật
         return response()->json([
             'product' => $product_findID['product'],
-            'variantDetails' => $product_findID['variantDetails'],
-            'brandName' => $product_findID['brandName'],
-            'categoryNames' => $product_findID['categoryNames'],
+            // 'variantDetails' => $product_findID['variantDetails'],
+            // 'brandName' => $product_findID['brandName'],
+            // 'categoryNames' => $product_findID['categoryNames'],
             'message' => 'Sản phẩm đã được cập nhật thành công!',
         ], 200);
     }
