@@ -1,14 +1,14 @@
 import Brand from './Brand';
 import Size from './Size';
-import Color from './Color';
-const Variant = () => {
+import Category from './Category';
+const Attribute = () => {
 	return (
 		<div className="grid grid-cols-2 gap-5">
 			<Brand />
 			<Size />
-			<Color />
+			<Category />
 		</div>
 	);
 };
 
-export default Variant;
+export default Attribute;

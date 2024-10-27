@@ -1,10 +1,9 @@
 import { PencilLine } from 'lucide-react';
-
+import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { FaSort } from 'react-icons/fa';
-import ModalProduct from './Modal';
 import { formatVNCurrency } from '../../../common/formatVNCurrency';
 
 const Product = () => {
@@ -98,23 +97,15 @@ const Product = () => {
 						<Trash2 size={16} />
 						<p>Delete {selectedItems.length} items</p>
 					</button>
-					<button
-						onClick={() => {
-							const modal = document.getElementById(
-								'modal-product'
-							) as HTMLDialogElement; // Assert type
-							console.log(modal);
-							modal?.showModal(); // Now showModal is recognized
-						}}
+					<Link
+						to="/admin/product/create"
 						className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
-						type="button"
 					>
 						<Plus size={16} />
 						Add Product
-					</button>
+					</Link>
 				</div>
 			</div>
-			<ModalProduct />
 
 			<div className="relative overflow-x-auto border border-stroke">
 				<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">

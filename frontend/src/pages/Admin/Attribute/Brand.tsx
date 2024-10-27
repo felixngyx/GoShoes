@@ -11,12 +11,6 @@ const schema = Joi.object({
 	name: Joi.string().required().messages({
 		'string.empty': 'Brand name is required',
 	}),
-	description: Joi.string().required().messages({
-		'string.empty': 'Brand description is required',
-	}),
-	logo_url: Joi.any().required().messages({
-		'any.required': 'Brand logo is required',
-	}),
 });
 
 const Brand = () => {
@@ -31,7 +25,6 @@ const Brand = () => {
 		try {
 			const res = await brandService.getAll();
 			setBrands(res.data.brands.data);
-			console.log(res.data.brands.data);
 		} catch (error) {
 			console.log(error);
 		}
@@ -134,7 +127,7 @@ const Brand = () => {
 	};
 
 	return (
-		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5 col-span-2">
+		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5 col-span-1">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
 					Brand List
@@ -185,12 +178,6 @@ const Brand = () => {
 								Name
 							</th>
 							<th scope="col" className="px-6 py-3 w-1/3">
-								Description
-							</th>
-							<th scope="col" className="px-6 py-3 w-1/3">
-								Logo
-							</th>
-							<th scope="col" className="px-6 py-3 w-1/3">
 								Action
 							</th>
 						</tr>
@@ -223,20 +210,6 @@ const Brand = () => {
 									</div>
 								</td>
 								<td className="px-6 py-3">{brand.name}</td>
-								<td className="px-6 py-3">{brand.description}</td>
-								<td className="px-6 py-3">
-									<img
-										src={
-											typeof brand.logo_url === 'string'
-												? brand.logo_url
-												: URL.createObjectURL(
-														brand.logo_url as File
-												  )
-										}
-										alt="brand logo"
-										className="w-10 h-10 rounded-full"
-									/>
-								</td>
 								<td className="px-6 py-3 flex items-center gap-2">
 									<button
 										className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
@@ -294,43 +267,6 @@ const Brand = () => {
 									</p>
 								)}
 							</label>
-							<label className="form-control w-full mb-4">
-								<div className="label">
-									<span className="label-text text-gray-500">
-										Brand description
-									</span>
-								</div>
-								<input
-									type="text"
-									className="input-sm w-full p-2 border rounded"
-									placeholder="Brand description"
-									{...register('description')}
-								/>
-								{errors.description && (
-									<p className="text-red-500 text-sm mb-4">
-										{errors.description.message}
-									</p>
-								)}
-							</label>
-
-							<label className="form-control w-full mb-4">
-								<div className="label">
-									<span className="label-text text-gray-500">
-										Brand logo
-									</span>
-								</div>
-								<input
-									type="file"
-									className="file-input input-sm file-input-bordered w-full "
-									{...register('logo_url')}
-								/>
-								{errors.logo_url && (
-									<p className="text-red-500 text-sm mb-4">
-										{errors.logo_url.message}
-									</p>
-								)}
-							</label>
-
 							<div className="flex justify-end gap-2">
 								<button
 									type="button"

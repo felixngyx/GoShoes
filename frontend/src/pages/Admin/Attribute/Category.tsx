@@ -1,5 +1,4 @@
 import { PencilLine, Plus, Trash2 } from 'lucide-react';
-import { FaSort } from 'react-icons/fa';
 import { useState } from 'react'; // Add this import
 
 const Category = () => {
@@ -7,31 +6,11 @@ const Category = () => {
 	const [selectedItems, setSelectedItems] = useState<number[]>([]); // State for individual selections
 
 	const categoryData = [
-		{
-			name: 'Category 1',
-			slug: 'category-1',
-			description: 'Description 1',
-		},
-		{
-			name: 'Category 2',
-			slug: 'category-2',
-			description: 'Description 2',
-		},
-		{
-			name: 'Category 3',
-			slug: 'category-3',
-			description: 'Description 3',
-		},
-		{
-			name: 'Category 4',
-			slug: 'category-4',
-			description: 'Description 4',
-		},
-		{
-			name: 'Category 5',
-			slug: 'category-5',
-			description: 'Description 5',
-		},
+		'Category 1',
+		'Category 2',
+		'Category 3',
+		'Category 4',
+		'Category 5',
 	];
 
 	const handleSelectAll = () => {
@@ -52,7 +31,7 @@ const Category = () => {
 	};
 
 	return (
-		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
+		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5 col-span-1">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
 					Category List
@@ -96,21 +75,10 @@ const Category = () => {
 									</label>
 								</div>
 							</th>
-							<th scope="col" className="px-6 py-3">
+							<th scope="col" className="px-6 py-3 w-2/3">
 								Name
 							</th>
-							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
-									Slug
-									<a>
-										<FaSort />
-									</a>
-								</div>
-							</th>
-							<th scope="col" className="px-6 py-3 w-1/2">
-								Description
-							</th>
-							<th scope="col" className="px-6 py-3">
+							<th scope="col" className="px-6 py-3 w-1/3">
 								Action
 							</th>
 						</tr>
@@ -142,13 +110,7 @@ const Category = () => {
 										</label>
 									</div>
 								</td>
-								<td className="px-6 py-3">{category.name}</td>
-								<td className="px-6 py-3">{category.slug}</td>
-								<td className="px-6 py-3">
-									Lorem ipsum dolor sit amet consectetur adipisicing
-									elit. Voluptatum voluptatibus quas excepturi ipsam
-									iste quam!
-								</td>
+								<td className="px-6 py-3">{category}</td>
 								<td className="px-6 py-3 flex items-center gap-2">
 									<button className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary">
 										<PencilLine size={16} />
