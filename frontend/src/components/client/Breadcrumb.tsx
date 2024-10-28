@@ -9,8 +9,8 @@ const Breadcrumb = ({ items }: { items: BreadcrumbProps[] }) => {
 	return (
 		<nav className="container w-full mx-auto my-10 flex justify-center bg-[#F6F7F8] py-4 items-center gap-4">
 			{items.map((item, index) => (
-				<>
-					<Link key={index} to={`/${item.link.toLowerCase()}`}>
+				<div key={index}>
+					<Link to={`/${item.link.toLowerCase()}`}>
 						<p
 							className={`text-sm font-normal ${
 								index === items.length - 1
@@ -19,10 +19,10 @@ const Breadcrumb = ({ items }: { items: BreadcrumbProps[] }) => {
 							}`}
 						>
 							{item.name}
+							{index < items.length - 1 && <span> / </span>}
 						</p>
 					</Link>
-					{index < items.length - 1 && <span> / </span>}
-				</>
+				</div>
 			))}
 		</nav>
 	);

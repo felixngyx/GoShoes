@@ -7,11 +7,15 @@ import { BrowserRouter } from 'react-router-dom';
 // import './css/satoshi.css';
 // import 'jsvectormap/dist/css/jsvectormap.css';
 // import 'flatpickr/dist/flatpickr.min.css';
+import { Provider } from 'react-redux';
+import store from './store/index.js';
 
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
 		<BrowserRouter>
-			<App />
+			<Provider store={store}>
+				<App />
+			</Provider>
 		</BrowserRouter>
 	</StrictMode>
 );

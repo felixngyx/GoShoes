@@ -1,4 +1,4 @@
-import { Package } from '../../../types/admin/package';
+import { Package } from '../../../types/admin/template/package';
 
 const packageData: Package[] = [
 	{

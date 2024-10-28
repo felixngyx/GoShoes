@@ -4,7 +4,7 @@ import UserTwo from '../../../images/user/user-02.png';
 import UserThree from '../../../images/user/user-03.png';
 import UserFour from '../../../images/user/user-04.png';
 import UserFive from '../../../images/user/user-05.png';
-import { Chat } from '../../../types/admin/chat';
+import { Chat } from '../../../types/admin/template/chat';
 
 const chatData: Chat[] = [
 	{
