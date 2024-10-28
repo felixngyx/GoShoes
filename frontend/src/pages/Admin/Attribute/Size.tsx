@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { joiResolver } from '@hookform/resolvers/joi';
 import Joi from 'joi';
 import toast from 'react-hot-toast';
-import { Size as SizeType } from '../../../services/admin/size';
+import { SIZE as SizeType } from '../../../services/admin/size';
 
 // Add schema validation
 const schema = Joi.object({
@@ -18,10 +18,11 @@ const schema = Joi.object({
 });
 
 // Add interface for form data
+
+// Update PaginationType to match Brand component
 type PaginationType = {
 	page: number;
 	limit: number;
-	current_page: number;
 	total: number;
 };
 
@@ -34,19 +35,17 @@ const Size = () => {
 	const [pagination, setPagination] = useState<PaginationType>({
 		page: 1,
 		limit: 5,
-		current_page: 1,
 		total: 0,
 	});
 
 	// Fetch size data
 	const fetchSize = async () => {
 		const res = await sizeService.getAll(pagination.page, pagination.limit);
-		setSizeData(res.data.product.data);
+		setSizeData(res.data.sizes.data);
 		setPagination({
-			page: res.data.product.page,
-			limit: res.data.product.limit,
-			current_page: res.data.product.current_page,
-			total: res.data.product.total,
+			page: Number(res.data.sizes.current_page),
+			limit: Number(res.data.sizes.per_page),
+			total: Number(res.data.sizes.total),
 		});
 	};
 
@@ -194,15 +193,20 @@ const Size = () => {
 	};
 
 	const renderPaginationButtons = () => {
-		const totalPages = Math.ceil(pagination.total / pagination.limit);
+		const total = Number(pagination.total) || 0;
+		const limit = Number(pagination.limit) || 5;
+		const totalPages = Math.max(1, Math.ceil(total / limit));
+
+		if (totalPages <= 0) return null;
+
 		const buttons = [];
 
-		// First page
+		// First page button with updated active class
 		buttons.push(
 			<button
 				key="first"
 				className={`join-item btn btn-sm ${
-					pagination.current_page === 1 ? 'btn-active' : ''
+					pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
 				}`}
 				onClick={() => handlePageChange(1)}
 			>
@@ -210,50 +214,62 @@ const Size = () => {
 			</button>
 		);
 
-		// Show dots if there are many pages
-		if (pagination.current_page > 3) {
-			buttons.push(
-				<button key="dots1" className="join-item btn btn-sm btn-disabled">
-					...
-				</button>
-			);
-		}
-
-		// Current page and surrounding pages
-		for (
-			let i = Math.max(2, pagination.current_page - 1);
-			i <= Math.min(totalPages - 1, pagination.current_page + 1);
-			i++
-		) {
-			buttons.push(
-				<button
-					key={i}
-					className={`join-item btn btn-sm ${
-						pagination.current_page === i ? 'btn-active' : ''
-					}`}
-					onClick={() => handlePageChange(i)}
-				>
-					{i}
-				</button>
-			);
-		}
-
-		// Show dots if there are many pages
-		if (pagination.current_page < totalPages - 2) {
-			buttons.push(
-				<button key="dots2" className="join-item btn btn-sm btn-disabled">
-					...
-				</button>
-			);
-		}
-
-		// Last page
 		if (totalPages > 1) {
+			// Show dots if there are pages between first and current
+			if (pagination.page > 3) {
+				buttons.push(
+					<button
+						key="dots1"
+						className="join-item btn btn-sm btn-disabled"
+					>
+						...
+					</button>
+				);
+			}
+
+			// Current page and surrounding pages with updated active class
+			for (
+				let i = Math.max(2, pagination.page - 1);
+				i <= Math.min(totalPages - 1, pagination.page + 1);
+				i++
+			) {
+				if (i !== 1 && i !== totalPages) {
+					buttons.push(
+						<button
+							key={i}
+							className={`join-item btn btn-sm ${
+								pagination.page === i
+									? 'btn-active bg-primary text-white'
+									: ''
+							}`}
+							onClick={() => handlePageChange(i)}
+						>
+							{i}
+						</button>
+					);
+				}
+			}
+
+			// Show dots if there are pages between current and last
+			if (pagination.page < totalPages - 2) {
+				buttons.push(
+					<button
+						key="dots2"
+						className="join-item btn btn-sm btn-disabled"
+					>
+						...
+					</button>
+				);
+			}
+
+			// Last page button with updated active class
 			buttons.push(
 				<button
 					key="last"
 					className={`join-item btn btn-sm ${
-						pagination.current_page === totalPages ? 'btn-active' : ''
+						pagination.page === totalPages
+							? 'btn-active bg-primary text-white'
+							: ''
 					}`}
 					onClick={() => handlePageChange(totalPages)}
 				>
@@ -373,7 +389,7 @@ const Size = () => {
 				</table>
 			</div>
 
-			<div className="join ms-auto">{renderPaginationButtons()}</div>
+			<div className="join ms-auto mt-auto">{renderPaginationButtons()}</div>
 
 			{/* Add/Edit Brand Modal */}
 			{isModalOpen && (

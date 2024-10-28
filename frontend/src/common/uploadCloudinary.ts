@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { env } from '../environment/env';
 
-export const uploadImageToCloudinary = async (image: File) => {
+const uploadImageToCloudinary = async (image: File) => {
 	const formData = new FormData();
 	formData.append('file', image);
 	formData.append('upload_preset', env.VITE_CLOUDINARY_UPLOAD_PRESET);
@@ -15,3 +15,5 @@ export const uploadImageToCloudinary = async (image: File) => {
 
 	return response.data;
 };
+
+export default uploadImageToCloudinary;
