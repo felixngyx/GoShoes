@@ -55,23 +55,23 @@ class ProductController extends Controller
             $query->where('price', '<=', $maxPrice);
         }
         if ($name) {
-            // Tìm kiếm sản phẩm theo tên (sử dụng where like để tìm kiếm theo từ khóa)
+           
             $query->where('name', 'LIKE', '%' . $name . '%');
         }
         if ($category) {
-            
+
             if (is_array($category)) {
                 $query->whereHas('categories', function ($q) use ($category) {
-                    $q->whereIn('id', $category); // Assuming 'id' is the category identifier
+                    $q->whereIn('id', $category); 
                 });
             } else {
-               
+
                 $query->whereHas('categories', function ($q) use ($category) {
-                    $q->where('id', $category); // Assuming 'id' is the category identifier
+                    $q->where('id', $category);
                 });
             }
         }
-
+        
         if ($color) {
             $query->whereHas('variants.color', function ($q) use ($color) {
                 $q->where('color', $color);
@@ -86,7 +86,7 @@ class ProductController extends Controller
         if ($brand_id) {
             $query->where('brand_id', $brand_id); // Apply filter for brand_id
         }
-      
+
 
         // Sắp xếp
         $products = $query->orderBy($orderBy, $order)
