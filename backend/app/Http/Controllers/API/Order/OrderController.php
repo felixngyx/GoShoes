@@ -31,248 +31,252 @@ class OrderController extends Controller
     public function index() {}
 
     public function OrderOneUser()
-{
-    $user_id = auth()->user()->id;
-    $orders = Order::with([
-        // Chỉ lấy thông tin địa chỉ giao hàng cần thiết
-        'shipping:id,address,city',
-        // Chỉ lấy thông tin sản phẩm cơ bản
-        'items:id,order_id,product_id,quantity,price',
-        'items.product:id,name,thumbnail'
-    ])
-    ->where('user_id', $user_id)
-    ->orderBy('created_at', 'desc')
-    ->get([
-        'id',
-        'shipping_id',
-        'total',
-        'created_at'
-    ]);
-
-    return response()->json([
-        'success' => true,
-        'data' => $orders->map(function ($order) {
-            return [
-                'id' => $order->id,
-                'total' => $order->total,
-                'created_at' => $order->created_at->format('Y-m-d'),
-
-                // Thông tin địa chỉ giao hàng
-                'shipping' => $order->shipping ? [
-                    'address' => $order->shipping->address,
-                    'city' => $order->shipping->city,
-                ] : null,
-
-                // Chi tiết sản phẩm
-                'items' => $order->items->map(function ($item) {
-                    return [
-                        'quantity' => $item->quantity,
-                        'price' => $item->price,
-                        'subtotal' => $item->quantity * $item->price,
-                        'product' => [
-                            'name' => $item->product->name,
-                            'thumbnail' => $item->product->thumbnail,
-                        ]
-                    ];
-                })
-            ];
-        })
-    ]);
-}
-
-public function store(OrderStoreRequest $request)
-{
-    DB::beginTransaction();
-
-    try {
-        // 1. Tính toán tổng giá trị ban đầu và kiểm tra tồn kho
-        $total = 0;
-        $items = [];
-
-        foreach ($request->items as $item) {
-            $product = Product::findOrFail($item['product_id']);
-            $variant = null;
-
-            // Kiểm tra nếu sản phẩm có biến thể
-            if (isset($item['variant_id'])) {
-                $variant = ProductVariant::findOrFail($item['variant_id']);
-                if ($variant->quantity < $item['quantity']) {
-                    throw new \Exception("Sản phẩm {$product->name} không đủ số lượng trong kho");
-                }
-                $price = $product->promotional_price ?? $product->price;
-            } else {
-                // Nếu không có biến thể, kiểm tra số lượng sản phẩm trực tiếp
-                if ($product['stock_quantity'] < $item['quantity']) {
-                    throw new \Exception("Sản phẩm {$product->name} không đủ số lượng trong kho");
-                }
-                $price = $product->promotional_price ?? $product->price;
-            }
-
-            $itemTotal = $price * $item['quantity'];
-            $total += $itemTotal;
-
-            $items[] = [
-                'variant_id' => $item['variant_id'] ?? null, // Biến thể có thể null
-                'product_id' => $item['product_id'],
-                'quantity' => $item['quantity'],
-                'price' => $price,
-            ];
-        }
-
-        // 2. Xử lý mã giảm giá
-        $discountAmount = 0;
-        $discountCode = null;
-        if ($request->has('discount_code')) {
-            $discountValidation = $this->validateDiscount(
-                $request->discount_code,
-                $total,
-                array_column($items, 'product_id')
-            );
-
-            if (!$discountValidation['status']) {
-                throw new \Exception($discountValidation['message']);
-            }
-
-            $discount = $discountValidation['discount'];
-            $discountAmount = $discountValidation['discount_amount'];
-            $discountCode = $request->discount_code;
-        }
-
-        // 3. Tính tổng giá trị cuối cùng
-        $finalTotal = $total - $discountAmount;
-
-        // Kiểm tra phương thức thanh toán
-        $paymentMethod = PaymentMethod::findOrFail($request->payment_method_id);
-        $isCOD = $paymentMethod->id === 2; // Giả sử ID 1 là COD
-
-        // 4. Tạo đơn hàng
-        $order = Order::create([
-            'user_id' => auth()->user()->id,
-            'total' => $finalTotal,
-            'status' => $this->determineOrderStatus($finalTotal, $isCOD),
-            'shipping_id' => $request->shipping_id,
-            'sku' => $this->generateSKU(),
-            'discount_code' => $discountCode,
-            'discount_amount' => $discountAmount,
-            'original_total' => $total,
-        ]);
-
-        // 5. Tạo chi tiết đơn hàng và cập nhật tồn kho
-        foreach ($items as $item) {
-            OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $item['product_id'],
-                'variant_id' => $item['variant_id'],
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
+    {
+        $user_id = auth()->user()->id;
+        $orders = Order::with([
+            // Chỉ lấy thông tin địa chỉ giao hàng cần thiết
+            'shipping:id,address,city',
+            // Chỉ lấy thông tin sản phẩm cơ bản
+            'items:id,order_id,product_id,quantity,price',
+            'items.product:id,name,thumbnail'
+        ])
+            ->where('user_id', $user_id)
+            ->orderBy('created_at', 'desc')
+            ->get([
+                'id',
+                'shipping_id',
+                'total',
+                'created_at'
             ]);
 
-            if ($item['variant_id']) {
-                ProductVariant::find($item['variant_id'])
-                    ->decrement('quantity', $item['quantity']);
-            } else {
-                Product::find($item['product_id'])
-                    ->decrement('stock_quantity', $item['quantity']);
-            }
-        }
-
-        // 6. Tạo bản ghi thanh toán với trạng thái tương ứng
-        $payment = OrderPayment::create([
-            'order_id' => $order->id,
-            'method_id' => $request->payment_method_id,
-            'status' => $this->determinePaymentStatus($finalTotal, $isCOD),
-            'amount' => $finalTotal,
-        ]);
-
-        // 7. Xử lý tiếp theo dựa trên phương thức thanh toán
-        if ($isCOD || $finalTotal == 0) {
-            // Cập nhật số lượt sử dụng mã giảm giá nếu có
-            if ($discountCode) {
-                Discount::where('code', $discountCode)->increment('used_count');
-            }
-
-            // Gửi email xác nhận đơn hàng
-            try {
-                Mail::to(auth()->user()->email)->send(new OrderCreated($order));
-            } catch (\Exception $e) {
-                Log::error('Gửi email thất bại: ' . $e->getMessage());
-                // Không throw exception ở đây để không ảnh hưởng đến việc tạo đơn hàng
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'order' => $order->load(['items.product', 'items.variant.size', 'items.variant.color', 'shipping', 'payment.method']),
-                'payment_url' => null,
-                'original_total' => $total,
-                'discount_amount' => $discountAmount,
-                'final_total' => $finalTotal,
-            ], 201);
-        }
-
-        // 8. Khởi tạo thanh toán ZaloPay cho các phương thức khác
-        $paymentResponse = $this->initiatePayment($order);
-
-        if (isset($paymentResponse['return_code']) && $paymentResponse['return_code'] == 1) {
-            // Cập nhật số lượt sử dụng mã giảm giá
-            if ($discountCode) {
-                Discount::where('code', $discountCode)->increment('used_count');
-            }
-
-            // Gửi email xác nhận đơn hàng
-            try {
-                Mail::to(auth()->user()->email)->send(new OrderCreated($order));
-            } catch (\Exception $e) {
-                Log::error('Gửi email thất bại: ' . $e->getMessage());
-            }
-
-            $payment_url = $paymentResponse['order_url'];
-
-            DB::commit();
-
-            return response()->json([
-                'order' => $order->load(['items.product', 'items.variant.size', 'items.variant.color', 'shipping', 'payment.method']),
-                'payment_url' => $payment_url,
-                'original_total' => $total,
-                'discount_amount' => $discountAmount,
-                'final_total' => $finalTotal,
-            ], 201);
-        } else {
-            throw new \Exception('Khởi tạo thanh toán thất bại: ' . json_encode($paymentResponse));
-        }
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Tạo đơn hàng thất bại: ' . $e->getMessage());
         return response()->json([
-            'error' => 'Tạo đơn hàng thất bại',
-            'message' => $e->getMessage()
-        ], 500);
+            'success' => true,
+            'data' => $orders->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'total' => $order->total,
+                    'created_at' => $order->created_at->format('Y-m-d'),
+
+                    // Thông tin địa chỉ giao hàng
+                    'shipping' => $order->shipping ? [
+                        'address' => $order->shipping->address,
+                        'city' => $order->shipping->city,
+                    ] : null,
+
+                    // Chi tiết sản phẩm
+                    'items' => $order->items->map(function ($item) {
+                        return [
+                            'quantity' => $item->quantity,
+                            'price' => $item->price,
+                            'subtotal' => $item->quantity * $item->price,
+                            'product' => [
+                                'name' => $item->product->name,
+                                'thumbnail' => $item->product->thumbnail,
+                            ]
+                        ];
+                    })
+                ];
+            })
+        ]);
     }
-}
+
+    public function store(OrderStoreRequest $request)
+    {
+        DB::beginTransaction();
+
+        try {
+            // 1. Tính toán tổng giá trị ban đầu và kiểm tra tồn kho
+            $total = 0;
+            $items = [];
+
+            foreach ($request->items as $item) {
+                $product = Product::findOrFail($item['product_id']);
+                $variant = null;
+
+                // Kiểm tra nếu sản phẩm có biến thể
+                if (isset($item['variant_id'])) {
+                    $variant = ProductVariant::findOrFail($item['variant_id']);
+                    if ($variant->quantity < $item['quantity']) {
+                        throw new \Exception("Sản phẩm {$product->name} không đủ số lượng trong kho");
+                    }
+                    $price = $product->promotional_price ?? $product->price;
+                } else {
+                    // Nếu không có biến thể, kiểm tra số lượng sản phẩm trực tiếp
+                    if ($product['stock_quantity'] < $item['quantity']) {
+                        throw new \Exception("Sản phẩm {$product->name} không đủ số lượng trong kho");
+                    }
+                    $price = $product->promotional_price ?? $product->price;
+                }
+
+                $itemTotal = $price * $item['quantity'];
+                $total += $itemTotal;
+
+                $items[] = [
+                    'variant_id' => $item['variant_id'] ?? null, // Biến thể có thể null
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'price' => $price,
+                ];
+            }
+
+            // 2. Xử lý mã giảm giá
+            $discountAmount = 0;
+            $discountCode = null;
+            if ($request->has('discount_code')) {
+                $discountValidation = $this->validateDiscount(
+                    $request->discount_code,
+                    $total,
+                    array_column($items, 'product_id')
+                );
+
+                if (!$discountValidation['status']) {
+                    throw new \Exception($discountValidation['message']);
+                }
+
+                $discount = $discountValidation['discount'];
+                $discountAmount = $discountValidation['discount_amount'];
+                $discountCode = $request->discount_code;
+            }
+
+            // 3. Tính tổng giá trị cuối cùng
+            $finalTotal = $total - $discountAmount;
+
+            // Kiểm tra phương thức thanh toán
+            $paymentMethod = PaymentMethod::findOrFail($request->payment_method_id);
+            $isCOD = $paymentMethod->id === 2; // Giả sử ID 1 là COD
+
+            // 4. Tạo đơn hàng
+            $order = Order::create([
+                'user_id' => auth()->user()->id,
+                'total' => $finalTotal,
+                'status' => $this->determineOrderStatus($finalTotal, $isCOD),
+                'shipping_id' => $request->shipping_id,
+                'sku' => $this->generateSKU(),
+                'discount_code' => $discountCode,
+                'discount_amount' => $discountAmount,
+                'original_total' => $total,
+            ]);
+
+            // 5. Tạo chi tiết đơn hàng và cập nhật tồn kho
+            foreach ($items as $item) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item['product_id'],
+                    'variant_id' => $item['variant_id'],
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                ]);
+
+                if ($item['variant_id']) {
+                    ProductVariant::find($item['variant_id'])
+                        ->decrement('quantity', $item['quantity']);
+                } else {
+                    Product::find($item['product_id'])
+                        ->decrement('stock_quantity', $item['quantity']);
+                }
+            }
+
+            // 6. Tạo bản ghi thanh toán với trạng thái tương ứng
+            $payment = OrderPayment::create([
+                'order_id' => $order->id,
+                'method_id' => $request->payment_method_id,
+                'status' => $this->determinePaymentStatus($finalTotal, $isCOD),
+                'url' => null, // Khởi tạo là null, sẽ cập nhật sau nếu có thanh toán online
+                'amount' => $finalTotal,
+            ]);
+
+            // 7. Xử lý tiếp theo dựa trên phương thức thanh toán
+            if ($isCOD || $finalTotal == 0) {
+                // Cập nhật số lượt sử dụng mã giảm giá nếu có
+                if ($discountCode) {
+                    Discount::where('code', $discountCode)->increment('used_count');
+                }
+
+                // Gửi email xác nhận đơn hàng
+                try {
+                    Mail::to(auth()->user()->email)->send(new OrderCreated($order));
+                } catch (\Exception $e) {
+                    Log::error('Gửi email thất bại: ' . $e->getMessage());
+                    // Không throw exception ở đây để không ảnh hưởng đến việc tạo đơn hàng
+                }
+
+                DB::commit();
+
+                return response()->json([
+                    'order' => $order->load(['items.product', 'items.variant.size', 'items.variant.color', 'shipping', 'payment.method']),
+                    'payment_url' => null,
+                    'original_total' => $total,
+                    'discount_amount' => $discountAmount,
+                    'final_total' => $finalTotal,
+                ], 201);
+            }
+
+            // 8. Khởi tạo thanh toán ZaloPay cho các phương thức khác
+            $paymentResponse = $this->initiatePayment($order);
+
+            if (isset($paymentResponse['return_code']) && $paymentResponse['return_code'] == 1) {
+                $payment_url = $paymentResponse['order_url'];
+
+                // Cập nhật URL thanh toán vào payment
+                $payment->update(['url' => $payment_url]);
+
+                // Cập nhật số lượt sử dụng mã giảm giá
+                if ($discountCode) {
+                    Discount::where('code', $discountCode)->increment('used_count');
+                }
+
+                // Gửi email xác nhận đơn hàng
+                try {
+                    Mail::to(auth()->user()->email)->send(new OrderCreated($order));
+                } catch (\Exception $e) {
+                    Log::error('Gửi email thất bại: ' . $e->getMessage());
+                }
+
+                DB::commit();
+
+                return response()->json([
+                    'order' => $order->load(['items.product', 'items.variant.size', 'items.variant.color', 'shipping', 'payment.method']),
+                    'payment_url' => $payment_url,
+                    'original_total' => $total,
+                    'discount_amount' => $discountAmount,
+                    'final_total' => $finalTotal,
+                ], 201);
+            } else {
+                throw new \Exception('Khởi tạo thanh toán thất bại: ' . json_encode($paymentResponse));
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Tạo đơn hàng thất bại: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Tạo đơn hàng thất bại',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
-// Helper methods để xác định trạng thái
-private function determineOrderStatus($finalTotal, $isCOD)
-{
-    if ($finalTotal == 0) {
-        return 'completed';
-    }
-    if ($isCOD) {
-        return 'processing';
-    }
-    return 'pending';
-}
-
-private function determinePaymentStatus($finalTotal, $isCOD)
-{
-    if ($finalTotal == 0) {
-        return 'success';
-    }
-    if ($isCOD) {
+    // Helper methods để xác định trạng thái
+    private function determineOrderStatus($finalTotal, $isCOD)
+    {
+        if ($finalTotal == 0) {
+            return 'completed';
+        }
+        if ($isCOD) {
+            return 'processing';
+        }
         return 'pending';
     }
-    return 'pending';
-}
+
+    private function determinePaymentStatus($finalTotal, $isCOD)
+    {
+        if ($finalTotal == 0) {
+            return 'success';
+        }
+        if ($isCOD) {
+            return 'pending';
+        }
+        return 'pending';
+    }
 
     protected function validateDiscount($code, $total, $productIds)
     {
