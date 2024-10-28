@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\Categories;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Category\CategoryRequest;
+use App\Models\Category;
 use App\Repositories\RepositoryInterfaces\CategoryRepositoryInterface;
 use App\Services\ServiceInterfaces\Category\CategoryServiceInterface;
 use Illuminate\Http\Request;
@@ -18,9 +19,20 @@ class CategoryController extends Controller
         $this->categoryService = $categoryService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json($this->categoryService->getAllCategories(), 200);
+        // return response()->json($this->categoryService->getAllCategories(), 200);
+        $page = $request->input('page', 1);
+        $limit = $request->input('limit', 9);
+        $orderBy = $request->input('orderBy', 'id');
+        $order = $request->input('order', 'asc');
+        $query = Category::select('id', 'name'); // Chỉ lấy trường id và name
+        $category = $query->orderBy($orderBy, $order)
+                          ->paginate($limit, ['*'], 'page', $page);
+        return response()->json([
+            'message' => 'Danh sách danh mục',
+            'category' => $category
+        ], 201);
     }
 
     public function show($id)
