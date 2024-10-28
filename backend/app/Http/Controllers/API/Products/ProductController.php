@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use App\Services\Product\ProductService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 
 class ProductController extends Controller
@@ -18,17 +19,88 @@ class ProductController extends Controller
     {
         $this->productService = $productService;
     }
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::paginate(2);
+        // $products = Product::all();
+
+        // return response()->json([
+        //     'message' => 'Danh sách sản phẩm',
+        //     'product' => $products
+        // ], 201);
+
+
+        $page = $request->input('page', 1);
+        $limit = $request->input('limit', 9);
+        $orderBy = $request->input('orderBy', 'id');
+        $order = $request->input('order', 'asc');
+        $minPrice = $request->input('minPrice');
+        $maxPrice = $request->input('maxPrice');
+        $maxPrice = $request->input('brand');
+        $category = $request->input('category');
+        $color = $request->input('color');
+        $name = $request->input('name');
+        $name = $request->input('name');
+        $brand_name = $request->input('brand_name');
+        $brand_id = $request->input('brand_id');
+
+        // Truy vấn sản phẩm
+        $query = Product::with(['variants.color', 'variants.size', 'categories', 'brand']);
+
+        // Áp dụng các điều kiện lọc
+        if ($minPrice) {
+            $query->where('price', '>=', $minPrice);
+        }
+
+        if ($maxPrice) {
+            $query->where('price', '<=', $maxPrice);
+        }
+        if ($name) {
+            // Tìm kiếm sản phẩm theo tên (sử dụng where like để tìm kiếm theo từ khóa)
+            $query->where('name', 'LIKE', '%' . $name . '%');
+        }
+        if ($category) {
+            
+            if (is_array($category)) {
+                $query->whereHas('categories', function ($q) use ($category) {
+                    $q->whereIn('id', $category); // Assuming 'id' is the category identifier
+                });
+            } else {
+               
+                $query->whereHas('categories', function ($q) use ($category) {
+                    $q->where('id', $category); // Assuming 'id' is the category identifier
+                });
+            }
+        }
+
+        if ($color) {
+            $query->whereHas('variants.color', function ($q) use ($color) {
+                $q->where('color', $color);
+            });
+        }
+        if ($brand_name) {
+            $query->whereHas('brand', function ($q) use ($brand_name) {
+                $q->where('name', $brand_name);
+            });
+        }
+
+        if ($brand_id) {
+            $query->where('brand_id', $brand_id); // Apply filter for brand_id
+        }
+      
+
+        // Sắp xếp
+        $products = $query->orderBy($orderBy, $order)
+            ->paginate($limit, ['*'], 'page', $page);
 
         return response()->json([
-            'message' => 'Danh sách sản phẩm',
-            'product' => $products
-        ], 201);
+            'status' => 'success',
+            'message' => 'Products retrieved successfully',
+            'data' => $products,
+        ]);
     }
 
-  
+
+
     public function create()
     {
         //
@@ -57,9 +129,9 @@ class ProductController extends Controller
         }
         return response()->json([
             'product' => $product['product'],
-            'variantDetails' => $product['variantDetails'],
-            'brandName' => $product['brandName'],
-            'categoryNames' => $product['categoryNames'],
+            // 'variantDetails' => $product['variantDetails'],
+            // 'brandName' => $product['brandName'],
+            // 'categoryNames' => $product['categoryNames'],
         ]);
     }
 
@@ -67,49 +139,33 @@ class ProductController extends Controller
     {
         //
     }
-
     public function update(UpdateProductRequest $request, string $id)
     {
-
-
-        // // Xác thực dữ liệu đầu vào
-        // $validated = $request->validate([
-        //     'name' => 'required|string|max:255',
-        //     'description' => 'nullable|string',
-        //     'price' => 'nullable|numeric',
-        //     'stock_quantity' => 'required|integer|min:1',
-        //     'promotional_price' => 'nullable|numeric|min:0',
-        //     'status' => 'required|in:public,unpublic,hidden',
-        //     'brand_id' => 'required|exists:brands,id',
-        //     'sku' => 'required|string|unique:products,sku,' . $id,
-        //     'hagtag' => 'nullable|string',
-        //     'category_ids' => 'required|array',
-        //     'category_ids.*' => 'exists:categories,id',
-        //     'variants' => 'required|array',
-        //     'variants.*.color_id' => 'required|exists:variant_colors,id',
-        //     'variants.*.size_id' => 'required|exists:variant_sizes,id',
-        //     'variants.*.quantity' => 'required|integer|min:1',
-        //     'variants.*.image_variant' => 'nullable|image|mimes:jpeg,png,jpg',
-        //     'images' => 'sometimes|nullable|array',
-        //     'images.*' => 'image|mimes:jpeg,png,jpg'
-        // ]);
-
+        // Xác thực dữ liệu đầu vào
         $validated = $request->validated();
-        $product = $this->productService->updateProduct($id, $validated);
-        $product_findID = $this->productService->findProductWithRelations($id);
+
+        // Tìm sản phẩm theo ID
+        $product = $this->productService->findProductForDeletion($id);
+
+        // Kiểm tra sự tồn tại của sản phẩm
         if (!$product) {
             return response()->json(['message' => 'Sản phẩm không tồn tại!'], 404);
         }
+
+        // Cập nhật sản phẩm
+        $this->productService->updateProduct($product, $validated);
+
+        // Lấy lại thông tin sản phẩm cùng với các quan hệ
+        $product_findID = $this->productService->findProductWithRelations($id);
+
+        // Trả về thông tin sản phẩm đã được cập nhật
         return response()->json([
             'product' => $product_findID['product'],
-            'variantDetails' => $product_findID['variantDetails'],
-            'brandName' => $product_findID['brandName'],
-            'categoryNames' => $product_findID['categoryNames'],
-        ]);
-        // return response()->json([
-        //     'message' => 'Sản phẩm đã được cập nhật thành công!',
-        //     'product' => $product
-        // ], 200);
+            // 'variantDetails' => $product_findID['variantDetails'],
+            // 'brandName' => $product_findID['brandName'],
+            // 'categoryNames' => $product_findID['categoryNames'],
+            'message' => 'Sản phẩm đã được cập nhật thành công!',
+        ], 200);
     }
 
     /**

@@ -13,14 +13,11 @@ class BrandSeeder extends Seeder
      */
     public function run(): void
     {
-        $colors = ['Nike', 'Adidas', 'Gucci', 'New Balance', 'Promax', 'Mira'];
+        $brands = ['Nike', 'Adidas', 'Gucci', 'New Balance', 'Promax', 'Mira'];
 
-        foreach ($colors as $color) {
+        foreach ($brands as $brand) {
             Brand::create([
-                'name' => $color,
-                'description' => 'This is a sample description for product',
-                'logo_url' => 'brands/sample-brand-'. Str::slug($color). '.jpg', // Hình ảnh logo của thương hiệu
-                'is_active' => true,
+                'name' => $brand,
             ]);
         }
     }

@@ -6,6 +6,7 @@ use App\Services\ServiceInterfaces\Auth\AuthServiceInterface;
 use App\Services\ServiceInterfaces\User\UserServiceInterface as UserService;
 use App\Services\ServiceInterfaces\Verify\VerifyServiceInterface as VerifyService;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -121,8 +122,10 @@ class AuthService implements AuthServiceInterface
 
     public function registerService(array $request) : \Illuminate\Http\JsonResponse
     {
+        DB::beginTransaction();
         try {
             $user =  $this->userService->create($request);
+            DB::commit();
             $verificationLink = (self::getVerifyService()->generateLinkVerification($user, 'register'));
             Mail::to($user->email)->send(new \App\Mail\RegisterMail($verificationLink));
             return response()->json([
@@ -131,15 +134,18 @@ class AuthService implements AuthServiceInterface
                 'data' => [
                     'user' => $user->name,
                     'email' => $user->email,
-                    'email_is_verified' => (bool)$user->email_verified_at
+                    'email_is_verified' => (bool)$user->email_verified_at,
+                    'is_admin' => $user->is_admin,
+                    'verification_link' => $verificationLink
                 ]
             ], 201);
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('ERROR: Register user error by'.$e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], $e->getCode());
+            ], 200);
         }
     }
 
@@ -191,6 +197,7 @@ class AuthService implements AuthServiceInterface
 
     public function resetPasswordService(array $request) : \Illuminate\Http\JsonResponse
     {
+        DB::beginTransaction();
         try {
             $decrypted = self::getVerifyService()->decryptTokenService($request['token']);
 
@@ -233,13 +240,14 @@ class AuthService implements AuthServiceInterface
             // Update password
             $user->password = bcrypt($request['password']);
             $this->userService->update(['password' => $user->password], $user->id);
-
+            DB::commit();
             // Return response
             return response()->json([
                 'success' => true,
                 'message' => 'Password reset successfully'
             ], 200);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -248,6 +256,7 @@ class AuthService implements AuthServiceInterface
     }
     public function registerVerifyService(array $request) : \Illuminate\Http\JsonResponse
     {
+        DB::beginTransaction();
         try {
             $decrypted = self::getVerifyService()->decryptTokenService($request['token']);
 
@@ -296,13 +305,14 @@ class AuthService implements AuthServiceInterface
 
             // Update email_verified_at
             $this->userService->update(['email_verified_at' => now()], $user->id);
-
+            DB::commit();
             // Return response
             return response()->json([
                 'success' => true,
                 'message' => 'Email verified successfully'
             ], 200);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -310,7 +320,7 @@ class AuthService implements AuthServiceInterface
         }
     }
 
-    public function refreshTokenService($request) : \Illuminate\Http\JsonResponse
+    public function refreshTokenService() : \Illuminate\Http\JsonResponse
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();

@@ -9,7 +9,7 @@ class Token extends Model
 {
     use HasFactory;
 
-    protected $table = 'password_change_history';
+    protected $table = 'token';
 
     protected $fillable = [
         'token',

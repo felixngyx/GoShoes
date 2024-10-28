@@ -2,7 +2,7 @@ import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 import Navbar from '../../../components/client/Navbar';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import FacebookLogin from 'react-facebook-login';
+import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
 import { env } from '../../../environment/env';
 import Joi from 'joi';
 import { useForm } from 'react-hook-form';
@@ -41,10 +41,16 @@ const SignIn = () => {
 	const onSubmit = async (data: IUser) => {
 		try {
 			const response = await authService.login(data);
-			Cookies.set('access_token', response.data.token);
-			dispatch(login(response.data.user));
-			toast.success(response.data.message);
-			navigate('/');
+			console.log(response);
+			if (response.data.success) {
+				Cookies.set('access_token', response.data.access_token);
+				Cookies.set('refresh_token', response.data.refresh_token);
+				dispatch(login(response.data.user));
+				toast.success(response.data.message);
+				navigate('/');
+			} else {
+				toast.error(response.data.message);
+			}
 		} catch (error: any) {
 			toast.error(error.response.data.message);
 		}
@@ -54,11 +60,12 @@ const SignIn = () => {
 		if (response.accessToken) {
 			dispatch(
 				login({
-					username: response.name,
+					name: response.name,
 					email: response.email,
 				})
 			);
 			Cookies.set('access_token', response.accessToken);
+			Cookies.set('refresh_token', response.refreshToken);
 			toast.success('Login successful');
 			navigate('/');
 		} else {
@@ -144,9 +151,16 @@ const SignIn = () => {
 									autoLoad={true}
 									fields="name,email,picture"
 									callback={responseFacebook}
-									textButton=""
 									icon="fa-facebook"
 									size="small"
+									render={(renderProps) => (
+										<img
+											onClick={renderProps.onClick}
+											className="w-8 cursor-pointer"
+											src="images/fb_logo.png"
+											alt=""
+										/>
+									)}
 								/>
 								<img
 									className="w-8"
