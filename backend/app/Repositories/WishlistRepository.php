@@ -13,4 +13,14 @@ class WishlistRepository extends BaseRepository implements WishlistRepositoryInt
     {
         parent::__construct($wishlist);
     }
+
+    public function findByUserIdAndProductId(int $userId, int $productId)
+    {
+        return $this->model->where('user_id', $userId)->where('product_id', $productId)->first();
+    }
+
+    public function getAllByUserId(int $userId)
+    {
+        return $this->model->where('user_id', $userId)->get();
+    }
 }

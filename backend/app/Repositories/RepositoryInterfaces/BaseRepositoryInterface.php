@@ -19,4 +19,6 @@ Interface BaseRepositoryInterface
 
     public function forceDelete(int $id);
 
+    public static function getDataFromCache(array $columns, array $condition);
+
 }

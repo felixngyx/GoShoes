@@ -14,5 +14,9 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
         parent::__construct($cart);
     }
 
+    public function findByUserIdAndProductId(int $userId, int $productId)
+    {
+        return $this->model->where('user_id', $userId)->where('product_id', $productId)->first();
+    }
 
 }

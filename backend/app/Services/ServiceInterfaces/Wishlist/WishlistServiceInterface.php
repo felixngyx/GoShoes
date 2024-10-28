@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Services\ServiceInterfaces\Cart;
+namespace App\Services\ServiceInterfaces\Wishlist;
 
-Interface CartServiceInterface
+Interface WishlistServiceInterface
 {
     public function all();
+
+    public function getAllByUserId();
 
     public function createOrUpdate(array $request);
 
     public function delete(array $request);
-
 
 }

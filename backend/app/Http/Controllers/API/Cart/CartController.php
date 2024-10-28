@@ -2,6 +2,8 @@
 namespace App\Http\Controllers\API\Cart;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Cart\StoreCartRequest;
+use App\Http\Requests\Cart\UpdateCartRequest;
 use App\Jobs\StoreCartJob;
 use App\Models\Cart;
 use Illuminate\Http\Request;
@@ -11,90 +13,49 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class CartController extends Controller
 {
-    public function cacheCartTable()
+
+    private static $cartService;
+
+    /**
+     * @return mixed
+     */
+    public static function getCartService()
     {
-        // Fetch all records from the cart table
-        $carts = Cart::all()->toArray();
-
-        // Store the fetched data in Redis with the key 'cart_table'
-        Redis::set('cart_table', json_encode($carts));
-
-        return Redis::get('cart_table');
+        return self::$cartService;
     }
 
-    public function getCachedCartTable()
+    /**
+     * @param mixed $cartService
+     */
+    public static function setCartService($cartService): void
     {
-        // Retrieve the data from Redis
-        $cachedCarts = (json_decode(Redis::get('cart_table'), true)) ?? $this->cacheCartTable() ;
+        self::$cartService = $cartService;
+    }
 
-        return response()->json($cachedCarts);
+    public function __construct(
+        Cart $cart
+    )
+    {
+        self::setCartService($cart);
     }
 
     public function index()
     {
-        $cachedCarts = $this->getCachedCartTable();
-        return response()->json($cachedCarts);
+        return self::getCartService()->getAllByUserId();
     }
 
-    public function store(Request $request)
+    public function store(StoreCartRequest $request)
     {
-        $user = JWTAuth::parseToken()->authenticate();
-        $data = [
-            'user_id' => $user->id,
-            'product_id' => $request['product_id'],
-            'quantity' => $request['quantity']
-        ];
-
-        Log::info('Storing cart data in Redis', ['data' => $data]);
-
-        // Update Redis cache
-        $cachedCarts = json_decode(Redis::get('cart_table'), true);
-        $cachedCarts[] = $data;
-        Redis::set('cart_table', json_encode($cachedCarts));
-
-        // Dispatch job to store data in DB
-        StoreCartJob::dispatch($data);
-
-        return response()->json(['message' => 'Cart stored in Redis and queued for DB']);
+        return self::getCartService()->createOrUpdate($request->all());
     }
 
-    public function show($userId, $productId)
+    public function destroy(Request $request)
     {
-        $cachedCarts = json_decode(Redis::get('cart_table'), true);
-        $cart = array_filter($cachedCarts, function ($item) use ($userId, $productId) {
-            return $item['user_id'] == $userId && $item['product_id'] == $productId;
-        });
-
-        return response()->json(array_values($cart));
+        return self::getCartService()->delete($request->all());
     }
 
-    public function update(Request $request, $userId, $productId)
+    public function update(UpdateCartRequest $request)
     {
-        $data = $request->all();
-        $cachedCarts = json_decode(Redis::get('cart_table'), true);
-
-        foreach ($cachedCarts as &$cart) {
-            if ($cart['user_id'] == $userId && $cart['product_id'] == $productId) {
-                $cart = array_merge($cart, $data);
-                break;
-            }
-        }
-
-        Redis::set('cart_table', json_encode($cachedCarts));
-        StoreCartJob::dispatch($data);
-
-        return response()->json(['message' => 'Cart updated in Redis and queued for DB']);
-    }
-
-    public function destroy($userId, $productId)
-    {
-        $cachedCarts = json_decode(Redis::get('cart_table'), true);
-        $cachedCarts = array_filter($cachedCarts, function ($item) use ($userId, $productId) {
-            return !($item['user_id'] == $userId && $item['product_id'] == $productId);
-        });
-
-        Redis::set('cart_table', json_encode(array_values($cachedCarts)));
-
-        return response()->json(['message' => 'Cart removed from Redis']);
+        return self::getCartService()->createOrUpdate($request->all());
     }
 }

@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\API\Auth\AuthController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\API\Wishlist\WishlistController;
+use App\Http\Controllers\API\Cart\CartController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\Categories\CategoryController;
 use App\Http\Controllers\API\Auth\SocialAuthController\FacebookAuthController;
@@ -93,6 +93,19 @@ Route::group([
         Route::put('/{id}', [DiscountController::class, 'update']);
         Route::delete('/{id}', [DiscountController::class, 'destroy']);
         Route::post('/validate', [DiscountController::class, 'validateCode']);
+    });
+
+    Route::prefix('wishlist')->group(function () {
+        Route::get('/', [WishlistController::class, 'index']);
+        Route::post('/', [WishlistController::class, 'store']);
+        Route::delete('/{id}', [WishlistController::class, 'destroy']);
+    });
+
+    Route::prefix('cart')->group(function () {
+        Route::get('/', [CartController::class, 'index']);
+        Route::post('/', [CartController::class, 'store']);
+        Route::delete('/product/{product_id}', [CartController::class, 'destroy']);
+        Route::put('/', [CartController::class, 'update']);
     });
 });
 

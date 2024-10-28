@@ -67,12 +67,30 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
         return Redis::get("{$tableName}_table");
     }
 
-    protected static final function getCachedTable()
+    protected static final function getCachedTable(array $columns = [], array $condition = [])
     {
         $modelInstance = new static;
         $tableName = $modelInstance->model->getTable();
         $cachedRecords = (json_decode(Redis::get("{$tableName}_table"), true)) ?? $modelInstance->cacheTable();
-
+        if (!empty($columns)) {
+            if (!empty($condition) && count($condition) > 0) {
+                $cachedRecords = array_filter($cachedRecords, function ($record) use ($columns, $condition) {
+                    $filtered = true;
+                    foreach ($condition as $key => $value) {
+                        if ($record[$key] != $value) {
+                            $filtered = false;
+                            break;
+                        }
+                    }
+                    return $filtered;
+                });
+            }
+        }
         return response()->json($cachedRecords);
+    }
+
+    public static final function getDataFromCache(array $columns, array $condition)
+    {
+        return self::getCachedTable();
     }
 }

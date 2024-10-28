@@ -3,47 +3,53 @@
 namespace App\Http\Controllers\API\Wishlist;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\StoreWishlistJob;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redis;
+use App\Http\Requests\Wishlist\DeleteWishlistRequest;
+use App\Http\Requests\Wishlist\StoreWishlistRequest;
+use App\Http\Requests\Wishlist\UpdateWishlistRequest;
+use App\Services\ServiceInterfaces\Wishlist\WishlistServiceInterface as WishlistService;
 
 class WishlistController extends Controller
 {
-    public function index($userId)
+
+    private static $wishlistService;
+
+    public function __construct(
+        WishlistService $wishlistService
+    )
     {
-        $wishlists = Redis::hgetall("wishlist:user:$userId");
-        return response()->json([
-            'success' => true,
-            'data' => $wishlists
-        ]);
+        self::setWishlistService($wishlistService);
     }
 
-    public function store(Request $request)
+    /**
+     * @return mixed
+     */
+
+    public static function getWishlistService() : WishlistService
     {
-        $wishlistData = $request->all();
-        $wishlistId = Redis::incr("wishlist:id");
-        Redis::hmset("wishlist:user:{$wishlistData['user_id']}:$wishlistId", $wishlistData);
-        StoreWishlistJob::dispatch($wishlistData);
-        return response()->json(['message' => 'Wishlist stored in Redis and queued for DB']);
+        return self::$wishlistService;
     }
 
-    public function show($userId, $id)
+    /**
+     * @param mixed $wishlistService
+     */
+
+    public static function setWishlistService($wishlistService): void
     {
-        $wishlist = Redis::hgetall("wishlist:user:$userId:$id");
-        return response()->json($wishlist);
+        self::$wishlistService = $wishlistService;
     }
 
-    public function update(Request $request, $userId, $id)
+    public function index()
     {
-        $wishlistData = $request->all();
-        Redis::hmset("wishlist:user:$userId:$id", $wishlistData);
-        StoreWishlistJob::dispatch($wishlistData);
-        return response()->json(['message' => 'Wishlist updated in Redis and queued for DB']);
+        return self::getWishlistService()->getAllByUserId();
     }
 
-    public function destroy($userId, $id)
+    public function store(StoreWishlistRequest $request)
     {
-        Redis::del("wishlist:user:$userId:$id");
-        return response()->json(['message' => 'Wishlist removed from Redis']);
+        return self::getWishlistService()->createOrUpdate($request->all());
+    }
+
+    public function destroy(DeleteWishlistRequest $request)
+    {
+        return self::getWishlistService()->delete($request->all());
     }
 }
