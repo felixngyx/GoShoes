@@ -21,11 +21,16 @@ class SizeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $page = $request->input('page', 1);
+        $limit = $request->input('limit', 9);
+        $orderBy = $request->input('orderBy', 'id');
+        $order = $request->input('order', 'asc');
 
-        $sizes = VariantSize::paginate(2);
-
+        $query = VariantSize::query();
+        $sizes = $query->orderBy($orderBy, $order)
+        ->paginate($limit, ['*'], 'page', $page);
         return response()->json([
             'message' => 'Danh sách sizes',
             'product' => $sizes
