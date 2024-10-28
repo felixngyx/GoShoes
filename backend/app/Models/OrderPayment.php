@@ -10,7 +10,7 @@ class OrderPayment extends Model
     use HasFactory;
     protected $primaryKey = 'order_id';
     public $incrementing = false;
-    protected $fillable = ['order_id', 'method_id', 'status'];
+    protected $fillable = ['order_id', 'method_id', 'status','url'];
 
     public function order()
     {

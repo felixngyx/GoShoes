@@ -19,14 +19,21 @@ class BrandController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $brands = Brand::paginate(2);
-       
+
+        $page = $request->input('page', 1);
+        $limit = $request->input('limit', 9);
+        $orderBy = $request->input('orderBy', 'id');
+        $order = $request->input('order', 'asc');
+
+        $query = Brand::query();
+        $brand = $query->orderBy($orderBy, $order)
+        ->paginate($limit, ['*'], 'page', $page);
         return response()->json([
-           'message' => 'Danh sách thương hiệu',
-            'brands' => $brands
-        ], 200);
+            'message' => 'Danh sách sizes',
+            'brands' => $brand
+        ], 201);
     }
 
     /**
