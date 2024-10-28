@@ -10,6 +10,8 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
+		"@cloudinary/react": "^1.13.0",
+		"@cloudinary/url-gen": "^1.21.0",
 		"@greatsumini/react-facebook-login": "^3.3.3",
 		"@heroicons/react": "^2.1.5",
 		"@hookform/resolvers": "^3.9.0",

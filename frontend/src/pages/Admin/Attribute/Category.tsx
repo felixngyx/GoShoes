@@ -83,7 +83,7 @@ const Category = () => {
 							</th>
 						</tr>
 					</thead>
-					<tbody>
+					<tbody className="z-0">
 						{categoryData.map((category, key) => (
 							<tr
 								className={`bg-white dark:bg-slate-800 ${
