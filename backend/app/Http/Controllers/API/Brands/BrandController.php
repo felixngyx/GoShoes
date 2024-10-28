@@ -32,7 +32,7 @@ class BrandController extends Controller
         ->paginate($limit, ['*'], 'page', $page);
         return response()->json([
             'message' => 'Danh sách sizes',
-            'product' => $brand
+            'brands' => $brand
         ], 201);
     }
 
