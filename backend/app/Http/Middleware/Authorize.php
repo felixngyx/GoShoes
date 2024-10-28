@@ -23,7 +23,7 @@ class Authorize
             if ($decoded['token_type'] !== 'access') {
                 return response()->json(['error' => 'Invalid token type'], 403);
             }
-            if ($decoded['is_admin']) {
+            if (!$decoded['is_admin']) {
                 return response()->json(['error' => 'Admin cannot be verified'], 403);
             }
         } catch (Exception $e) {
