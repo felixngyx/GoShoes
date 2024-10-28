@@ -1,6 +1,25 @@
 import { TrashIcon, Upload, Eye, X } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
+import { Status } from '.';
+
+// type DataUpload = {
+// 	name: string;
+// 	price: number;
+// 	category: string[];
+// 	promotionPrice: number;
+// 	sku: string;
+// 	hashtag: string;
+// 	status: string;
+// 	thumbnail: string;
+// 	variant: {
+// 		image: string;
+// 		size: string;
+// 		color: string;
+// 		quantity: number;
+// 	}[];
+// 	description: string;
+// };
 
 const AddProduct = () => {
 	const { control } = useForm();
@@ -126,7 +145,7 @@ const AddProduct = () => {
 							<div className="label">
 								<span className="label-text">Category</span>
 							</div>
-							<select className="select select-bordered w-full max-w-xs">
+							<select className="select select-bordered w-full">
 								<option disabled defaultValue="Select Category">
 									Select Category
 								</option>
@@ -138,6 +157,17 @@ const AddProduct = () => {
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text">Promotion Price</span>
+							</div>
+							<input
+								type="text"
+								placeholder="Type here"
+								className="input input-bordered w-full"
+							/>
+						</label>
+
+						<label className="form-control col-span-1">
+							<div className="label">
+								<span className="label-text">SKU</span>
 							</div>
 							<input
 								type="text"
@@ -162,11 +192,12 @@ const AddProduct = () => {
 								<span className="label-text">Status</span>
 							</div>
 							<select className="select select-bordered w-full max-w-xs">
-								<option disabled defaultValue="Select Status">
+								<option defaultValue="Select Status">
 									Select Status
 								</option>
-								<option>Active</option>
-								<option>Inactive</option>
+								<option value={Status.PUBLISH}>Publish</option>
+								<option value={Status.UNPUBLISH}>Unpublish</option>
+								<option value={Status.HIDDEN}>Hidden</option>
 							</select>
 						</label>
 
@@ -227,7 +258,7 @@ const AddProduct = () => {
 						</div>
 
 						{/* New section for product images */}
-						<div className="form-control col-span-2">
+						<div className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text">Product Images</span>
 							</div>

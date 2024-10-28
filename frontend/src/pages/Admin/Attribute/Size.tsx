@@ -1,13 +1,97 @@
 import { PencilLine, Plus, Trash2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import sizeService from '../../../services/admin/size';
+import { useForm } from 'react-hook-form';
+import { joiResolver } from '@hookform/resolvers/joi';
+import Joi from 'joi';
+import toast from 'react-hot-toast';
+import { Size as SizeType } from '../../../services/admin/size';
+
+// Add schema validation
+const schema = Joi.object({
+	size: Joi.string().required().messages({
+		'string.empty': 'Size name is required',
+	}),
+	code: Joi.string().required().messages({
+		'string.empty': 'Code is required',
+	}),
+});
+
+// Add interface for form data
+type PaginationType = {
+	page: number;
+	limit: number;
+	current_page: number;
+	total: number;
+};
 
 const Size = () => {
 	const [selectAll, setSelectAll] = useState(false); // State for select all
 	const [selectedItems, setSelectedItems] = useState<number[]>([]); // State for individual selections
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingSize, setEditingSize] = useState<string | null>(null);
+	const [sizeData, setSizeData] = useState<SizeType[]>([]);
+	const [pagination, setPagination] = useState<PaginationType>({
+		page: 1,
+		limit: 5,
+		current_page: 1,
+		total: 0,
+	});
 
-	const sizeData = ['38', '39', '40', '41', '42'];
+	// Fetch size data
+	const fetchSize = async () => {
+		const res = await sizeService.getAll(pagination.page, pagination.limit);
+		setSizeData(res.data.product.data);
+		setPagination({
+			page: res.data.product.page,
+			limit: res.data.product.limit,
+			current_page: res.data.product.current_page,
+			total: res.data.product.total,
+		});
+	};
+
+	// Delete size
+	const deleteSize = async (id: string) => {
+		if (window.confirm('Are you sure you want to delete this size?')) {
+			try {
+				await sizeService.delete(id);
+				toast.success('Size deleted successfully');
+				fetchSize();
+			} catch (error: any) {
+				toast.error(
+					error.response?.data?.message || 'Something went wrong'
+				);
+			}
+		}
+	};
+
+	// Create size
+	const createSize = async (data: SizeType) => {
+		try {
+			await sizeService.create(data);
+			toast.success('Size added successfully');
+		} catch (error: any) {
+			toast.error(error.response?.data?.message || 'Something went wrong');
+		}
+	};
+
+	// Update size
+	const updateSize = async (id: string, data: SizeType) => {
+		try {
+			await sizeService.update(id, data);
+			toast.success('Size updated successfully');
+		} catch (error: any) {
+			toast.error(error.response?.data?.message || 'Something went wrong');
+		}
+	};
+
+	useEffect(() => {
+		fetchSize();
+	}, []);
+
+	useEffect(() => {
+		fetchSize();
+	}, [pagination.page]);
 
 	const handleSelectAll = () => {
 		if (selectAll) {
@@ -31,9 +115,18 @@ const Size = () => {
 		setIsModalOpen(true);
 	};
 
-	const openEditModal = (size: string) => {
-		setEditingSize(size);
-		setIsModalOpen(true);
+	// Modify openEditModal to find and set the size data
+	const openEditModal = (sizeId: string) => {
+		const sizeToEdit = sizeData.find((s) => s.id === sizeId);
+		if (sizeToEdit) {
+			setEditingSize(sizeId);
+			// Reset form with existing values
+			reset({
+				size: sizeToEdit.size,
+				code: sizeToEdit.code,
+			});
+			setIsModalOpen(true);
+		}
 	};
 
 	const closeModal = () => {
@@ -61,6 +154,116 @@ const Size = () => {
 			document.removeEventListener('mousedown', handleClickOutside);
 		};
 	}, [isModalOpen]);
+
+	// Add form handling
+	const {
+		register,
+		handleSubmit,
+		reset,
+		formState: { errors },
+	} = useForm<SizeType>({
+		resolver: joiResolver(schema),
+		defaultValues: {
+			size: '',
+		},
+	});
+
+	// Add submit handler
+	const onSubmit = async (data: SizeType) => {
+		try {
+			if (editingSize) {
+				// Handle edit
+				await updateSize(editingSize, data);
+			} else {
+				// Handle add
+				await createSize(data);
+			}
+			await fetchSize(); // Refresh the list
+			closeModal();
+			reset(); // Reset form
+		} catch (error: any) {
+			toast.error(error.response?.data?.message || 'Something went wrong');
+		}
+	};
+
+	const handlePageChange = (page: number) => {
+		setPagination((prev) => ({
+			...prev,
+			page,
+		}));
+	};
+
+	const renderPaginationButtons = () => {
+		const totalPages = Math.ceil(pagination.total / pagination.limit);
+		const buttons = [];
+
+		// First page
+		buttons.push(
+			<button
+				key="first"
+				className={`join-item btn btn-sm ${
+					pagination.current_page === 1 ? 'btn-active' : ''
+				}`}
+				onClick={() => handlePageChange(1)}
+			>
+				1
+			</button>
+		);
+
+		// Show dots if there are many pages
+		if (pagination.current_page > 3) {
+			buttons.push(
+				<button key="dots1" className="join-item btn btn-sm btn-disabled">
+					...
+				</button>
+			);
+		}
+
+		// Current page and surrounding pages
+		for (
+			let i = Math.max(2, pagination.current_page - 1);
+			i <= Math.min(totalPages - 1, pagination.current_page + 1);
+			i++
+		) {
+			buttons.push(
+				<button
+					key={i}
+					className={`join-item btn btn-sm ${
+						pagination.current_page === i ? 'btn-active' : ''
+					}`}
+					onClick={() => handlePageChange(i)}
+				>
+					{i}
+				</button>
+			);
+		}
+
+		// Show dots if there are many pages
+		if (pagination.current_page < totalPages - 2) {
+			buttons.push(
+				<button key="dots2" className="join-item btn btn-sm btn-disabled">
+					...
+				</button>
+			);
+		}
+
+		// Last page
+		if (totalPages > 1) {
+			buttons.push(
+				<button
+					key="last"
+					className={`join-item btn btn-sm ${
+						pagination.current_page === totalPages ? 'btn-active' : ''
+					}`}
+					onClick={() => handlePageChange(totalPages)}
+				>
+					{totalPages}
+				</button>
+			);
+		}
+
+		return buttons;
+	};
 
 	return (
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
@@ -110,8 +313,11 @@ const Size = () => {
 									</label>
 								</div>
 							</th>
-							<th scope="col" className="px-6 py-3 w-2/3">
-								Name
+							<th scope="col" className="px-6 py-3 w-1/3">
+								Size
+							</th>
+							<th scope="col" className="px-6 py-3 w-1/3">
+								Code
 							</th>
 							<th scope="col" className="px-6 py-3 w-1/3">
 								Action
@@ -145,15 +351,19 @@ const Size = () => {
 										</label>
 									</div>
 								</td>
-								<td className="px-6 py-3">{size}</td>
+								<td className="px-6 py-3">{size.size}</td>
+								<td className="px-6 py-3">{size.code}</td>
 								<td className="px-6 py-3 flex items-center gap-2">
 									<button
 										className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
-										onClick={() => openEditModal(size)}
+										onClick={() => openEditModal(size.id!)}
 									>
 										<PencilLine size={16} />
 									</button>
-									<button className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error">
+									<button
+										className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error"
+										onClick={() => deleteSize(size.id!)}
+									>
 										<Trash2 size={16} />
 									</button>
 								</td>
@@ -163,17 +373,11 @@ const Size = () => {
 				</table>
 			</div>
 
-			<div className="join ms-auto">
-				<button className="join-item btn btn-sm">1</button>
-				<button className="join-item btn btn-sm">2</button>
-				<button className="join-item btn btn-sm btn-disabled">...</button>
-				<button className="join-item btn btn-sm">99</button>
-				<button className="join-item btn btn-sm">100</button>
-			</div>
+			<div className="join ms-auto">{renderPaginationButtons()}</div>
 
 			{/* Add/Edit Brand Modal */}
 			{isModalOpen && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
 					<div
 						ref={modalRef}
 						className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/3"
@@ -181,23 +385,45 @@ const Size = () => {
 						<h2 className="text-xl font-semibold mb-4">
 							{editingSize ? 'Edit Size' : 'Add Size'}
 						</h2>
-						<input
-							type="text"
-							className="w-full p-2 border rounded mb-4"
-							placeholder="Size name"
-							defaultValue={editingSize || ''}
-						/>
-						<div className="flex justify-end gap-2">
-							<button
-								className="btn btn-sm bg-gray-200 hover:bg-gray-300 text-gray-800"
-								onClick={closeModal}
-							>
-								Cancel
-							</button>
-							<button className="btn btn-sm bg-blue-500 hover:bg-blue-600 text-white">
-								{editingSize ? 'Save Changes' : 'Add Size'}
-							</button>
-						</div>
+						<form onSubmit={handleSubmit(onSubmit)}>
+							<input
+								type="text"
+								className="w-full p-2 border rounded mb-2"
+								placeholder="Size name"
+								{...register('size')}
+							/>
+							{errors.size && (
+								<p className="text-red-500 text-sm mb-4">
+									{errors.size.message}
+								</p>
+							)}
+							<input
+								type="text"
+								className="w-full p-2 border rounded mb-2"
+								placeholder="Code"
+								{...register('code')}
+							/>
+							{errors.code && (
+								<p className="text-red-500 text-sm mb-4">
+									{errors.code.message}
+								</p>
+							)}
+							<div className="flex justify-end gap-2">
+								<button
+									type="button"
+									className="btn btn-sm bg-gray-200 hover:bg-gray-300 text-gray-800"
+									onClick={closeModal}
+								>
+									Cancel
+								</button>
+								<button
+									type="submit"
+									className="btn btn-sm bg-blue-500 hover:bg-blue-600 text-white"
+								>
+									{editingSize ? 'Save Changes' : 'Add Size'}
+								</button>
+							</div>
+						</form>
 					</div>
 				</div>
 			)}
