@@ -26,13 +26,13 @@ import NotfoundPage from './pages/Client/NotfoundPage';
 import OrderDetail from './pages/Client/User/OrderDetail';
 import Address from './pages/Client/User/Address';
 import User from './pages/Admin/User';
-import Category from './pages/Admin/Category';
 import ResetPassword from './pages/Client/ResetPassword';
 import ForgetPassword from './pages/Client/ForgetPassword';
 import Product from './pages/Admin/Product';
 import { Toaster } from 'react-hot-toast';
-import Variant from './pages/Admin/Variant';
+import Attribute from './pages/Admin/Attribute';
 import Homepage from './pages/Client/home';
+import AddProduct from './pages/Admin/Product/AddProduct';
 
 function App() {
 	const { pathname } = useLocation();
@@ -71,9 +71,9 @@ function App() {
 						}
 					/>
 					<Route path="user" element={<User />} />
-					<Route path="category" element={<Category />} />
 					<Route path="product" element={<Product />} />
-					<Route path="variant" element={<Variant />} />
+					<Route path="attribute" element={<Attribute />} />
+					<Route path="product/create" element={<AddProduct />} />
 					<Route
 						path="calendar" // Changed from "/calendar" to "calendar"
 						element={

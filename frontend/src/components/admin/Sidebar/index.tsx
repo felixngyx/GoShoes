@@ -1,9 +1,8 @@
-import { NavLink, useLocation } from 'react-router-dom';
-// import SidebarLinkGroup from './SidebarLinkGroup';
-import Logo from '../../../images/logo/logo.svg';
-import { FaClipboardList, FaUser } from 'react-icons/fa';
+import { FaUser } from 'react-icons/fa';
 import { Box, Boxes } from 'lucide-react';
 import { useRef, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import Logo from '../../../images/logo/logo.svg';
 interface SidebarProps {
 	sidebarOpen: boolean;
 	setSidebarOpen: (arg: boolean) => void;
@@ -217,19 +216,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
 							<li>
 								<NavLink
-									to="/admin/category"
-									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-										pathname.includes('category') &&
-										'bg-graydark dark:bg-meta-4'
-									}`}
-								>
-									<FaClipboardList />
-									Category
-								</NavLink>
-							</li>
-
-							<li>
-								<NavLink
 									to="/admin/product"
 									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
 										pathname.includes('product') &&
@@ -243,14 +229,14 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
 							<li>
 								<NavLink
-									to="/admin/variant"
+									to="/admin/attribute"
 									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-										pathname.includes('variant') &&
+										pathname.includes('attribute') &&
 										'bg-graydark dark:bg-meta-4'
 									}`}
 								>
 									<Boxes />
-									Variant
+									Attribute
 								</NavLink>
 							</li>
 

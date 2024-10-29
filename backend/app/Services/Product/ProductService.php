@@ -18,60 +18,61 @@ class ProductService
         $this->productRepository = $productRepository;
     }
 
-    public function storeProduct($validated)
-    {
-        try {
-            // Logic lưu sản phẩm và các biến thể, ảnh
+        public function storeProduct($validated)
+        {
+            try {
+                // Logic lưu sản phẩm và các biến thể, ảnh
 
-            $sku = 'shope-' . 'T' . date('m') . rand(10, 99);
-            $productData = [
-                'name' => $validated['name'],
-                'description' => $validated['description'],
-                'price' => $validated['price'],
-                'stock_quantity' => $validated['stock_quantity'],
-                'promotional_price' => $validated['promotional_price'],
-                'sku' => $sku,
-                'thumbnail' => $validated['thumbnail'],
-                'hagtag' => $validated['hagtag'],
-                'brand_id' => $validated['brand_id'],
-            ];
+                $sku = 'shope-' . 'T' . date('m') . rand(10, 99);
+                $productData = [
+                    'name' => $validated['name'],
+                    'description' => $validated['description'],
+                    'price' => $validated['price'],
+                    'stock_quantity' => $validated['stock_quantity'],
+                    'promotional_price' => $validated['promotional_price'],
+                    'sku' => $sku,
+                    'thumbnail' => $validated['thumbnail'],
+                    'hagtag' => $validated['hagtag'],
+                    'brand_id' => $validated['brand_id'],
+                ];
 
-            $product = $this->productRepository->createProduct($productData);
-            $this->productRepository->syncCategories($product, $validated['category_ids']);
+                $product = $this->productRepository->createProduct($productData);
+                $this->productRepository->syncCategories($product, $validated['category_ids']);
 
-            foreach ($validated['variants'] as $variantData) {
-                // $color = VariantColor::firstOrCreate(['color' => $variantData['color']]);
+                foreach ($validated['variants'] as $variantData) {
+                    // $color = VariantColor::firstOrCreate(['color' => $variantData['color']]);
 
-                $color = VariantColor::create([
-                    'color' => $variantData['color'],
-                    'link_image' => $variantData['link_image'] // Kết hợp vào một mảng duy nhất
-                ]);
-
-                $variantData['color_id'] = $color->id;
-                $variantData['product_id'] = $product->id;
-                $variantData['image_variant'] = $variantData['image_variant'];
-                $this->productRepository->createProductVariant($variantData);
-            }
-
-            if (isset($validated['images'])) {
-                foreach ($validated['images'] as $image) {
-                    $this->productRepository->createProductImage([
-                        'product_id' => $product->id,
-                        'image_path' => $image,
+                    $color = VariantColor::create([
+                        'color' => $variantData['color'],
+                        'link_image' => $variantData['link_image'] // Kết hợp vào một mảng duy nhất
                     ]);
+
+                    $variantData['color_id'] = $color->id;
+                    $variantData['product_id'] = $product->id;
+                    $variantData['image_variant'] = $variantData['image_variant'];
+                    $this->productRepository->createProductVariant($variantData);
                 }
+                
+                
+                if (isset($validated['images'])) {
+                    foreach ($validated['images'] as $image) {
+                        $this->productRepository->createProductImage([
+                            'product_id' => $product->id,
+                            'image_path' => $image,
+                        ]);
+                    }
+                }
+
+                return $product;
+            } catch (\Exception $e) {
+                Log::error('Error    product: ' . $e->getMessage());
+
+                return response()->json([
+                    'message' => 'Có lỗi xảy ra khi lưu sản phẩm.',
+                    'error' => $e->getMessage(),
+                ], 500);
             }
-
-            return $product;
-        } catch (\Exception $e) {
-            Log::error('Error    product: ' . $e->getMessage());
-
-            return response()->json([
-                'message' => 'Có lỗi xảy ra khi lưu sản phẩm.',
-                'error' => $e->getMessage(),
-            ], 500);
         }
-    }
 
     public function findProductForDeletion(string $id)
     {

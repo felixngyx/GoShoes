@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 import Navbar from '../../../components/client/Navbar';
 import { Link } from 'react-router-dom';
 import Joi from 'joi';
@@ -7,6 +6,12 @@ import { useForm } from 'react-hook-form';
 import { joiResolver } from '@hookform/resolvers/joi';
 import authService from '../../../services/client/auth';
 import toast from 'react-hot-toast';
+import { login } from '../../../store/client/userSlice';
+import Cookies from 'js-cookie';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { env } from '../../../environment/env';
+import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
 
 // Define the schema for form validation
 const schema = Joi.object({
@@ -43,9 +48,9 @@ interface ISignUpForm {
 }
 
 const SignUp = () => {
-	const [showPassword, setShowPassword] = useState(false);
-	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-	// const navigate = useNavigate();
+	const navigate = useNavigate();
+	const dispatch = useDispatch();
+	const [loading, setLoading] = useState(false);
 
 	const {
 		register,
@@ -57,13 +62,35 @@ const SignUp = () => {
 
 	const onSubmit = async (data: ISignUpForm) => {
 		try {
-			console.log(data);
+			setLoading(true);
 			const response = await authService.register(data);
-			console.log(response);
-			// toast.success(response.data.message);
-			// navigate('/signin');
+			if (response.data.success) {
+				toast.success(response.data.message);
+				navigate('/signin');
+			} else {
+				toast.error(response.data.message);
+			}
 		} catch (error: any) {
 			toast.error(error.response.data.message);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const responseFacebook = (response: any) => {
+		if (response.accessToken) {
+			dispatch(
+				login({
+					name: response.name,
+					email: response.email,
+				})
+			);
+			Cookies.set('access_token', response.accessToken);
+			Cookies.set('refresh_token', response.refreshToken);
+			toast.success('Login successful');
+			navigate('/');
+		} else {
+			console.error('Facebook login failed:', response);
 		}
 	};
 
@@ -115,17 +142,18 @@ const SignUp = () => {
 							)}
 							<label className="input input-bordered flex items-center bg-[#f0efff] mt-5 gap-2">
 								<input
-									type={showPassword ? 'text' : 'password'}
+									// type={showPassword ? 'text' : 'password'}
+									type="password"
 									className="grow placeholder:text-[#494949]"
 									placeholder="Enter password"
 									{...register('password')}
 								/>
-								<div
+								{/* <div
 									onClick={() => setShowPassword(!showPassword)}
 									className="cursor-pointer"
 								>
 									{showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-								</div>
+								</div> */}
 							</label>
 							{errors.password && (
 								<p className="text-red-500 text-sm">
@@ -134,23 +162,12 @@ const SignUp = () => {
 							)}
 							<label className="input input-bordered flex items-center bg-[#f0efff] mt-5 gap-2">
 								<input
-									type={showConfirmPassword ? 'text' : 'password'}
+									// type={showConfirmPassword ? 'text' : 'password'}
+									type="password"
 									className="grow placeholder:text-[#494949]"
 									placeholder="Enter confirm password"
 									{...register('confirmPassword')}
 								/>
-								<div
-									onClick={() =>
-										setShowConfirmPassword(!showConfirmPassword)
-									}
-									className="cursor-pointer"
-								>
-									{showConfirmPassword ? (
-										<FaRegEyeSlash />
-									) : (
-										<FaRegEye />
-									)}
-								</div>
 							</label>
 							{errors.confirmPassword && (
 								<p className="text-red-500 text-sm">
@@ -159,20 +176,32 @@ const SignUp = () => {
 							)}
 
 							<button
+								disabled={loading}
 								type="submit"
 								className="btn bg-[#40BFFF] text-white w-full rounded-md mt-5"
 							>
-								Sign up
+								{loading ? 'Loading...' : 'Sign up'}
 							</button>
 
 							<p className="text-md text-[#B0B0B0] text-center my-10">
 								or continue with
 							</p>
 							<div className="flex justify-center items-center gap-5 mt-5">
-								<img
-									className="w-8 cursor-pointer"
-									src="images/fb_logo.png"
-									alt=""
+								<FacebookLogin
+									appId={env.FACEBOOK_APP_ID}
+									autoLoad={true}
+									fields="name,email,picture"
+									callback={responseFacebook}
+									icon="fa-facebook"
+									size="small"
+									render={(renderProps) => (
+										<img
+											onClick={renderProps.onClick}
+											className="w-8 cursor-pointer"
+											src="images/fb_logo.png"
+											alt=""
+										/>
+									)}
 								/>
 								<img
 									className="w-8 cursor-pointer"

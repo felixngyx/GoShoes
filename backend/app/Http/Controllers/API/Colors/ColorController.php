@@ -21,14 +21,20 @@ class ColorController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
 
-        $colors = VariantColor::paginate(2);
+        $page = $request->input('page', 1);
+        $limit = $request->input('limit', 9);
+        $orderBy = $request->input('orderBy', 'id');
+        $order = $request->input('order', 'asc');
 
+        $query = VariantColor::query();
+        $clors = $query->orderBy($orderBy, $order)
+        ->paginate($limit, ['*'], 'page', $page);
         return response()->json([
-            'message' => 'Danh sách colors',
-            'product' => $colors
+            'message' => 'Danh sách sizes',
+            'clors' => $clors
         ], 201);
     }
 

@@ -1,9 +1,15 @@
 import axiosClient from '../../apis/axiosClient';
-import { BRAND } from '../../types/admin/brand';
+
+export type BRAND = {
+	id?: string;
+	name: string;
+};
+
 const brandService = {
-	getAll: () => {
-		return axiosClient.get('/brands');
+	getAll: (page: number = 1, limit: number = 5) => {
+		return axiosClient.get(`/brands?page=${page}&limit=${limit}`);
 	},
+
 	create: (data: BRAND) => {
 		return axiosClient.post('/brands', data);
 	},

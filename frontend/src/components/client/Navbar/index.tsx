@@ -7,6 +7,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store/index';
 import { logout } from '../../../store/client/userSlice';
 import Cookies from 'js-cookie';
+import { toast } from 'react-hot-toast';
+import { LogIn, LogOut, SquarePen, UserRound } from 'lucide-react';
 
 const useDebounce = (value: string, delay: number) => {
 	const [debouncedValue, setDebouncedValue] = useState(value);
@@ -33,6 +35,8 @@ const Navbar = () => {
 	const logoutHandler = () => {
 		dispatch(logout());
 		Cookies.remove('access_token');
+		Cookies.remove('refresh_token');
+		toast.success('Logout successfully');
 		navigate('/');
 	};
 
@@ -98,13 +102,14 @@ const Navbar = () => {
 										tabIndex={0}
 										className="dropdown-content menu bg-base-100 rounded-box z-[1] w-40 p-2 shadow font-semibold"
 									>
-										{user.username ? (
+										{user.name ? (
 											<>
 												<li>
 													<Link
 														to="/account"
 														className="flex flex-row gap-2"
 													>
+														<UserRound size={18} />
 														Account
 													</Link>
 												</li>
@@ -113,6 +118,7 @@ const Navbar = () => {
 														className="flex flex-row gap-2"
 														onClick={logoutHandler}
 													>
+														<LogOut size={18} />
 														Logout
 													</button>
 												</li>
@@ -124,6 +130,7 @@ const Navbar = () => {
 														to="/signin"
 														className="flex flex-row gap-2"
 													>
+														<LogIn size={18} />
 														Sign in
 													</Link>
 												</li>
@@ -132,6 +139,7 @@ const Navbar = () => {
 														to="/signup"
 														className="flex flex-row gap-2"
 													>
+														<SquarePen size={18} />
 														Sign up
 													</Link>
 												</li>

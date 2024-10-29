@@ -1,23 +1,25 @@
 import { PencilLine, Plus, Trash2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import { BRAND } from '../../../types/admin/brand';
+import { BRAND } from '../../../services/admin/brand';
 import brandService from '../../../services/admin/brand';
 import { useForm } from 'react-hook-form';
 import { joiResolver } from '@hookform/resolvers/joi';
 import Joi from 'joi';
 import toast from 'react-hot-toast';
 
+// Update schema validation
 const schema = Joi.object({
 	name: Joi.string().required().messages({
 		'string.empty': 'Brand name is required',
 	}),
-	description: Joi.string().required().messages({
-		'string.empty': 'Brand description is required',
-	}),
-	logo_url: Joi.any().required().messages({
-		'any.required': 'Brand logo is required',
-	}),
 });
+
+// Update PaginationType to ensure all fields are numbers
+type PaginationType = {
+	page: number;
+	limit: number;
+	total: number;
+};
 
 const Brand = () => {
 	const [selectAll, setSelectAll] = useState(false); // State for select all
@@ -27,11 +29,24 @@ const Brand = () => {
 
 	const [brands, setBrands] = useState<BRAND[]>([]);
 
+	const [pagination, setPagination] = useState<PaginationType>({
+		page: 1,
+		limit: 5, // Make sure this is a number
+		total: 0,
+	});
+
 	const fetchBrands = async () => {
 		try {
-			const res = await brandService.getAll();
+			const res = await brandService.getAll(
+				pagination.page,
+				Number(pagination.limit) // Ensure limit is a number
+			);
 			setBrands(res.data.brands.data);
-			console.log(res.data.brands.data);
+			setPagination({
+				page: Number(res.data.brands.current_page),
+				limit: Number(res.data.brands.per_page),
+				total: Number(res.data.brands.total),
+			});
 		} catch (error) {
 			console.log(error);
 		}
@@ -51,7 +66,103 @@ const Brand = () => {
 
 	useEffect(() => {
 		fetchBrands();
-	}, []);
+	}, [pagination.page]); // Change dependency from pagination.page to pagination.current_page
+
+	const handlePageChange = (page: number) => {
+		setPagination((prev) => ({
+			...prev,
+			page: page,
+		}));
+	};
+
+	const renderPaginationButtons = () => {
+		const total = Number(pagination.total) || 0;
+		const limit = Number(pagination.limit) || 5;
+		const totalPages = Math.max(1, Math.ceil(total / limit));
+
+		if (totalPages <= 0) return null;
+
+		const buttons = [];
+
+		// First page button with updated active class
+		buttons.push(
+			<button
+				key="first"
+				className={`join-item btn btn-sm ${
+					pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
+				}`}
+				onClick={() => handlePageChange(1)}
+			>
+				1
+			</button>
+		);
+
+		if (totalPages > 1) {
+			// Show dots if there are pages between first and current
+			if (pagination.page > 3) {
+				buttons.push(
+					<button
+						key="dots1"
+						className="join-item btn btn-sm btn-disabled"
+					>
+						...
+					</button>
+				);
+			}
+
+			// Current page and surrounding pages with updated active class
+			for (
+				let i = Math.max(2, pagination.page - 1);
+				i <= Math.min(totalPages - 1, pagination.page + 1);
+				i++
+			) {
+				if (i !== 1 && i !== totalPages) {
+					buttons.push(
+						<button
+							key={i}
+							className={`join-item btn btn-sm ${
+								pagination.page === i
+									? 'btn-active bg-primary text-white'
+									: ''
+							}`}
+							onClick={() => handlePageChange(i)}
+						>
+							{i}
+						</button>
+					);
+				}
+			}
+
+			// Show dots if there are pages between current and last
+			if (pagination.page < totalPages - 2) {
+				buttons.push(
+					<button
+						key="dots2"
+						className="join-item btn btn-sm btn-disabled"
+					>
+						...
+					</button>
+				);
+			}
+
+			// Last page button with updated active class
+			buttons.push(
+				<button
+					key="last"
+					className={`join-item btn btn-sm ${
+						pagination.page === totalPages
+							? 'btn-active bg-primary text-white'
+							: ''
+					}`}
+					onClick={() => handlePageChange(totalPages)}
+				>
+					{totalPages}
+				</button>
+			);
+		}
+
+		return buttons;
+	};
 
 	const handleSelectAll = () => {
 		if (selectAll) {
@@ -77,12 +188,17 @@ const Brand = () => {
 
 	const openEditModal = (brand: BRAND) => {
 		setEditingBrand(brand);
+		// Reset form with existing values
+		reset({
+			name: brand.name,
+		});
 		setIsModalOpen(true);
 	};
 
 	const closeModal = () => {
 		setIsModalOpen(false);
 		setEditingBrand(null);
+		reset(); // Reset form when closing
 	};
 
 	const modalRef = useRef<HTMLDivElement>(null);
@@ -113,28 +229,45 @@ const Brand = () => {
 		formState: { errors },
 	} = useForm<BRAND>({
 		resolver: joiResolver(schema),
+		defaultValues: {
+			name: '',
+		},
 	});
 
-	const onSubmit = async (data: { name: string }) => {
+	const onSubmit = async (data: BRAND) => {
 		try {
 			if (editingBrand) {
 				// Handle edit
 				await brandService.update(editingBrand.id!, data);
 				toast.success('Brand updated successfully');
 			} else {
+				// Handle add
 				await brandService.create(data);
 				toast.success('Brand added successfully');
-				reset();
 			}
+			await fetchBrands(); // Refresh the list
 			closeModal();
-			fetchBrands();
+			reset(); // Reset form
 		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'An error occurred');
+			toast.error(error.response?.data?.message || 'Something went wrong');
 		}
 	};
 
+	// Add useEffect to handle form reset when editingBrand changes
+	useEffect(() => {
+		if (editingBrand) {
+			reset({
+				name: editingBrand.name,
+			});
+		} else {
+			reset({
+				name: '',
+			});
+		}
+	}, [editingBrand, reset]);
+
 	return (
-		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5 col-span-2">
+		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5 col-span-1">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
 					Brand List
@@ -185,12 +318,6 @@ const Brand = () => {
 								Name
 							</th>
 							<th scope="col" className="px-6 py-3 w-1/3">
-								Description
-							</th>
-							<th scope="col" className="px-6 py-3 w-1/3">
-								Logo
-							</th>
-							<th scope="col" className="px-6 py-3 w-1/3">
 								Action
 							</th>
 						</tr>
@@ -223,20 +350,6 @@ const Brand = () => {
 									</div>
 								</td>
 								<td className="px-6 py-3">{brand.name}</td>
-								<td className="px-6 py-3">{brand.description}</td>
-								<td className="px-6 py-3">
-									<img
-										src={
-											typeof brand.logo_url === 'string'
-												? brand.logo_url
-												: URL.createObjectURL(
-														brand.logo_url as File
-												  )
-										}
-										alt="brand logo"
-										className="w-10 h-10 rounded-full"
-									/>
-								</td>
 								<td className="px-6 py-3 flex items-center gap-2">
 									<button
 										className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
@@ -257,13 +370,7 @@ const Brand = () => {
 				</table>
 			</div>
 
-			<div className="join ms-auto mt-auto">
-				<button className="join-item btn btn-sm">1</button>
-				<button className="join-item btn btn-sm">2</button>
-				<button className="join-item btn btn-sm btn-disabled">...</button>
-				<button className="join-item btn btn-sm">99</button>
-				<button className="join-item btn btn-sm">100</button>
-			</div>
+			<div className="join ms-auto">{renderPaginationButtons()}</div>
 
 			{/* Add/Edit Brand Modal */}
 			{isModalOpen && (
@@ -276,61 +383,17 @@ const Brand = () => {
 							{editingBrand ? 'Edit Brand' : 'Add Brand'}
 						</h2>
 						<form onSubmit={handleSubmit(onSubmit)}>
-							<label className="form-control w-full mb-4">
-								<div className="label">
-									<span className="label-text text-gray-500">
-										Brand name
-									</span>
-								</div>
-								<input
-									type="text"
-									className="input-sm w-full p-2 border rounded"
-									placeholder="Brand name"
-									{...register('name')}
-								/>
-								{errors.name && (
-									<p className="text-red-500 text-sm mb-4">
-										{errors.name.message}
-									</p>
-								)}
-							</label>
-							<label className="form-control w-full mb-4">
-								<div className="label">
-									<span className="label-text text-gray-500">
-										Brand description
-									</span>
-								</div>
-								<input
-									type="text"
-									className="input-sm w-full p-2 border rounded"
-									placeholder="Brand description"
-									{...register('description')}
-								/>
-								{errors.description && (
-									<p className="text-red-500 text-sm mb-4">
-										{errors.description.message}
-									</p>
-								)}
-							</label>
-
-							<label className="form-control w-full mb-4">
-								<div className="label">
-									<span className="label-text text-gray-500">
-										Brand logo
-									</span>
-								</div>
-								<input
-									type="file"
-									className="file-input input-sm file-input-bordered w-full "
-									{...register('logo_url')}
-								/>
-								{errors.logo_url && (
-									<p className="text-red-500 text-sm mb-4">
-										{errors.logo_url.message}
-									</p>
-								)}
-							</label>
-
+							<input
+								type="text"
+								className="w-full p-2 border rounded mb-2"
+								placeholder="Brand name"
+								{...register('name')}
+							/>
+							{errors.name && (
+								<p className="text-red-500 text-sm mb-4">
+									{errors.name.message}
+								</p>
+							)}
 							<div className="flex justify-end gap-2">
 								<button
 									type="button"
