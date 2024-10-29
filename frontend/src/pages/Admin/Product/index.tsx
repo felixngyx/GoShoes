@@ -6,6 +6,12 @@ import { useState } from 'react';
 import { FaSort } from 'react-icons/fa';
 import { formatVNCurrency } from '../../../common/formatVNCurrency';
 
+export enum Status {
+	PUBLISH = 'publish',
+	UNPUBLISH = 'unpublish',
+	HIDDEN = 'hidden',
+}
+
 const Product = () => {
 	const [selectAll, setSelectAll] = useState(false); // State for select all
 	const [selectedItems, setSelectedItems] = useState<number[]>([]); // State for individual selections
@@ -190,8 +196,10 @@ const Product = () => {
 								<td className="px-6 py-3">
 									<div
 										className={`badge text-white badge-${
-											product.status === 'Active'
+											product.status === Status.PUBLISH
 												? 'success'
+												: product.status === Status.UNPUBLISH
+												? 'warning'
 												: 'error'
 										}`}
 									>

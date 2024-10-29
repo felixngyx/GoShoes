@@ -1,9 +1,127 @@
 import { TrashIcon, Upload, Eye, X } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
+import { Status } from '.';
+import categoryService, { CATEGORY } from '../../../services/admin/category';
+import sizeService, { SIZE } from '../../../services/admin/size';
+import brandService, { BRAND } from '../../../services/admin/brand';
+import productService, { PRODUCT } from '../../../services/admin/product';
+import toast from 'react-hot-toast';
+import Joi from 'joi';
+import { joiResolver } from '@hookform/resolvers/joi';
+import uploadImageToCloudinary from '../../../common/uploadCloudinary';
+
+// Add form validation schema
+const productSchema = Joi.object({
+	name: Joi.string().required().messages({
+		'string.empty': 'Product name is required',
+	}),
+	description: Joi.string().required().messages({
+		'string.empty': 'Description is required',
+	}),
+	price: Joi.number().positive().required().messages({
+		'number.base': 'Price must be a number',
+		'number.positive': 'Price must be positive',
+	}),
+	promotional_price: Joi.number().positive().required().messages({
+		'number.base': 'Promotional price must be a number',
+		'number.positive': 'Promotional price must be positive',
+	}),
+	status: Joi.string().required().messages({
+		'string.empty': 'Status is required',
+	}),
+	sku: Joi.string().required().messages({
+		'string.empty': 'SKU is required',
+	}),
+	hashtag: Joi.string().required().messages({
+		'string.empty': 'Hashtag is required',
+	}),
+	category_ids: Joi.array().items(Joi.number()).required().messages({
+		'array.base': 'Category is required',
+		'array.min': 'At least one category is required',
+	}),
+	brand_id: Joi.number().required().messages({
+		'number.base': 'Brand is required',
+	}),
+	thumbnail: Joi.string().required().messages({
+		'string.empty': 'Thumbnail is required',
+	}),
+	images: Joi.array().items(Joi.string()).required().messages({
+		'array.base': 'Images must be an array',
+		'array.min': 'At least one image is required',
+	}),
+	stock_quantity: Joi.number().min(0).required().messages({
+		'number.min': 'Stock quantity must be at least 0',
+	}),
+	variants: Joi.array()
+		.items(
+			Joi.object({
+				color: Joi.string().required(),
+				size_id: Joi.number().required(),
+				quantity: Joi.number().min(0).required(),
+				image_variant: Joi.string().allow(''),
+			})
+		)
+		.min(1)
+		.required()
+		.messages({
+			'array.min': 'At least one variant is required',
+		}),
+});
+
+// Update the type definition
+type ProductFormData = {
+	name: string;
+	description: string;
+	price: number;
+	stock_quantity: number;
+	promotional_price: number;
+	status: string;
+	sku: string;
+	hashtag: string;
+	category_ids: number[];
+	brand_id: number;
+	thumbnail: string;
+	images: string[];
+	variants: {
+		color: string;
+		size_id: number;
+		quantity: number;
+		image_variant: string;
+	}[];
+};
 
 const AddProduct = () => {
-	const { control } = useForm();
+	const [categories, setCategories] = useState<CATEGORY[]>([]);
+	const [sizes, setSizes] = useState<SIZE[]>([]);
+	const [brands, setBrands] = useState<BRAND[]>([]);
+
+	useEffect(() => {
+		try {
+			(async () => {
+				const resCategory = await categoryService.getAll();
+				setCategories(resCategory.data.category.data);
+				const resSize = await sizeService.getAll();
+				setSizes(resSize.data.sizes.data);
+				const resBrand = await brandService.getAll();
+				setBrands(resBrand.data.brands.data);
+			})();
+		} catch (error) {}
+	}, []);
+
+	const {
+		register,
+		handleSubmit,
+		control,
+		clearErrors,
+		setValue, // Add this
+		formState: { errors },
+	} = useForm<ProductFormData>({
+		resolver: joiResolver(productSchema),
+		defaultValues: {
+			variants: [],
+		},
+	});
 
 	const { fields, append, remove } = useFieldArray({
 		control,
@@ -11,6 +129,7 @@ const AddProduct = () => {
 	});
 
 	const [thumbnail, setThumbnail] = useState<string | null>(null);
+	const [thumbnailFile, setThumbnailFile] = useState<File | null>(null); // Add this line
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -20,14 +139,35 @@ const AddProduct = () => {
 	// Add this new state for variant images
 	const [variantImages, setVariantImages] = useState<(string | null)[]>([]);
 
+	// Add new state for variant image files
+	const [variantImageFiles, setVariantImageFiles] = useState<(File | null)[]>(
+		[]
+	);
+
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+	// Add state to store the actual files
+	const [productImageFiles, setProductImageFiles] = useState<File[]>([]);
+
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		event.preventDefault();
 		const file = event.target.files?.[0];
-		if (file) setThumbnail(URL.createObjectURL(file));
+		if (file) {
+			const objectUrl = URL.createObjectURL(file);
+			setThumbnail(objectUrl);
+			setThumbnailFile(file);
+			// Set the value for the thumbnail field
+			setValue('thumbnail', objectUrl);
+			clearErrors('thumbnail');
+		}
 	};
 
-	const removeThumbnail = () => setThumbnail(null);
+	const removeThumbnail = () => {
+		setThumbnail(null);
+		setThumbnailFile(null);
+		// Clear the thumbnail value
+		setValue('thumbnail', '');
+	};
 
 	const openModal = (imageSrc: string) => {
 		setPreviewImage(imageSrc);
@@ -36,29 +176,41 @@ const AddProduct = () => {
 
 	const closeModal = () => modalRef.current?.close();
 
-	const handleUploadClick = () => {
+	const handleUploadClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
 		fileInputRef.current?.click();
 	};
 
 	const handleProductImagesChange = (
 		event: React.ChangeEvent<HTMLInputElement>
 	) => {
+		event.preventDefault();
 		const files = event.target.files;
 		if (files) {
-			const newImages = Array.from(files).map((file) =>
-				URL.createObjectURL(file)
-			);
+			const filesArray = Array.from(files);
+			setProductImageFiles((prev) => [...prev, ...filesArray]);
+			const newImages = filesArray.map((file) => URL.createObjectURL(file));
 			setProductImages((prevImages) => [...prevImages, ...newImages]);
+			// Add this line to update the form field
+			setValue('images', [...productImages, ...newImages]);
+			clearErrors('images');
 		}
 	};
 
 	const removeProductImage = (index: number) => {
-		setProductImages((prevImages) =>
-			prevImages.filter((_, i) => i !== index)
+		setProductImages((prev) => prev.filter((_, i) => i !== index));
+		setProductImageFiles((prev) => prev.filter((_, i) => i !== index));
+		// Add this line to update the form field
+		setValue(
+			'images',
+			productImages.filter((_, i) => i !== index)
 		);
 	};
 
-	const handleProductImagesUploadClick = () => {
+	const handleProductImagesUploadClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
 		productImagesInputRef.current?.click();
 	};
 
@@ -66,11 +218,15 @@ const AddProduct = () => {
 		index: number,
 		event: React.ChangeEvent<HTMLInputElement>
 	) => {
+		event.preventDefault(); // Add this line
 		const file = event.target.files?.[0];
 		if (file) {
 			const newImages = [...variantImages];
+			const newFiles = [...variantImageFiles];
 			newImages[index] = URL.createObjectURL(file);
+			newFiles[index] = file;
 			setVariantImages(newImages);
+			setVariantImageFiles(newFiles);
 		}
 	};
 
@@ -82,7 +238,7 @@ const AddProduct = () => {
 
 	// Modify the append function to also add a null image
 	const addVariant = () => {
-		append({ size: '', color: '', quantity: 0 });
+		append({ color: '', size_id: 0, quantity: 0, image_variant: '' });
 		setVariantImages([...variantImages, null]);
 	};
 
@@ -94,21 +250,87 @@ const AddProduct = () => {
 		setVariantImages(newImages);
 	};
 
+	const onSubmit = async (data: ProductFormData) => {
+		try {
+			// Upload thumbnail if exists
+			const thumbnailUrl = thumbnailFile
+				? await uploadImageToCloudinary(thumbnailFile)
+				: '';
+
+			// Upload product images
+			const uploadedProductImages = await Promise.all(
+				productImageFiles.map((file) => uploadImageToCloudinary(file))
+			);
+
+			// Upload variant images
+			const uploadedVariantImages = await Promise.all(
+				variantImageFiles.map((file) =>
+					file ? uploadImageToCloudinary(file) : null
+				)
+			);
+
+			// Prepare variants data
+			const formattedVariants = data.variants.map(
+				(variant: any, index: number) => ({
+					color: variant.color,
+					link_image: uploadedVariantImages[index],
+					size_id: variant.size_id,
+					quantity: variant.quantity,
+					image_variant: uploadedVariantImages[index],
+				})
+			);
+
+			// Prepare final form data
+			const formData = {
+				name: data.name,
+				description: data.description,
+				price: data.price,
+				promotional_price: data.promotional_price,
+				status: data.status,
+				sku: data.sku,
+				hashtag: data.hashtag,
+				category_ids: data.category_ids,
+				thumbnail: thumbnailUrl,
+				brand_id: data.brand_id,
+				variants: formattedVariants,
+				images: uploadedProductImages,
+				stock_quantity: data.stock_quantity,
+			};
+
+			// Send to backend
+			await productService.create(formData);
+			toast.success('Product created successfully');
+			// navigate('/admin/products');
+		} catch (error) {
+			toast.error('Failed to create product');
+			console.error(error);
+		}
+	};
+
 	return (
 		<>
 			<div className="w-full border border-stroke p-4 shadow-lg">
 				<h3 className="font-bold text-2xl">Add Product</h3>
 				<div className="w-full">
-					<form className="grid grid-cols-3 gap-x-4 gap-y-5 w-full">
+					<form
+						onSubmit={handleSubmit(onSubmit)}
+						className="grid grid-cols-3 gap-x-4 gap-y-5 w-full"
+					>
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text">Product Name</span>
 							</div>
 							<input
+								{...register('name')}
 								type="text"
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
+							{errors.name && (
+								<p className="text-red-500 text-xs">
+									{errors.name.message}
+								</p>
+							)}
 						</label>
 
 						<label className="form-control col-span-1">
@@ -116,23 +338,38 @@ const AddProduct = () => {
 								<span className="label-text">Price</span>
 							</div>
 							<input
+								{...register('price')}
 								type="text"
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
+							{errors.price && (
+								<p className="text-red-500 text-xs">
+									{errors.price.message}
+								</p>
+							)}
 						</label>
 
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text">Category</span>
 							</div>
-							<select className="select select-bordered w-full max-w-xs">
-								<option disabled defaultValue="Select Category">
-									Select Category
-								</option>
-								<option>Sport</option>
-								<option>Fashion</option>
+							<select
+								{...register('category_ids.0')} // Change to register first array element
+								className="select select-bordered w-full"
+							>
+								<option value="">Select Category</option>
+								{categories.map((category) => (
+									<option key={category.id} value={category.id}>
+										{category.name}
+									</option>
+								))}
 							</select>
+							{errors.category_ids && (
+								<p className="text-red-500 text-xs">
+									{errors.category_ids.message}
+								</p>
+							)}
 						</label>
 
 						<label className="form-control col-span-1">
@@ -140,10 +377,50 @@ const AddProduct = () => {
 								<span className="label-text">Promotion Price</span>
 							</div>
 							<input
+								{...register('promotional_price')}
 								type="text"
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
+							{errors.promotional_price && (
+								<p className="text-red-500 text-xs">
+									{errors.promotional_price.message}
+								</p>
+							)}
+						</label>
+
+						<label className="form-control col-span-1">
+							<div className="label">
+								<span className="label-text">Stock Quantity</span>
+							</div>
+							<input
+								{...register('stock_quantity')}
+								type="text"
+								placeholder="Type here"
+								className="input input-bordered w-full"
+							/>
+							{errors.stock_quantity && (
+								<p className="text-red-500 text-xs">
+									{errors.stock_quantity.message}
+								</p>
+							)}
+						</label>
+
+						<label className="form-control col-span-1">
+							<div className="label">
+								<span className="label-text">SKU</span>
+							</div>
+							<input
+								{...register('sku')}
+								type="text"
+								placeholder="Type here"
+								className="input input-bordered w-full"
+							/>
+							{errors.sku && (
+								<p className="text-red-500 text-xs">
+									{errors.sku.message}
+								</p>
+							)}
 						</label>
 
 						<label className="form-control col-span-1">
@@ -151,30 +428,75 @@ const AddProduct = () => {
 								<span className="label-text">Hashtag</span>
 							</div>
 							<input
+								{...register('hashtag')}
 								type="text"
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
+							{errors.hashtag && (
+								<p className="text-red-500 text-xs">
+									{errors.hashtag.message}
+								</p>
+							)}
 						</label>
 
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text">Status</span>
 							</div>
-							<select className="select select-bordered w-full max-w-xs">
-								<option disabled defaultValue="Select Status">
+							<select
+								{...register('status')}
+								className="select select-bordered w-full"
+							>
+								<option defaultValue="Select Status">
 									Select Status
 								</option>
-								<option>Active</option>
-								<option>Inactive</option>
+								<option value={Status.PUBLISH}>Publish</option>
+								<option value={Status.UNPUBLISH}>Unpublish</option>
+								<option value={Status.HIDDEN}>Hidden</option>
 							</select>
+							{errors.status && (
+								<p className="text-red-500 text-xs">
+									{errors.status.message}
+								</p>
+							)}
 						</label>
 
-						<div className="form-control col-span-1">
+						<label className="form-control col-span-1">
+							<div className="label">
+								<span className="label-text">Brand</span>
+							</div>
+							<select
+								{...register('brand_id')}
+								className="select select-bordered w-full"
+							>
+								<option defaultValue="Select Brand">
+									Select Brand
+								</option>
+								{brands.map((brand) => (
+									<option key={brand.id} value={brand.id}>
+										{brand.name}
+									</option>
+								))}
+							</select>
+							{errors.brand_id && (
+								<p className="text-red-500 text-xs">
+									{errors.brand_id.message}
+								</p>
+							)}
+						</label>
+
+						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text">Thumbnail</span>
+								{errors.thumbnail && (
+									<span className="text-red-500 text-xs">
+										{errors.thumbnail.message}
+									</span>
+								)}
 							</div>
 							<input
+								{...register('thumbnail')} // Add this
 								ref={fileInputRef}
 								type="file"
 								className="hidden"
@@ -214,7 +536,7 @@ const AddProduct = () => {
 									</div>
 								) : (
 									<div
-										onClick={handleUploadClick}
+										onClick={(e) => handleUploadClick(e)}
 										className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
 									>
 										<Upload />
@@ -224,12 +546,17 @@ const AddProduct = () => {
 									</div>
 								)}
 							</div>
-						</div>
+						</label>
 
 						{/* New section for product images */}
-						<div className="form-control col-span-2">
+						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text">Product Images</span>
+								{errors.images && (
+									<span className="text-red-500 text-xs">
+										{errors.images.message}
+									</span>
+								)}
 							</div>
 							<input
 								ref={productImagesInputRef}
@@ -241,7 +568,7 @@ const AddProduct = () => {
 							/>
 							<div className="flex flex-wrap gap-2">
 								<div
-									onClick={handleProductImagesUploadClick}
+									onClick={(e) => handleProductImagesUploadClick(e)}
 									className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
 								>
 									<Upload />
@@ -282,16 +609,22 @@ const AddProduct = () => {
 									</div>
 								))}
 							</div>
-						</div>
+						</label>
 
 						<label className="form-control col-span-3">
 							<div className="label">
 								<span className="label-text">Description</span>
 							</div>
 							<textarea
+								{...register('description')}
 								className="textarea textarea-bordered"
 								placeholder="Type here"
 							></textarea>
+							{errors.description && (
+								<p className="text-red-500 text-xs">
+									{errors.description.message}
+								</p>
+							)}
 						</label>
 
 						<h3 className="text-lg font-bold col-span-3">Variant</h3>
@@ -366,10 +699,11 @@ const AddProduct = () => {
 											<option defaultValue="Select Size">
 												Select Size
 											</option>
-											<option>38</option>
-											<option>39</option>
-											<option>40</option>
-											<option>41</option>
+											{sizes.map((size) => (
+												<option key={size.id} value={size.id}>
+													{size.size}
+												</option>
+											))}
 										</select>
 
 										<input
@@ -403,38 +737,29 @@ const AddProduct = () => {
 							Add Variant
 						</button>
 
-						<div className="flex items-center gap-2 col-span-3 w-full justify-end">
-							<button className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error w-fit">
-								Cancel
-							</button>
-							<button className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit">
-								Save
-							</button>
-						</div>
+						<button
+							type="submit"
+							className="btn mt-4 col-span-3 bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+						>
+							Add product
+						</button>
 					</form>
 				</div>
 			</div>
 
+			{/* Add this dialog for image preview */}
 			<dialog ref={modalRef} className="modal">
-				<div className="modal-box">
-					<button
-						onClick={closeModal}
-						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-					>
-						<X size={16} />
-					</button>
-					<h3 className="font-bold text-lg mb-4">Image Preview</h3>
-					{previewImage && (
-						<img
-							src={previewImage}
-							alt="Preview"
-							className="w-full h-auto"
-						/>
-					)}
-				</div>
-				<form method="dialog" className="modal-backdrop">
-					<button>close</button>
-				</form>
+				{previewImage && (
+					<div className="modal-box">
+						<img src={previewImage} alt="Preview" className="w-full" />
+						<button
+							onClick={closeModal}
+							className="btn btn-sm btn-circle absolute right-2 top-2"
+						>
+							<X />
+						</button>
+					</div>
+				)}
 			</dialog>
 		</>
 	);
