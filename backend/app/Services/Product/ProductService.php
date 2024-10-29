@@ -28,7 +28,7 @@ class ProductService
                     'name' => $validated['name'],
                     'description' => $validated['description'],
                     'price' => $validated['price'],
-                    // 'stock_quantity' => $validated['stock_quantity'],
+                    'stock_quantity' => $validated['stock_quantity'],
                     'promotional_price' => $validated['promotional_price'],
                     'sku' => $sku,
                     'thumbnail' => $validated['thumbnail'],
@@ -65,6 +65,7 @@ class ProductService
 
                 return $product;
             } catch (\Exception $e) {
+
                 Log::error('Error    product: ' . $e->getMessage());
 
                 return response()->json([
@@ -87,17 +88,17 @@ class ProductService
     public function deleteProduct(Product $product)
     {
         try {
-            foreach ($product->variants as $variant) {
-                if ($variant->color_id) {
-                    VariantColor::destroy($variant->color_id);
-                }
-            }
-            // Xóa các biến thể và ảnh trong database
-            $product->variants()->delete();
-            $product->images()->delete();
+            // foreach ($product->variants as $variant) {
+            //     if ($variant->color_id) {
+            //         VariantColor::destroy($variant->color_id);
+            //     }
+            // }
+            // // Xóa các biến thể và ảnh trong database
+            // $product->variants()->delete();
+            // $product->images()->delete();
 
             // Xóa sản phẩm
-            $this->productRepository->deleteProduct($product);
+            $this->productRepository->softDeleteProduct($product);
 
             return response()->json([
                 'message' => 'Sản phẩm đã được xóa thành công!',
@@ -112,6 +113,25 @@ class ProductService
         }
     }
 
+    public function restoreProduct(Product $product)
+    {
+        try {
+            $this->productRepository->restoreProduct($product);
+
+            return response()->json([
+                'message' => 'Sản phẩm đã được khôi phục thành công!',
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Error restoring product: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi khôi phục sản phẩm.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
+
 
     public function updateProduct(Product $product, $validated)
     {
@@ -123,7 +143,7 @@ class ProductService
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'price' => $validated['price'],
-                // 'stock_quantity' => $validated['stock_quantity'],
+                'stock_quantity' => $validated['stock_quantity'],
                 'promotional_price' => $validated['promotional_price'],
                 'thumbnail' => $validated['thumbnail'],
                 'hagtag' => $validated['hagtag'],

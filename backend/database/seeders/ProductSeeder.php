@@ -18,7 +18,7 @@ class ProductSeeder extends Seeder
                 'name' => 'Sample Product ' . $i, // Tên sản phẩm khác nhau cho mỗi vòng lặp
                 'description' => 'This is a sample description for product ' . $i . '.',
                 'price' => rand(50000, 200000), // Giá ngẫu nhiên trong khoảng từ 50.000 đến 200.000
-                // 'stock_quantity' => rand(10, 100), // Số lượng trong kho ngẫu nhiên từ 10 đến 100
+                'stock_quantity' => rand(10, 100), // Số lượng trong kho ngẫu nhiên từ 10 đến 100
                 'promotional_price' => rand(30000, 150000), // Giá khuyến mãi ngẫu nhiên
                 'status' => 'public', // Trạng thái sản phẩm
                 'sku' => Str::upper(Str::random(10)), // Mã SKU ngẫu nhiên

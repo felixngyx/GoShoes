@@ -21,14 +21,6 @@ class ProductController extends Controller
     }
     public function index(Request $request)
     {
-        // $products = Product::all();
-
-        // return response()->json([
-        //     'message' => 'Danh sách sản phẩm',
-        //     'product' => $products
-        // ], 201);
-
-
         $page = $request->input('page', 1);
         $limit = $request->input('limit', 9);
         $orderBy = $request->input('orderBy', 'id');
@@ -44,7 +36,8 @@ class ProductController extends Controller
         $brand_id = $request->input('brand_id');
 
         // Truy vấn sản phẩm
-        $query = Product::with(['variants.color', 'variants.size', 'categories', 'brand']);
+        $query = Product::with(['variants.color', 'variants.size', 'categories', 'brand'])
+            ->where('is_deleted', false);
 
         // Áp dụng các điều kiện lọc
         if ($minPrice) {
@@ -55,14 +48,14 @@ class ProductController extends Controller
             $query->where('price', '<=', $maxPrice);
         }
         if ($name) {
-           
+
             $query->where('name', 'LIKE', '%' . $name . '%');
         }
         if ($category) {
 
             if (is_array($category)) {
                 $query->whereHas('categories', function ($q) use ($category) {
-                    $q->whereIn('id', $category); 
+                    $q->whereIn('id', $category);
                 });
             } else {
 
@@ -71,7 +64,7 @@ class ProductController extends Controller
                 });
             }
         }
-        
+
         if ($color) {
             $query->whereHas('variants.color', function ($q) use ($color) {
                 $q->where('color', $color);
@@ -98,14 +91,6 @@ class ProductController extends Controller
             'data' => $products,
         ]);
     }
-
-
-
-    public function create()
-    {
-        //
-    }
-
     public function store(StoreProductRequest $request)
     {
         $validated = $request->validated();
@@ -129,6 +114,7 @@ class ProductController extends Controller
         }
         return response()->json([
             'product' => $product['product'],
+            'relatedProducts' => $product['relatedProducts'],
             // 'variantDetails' => $product['variantDetails'],
             // 'brandName' => $product['brandName'],
             // 'categoryNames' => $product['categoryNames'],
@@ -184,5 +170,86 @@ class ProductController extends Controller
         $this->productService->deleteProduct($product);
 
         return response()->json(['message' => 'Sản phẩm đã được xóa thành công!'], 200);
+    }
+    public function trashedProducts(Request $request)
+    {
+        try {
+            // Lấy các tham số từ request
+            $page = $request->input('page', 1);
+            $limit = $request->input('limit', 9);
+            $orderBy = $request->input('orderBy', 'id');
+            $order = $request->input('order', 'asc');
+            $name = $request->input('name');
+
+            // Khởi tạo query với các relationship cần thiết
+            $query = Product::with(['variants.color', 'variants.size', 'categories', 'brand'])
+                ->where('is_deleted', true); // Chỉ lấy sản phẩm đã xóa mềm
+
+
+            if ($name) {
+                $query->where('name', 'LIKE', '%' . $name . '%');
+            }
+            // Sắp xếp và phân trang
+            $trashedProducts = $query->orderBy($orderBy, $order)
+                ->paginate($limit, ['*'], 'page', $page);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Sản phẩm thùng rác được truy xuất thành công',
+                'data' => $trashedProducts
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Có lỗi xảy ra khi lấy danh sách sản phẩm đã xóa.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function restore($id)
+    {
+        try {
+            $product = Product::where('id', $id)
+                ->where('is_deleted', 1)
+                ->firstOrFail();
+
+            $this->productService->restoreProduct($product); 
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Sản phẩm đã được phục hồi thành công!',
+                'product' => $product 
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Không tìm thấy sản phẩm hoặc sản phẩm chưa bị xóa.',
+                'error' => $e->getMessage()
+            ], 404);
+        }
+    }
+    public function restoreMultiple(Request $request)
+    {
+        try {
+            $productIds = $request->input('product_ids', []);
+            
+            $products = Product::whereIn('id', $productIds)
+                ->where('is_deleted', 1)
+                ->get();
+
+            foreach ($products as $product) {
+                $this->productService->restoreProduct($product);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Khôi phục thành công ' . count($products) . ' sản phẩm.'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Có lỗi xảy ra khi khôi phục sản phẩm.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
