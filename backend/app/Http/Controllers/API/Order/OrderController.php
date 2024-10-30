@@ -411,4 +411,8 @@ class OrderController extends Controller
         $response = $this->zaloPaymentController->paymentZalo($paymentRequest);
         return json_decode($response->getContent(), true);
     }
+
+    public function UpdateOrder($order){
+        $order->update(['status'=> '']);
+    }
 }
