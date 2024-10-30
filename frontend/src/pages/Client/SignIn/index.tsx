@@ -92,11 +92,7 @@ const SignIn = () => {
 								</Link>
 							</p>
 						</div>
-						<img
-							// className="absolute top-0 right-0 w-100px"
-							src="user_login.svg"
-							alt=""
-						/>
+						<img src="user_login.svg" alt="" />
 					</div>
 					<div className="w-1/3 flex justify-center items-center">
 						<form
