@@ -35,13 +35,44 @@ class ProductRepository implements ProductRepositoryInterface
     }
     public function findProductWithRelations(string $id)
     {
-        // return Product::with(['variants', 'images', 'categories' , 'brand'])->find($id);
-        // Truy vấn sản phẩm cùng với các quan hệ
-        $product = Product::with(['variants.color', 'variants.size', 'images', 'categories', 'brand'])->find($id);
+        $product = Product::where('is_deleted', false)
+            ->with(['variants.color', 'variants.size', 'images', 'categories', 'brand'])
+            ->find($id);
+            
         if (!$product) {
-            return null; 
+            return null;
         }
-        // $variantDetails = $product->variants->map(function ($variant) {
+    
+        $categories = $product->categories;
+        $relatedProducts = Product::whereHas('categories', function ($query) use ($categories) {
+            $query->whereIn('categories.id', $categories->pluck('id'));
+        })
+            ->where('id', '!=', $product->id)
+            ->where('is_deleted', false)  // Chỉ lấy sản phẩm liên quan chưa bị xóa
+            ->get();
+            
+        return [
+            'product' => $product,
+            'relatedProducts' => $relatedProducts,
+        ];
+    }
+   
+    public function softDeleteProduct(Product $product)
+    {
+        return $product->update(['is_deleted' => 1]);
+    }
+    public function restoreProduct(Product $product)
+    {
+        return $product->update(['is_deleted' => 0]);
+    }
+
+     public function find($id)
+    {
+        return Product::where('is_deleted', false)->findOrFail($id);
+    }
+}
+
+    // $variantDetails = $product->variants->map(function ($variant) {
         //     return [
         //         'id' => $variant->id,
         //         'quantity' => $variant->quantity,
@@ -55,22 +86,8 @@ class ProductRepository implements ProductRepositoryInterface
         // $brandName = $product->brand ? $product->brand->name : null;
         
         // $categoryNames = $product->categories->pluck('name')->toArray(); 
-
-        return [
-            'product' => $product,
-            // 'variantDetails' => $variantDetails,
+   // 'variantDetails' => $variantDetails,
             // 'brandName' => $brandName,
             // 'categoryNames' => $categoryNames, // Lấy tên danh mục sản phẩm
-        ];
-    }
-    public function deleteProduct(Product $product)
-
-    {
-        return $product->delete();
-    }
-
-    public function find($id)
-    {
-        return Product::findOrFail($id);
-    }
-}
+               // return Product::with(['variants', 'images', 'categories' , 'brand'])->find($id);
+        // Truy vấn sản phẩm cùng với các quan hệ
