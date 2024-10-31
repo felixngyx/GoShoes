@@ -11,6 +11,10 @@ const authService = {
 	}) => {
 		return axiosClient.post('/auth/register', credentials);
 	},
+
+	facebookLogin: () => {
+		return axiosClient.get('/auth/facebook');
+	},
 };
 
 export default authService;

@@ -80,9 +80,11 @@ Route::group([
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'OrderOneUser']);
         Route::post('/', [OrderController::class, 'store']);
-        Route::get('/{id}', [OrderController::class, 'show']);
+        // Route::get('/{id}', [OrderController::class, 'show']);
         Route::put('/{id}', [OrderController::class, 'update']);
         Route::get('/{id}/check-payment', [OrderController::class, 'checkPaymentStatus']);
+        Route::put('/{id}/update', [OrderController::class,'UpdateOrder']);
+        Route::post('/{id}/renew-payment', [OrderController::class, 'renewPaymentLink']);
     });
 
     Route::prefix('discounts')->group(function () {

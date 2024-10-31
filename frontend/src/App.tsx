@@ -33,6 +33,7 @@ import { Toaster } from 'react-hot-toast';
 import Attribute from './pages/Admin/Attribute';
 import Homepage from './pages/Client/home';
 import AddProduct from './pages/Admin/Product/AddProduct';
+import Cart from './pages/Client/Cart';
 
 function App() {
 	const { pathname } = useLocation();
@@ -54,6 +55,7 @@ function App() {
 						<Route path="my-order/:id" element={<OrderDetail />} />
 						<Route path="my-address" element={<Address />} />
 					</Route>
+					<Route path="/cart" element={<Cart />} />
 					<Route path="/reset-password" element={<ResetPassword />} />
 					<Route path="/forget-password" element={<ForgetPassword />} />
 					<Route path="*" element={<NotfoundPage />} />

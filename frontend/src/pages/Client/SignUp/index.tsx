@@ -11,7 +11,6 @@ import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { env } from '../../../environment/env';
-import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
 
 // Define the schema for form validation
 const schema = Joi.object({
@@ -74,23 +73,6 @@ const SignUp = () => {
 			toast.error(error.response.data.message);
 		} finally {
 			setLoading(false);
-		}
-	};
-
-	const responseFacebook = (response: any) => {
-		if (response.accessToken) {
-			dispatch(
-				login({
-					name: response.name,
-					email: response.email,
-				})
-			);
-			Cookies.set('access_token', response.accessToken);
-			Cookies.set('refresh_token', response.refreshToken);
-			toast.success('Login successful');
-			navigate('/');
-		} else {
-			console.error('Facebook login failed:', response);
 		}
 	};
 
@@ -187,21 +169,10 @@ const SignUp = () => {
 								or continue with
 							</p>
 							<div className="flex justify-center items-center gap-5 mt-5">
-								<FacebookLogin
-									appId={env.FACEBOOK_APP_ID}
-									autoLoad={true}
-									fields="name,email,picture"
-									callback={responseFacebook}
-									icon="fa-facebook"
-									size="small"
-									render={(renderProps) => (
-										<img
-											onClick={renderProps.onClick}
-											className="w-8 cursor-pointer"
-											src="images/fb_logo.png"
-											alt=""
-										/>
-									)}
+								<img
+									className="w-8 cursor-pointer"
+									src="images/fb_logo.png"
+									alt=""
 								/>
 								<img
 									className="w-8 cursor-pointer"

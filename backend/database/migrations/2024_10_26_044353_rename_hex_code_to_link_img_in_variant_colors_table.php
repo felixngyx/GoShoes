@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('variant_colors', function (Blueprint $table) {
-            $table->renameColumn('link_img', 'link_image');
+            $table->renameColumn('link_image', 'hex_code');
         });
     }
 };
