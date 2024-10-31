@@ -23,7 +23,8 @@ class Product extends Model
         'thumbnail',
         'hagtag',
         'scheduled_at',
-        'published_at'
+        'published_at',
+        'is_deleted'
     ];
     protected $casts = [
         'is_deleted' => 'boolean',
