@@ -2,8 +2,6 @@ import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 import Navbar from '../../../components/client/Navbar';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
-import { env } from '../../../environment/env';
 import Joi from 'joi';
 import { useForm } from 'react-hook-form';
 import { IUser } from '../../../types/client/user';
@@ -56,20 +54,17 @@ const SignIn = () => {
 		}
 	};
 
-	const responseFacebook = (response: any) => {
-		if (response.accessToken) {
-			dispatch(
-				login({
-					name: response.name,
-					email: response.email,
-				})
+	const handleFacebookLogin = async () => {
+		try {
+			window.open(
+				'http://localhost:8000/api/auth/facebook',
+				'_blank',
+				'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=500,width=500'
 			);
-			Cookies.set('access_token', response.accessToken);
-			Cookies.set('refresh_token', response.refreshToken);
-			toast.success('Login successful');
-			navigate('/');
-		} else {
-			console.error('Facebook login failed:', response);
+			// const response = await authService.facebookLogin();
+			// console.log(response);
+		} catch (error: any) {
+			toast.error(error.response.data.message);
 		}
 	};
 
@@ -92,11 +87,7 @@ const SignIn = () => {
 								</Link>
 							</p>
 						</div>
-						<img
-							// className="absolute top-0 right-0 w-100px"
-							src="user_login.svg"
-							alt=""
-						/>
+						<img src="user_login.svg" alt="" />
 					</div>
 					<div className="w-1/3 flex justify-center items-center">
 						<form
@@ -146,21 +137,11 @@ const SignIn = () => {
 								or continue with
 							</p>
 							<div className="flex justify-center items-center gap-5 mt-5">
-								<FacebookLogin
-									appId={env.FACEBOOK_APP_ID}
-									autoLoad={true}
-									fields="name,email,picture"
-									callback={responseFacebook}
-									icon="fa-facebook"
-									size="small"
-									render={(renderProps) => (
-										<img
-											onClick={renderProps.onClick}
-											className="w-8 cursor-pointer"
-											src="images/fb_logo.png"
-											alt=""
-										/>
-									)}
+								<img
+									onClick={handleFacebookLogin}
+									className="w-8 cursor-pointer"
+									src="images/fb_logo.png"
+									alt=""
 								/>
 								<img
 									className="w-8"

@@ -91,7 +91,9 @@ const Navbar = () => {
 									<div className="badge badge-error badge-xs absolute top-[-5px] right-[-5px] text-white font-semibold">
 										0
 									</div>
-									<MdOutlineShoppingCart size={24} />
+									<Link to="/cart">
+										<MdOutlineShoppingCart size={24} />
+									</Link>
 								</div>
 
 								<div className="dropdown dropdown-end w-fit">
@@ -236,7 +238,6 @@ const Navbar = () => {
 								</div>
 							</>
 						)}
-
 						<div className="flex flex-col gap-2 mt-4">
 							<div className="flex flex-row gap-2 items-center justify-between">
 								<img src="/demo.png" alt="" className="size-40" />
