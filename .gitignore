@@ -3,4 +3,4 @@ composer.phar
 .idea
 
 
-frontend/package-lock.json
+./frontend/package-lock.json
