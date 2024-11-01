@@ -1,3 +1,4 @@
+import { Category } from "../Category";
 import { Variant } from "./variants";
 
 export interface IProduct {
@@ -8,8 +9,12 @@ export interface IProduct {
   price: number;
   stock_quantity: number;
   promotional_price: number;
+  status: string;
+  sku: string;
+  hashtag: string;
   rating_count: number;
   slug: string;
   thumbnail: string;
   variants: Variant[];
+  categories: Category[];
 }

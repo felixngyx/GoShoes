@@ -6,15 +6,15 @@ import { IProduct } from "../../types/client/products/products";
 
 const ProductCard = () => {
   const {
-    data: products = [],
+    data: response,
     isLoading,
     isError,
   } = useQuery({
     queryKey: ["PRODUCT_KEY"],
-    queryFn: () => getAllProducts(1, 6),
+    queryFn: () => getAllProducts(1, 8),
   });
 
-  console.log("Products data:", products);
+  const productList = response?.data || [];
 
   if (isLoading) {
     return <p>Loading....</p>;
@@ -22,20 +22,26 @@ const ProductCard = () => {
   if (isError) {
     return <p>Error.......</p>;
   }
-
-  if (!Array.isArray(products)) {
-    return <p>No products found.</p>; // Xử lý khi không phải là mảng
+  // Kiểm tra loại dữ liệu
+  if (!Array.isArray(productList)) {
+    console.warn("Expected productList to be an array but got:", productList);
+    return <p>No products found.</p>;
   }
+
   return (
-    <div>
-      {products?.map((product: IProduct) => (
+    <>
+      {productList.map((product: IProduct) => (
         <div
           key={product.id}
-          className="col-span-1 border border-gray-[#F6F7F8] rounded-lg group overflow-hidden"
+          className="border border-gray-[#F6F7F8] rounded-lg group overflow-hidden"
         >
           <div className="relative">
-            <img src={product.thumbnail} alt={product.name} />
-            <div className="absolute hidden group-hover:flex w-[90%] h-[90%] top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-white justify-center items-center gap-2 z-1">
+            <img
+              className="w-[301px] h-[276px] object-cover"
+              src={product.thumbnail}
+              alt={product.name}
+            />
+            <div className="oba absolute hidden group-hover:flex w-[90%] h-[90%] top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-white justify-center items-center gap-2 z-1 ">
               <IoHeartOutline
                 className="cursor-pointer"
                 size={30}
@@ -43,7 +49,7 @@ const ProductCard = () => {
               />
               <IoCart className="cursor-pointer" size={30} color="#40BFFF" />
             </div>
-            <div className="absolute top-0 left-0 text-white font-semibold bg-red-500 px-2 ">
+            <div className="absolute flex justify-center items-center font-light top-0 left-0 text-white bg-[#FF4858] w-[64px] h-[33px]">
               HOT
             </div>
           </div>
@@ -60,17 +66,17 @@ const ProductCard = () => {
             <IoStar color="yellow" />
           </div>
           <div className="flex items-center justify-center gap-2 mb-2">
-            <p className="text-primary text-lg font-bold">
+            <p className="text-[#40BFFF] text-lg font-bold">
               {product.promotional_price}
             </p>
-            <p className="text-[#9098B1] text-xm font-bold line-through">
+            <p className="text-[#9098B1] text-xm font-light line-through">
               {product.price}
             </p>
             <p className="text-[#E71D36] text-xm font-bold">-10%</p>
           </div>
         </div>
       ))}
-    </div>
+    </>
   );
 };
 
