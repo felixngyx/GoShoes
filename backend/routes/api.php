@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\Categories\CategoryController;
