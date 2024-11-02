@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers\API\Order;
 
+use App\Events\NewOrderCreated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Order\OrderUpdateStatus;
 use App\Models\Order;
@@ -234,7 +235,7 @@ class OrderController extends Controller
                 }
 
                 DB::commit();
-
+                event(new NewOrderCreated($order->id));
                 return response()->json([
                     'order' => $order->load(['items.product', 'items.variant.size', 'items.variant.color', 'shipping', 'payment.method']),
                     'payment_url' => $payment_url,
@@ -245,6 +246,7 @@ class OrderController extends Controller
             } else {
                 throw new \Exception('Khởi tạo thanh toán thất bại: ' . json_encode($paymentResponse));
             }
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Tạo đơn hàng thất bại: ' . $e->getMessage());

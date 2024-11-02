@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\Categories\CategoryController;
@@ -109,8 +110,8 @@ Route::prefix('payment')->group(function () {
 });
 
 
-Route::get('auth/facebook', [FacebookAuthController::class, 'redirectToFacebook'])->middleware('web');
-Route::get('auth/facebook/callback', [FacebookAuthController::class, 'handleFacebookCallback'])->middleware('web');
+Route::post('/auth/facebook-login', [FacebookAuthController::class, 'loginWithFacebook']);
+
 
 Route::get('categories', [CategoryController::class, 'index']);
 Route::post('categories', [CategoryController::class, 'store']);
