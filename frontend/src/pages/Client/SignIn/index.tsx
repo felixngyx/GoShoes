@@ -56,22 +56,37 @@ const SignIn = () => {
 		}
 	};
 
-	const responseFacebook = (response: any) => {
+	const responseFacebook = async (response) => {
 		if (response.accessToken) {
-			dispatch(
-				login({
-					name: response.name,
-					email: response.email,
-				})
-			);
-			Cookies.set('access_token', response.accessToken);
-			Cookies.set('refresh_token', response.refreshToken);
-			toast.success('Login successful');
-			navigate('/');
+			try {
+				// Gửi access token tới backend
+				const serverResponse = await authService.loginWithFacebook({
+					access_token: response.accessToken,
+				});
+	
+				// Kiểm tra phản hồi từ server
+				if (serverResponse.data.success) {
+					// Lưu token vào cookie
+					Cookies.set('access_token', serverResponse.data.access_token);
+					Cookies.set('refresh_token', serverResponse.data.refresh_token);
+					dispatch(login(serverResponse.data.user));
+					toast.success(serverResponse.data.message);
+					navigate('/');
+				} else {
+					toast.error(serverResponse.data.message);
+				}
+			} catch (error) {
+				console.error('Facebook login error:', error);
+				toast.error('Facebook login failed. Please try again.');
+			}
 		} else {
 			console.error('Facebook login failed:', response);
+			toast.error('Facebook login failed.');
 		}
 	};
+	
+	
+	
 
 	return (
 		<>
