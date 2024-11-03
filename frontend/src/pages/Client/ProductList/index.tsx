@@ -1,10 +1,11 @@
 import Slider from "@mui/material/Slider";
 import { useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { BsGrid3X3GapFill } from "react-icons/bs";
 import { FaListUl } from "react-icons/fa";
 import Banner from "../../../components/client/Banner";
 import Breadcrumb from "../../../components/client/Breadcrumb";
+import useDebounce from "../../../hooks/client/useDebounce";
 import { filterProduct } from "../../../services/client/filterPrice";
 import { IProduct } from "../../../types/client/products/products";
 import ProductCardList from "./ProductCardList";
@@ -34,6 +35,12 @@ const ProductList = () => {
       console.log("data", products);
     }
   };
+  const debouncedRefetch = useCallback(
+    useDebounce(() => {
+      refetch();
+    }, 1000),
+    [refetch]
+  );
 
   const handlePriceChangeCommitted = () => {
     refetch();
