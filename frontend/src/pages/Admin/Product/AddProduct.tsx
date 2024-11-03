@@ -1,5 +1,5 @@
-import { TrashIcon, Upload, Eye, X } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { TrashIcon, Upload, Eye, X, Logs } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { Status } from '.';
 import categoryService, { CATEGORY } from '../../../services/admin/category';
@@ -43,58 +43,44 @@ const productSchema = Joi.object({
 	brand_id: Joi.number().required().messages({
 		'number.base': 'Brand is required',
 	}),
-	thumbnail: Joi.string().required().messages({
-		'string.empty': 'Thumbnail is required',
+	thumbnail: Joi.any().required().messages({
+		'any.required': 'Thumbnail is required',
 	}),
-	images: Joi.array().items(Joi.string()).required().messages({
+	images: Joi.array().items(Joi.any()).required().messages({
 		'array.base': 'Images must be an array',
 		'array.min': 'At least one image is required',
 	}),
-	stock_quantity: Joi.number().min(0).required().messages({
-		'number.min': 'Stock quantity must be at least 0',
+	stock_quantity: Joi.number().min(1).required().messages({
+		'number.min': 'Stock quantity must be at least 1',
+		'number.base': 'Stock quantity must be a number',
 	}),
 	variants: Joi.array()
 		.items(
 			Joi.object({
-				color: Joi.string().required(),
-				size_id: Joi.number().required(),
-				quantity: Joi.number().min(0).required(),
-				image_variant: Joi.string().allow(''),
+				color: Joi.string().required().messages({
+					'string.empty': 'Color is required',
+				}),
+				size_id: Joi.number().required().messages({
+					'number.base': 'Size is required',
+				}),
+				quantity: Joi.number().min(0).required().messages({
+					'number.min': 'Quantity must be at least 0',
+					'number.base': 'Quantity must be a number',
+				}),
+				image_variant: Joi.any().required().messages({
+					'any.required': 'Image variant is required',
+					'any.empty': 'Image variant is required',
+				}),
 			})
 		)
-		.min(1)
-		.required()
-		.messages({
-			'array.min': 'At least one variant is required',
-		}),
+		.allow(''),
 });
-
-// Update the type definition
-type ProductFormData = {
-	name: string;
-	description: string;
-	price: number;
-	stock_quantity: number;
-	promotional_price: number;
-	status: string;
-	sku: string;
-	hashtag: string;
-	category_ids: number[];
-	brand_id: number;
-	thumbnail: string;
-	images: string[];
-	variants: {
-		color: string;
-		size_id: number;
-		quantity: number;
-		image_variant: string;
-	}[];
-};
 
 const AddProduct = () => {
 	const [categories, setCategories] = useState<CATEGORY[]>([]);
 	const [sizes, setSizes] = useState<SIZE[]>([]);
 	const [brands, setBrands] = useState<BRAND[]>([]);
+	const [selectedCategories, setSelectedCategories] = useState<CATEGORY[]>([]);
 
 	useEffect(() => {
 		try {
@@ -114,9 +100,9 @@ const AddProduct = () => {
 		handleSubmit,
 		control,
 		clearErrors,
-		setValue, // Add this
+		setValue,
 		formState: { errors },
-	} = useForm<ProductFormData>({
+	} = useForm<PRODUCT>({
 		resolver: joiResolver(productSchema),
 		defaultValues: {
 			variants: [],
@@ -128,42 +114,32 @@ const AddProduct = () => {
 		name: 'variants',
 	});
 
-	const [thumbnail, setThumbnail] = useState<string | null>(null);
-	const [thumbnailFile, setThumbnailFile] = useState<File | null>(null); // Add this line
+	const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	const [productImages, setProductImages] = useState<string[]>([]);
 	const productImagesInputRef = useRef<HTMLInputElement>(null);
 
-	// Add this new state for variant images
-	const [variantImages, setVariantImages] = useState<(string | null)[]>([]);
-
-	// Add new state for variant image files
 	const [variantImageFiles, setVariantImageFiles] = useState<(File | null)[]>(
 		[]
 	);
 
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-	// Add state to store the actual files
 	const [productImageFiles, setProductImageFiles] = useState<File[]>([]);
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		event.preventDefault();
 		const file = event.target.files?.[0];
 		if (file) {
-			const objectUrl = URL.createObjectURL(file);
-			setThumbnail(objectUrl);
 			setThumbnailFile(file);
 			// Set the value for the thumbnail field
-			setValue('thumbnail', objectUrl);
+			setValue('thumbnail', file);
 			clearErrors('thumbnail');
 		}
 	};
 
 	const removeThumbnail = () => {
-		setThumbnail(null);
 		setThumbnailFile(null);
 		// Clear the thumbnail value
 		setValue('thumbnail', '');
@@ -190,22 +166,17 @@ const AddProduct = () => {
 		if (files) {
 			const filesArray = Array.from(files);
 			setProductImageFiles((prev) => [...prev, ...filesArray]);
-			const newImages = filesArray.map((file) => URL.createObjectURL(file));
-			setProductImages((prevImages) => [...prevImages, ...newImages]);
-			// Add this line to update the form field
-			setValue('images', [...productImages, ...newImages]);
+			setValue('images', [...productImageFiles, ...filesArray]);
 			clearErrors('images');
 		}
 	};
 
 	const removeProductImage = (index: number) => {
-		setProductImages((prev) => prev.filter((_, i) => i !== index));
-		setProductImageFiles((prev) => prev.filter((_, i) => i !== index));
-		// Add this line to update the form field
-		setValue(
-			'images',
-			productImages.filter((_, i) => i !== index)
-		);
+		setProductImageFiles((prev) => {
+			const newFiles = prev.filter((_, i) => i !== index);
+			setValue('images', newFiles);
+			return newFiles;
+		});
 	};
 
 	const handleProductImagesUploadClick = (e: React.MouseEvent) => {
@@ -221,38 +192,37 @@ const AddProduct = () => {
 		event.preventDefault(); // Add this line
 		const file = event.target.files?.[0];
 		if (file) {
-			const newImages = [...variantImages];
 			const newFiles = [...variantImageFiles];
-			newImages[index] = URL.createObjectURL(file);
 			newFiles[index] = file;
-			setVariantImages(newImages);
 			setVariantImageFiles(newFiles);
 		}
 	};
 
 	const removeVariantImage = (index: number) => {
-		const newImages = [...variantImages];
-		newImages[index] = null;
-		setVariantImages(newImages);
+		const newFiles = [...variantImageFiles];
+		newFiles[index] = null;
+		setVariantImageFiles(newFiles);
 	};
 
 	// Modify the append function to also add a null image
 	const addVariant = () => {
 		append({ color: '', size_id: 0, quantity: 0, image_variant: '' });
-		setVariantImages([...variantImages, null]);
+		setVariantImageFiles([...variantImageFiles, null]);
 	};
 
 	// Modify the remove function to also remove the corresponding image
 	const removeVariant = (index: number) => {
 		remove(index);
-		const newImages = [...variantImages];
-		newImages.splice(index, 1);
-		setVariantImages(newImages);
+		const newFiles = [...variantImageFiles];
+		newFiles.splice(index, 1);
+		setVariantImageFiles(newFiles);
 	};
 
-	const onSubmit = async (data: ProductFormData) => {
+	const onSubmit = async (data: PRODUCT) => {
 		try {
-			// Upload thumbnail if exists
+			console.log(data);
+			// Upload thumbnail
+			toast.success('Creating product...');
 			const thumbnailUrl = thumbnailFile
 				? await uploadImageToCloudinary(thumbnailFile)
 				: '';
@@ -270,7 +240,7 @@ const AddProduct = () => {
 			);
 
 			// Prepare variants data
-			const formattedVariants = data.variants.map(
+			const formattedVariants = data.variants?.map(
 				(variant: any, index: number) => ({
 					color: variant.color,
 					link_image: uploadedVariantImages[index],
@@ -298,13 +268,38 @@ const AddProduct = () => {
 			};
 
 			// Send to backend
-			await productService.create(formData);
+			const res = await productService.create(formData);
+			console.log(res);
 			toast.success('Product created successfully');
 			// navigate('/admin/products');
 		} catch (error) {
 			toast.error('Failed to create product');
 			console.error(error);
 		}
+	};
+
+	const handleCategoryChange = (categoryId: number) => {
+		const category = categories.find((cat) => Number(cat.id) === categoryId);
+		if (category) {
+			const newSelectedCategories = [...selectedCategories, category];
+			setSelectedCategories(newSelectedCategories);
+			setValue(
+				'category_ids',
+				newSelectedCategories.map((cat) => Number(cat.id))
+			);
+			clearErrors('category_ids');
+		}
+	};
+
+	const removeCategory = (categoryId: number) => {
+		const newSelectedCategories = selectedCategories.filter(
+			(cat) => Number(cat.id) !== categoryId
+		);
+		setSelectedCategories(newSelectedCategories);
+		setValue(
+			'category_ids',
+			newSelectedCategories.map((cat) => Number(cat.id))
+		);
 	};
 
 	return (
@@ -352,28 +347,6 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text">Category</span>
-							</div>
-							<select
-								{...register('category_ids.0')} // Change to register first array element
-								className="select select-bordered w-full"
-							>
-								<option value="">Select Category</option>
-								{categories.map((category) => (
-									<option key={category.id} value={category.id}>
-										{category.name}
-									</option>
-								))}
-							</select>
-							{errors.category_ids && (
-								<p className="text-red-500 text-xs">
-									{errors.category_ids.message}
-								</p>
-							)}
-						</label>
-
-						<label className="form-control col-span-1">
-							<div className="label">
 								<span className="label-text">Promotion Price</span>
 							</div>
 							<input
@@ -395,7 +368,7 @@ const AddProduct = () => {
 							</div>
 							<input
 								{...register('stock_quantity')}
-								type="text"
+								type="number"
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
@@ -451,8 +424,8 @@ const AddProduct = () => {
 								<option defaultValue="Select Status">
 									Select Status
 								</option>
-								<option value={Status.PUBLISH}>Publish</option>
-								<option value={Status.UNPUBLISH}>Unpublish</option>
+								<option value={Status.PUBLIC}>Public</option>
+								<option value={Status.UNPUBLIC}>Unpublic</option>
 								<option value={Status.HIDDEN}>Hidden</option>
 							</select>
 							{errors.status && (
@@ -488,6 +461,85 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
+								<span className="label-text">Select Categories</span>
+							</div>
+							<div className="flex flex-col gap-2">
+								<div className="dropdown w-full relative">
+									<div className="w-full min-h-12 border-2 border-gray-300 rounded-md p-2 flex flex-wrap gap-1">
+										{selectedCategories.map((category) => (
+											<div
+												key={category.id}
+												className="bg-[#BCDDFE] text-primary px-2 py-1 rounded-md flex items-center gap-1 text-xs"
+											>
+												<span>{category.name}</span>
+												<button
+													type="button"
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+														removeCategory(Number(category.id));
+													}}
+													className="hover:text-primary/80"
+												>
+													<X size={14} />
+												</button>
+											</div>
+										))}
+									</div>
+
+									<div
+										tabIndex={0}
+										role="button"
+										className="btn btn-sm w-fit absolute right-2 top-2 border border-gray-300 rounded-md"
+										onClick={(e) => {
+											e.preventDefault();
+											e.stopPropagation();
+										}}
+									>
+										<Logs size={16} />
+									</div>
+									<ul
+										tabIndex={0}
+										className="dropdown-content menu bg-base-100 w-full mt-1 p-2 shadow border border-gray-300 rounded-md z-[1] flex flex-col"
+									>
+										{categories
+											.filter(
+												(cat) =>
+													!selectedCategories.some(
+														(selected) =>
+															Number(selected.id) ===
+															Number(cat.id)
+													)
+											)
+											.map((category) => (
+												<li
+													className="hover:bg-gray-100 rounded-none"
+													key={category.id}
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+														handleCategoryChange(
+															Number(category.id)
+														);
+													}}
+												>
+													<button type="button">
+														{category.name}
+													</button>
+												</li>
+											))}
+									</ul>
+								</div>
+							</div>
+							{selectedCategories.length === 0 && (
+								<span className="text-red-500 text-xs">
+									Please select at least one category
+								</span>
+							)}
+						</label>
+
+						<label className="form-control col-span-1 w-fit">
+							<div className="label">
 								<span className="label-text">Thumbnail</span>
 								{errors.thumbnail && (
 									<span className="text-red-500 text-xs">
@@ -504,10 +556,10 @@ const AddProduct = () => {
 								accept="image/*"
 							/>
 							<div className="flex gap-2">
-								{thumbnail ? (
+								{thumbnailFile ? (
 									<div className="relative size-[100px] group">
 										<img
-											src={thumbnail}
+											src={URL.createObjectURL(thumbnailFile)}
 											alt="Thumbnail"
 											className="w-full h-full object-cover rounded-md"
 										/>
@@ -516,7 +568,9 @@ const AddProduct = () => {
 												onClick={(e) => {
 													e.preventDefault();
 													e.stopPropagation();
-													openModal(thumbnail);
+													openModal(
+														URL.createObjectURL(thumbnailFile)
+													);
 												}}
 												className="btn btn-xs btn-circle btn-ghost"
 											>
@@ -549,7 +603,7 @@ const AddProduct = () => {
 						</label>
 
 						{/* New section for product images */}
-						<label className="form-control col-span-1">
+						<label className="form-control col-span-1 w-fit">
 							<div className="label">
 								<span className="label-text">Product Images</span>
 								{errors.images && (
@@ -574,13 +628,13 @@ const AddProduct = () => {
 									<Upload />
 									<p className="text-sm text-gray-500">Add Images</p>
 								</div>
-								{productImages.map((image, index) => (
+								{productImageFiles.map((image, index) => (
 									<div
 										key={index}
 										className="relative size-[100px] group"
 									>
 										<img
-											src={image}
+											src={URL.createObjectURL(image)}
 											alt={`Product ${index + 1}`}
 											className="w-full h-full object-cover rounded-md"
 										/>
@@ -589,7 +643,7 @@ const AddProduct = () => {
 												onClick={(e) => {
 													e.preventDefault();
 													e.stopPropagation();
-													openModal(image);
+													openModal(URL.createObjectURL(image));
 												}}
 												className="btn btn-xs btn-circle btn-ghost"
 											>
@@ -639,48 +693,67 @@ const AddProduct = () => {
 										<input
 											type="file"
 											className="hidden"
-											onChange={(e) =>
-												handleVariantImageChange(index, e)
-											}
 											accept="image/*"
 											id={`variant-image-${index}`}
+											onChange={(e) => {
+												register(
+													`variants.${index}.image_variant`
+												).onChange(e);
+												handleVariantImageChange(index, e);
+											}}
 										/>
-										<div className="flex gap-2">
-											{variantImages[index] ? (
-												<div className="relative size-[100px] group">
-													<img
-														src={variantImages[index]!}
-														alt={`Variant ${index + 1}`}
-														className="w-full h-full object-cover rounded-md"
-													/>
-													<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
-														<button
-															onClick={(e) => {
-																e.preventDefault();
-																e.stopPropagation();
-																openModal(
-																	variantImages[index]!
-																);
-															}}
-															className="btn btn-xs btn-circle btn-ghost"
-														>
-															<Eye color="white" size={16} />
-														</button>
-														<button
-															onClick={(e) => {
-																e.preventDefault();
-																e.stopPropagation();
-																removeVariantImage(index);
-															}}
-															className="btn btn-xs btn-circle btn-ghost"
-														>
-															<TrashIcon
-																color="white"
-																size={16}
-															/>
-														</button>
+										<div className="flex gap-2 relative">
+											{variantImageFiles[index] ? (
+												<>
+													<div className="relative size-[100px] group">
+														<img
+															src={URL.createObjectURL(
+																variantImageFiles[index]
+															)}
+															alt={`Variant ${index + 1}`}
+															className="w-full h-full object-cover rounded-md"
+														/>
+														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
+															<button
+																onClick={(e) => {
+																	e.preventDefault();
+																	e.stopPropagation();
+																	openModal(
+																		URL.createObjectURL(
+																			variantImageFiles[
+																				index
+																			]!
+																		)
+																	);
+																}}
+																className="btn btn-xs btn-circle btn-ghost"
+															>
+																<Eye color="white" size={16} />
+															</button>
+															<button
+																onClick={(e) => {
+																	e.preventDefault();
+																	e.stopPropagation();
+																	removeVariantImage(index);
+																}}
+																className="btn btn-xs btn-circle btn-ghost"
+															>
+																<TrashIcon
+																	color="white"
+																	size={16}
+																/>
+															</button>
+														</div>
 													</div>
-												</div>
+													{errors.variants && (
+														<p className="text-red-500 text-xs absolute -bottom-5">
+															{
+																errors.variants?.[index]
+																	?.image_variant?.message
+															}
+														</p>
+													)}
+												</>
 											) : (
 												<label
 													htmlFor={`variant-image-${index}`}
@@ -693,30 +766,73 @@ const AddProduct = () => {
 												</label>
 											)}
 										</div>
+										{errors.variants && (
+											<p className="text-red-500 text-xs absolute -bottom-5">
+												{
+													errors.variants?.[index]?.image_variant
+														?.message
+												}
+											</p>
+										)}
 									</div>
 									<div className="grid grid-cols-3 gap-3 w-full items-center">
-										<select className="select select-bordered w-full">
-											<option defaultValue="Select Size">
-												Select Size
-											</option>
-											{sizes.map((size) => (
-												<option key={size.id} value={size.id}>
-													{size.size}
+										<div className="form-control relative">
+											<select
+												className="select select-bordered w-full"
+												{...register(`variants.${index}.size_id`)}
+											>
+												<option defaultValue="Select Size">
+													Select Size
 												</option>
-											))}
-										</select>
+												{sizes.map((size) => (
+													<option key={size.id} value={size.id}>
+														{size.size}
+													</option>
+												))}
+											</select>
+											{errors.variants && (
+												<p className="text-red-500 text-xs absolute -bottom-5">
+													{
+														errors.variants?.[index]?.size_id
+															?.message
+													}
+												</p>
+											)}
+										</div>
 
-										<input
-											type="text"
-											placeholder="Color"
-											className="input input-bordered w-full"
-										/>
+										<div className="form-control relative">
+											<input
+												type="text"
+												placeholder="Color"
+												className="input input-bordered w-full"
+												{...register(`variants.${index}.color`)}
+											/>
+											{errors.variants && (
+												<p className="text-red-500 text-xs absolute -bottom-5">
+													{
+														errors.variants?.[index]?.color
+															?.message
+													}
+												</p>
+											)}
+										</div>
 
-										<input
-											type="number"
-											placeholder="Quantity"
-											className="input input-bordered w-full"
-										/>
+										<div className="form-control relative">
+											<input
+												type="number"
+												placeholder="Quantity"
+												className="input input-bordered w-full"
+												{...register(`variants.${index}.quantity`)}
+											/>
+											{errors.variants && (
+												<p className="text-red-500 text-xs absolute -bottom-5">
+													{
+														errors.variants?.[index]?.quantity
+															?.message
+													}
+												</p>
+											)}
+										</div>
 									</div>
 								</div>
 								<button

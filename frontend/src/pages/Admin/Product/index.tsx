@@ -7,8 +7,8 @@ import { FaSort } from 'react-icons/fa';
 import { formatVNCurrency } from '../../../common/formatVNCurrency';
 
 export enum Status {
-	PUBLISH = 'publish',
-	UNPUBLISH = 'unpublish',
+	PUBLIC = 'public',
+	UNPUBLIC = 'unpublic',
 	HIDDEN = 'hidden',
 }
 
@@ -196,9 +196,9 @@ const Product = () => {
 								<td className="px-6 py-3">
 									<div
 										className={`badge text-white badge-${
-											product.status === Status.PUBLISH
+											product.status === Status.PUBLIC
 												? 'success'
-												: product.status === Status.UNPUBLISH
+												: product.status === Status.UNPUBLIC
 												? 'warning'
 												: 'error'
 										}`}

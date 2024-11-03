@@ -56,11 +56,11 @@ const SignIn = () => {
 
 	const handleFacebookLogin = async () => {
 		try {
-			window.open(
-				'http://localhost:8000/api/auth/facebook',
-				'_blank',
-				'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=500,width=500'
-			);
+			// window.open(
+			// 	'http://localhost:8000/api/auth/facebook',
+			// 	'_blank',
+			// 	'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=500,width=500'
+			// );
 			// const response = await authService.facebookLogin();
 			// console.log(response);
 		} catch (error: any) {
