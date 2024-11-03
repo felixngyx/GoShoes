@@ -18,6 +18,9 @@ const ProductList = () => {
   const { data: products, refetch } = useQuery<IProduct[]>({
     queryKey: ["PRODUCT_KEY", priceRange, showCount],
     queryFn: () => filterProduct(priceRange[0], priceRange[1], showCount),
+    staleTime: 2,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
   });
 
   const formatPrice = (price: number) => {
@@ -33,7 +36,7 @@ const ProductList = () => {
   };
 
   const handlePriceChangeCommitted = () => {
-    refetch(); // Chỉ gọi lại API khi thả chuột khỏi thanh trượt
+    refetch();
   };
 
   const handleShowCountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -83,7 +86,7 @@ const ProductList = () => {
               <Slider
                 value={priceRange}
                 onChange={handlePriceChange}
-                onChangeCommitted={handlePriceChangeCommitted} // Chỉ gọi lại API sau khi kéo thả xong
+                onChangeCommitted={handlePriceChangeCommitted}
                 valueLabelDisplay="off"
                 min={0}
                 max={10000000}
@@ -192,7 +195,11 @@ const ProductList = () => {
               layout === "grid" ? "grid-cols-3" : "grid-cols-1"
             } gap-5`}
           >
-            {Array.isArray(products) && products.length > 0 ? (
+            {products === undefined ? (
+              // Hiển thị loader khi đang tải dữ liệu
+              <span className="loading loading-spinner loading-lg"></span>
+            ) : products.length > 0 ? (
+              // Hiển thị danh sách sản phẩm nếu có
               products.map((product) =>
                 layout === "grid" ? (
                   <ProductItems key={product.id} product={product} />
@@ -201,7 +208,10 @@ const ProductList = () => {
                 )
               )
             ) : (
-              <span className="loading loading-spinner loading-lg"></span>
+              // Hiển thị thông báo khi không có sản phẩm nào
+              <p className="text-center text-gray-500">
+                Không có sản phẩm nào phù hợp.
+              </p>
             )}
           </div>
 
