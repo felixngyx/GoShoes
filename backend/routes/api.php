@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\Categories\CategoryController;
@@ -85,9 +86,11 @@ Route::group([
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'OrderOneUser']);
         Route::post('/', [OrderController::class, 'store']);
-        Route::get('/{id}', [OrderController::class, 'show']);
+        // Route::get('/{id}', [OrderController::class, 'show']);
         Route::put('/{id}', [OrderController::class, 'update']);
         Route::get('/{id}/check-payment', [OrderController::class, 'checkPaymentStatus']);
+        Route::put('/{id}/update', [OrderController::class,'UpdateOrder']);
+        Route::post('/{id}/renew-payment', [OrderController::class, 'renewPaymentLink']);
     });
 
     Route::prefix('discounts')->group(function () {
@@ -112,8 +115,8 @@ Route::prefix('payment')->group(function () {
 });
 
 
-Route::get('auth/facebook', [FacebookAuthController::class, 'redirectToFacebook'])->middleware('web');
-Route::get('auth/facebook/callback', [FacebookAuthController::class, 'handleFacebookCallback'])->middleware('web');
+Route::post('/auth/facebook-login', [FacebookAuthController::class, 'loginWithFacebook']);
+
 
 Route::get('categories', [CategoryController::class, 'index']);
 Route::post('categories', [CategoryController::class, 'store']);
