@@ -57,23 +57,18 @@ Route::post('/colors', [ColorController::class, 'store']);
 Route::get('/colors/{id}', [ColorController::class, 'show']);
 Route::put('/colors/{id}', [ColorController::class, 'update']);
 Route::delete('/colors/{id}', [ColorController::class, 'destroy']);
-Route::delete('colors', [ColorController::class, 'destroyMultiple']);
-
 // API Size
 Route::get('/sizes', [SizeController::class, 'index']);
 Route::post('/sizes', [SizeController::class, 'store']);
 Route::get('/sizes/{id}', [SizeController::class, 'show']);
 Route::put('/sizes/{id}', [SizeController::class, 'update']);
 Route::delete('/sizes/{id}', [SizeController::class, 'destroy']);
-Route::delete('sizes', [SizeController::class, 'destroyMultiple']);
 
 Route::get('/brands', [BrandController::class, 'index']);
 Route::post('/brands', [BrandController::class, 'store']);
 Route::get('/brands/{id}', [BrandController::class, 'show']);
 Route::put('/brands/{id}', [BrandController::class, 'update']);
 Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
-Route::delete('brands', [BrandController::class, 'destroyMultiple']);
-
 
 
 

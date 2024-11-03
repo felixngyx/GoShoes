@@ -25,10 +25,12 @@ class ProductController extends Controller
         $limit = $request->input('limit', 9);
         $orderBy = $request->input('orderBy', 'id');
         $order = $request->input('order', 'asc');
-        $minPrice = $request->input('minPrice') ? (float) $request->input('minPrice') : null;
-        $maxPrice = $request->input('maxPrice') ? (float) $request->input('maxPrice') : null;
+        $minPrice = $request->input('minPrice');
+        $maxPrice = $request->input('maxPrice');
+        $maxPrice = $request->input('brand');
         $category = $request->input('category');
         $color = $request->input('color');
+        $name = $request->input('name');
         $name = $request->input('name');
         $brand_name = $request->input('brand_name');
         $brand_id = $request->input('brand_id');
@@ -38,14 +40,13 @@ class ProductController extends Controller
             ->where('is_deleted', false);
 
         // Áp dụng các điều kiện lọc
-        if (!is_null($minPrice)) {
+        if ($minPrice) {
             $query->where('price', '>=', $minPrice);
         }
-    
-        if (!is_null($maxPrice)) {
+
+        if ($maxPrice) {
             $query->where('price', '<=', $maxPrice);
         }
-        // dd($query->toSql(), $query->getBindings());
         if ($name) {
 
             $query->where('name', 'LIKE', '%' . $name . '%');
@@ -92,25 +93,15 @@ class ProductController extends Controller
     }
     public function store(StoreProductRequest $request)
     {
-        try {
-            $validated = $request->validated();
-            $product = $this->productService->storeProduct($validated);
+        $validated = $request->validated();
+        // Log::info($validated);
+        // $validated = $request->validated();
+        $product = $this->productService->storeProduct($validated);
 
-            // Kiểm tra nếu product là response (tức là có lỗi)
-            if ($product instanceof \Illuminate\Http\JsonResponse) {
-                return $product;
-            }
-
-            return response()->json([
-                'message' => 'Sản phẩm đã được thêm thành công!',
-                'product' => $product
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Có lỗi xảy ra khi thêm sản phẩm.',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'Sản phẩm đã được thêm thành công!',
+            'product' => $product
+        ], 201);
     }
 
     public function show(string $id)
@@ -193,6 +184,8 @@ class ProductController extends Controller
             // Khởi tạo query với các relationship cần thiết
             $query = Product::with(['variants.color', 'variants.size', 'categories', 'brand'])
                 ->where('is_deleted', true); // Chỉ lấy sản phẩm đã xóa mềm
+
+
             if ($name) {
                 $query->where('name', 'LIKE', '%' . $name . '%');
             }
@@ -219,12 +212,12 @@ class ProductController extends Controller
                 ->where('is_deleted', 1)
                 ->firstOrFail();
 
-            $this->productService->restoreProduct($product);
+            $this->productService->restoreProduct($product); 
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Sản phẩm đã được phục hồi thành công!',
-                'product' => $product
+                'product' => $product 
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -238,7 +231,7 @@ class ProductController extends Controller
     {
         try {
             $productIds = $request->input('product_ids', []);
-
+            
             $products = Product::whereIn('id', $productIds)
                 ->where('is_deleted', 1)
                 ->get();
