@@ -21,4 +21,9 @@ class BrandRepository implements BrandRepositoryInterface {
     public function deleteBrand(Brand $brand) {
         return $brand->delete();
     }
+    public function deleteBrandsByIds(array $ids){
+        return Brand::whereIn('id', $ids)->delete();  // Xóa tất cả màu sắc theo ID
+
+    }
+
 }
