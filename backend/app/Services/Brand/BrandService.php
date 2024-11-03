@@ -20,7 +20,7 @@ class BrandService
     public function storeBrand($validated)
     {
         try {
-           
+
             $BrandData = [
                 'name' => $validated['name'],
             ];
@@ -43,9 +43,9 @@ class BrandService
     public function updateBrand($id, $validated)
     {
         try {
-          
+
             $brand = $this->brandRepository->findBrandById($id);
-       
+
             $brandData = [
                 'name' => $validated['name'],
             ];
@@ -66,7 +66,7 @@ class BrandService
     public function deleteBrand(Brand $brand)
     {
         try {
-           
+
             $this->brandRepository->deleteBrand($brand);
 
             return response()->json([
@@ -78,6 +78,19 @@ class BrandService
                 'message' => 'Có lỗi xảy ra khi xóa thương hiệu.',
                 'error' => $e->getMessage(),
             ], 500);
+        }
+    }
+    public function deleteBrands(array $ids)
+    {
+        if (empty($ids)) {
+            return response()->json(['message' => 'Không có ID nào được cung cấp!'], 400);
+        }
+        try {
+            $deletedCount = $this->brandRepository->deleteBrandsByIds($ids);
+            return response()->json(['message' => 'Đã xóa thành công ' . $deletedCount . ' thương hiệu!'], 200);
+        } catch (\Exception $e) {
+            Log::error('Error deleting brands: ' . $e->getMessage());
+            return response()->json(['message' => 'Có lỗi xảy ra khi xóa thương hiệu.', 'error' => $e->getMessage()], 500);
         }
     }
 }
