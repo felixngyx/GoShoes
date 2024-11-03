@@ -18,75 +18,62 @@ class ProductService
         $this->productRepository = $productRepository;
     }
 
-    public function storeProduct($validated)
-    {
-        try {
-            // Tạo SKU
-            $sku = 'shope-' . 'T' . date('m') . rand(10, 99);
-            
-            // Chuẩn bị dữ liệu sản phẩm
-            $productData = [
-                'name' => $validated['name'],
-                'description' => $validated['description'],
-                'price' => $validated['price'],
-                'stock_quantity' => $validated['stock_quantity'],
-                'promotional_price' => $validated['promotional_price'] ?? null, // Thêm null nếu không có
-                'sku' => $sku,
-                'thumbnail' => $validated['thumbnail'],
-                'hagtag' => $validated['hagtag'] ?? null, // Thêm null nếu không có
-                'brand_id' => $validated['brand_id'],
-            ];
-    
-            // Tạo sản phẩm
-            $product = $this->productRepository->createProduct($productData);
-            
-            // Đồng bộ categories
-            $this->productRepository->syncCategories($product, $validated['category_ids']);
-    
-            // Xử lý variants nếu có
-            if (isset($validated['variants']) && !empty($validated['variants'])) {
+        public function storeProduct($validated)
+        {
+            try {
+                // Logic lưu sản phẩm và các biến thể, ảnh
+
+                $sku = 'shope-' . 'T' . date('m') . rand(10, 99);
+                $productData = [
+                    'name' => $validated['name'],
+                    'description' => $validated['description'],
+                    'price' => $validated['price'],
+                    'stock_quantity' => $validated['stock_quantity'],
+                    'promotional_price' => $validated['promotional_price'],
+                    'sku' => $sku,
+                    'thumbnail' => $validated['thumbnail'],
+                    'hagtag' => $validated['hagtag'],
+                    'brand_id' => $validated['brand_id'],
+                ];
+
+                $product = $this->productRepository->createProduct($productData);
+                $this->productRepository->syncCategories($product, $validated['category_ids']);
+
                 foreach ($validated['variants'] as $variantData) {
-                    // Tạo màu mới
+                    // $color = VariantColor::firstOrCreate(['color' => $variantData['color']]);
+
                     $color = VariantColor::create([
                         'color' => $variantData['color'],
-                        'link_image' => $variantData['link_image']
+                        'link_image' => $variantData['link_image'] // Kết hợp vào một mảng duy nhất
                     ]);
-    
-                    // Chuẩn bị dữ liệu variant
-                    $variantToCreate = [
-                        'color_id' => $color->id,
-                        'product_id' => $product->id,
-                        'image_variant' => $variantData['image_variant'],
-                        'size_id' => $variantData['size_id'],
-                        'quantity' => $variantData['quantity']
-                    ];
-                    
-                    $this->productRepository->createProductVariant($variantToCreate);
+
+                    $variantData['color_id'] = $color->id;
+                    $variantData['product_id'] = $product->id;
+                    $variantData['image_variant'] = $variantData['image_variant'];
+                    $this->productRepository->createProductVariant($variantData);
                 }
-            }
-    
-            // Xử lý ảnh phụ nếu có
-            if (isset($validated['images']) && !empty($validated['images'])) {
-                foreach ($validated['images'] as $image) {
-                    $this->productRepository->createProductImage([
-                        'product_id' => $product->id,
-                        'image_path' => $image,
-                    ]);
+                
+                
+                if (isset($validated['images'])) {
+                    foreach ($validated['images'] as $image) {
+                        $this->productRepository->createProductImage([
+                            'product_id' => $product->id,
+                            'image_path' => $image,
+                        ]);
+                    }
                 }
+
+                return $product;
+            } catch (\Exception $e) {
+
+                Log::error('Error    product: ' . $e->getMessage());
+
+                return response()->json([
+                    'message' => 'Có lỗi xảy ra khi lưu sản phẩm.',
+                    'error' => $e->getMessage(),
+                ], 500);
             }
-    
-            // Load relationships và trả về sản phẩm
-            return $product->load(['categories', 'variants.color', 'variants.size', 'images', 'brand']);
-    
-        } catch (\Exception $e) {
-            Log::error('Error creating product: ' . $e->getMessage());
-            
-            return response()->json([
-                'message' => 'Có lỗi xảy ra khi lưu sản phẩm.',
-                'error' => $e->getMessage(),
-            ], 500);
         }
-    }
 
     public function findProductForDeletion(string $id)
     {
@@ -149,112 +136,90 @@ class ProductService
     public function updateProduct(Product $product, $validated)
     {
         try {
-            Log::info('Bắt đầu cập nhật sản phẩm', ['product_id' => $product->id]);
-    
+            Log::info('Id sản phẩm', ['product_id' => $product->id]);
+
             // Cập nhật thông tin sản phẩm
             $productData = [
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'price' => $validated['price'],
                 'stock_quantity' => $validated['stock_quantity'],
-                'promotional_price' => $validated['promotional_price'] ?? null,
+                'promotional_price' => $validated['promotional_price'],
                 'thumbnail' => $validated['thumbnail'],
-                'hagtag' => $validated['hagtag'] ?? null,
+                'hagtag' => $validated['hagtag'],
                 'brand_id' => $validated['brand_id'],
             ];
-    
+
+            Log::info('dữ liệu sản phẩm trước khi update', $productData);
+
             // Cập nhật sản phẩm
             $product->update($productData);
-            Log::info('Đã cập nhật thông tin cơ bản của sản phẩm', ['product_id' => $product->id]);
-    
-            // Cập nhật danh mục
+            Log::info('Thêm dữ liệu thành công', ['product_id' => $product->id]);
+
+            // Cập nhật danh mục liên quan
             $this->productRepository->syncCategories($product, $validated['category_ids']);
-            Log::info('Đã cập nhật danh mục', ['product_id' => $product->id]);
-    
-            // Xử lý variants
-            if (isset($validated['variants']) && !empty($validated['variants'])) {
-                Log::info('Bắt đầu cập nhật variants', ['product_id' => $product->id]);
-                
-                // Lấy danh sách variant hiện tại
-                $existingVariants = $product->variants()
-                    ->get()
-                    ->keyBy(function ($variant) {
-                        return $variant->color_id . '-' . $variant->size_id;
-                    });
-    
-                // Tạo danh sách variant mới từ dữ liệu đầu vào
-                $newVariantKeys = collect($validated['variants'])->map(function ($variant) {
-                    return $variant['color_id'] . '-' . $variant['size_id'];
-                })->toArray();
-    
-                // Xóa các variant không còn trong danh sách mới
-                foreach ($existingVariants as $key => $variant) {
-                    if (!in_array($key, $newVariantKeys)) {
-                        $variant->delete();
-                        Log::info('Đã xóa variant cũ', ['variant_id' => $variant->id]);
-                    }
+            Log::info('Danh mục đã được đồng bộ hóa thành công cho sản phẩm.', ['product_id' => $product->id]);
+
+            // Cập nhật các biến thể
+            foreach ($validated['variants'] as $variantData) {
+                Log::info('Dữ liệu đầu vào cho biến thể:', $variantData);
+            
+                // Tìm biến thể bằng `product_id`, `color_id`, và `size_id`
+                $variant = ProductVariant::where('product_id', $product->id)
+                ->where('color_id', $variantData['color_id'])
+                ->where('size_id', $variantData['size_id'])
+                ->first();
+        
+            
+                if ($variant) {
+                    Log::info('Tìm thấy biến thể thành công.', ['variant_id' => $variant->id]);
+            
+                    // Cập nhật nếu biến thể tồn tại
+                    $variant->update([
+                        'color_id' => $variantData['color_id'],
+                        'size_id' => $variantData['size_id'],
+                        'quantity' => $variantData['quantity'],
+                        'image_variant' => $variantData['image_variant'] ?? $variant->image_variant,
+                    ]);
+                    Log::info('Đã cập nhật biến thể thành công.', ['variant_id' => $variant->id]);
+                } else {
+                    // Nếu biến thể không tồn tại, tạo mới
+                    Log::info('Không tìm thấy biến thể. Tạo biến thể mới.', $variantData);
+            
+                    $variantData['product_id'] = $product->id;
+                    $this->productRepository->createProductVariant($variantData);
+                    Log::info('Đã tạo biến thể mới', $variantData);
                 }
-    
-                // Cập nhật hoặc tạo mới variants
-                foreach ($validated['variants'] as $variantData) {
-                    $variant = $product->variants()
-                        ->where('color_id', $variantData['color_id'])
-                        ->where('size_id', $variantData['size_id'])
-                        ->first();
-    
-                    if ($variant) {
-                        // Cập nhật variant hiện có
-                        $variant->update([
-                            'quantity' => $variantData['quantity'],
-                            'image_variant' => $variantData['image_variant'] ?? $variant->image_variant,
-                        ]);
-                        Log::info('Đã cập nhật variant', ['variant_id' => $variant->id]);
-                    } else {
-                        // Tạo variant mới
-                        $this->productRepository->createProductVariant([
-                            'product_id' => $product->id,
-                            'color_id' => $variantData['color_id'],
-                            'size_id' => $variantData['size_id'],
-                            'quantity' => $variantData['quantity'],
-                            'image_variant' => $variantData['image_variant'] ?? null,
-                        ]);
-                        Log::info('Đã tạo variant mới');
-                    }
-                }
-            } else {
-                // Nếu không có variants trong dữ liệu cập nhật, xóa tất cả variants hiện có
-                $product->variants()->delete();
-                Log::info('Đã xóa tất cả variants do không có trong dữ liệu cập nhật', ['product_id' => $product->id]);
             }
-    
-            // Cập nhật hình ảnh
+        
+            // Cập nhật các hình ảnh sản phẩm
             if (isset($validated['images'])) {
-                // Xóa ảnh cũ nếu cần
+                Log::info('Updating product images.', ['product_id' => $product->id]);
+                // Xóa các hình ảnh cũ nếu có
                 // $product->images()->delete();
-                
+                Log::info('Đã xóa hình ảnh cũ cho sản phẩm.', ['product_id' => $product->id]);
+
                 foreach ($validated['images'] as $image) {
                     $this->productRepository->createProductImage([
                         'product_id' => $product->id,
                         'image_path' => $image,
                     ]);
+                    Log::info('Đã thêm hình ảnh mới.', ['product_id' => $product->id, 'image_path' => $image]);
                 }
-                Log::info('Đã cập nhật hình ảnh sản phẩm', ['product_id' => $product->id]);
             }
-    
-            // Load relationships và trả về
-            $updatedProduct = $product->load(['categories', 'variants.color', 'variants.size', 'images', 'brand']);
-    
+
+            Log::info('Cập nhật sản phẩm đã hoàn tất thành công.', ['product_id' => $product->id]);
+
             return response()->json([
                 'message' => 'Sản phẩm đã được cập nhật thành công!',
-                'product' => $updatedProduct,
+                'product' => $product,
             ], 200);
-    
         } catch (\Exception $e) {
-            Log::error('Lỗi khi cập nhật sản phẩm: ' . $e->getMessage(), [
+            Log::error('Error updating product: ' . $e->getMessage(), [
                 'product_id' => $product->id,
                 'validated_data' => $validated,
             ]);
-    
+
             return response()->json([
                 'message' => 'Có lỗi xảy ra khi cập nhật sản phẩm.',
                 'error' => $e->getMessage(),

@@ -107,10 +107,4 @@ class ColorController extends Controller
 
         return response()->json(['message' => 'Màu sắc đã được xóa thành công!'], 200);
     }
-
-    public function destroyMultiple(Request $request)
-    {
-        $ids = $request->input('ids');
-        return $this->colorService->deleteColors($ids); 
-    }
 }

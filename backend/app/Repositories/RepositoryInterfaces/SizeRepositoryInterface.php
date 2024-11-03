@@ -10,6 +10,4 @@ interface SizeRepositoryInterface
     public function findSizeById(int $id);
     public function updateSize(int $id, array $data);  // Thêm hàm update
     public function deleteSize(VariantSize $Size);
-    public function deleteSizesByIds(array $ids);
-
 }
