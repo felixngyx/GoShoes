@@ -10,4 +10,6 @@ interface ColorRepositoryInterface
     public function findColorById(int $id);
     public function updateColor(int $id, array $data);  // Thêm hàm update
     public function deleteColor(VariantColor $color);
+    public function deleteColorsByIds(array $ids);
+
 }

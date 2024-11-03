@@ -109,4 +109,9 @@ class SizeController extends Controller
 
         return response()->json(['message' => 'Size đã được xóa thành công!'], 200);
     }
+    public function destroyMultiple(Request $request)
+    {
+        $ids = $request->input('ids');
+        return $this->sizeService->deleteSizes($ids); 
+    }
 }

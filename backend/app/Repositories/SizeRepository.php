@@ -31,4 +31,9 @@ class SizeRepository implements SizeRepositoryInterface
     {
         return $Size->delete();
     }
+    public function deleteSizesByIds(array $ids)
+    {
+        return VariantSize::whereIn('id', $ids)->delete();  // Xóa tất cả màu sắc theo ID
+    }
+
 }

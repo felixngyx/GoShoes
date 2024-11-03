@@ -59,11 +59,11 @@ class ProductRepository implements ProductRepositoryInterface
    
     public function softDeleteProduct(Product $product)
     {
-        return $product->update(['is_deleted' => 1]);
+        return $product->update(['is_deleted' => true]);
     }
     public function restoreProduct(Product $product)
     {
-        return $product->update(['is_deleted' => 0]);
+        return $product->update(['is_deleted' => false]);
     }
 
      public function find($id)

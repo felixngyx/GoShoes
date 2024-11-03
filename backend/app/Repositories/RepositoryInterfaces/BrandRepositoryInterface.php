@@ -9,4 +9,6 @@ interface BrandRepositoryInterface
     public function findBrandById(int $id);
     public function updateBrand(int $id, array $data);  // Thêm hàm update
     public function deleteBrand(Brand $color);
+    public function deleteBrandsByIds(array $ids);
+
 }
