@@ -13,7 +13,8 @@ class BrandController extends Controller
 {
 
     protected $brandService;
-    public function __construct(BrandService $brandService){
+    public function __construct(BrandService $brandService)
+    {
         $this->brandService = $brandService;
     }
     /**
@@ -29,7 +30,7 @@ class BrandController extends Controller
 
         $query = Brand::query();
         $brand = $query->orderBy($orderBy, $order)
-        ->paginate($limit, ['*'], 'page', $page);
+            ->paginate($limit, ['*'], 'page', $page);
         return response()->json([
             'message' => 'Danh sách sizes',
             'brands' => $brand
@@ -53,7 +54,7 @@ class BrandController extends Controller
         $brand = $this->brandService->storeBrand($validated);
 
         return response()->json([
-           'message' => 'Thương hiệu đã được thêm thành công!',
+            'message' => 'Thương hiệu đã được thêm thành công!',
             'brand' => $brand
         ], 201);
     }
@@ -67,12 +68,12 @@ class BrandController extends Controller
 
         if (!$brand) {
             return response()->json([
-               'message' => 'Thương hiệu không tồn tại',
+                'message' => 'Thương hiệu không tồn tại',
             ], 404);
         }
 
         return response()->json([
-           'message' => 'Thông tin thương hiệu',
+            'message' => 'Thông tin thương hiệu',
             'brand' => $brand
         ]);
     }
@@ -90,20 +91,20 @@ class BrandController extends Controller
 
         if (!$brand) {
             return response()->json([
-               'message' => 'Thương hiệu không tồn tại',
+                'message' => 'Thương hiệu không tồn tại',
             ], 404);
         }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:brands,name,'. $id,
+            'name' => 'required|string|max:255|unique:brands,name,' . $id,
             'description' => 'nullable|string|max:255',
             'logo_url' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
         $brand = $this->brandService->updateBrand($id, $validated);
 
-    
+
         return response()->json([
-           'message' => 'Thông tin thương hiệu đã được cập nhật thành công!',
+            'message' => 'Thông tin thương hiệu đã được cập nhật thành công!',
             'brand' => $brand
         ], 200);
     }
@@ -111,17 +112,23 @@ class BrandController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id){
-         // Tìm sản phẩm theo ID
-         $brand = $this->brandService->findBrandId($id);
+    public function destroy(string $id)
+    {
+        // Tìm sản phẩm theo ID
+        $brand = $this->brandService->findBrandId($id);
 
-         if (!$brand) {
-             return response()->json(['message' => 'Thương hiệu không tồn tại!'], 404);
-         }
- 
-         // Xóa Thương hiệu
-         $this->brandService->deleteBrand($brand);
- 
-         return response()->json(['message' => 'Thương hiệu đã được xóa thành công!'], 200);
+        if (!$brand) {
+            return response()->json(['message' => 'Thương hiệu không tồn tại!'], 404);
+        }
+
+        // Xóa Thương hiệu
+        $this->brandService->deleteBrand($brand);
+
+        return response()->json(['message' => 'Thương hiệu đã được xóa thành công!'], 200);
+    }
+    public function destroyMultiple(Request $request)
+    {
+        $ids = $request->input('ids');
+        return $this->brandService->deleteBrands($ids);
     }
 }
