@@ -1,10 +1,11 @@
 import Slider from "@mui/material/Slider";
 import { useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { BsGrid3X3GapFill } from "react-icons/bs";
 import { FaListUl } from "react-icons/fa";
 import Banner from "../../../components/client/Banner";
 import Breadcrumb from "../../../components/client/Breadcrumb";
+import useDebounce from "../../../hooks/client/useDebounce";
 import { filterProduct } from "../../../services/client/filterPrice";
 import { IProduct } from "../../../types/client/products/products";
 import ProductCardList from "./ProductCardList";
@@ -18,6 +19,9 @@ const ProductList = () => {
   const { data: products, refetch } = useQuery<IProduct[]>({
     queryKey: ["PRODUCT_KEY", priceRange, showCount],
     queryFn: () => filterProduct(priceRange[0], priceRange[1], showCount),
+    staleTime: 2,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
   });
 
   const formatPrice = (price: number) => {
@@ -31,9 +35,15 @@ const ProductList = () => {
       console.log("data", products);
     }
   };
+  const debouncedRefetch = useCallback(
+    useDebounce(() => {
+      refetch();
+    }, 1000),
+    [refetch]
+  );
 
   const handlePriceChangeCommitted = () => {
-    refetch(); // Chỉ gọi lại API khi thả chuột khỏi thanh trượt
+    debouncedRefetch(); // Chỉ gọi lại API khi thả chuột khỏi thanh trượt
   };
 
   const handleShowCountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -83,7 +93,7 @@ const ProductList = () => {
               <Slider
                 value={priceRange}
                 onChange={handlePriceChange}
-                onChangeCommitted={handlePriceChangeCommitted} // Chỉ gọi lại API sau khi kéo thả xong
+                onChangeCommitted={handlePriceChangeCommitted}
                 valueLabelDisplay="off"
                 min={0}
                 max={10000000}
@@ -192,7 +202,11 @@ const ProductList = () => {
               layout === "grid" ? "grid-cols-3" : "grid-cols-1"
             } gap-5`}
           >
-            {Array.isArray(products) && products.length > 0 ? (
+            {products === undefined ? (
+              // Hiển thị loader khi đang tải dữ liệu
+              <span className="loading loading-spinner loading-lg"></span>
+            ) : products.length > 0 ? (
+              // Hiển thị danh sách sản phẩm nếu có
               products.map((product) =>
                 layout === "grid" ? (
                   <ProductItems key={product.id} product={product} />
@@ -201,7 +215,10 @@ const ProductList = () => {
                 )
               )
             ) : (
-              <span className="loading loading-spinner loading-lg"></span>
+              // Hiển thị thông báo khi không có sản phẩm nào
+              <p className="text-center text-gray-500">
+                Không có sản phẩm nào phù hợp.
+              </p>
             )}
           </div>
 

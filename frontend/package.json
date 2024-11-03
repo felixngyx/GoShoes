@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "proxy": "https://provinces.open-api.vn"
   },
   "dependencies": {
     "@cloudinary/react": "^1.13.0",
