@@ -82,7 +82,7 @@ class ColorController extends Controller
     {
         $validated = $request->validate([
             'color' => 'required|string|max:255|unique:variant_colors,color,' . $id,
-            'hex_code' => 'required|string|max:20',
+            'link_image' => 'required|string|max:255',
         ]);
 
         $color = $this->colorService->updateColor($id, $validated);
@@ -106,5 +106,9 @@ class ColorController extends Controller
         $this->colorService->deleteColor($color);
 
         return response()->json(['message' => 'Màu sắc đã được xóa thành công!'], 200);
+    }
+    public function destroyMultiple(Request $request){
+        $ids = $request->input('ids');
+        return $this->colorService->deleteColors($ids);
     }
 }
