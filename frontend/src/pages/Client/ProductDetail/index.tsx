@@ -100,15 +100,14 @@ const ProductDetail = () => {
   );
 
   useEffect(() => {
-    // Kiểm tra nếu product và product.images đã tồn tại
     if (product && product.images && product.images.length > 0) {
       const interval = setInterval(() => {
         setSelectedThumbnail(
           (prevIndex) => (prevIndex + 1) % product.images.length
         );
-      }, 3000); // Change image every 3 seconds
+      }, 3000);
 
-      return () => clearInterval(interval); // Cleanup on unmount
+      return () => clearInterval(interval);
     }
   }, [product]);
 
@@ -177,9 +176,6 @@ const ProductDetail = () => {
                 <ChevronLeft color="#9098B1" />
               </button>
               <div className="grid grid-cols-4 gap-2">
-                {/* {product.images
-                  .slice(currentSlide, currentSlide + 4)
-                  .map((image, index) => ( */}
                 {product.images
                   .slice(currentSlide, currentSlide + 4)
                   .map((image: IImages, index: number) => (

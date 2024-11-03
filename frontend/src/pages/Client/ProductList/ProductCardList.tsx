@@ -11,7 +11,7 @@ const ProductCardList = () => {
     isError,
   } = useQuery({
     queryKey: ["PRODUCT_KEY"],
-    queryFn: () => getAllProducts(1, 8),
+    queryFn: () => getAllProducts(1, 10),
   });
 
   const productList = response?.data || [];

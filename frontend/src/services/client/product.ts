@@ -1,4 +1,3 @@
-import { log } from "console";
 import axiosClient from "../../apis/axiosClient";
 import { IProduct } from "../../types/client/products/products";
 
@@ -54,5 +53,15 @@ export const getAllRelatedProducts = async (
   } catch (error) {
     console.error("An error occurred:", error);
     return []; // Trả về mảng rỗng nếu có lỗi
+  }
+};
+
+export const getProductsByName = async (name: string) => {
+  try {
+    const response = await axiosClient.get(`/products?name=${name}`);
+    return response.data; // Trả về dữ liệu từ phản hồi
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    throw new Error("Failed to fetch products");
   }
 };
