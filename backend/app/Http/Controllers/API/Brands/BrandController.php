@@ -124,9 +124,4 @@ class BrandController extends Controller
  
          return response()->json(['message' => 'Thương hiệu đã được xóa thành công!'], 200);
     }
-    public function destroyMultiple(Request $request)
-    {
-        $ids = $request->input('ids');
-        return $this->brandService->deleteBrands($ids); 
-    }
 }

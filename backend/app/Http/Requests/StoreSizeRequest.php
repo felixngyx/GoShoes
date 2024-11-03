@@ -23,7 +23,8 @@ class StoreSizeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'size' => 'required|string|max:255|unique:variant_sizes,size'
+            'size' => 'required|string|max:255|unique:variant_sizes,size',
+            'code' => 'required|string|max:20',
         ];
         
     }

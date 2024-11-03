@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Services\Color;
-
 use Illuminate\Support\Facades\Log;
 use App\Repositories\RepositoryInterfaces\ColorRepositoryInterface;
 
@@ -22,7 +21,7 @@ class ColorService
         try {
             $colorData = [
                 'color' => $validated['color'],
-                'link_image' => $validated['link_image'],
+                'hex_code' => $validated['hex_code'],
             ];
             $color = $this->colorRepository->createColor($colorData);
             return $color;
@@ -35,8 +34,7 @@ class ColorService
             ], 500);
         }
     }
-    public function findColor(string $id)
-    {
+    public function findColor(string $id){
         return $this->colorRepository->findColorById($id);
     }
     public function updateColor($id, $validated)  // Hàm updateColor
@@ -46,7 +44,7 @@ class ColorService
                 'color' => $validated['color'],
                 'hex_code' => $validated['hex_code'],
             ];
-
+            
             $color = $this->colorRepository->updateColor($id, $colorData);
             if ($color) {
                 return $color;
@@ -77,20 +75,6 @@ class ColorService
                 'message' => 'Có lỗi xảy ra khi xóa màu sắc.',
                 'error' => $e->getMessage(),
             ], 500);
-        }
-    }
-
-    public function deleteColors(array $ids)
-    {
-        if (empty($ids)) {
-            return response()->json(['message' => 'Không có ID nào được cung cấp!'], 400);
-        }
-        try {
-            $deletedCount = $this->colorRepository->deleteColorsByIds($ids);
-            return response()->json(['message' => 'Đã xóa thành công ' . $deletedCount . ' màu sắc!'], 200);
-        } catch (\Exception $e) {
-            Log::error('Error deleting colors: ' . $e->getMessage());
-            return response()->json(['message' => 'Có lỗi xảy ra khi xóa màu sắc.', 'error' => $e->getMessage()], 500);
         }
     }
 }

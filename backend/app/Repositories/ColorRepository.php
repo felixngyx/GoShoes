@@ -13,8 +13,7 @@ class ColorRepository implements ColorRepositoryInterface
     {
         return VariantColor::create($data);
     }
-    public function findColorById(int $id)
-    {
+    public function findColorById(int $id){
         return VariantColor::find($id);
     }
     public function updateColor(int $id, array $data) // Hàm updateColor
@@ -31,9 +30,5 @@ class ColorRepository implements ColorRepositoryInterface
 
     {
         return $color->delete();
-    }
-    public function deleteColorsByIds(array $ids)
-    {
-        return VariantColor::whereIn('id', $ids)->delete();  // Xóa tất cả màu sắc theo ID
     }
 }

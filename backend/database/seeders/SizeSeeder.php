@@ -9,11 +9,12 @@ class SizeSeeder extends Seeder
 {
     public function run()
     {
-        $sizes = ['38', '39', '40', '41', '42', '43'];
+        $sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
         foreach ($sizes as $size) {
             VariantSize::create([
                 'size' => $size,
+                'code' => $size,
             ]);
         }
     }
