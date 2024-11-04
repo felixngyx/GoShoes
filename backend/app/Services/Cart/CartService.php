@@ -4,7 +4,6 @@ namespace App\Services\Cart;
 
 use App\Repositories\RepositoryInterfaces\CartRepositoryInterface as CartRepository;
 use App\Services\ServiceInterfaces\Cart\CartServiceInterface;
-use http\QueryString;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -12,10 +11,9 @@ class CartService implements CartServiceInterface
 {
     private static $cartRepository;
 
-    public function __construct(
-    )
+    public function __construct()
     {
-        self::setCartRepository(CartRepository::class);
+        self::setCartRepository(app(CartRepository::class));
     }
 
     /**
@@ -39,6 +37,12 @@ class CartService implements CartServiceInterface
     public function all()
     {
         return self::getCartRepository()->all();
+    }
+
+    public function getAllByUserId()
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+        return self::getCartRepository()->getAllByUserId($user->id);
     }
 
     public function createOrUpdate(array $request)

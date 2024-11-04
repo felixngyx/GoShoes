@@ -19,4 +19,9 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
         return $this->model->where('user_id', $userId)->where('product_id', $productId)->first();
     }
 
+    public function getAllByUserId(int $userId)
+    {
+        return $this->model->with('productvariant')->where('user_id', $userId)->get();
+    }
+
 }

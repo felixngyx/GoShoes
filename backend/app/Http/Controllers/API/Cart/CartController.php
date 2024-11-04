@@ -2,24 +2,25 @@
 namespace App\Http\Controllers\API\Cart;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Cart\DeleteCartRequest;
 use App\Http\Requests\Cart\StoreCartRequest;
 use App\Http\Requests\Cart\UpdateCartRequest;
-use App\Jobs\StoreCartJob;
-use App\Models\Cart;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Redis;
-use Tymon\JWTAuth\Facades\JWTAuth;
-
+use App\Services\ServiceInterfaces\Cart\CartServiceInterface as CartService;
 class CartController extends Controller
 {
 
     private static $cartService;
 
+    public function __construct(
+    )
+    {
+        self::setCartService(app(CartService::class));
+    }
+
     /**
      * @return mixed
      */
-    public static function getCartService()
+    public static function getCartService(): CartService
     {
         return self::$cartService;
     }
@@ -27,16 +28,11 @@ class CartController extends Controller
     /**
      * @param mixed $cartService
      */
-    public static function setCartService($cartService): void
+    public static function setCartService(
+        CartService $cartService
+    ): void
     {
         self::$cartService = $cartService;
-    }
-
-    public function __construct(
-        Cart $cart
-    )
-    {
-        self::setCartService($cart);
     }
 
     public function index()
@@ -49,7 +45,7 @@ class CartController extends Controller
         return self::getCartService()->createOrUpdate($request->all());
     }
 
-    public function destroy(Request $request)
+    public function destroy(DeleteCartRequest $request)
     {
         return self::getCartService()->delete($request->all());
     }

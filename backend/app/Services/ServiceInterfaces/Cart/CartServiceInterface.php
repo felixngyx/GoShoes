@@ -10,5 +10,7 @@ Interface CartServiceInterface
 
     public function delete(array $request);
 
+    public function getAllByUserId();
+
 
 }
