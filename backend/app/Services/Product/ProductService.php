@@ -228,18 +228,31 @@ class ProductService
             }
     
             // Cập nhật hình ảnh
-            if (isset($validated['images'])) {
-                // Xóa ảnh cũ nếu cần
-                // $product->images()->delete();
-                
-                foreach ($validated['images'] as $image) {
+         if (isset($validated['images'])) {
+            // Lấy danh sách ID hình ảnh mới
+            $newImageIds = collect($validated['images'])->pluck('id')->filter()->toArray();
+            
+            // Xóa những hình ảnh không có trong danh sách mới
+            $product->images()
+                ->whereNotIn('id', $newImageIds)
+                ->delete();
+            
+            foreach ($validated['images'] as $imageData) {
+                if (isset($imageData['id'])) {
+                    // Cập nhật hình ảnh hiện có
+                    $product->images()
+                        ->where('id', $imageData['id'])
+                        ->update(['image_path' => $imageData['image_path']]);
+                } else {
+                    // Tạo hình ảnh mới
                     $this->productRepository->createProductImage([
                         'product_id' => $product->id,
-                        'image_path' => $image,
+                        'image_path' => $imageData['image_path'],
                     ]);
                 }
-                Log::info('Đã cập nhật hình ảnh sản phẩm', ['product_id' => $product->id]);
             }
+            Log::info('Đã cập nhật hình ảnh sản phẩm', ['product_id' => $product->id]);
+        }
     
             // Load relationships và trả về
             $updatedProduct = $product->load(['categories', 'variants.color', 'variants.size', 'images', 'brand']);
