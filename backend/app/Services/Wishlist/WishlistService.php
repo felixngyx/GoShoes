@@ -13,10 +13,9 @@ class WishlistService implements WishlistServiceInterface
 
 
     public function __construct(
-        WishlistRepository $wishListRepository,
     )
     {
-        self::setWishListRepository($wishListRepository);
+        self::setWishListRepository(app(WishlistRepository::class));
     }
 
     /**
@@ -47,7 +46,7 @@ class WishlistService implements WishlistServiceInterface
         return response()->json([
             'success' => true,
             'data' => [
-                'product_id' => $data->product_id
+                $data->makeHidden(self::columnHiddens()),
             ],
         ]);
     }
@@ -61,7 +60,10 @@ class WishlistService implements WishlistServiceInterface
                 'user_id' => $user->id,
                 'product_id' => $request['product_id'],
             ];
-            self::getWishListRepository()->createOrUpdate($data);
+            self::getWishListRepository()->upsert(
+                $data,
+                ['user_id'=>$data['user_id'], 'product_id'=>$data['product_id']],
+            );
             DB::commit();
             return response()->json([
                 'success' => true,
@@ -80,7 +82,8 @@ class WishlistService implements WishlistServiceInterface
     {
         DB::beginTransaction();
         try {
-            $wishList = self::$wishListRepository->findByUserIdAndProductId($request['user_id'], $request['product_id']);
+            $user = JWTAuth::parseToken()->authenticate();
+            $wishList = self::$wishListRepository->findByUserIdAndProductId($user->id, $request['product_id']);
             if (!$wishList) {
                 return response()->json([
                     'success' => false,
@@ -101,4 +104,16 @@ class WishlistService implements WishlistServiceInterface
             ], $e->getCode());
         }
     }
+
+    private static function columnHiddens() : array
+    {
+        return [
+            'id',
+            'user_id',
+            'created_at',
+            'updated_at',
+            'product_id',
+        ];
+    }
+
 }

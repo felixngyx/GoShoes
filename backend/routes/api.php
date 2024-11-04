@@ -111,13 +111,13 @@ Route::group([
     Route::prefix('wishlist')->group(function () {
         Route::get('/', [WishlistController::class, 'index']);
         Route::post('/', [WishlistController::class, 'store']);
-        Route::delete('/{id}', [WishlistController::class, 'destroy']);
+        Route::delete('/', [WishlistController::class, 'destroy']);
     });
 
     Route::prefix('cart')->group(function () {
         Route::get('/', [CartController::class, 'index']);
         Route::post('/', [CartController::class, 'store']);
-        Route::delete('/product/{product_id}', [CartController::class, 'destroy']);
+        Route::delete('/', [CartController::class, 'destroy']);
         Route::put('/', [CartController::class, 'update']);
     });
 });

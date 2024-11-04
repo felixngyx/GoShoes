@@ -21,6 +21,6 @@ class WishlistRepository extends BaseRepository implements WishlistRepositoryInt
 
     public function getAllByUserId(int $userId)
     {
-        return $this->model->where('user_id', $userId)->get();
+        return $this->model->where('user_id', $userId)->with('product')->get();
     }
 }

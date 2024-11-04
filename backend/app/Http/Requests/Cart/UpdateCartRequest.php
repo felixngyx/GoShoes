@@ -22,7 +22,7 @@ class UpdateCartRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => 'required|integer|exists:products,id',
+            'product_variant_id' => 'required|integer|exists:product_variants,id',
             'quantity' => 'required|integer|min:1'
         ];
     }
@@ -36,9 +36,9 @@ class UpdateCartRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'product_id.required' => 'Product ID is required',
-            'product_id.integer' => 'Product ID must be an integer',
-            'product_id.exists' => 'Product ID does not exist',
+            'product_variant_id.required' => 'Product ID is required',
+            'product_variant_id.integer' => 'Product ID must be an integer',
+            'product_variant_id.exists' => 'Product ID does not exist',
             'quantity.required' => 'Quantity is required',
             'quantity.integer' => 'Quantity must be an integer',
             'quantity.min' => 'Quantity must be at least 1'

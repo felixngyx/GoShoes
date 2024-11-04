@@ -42,6 +42,7 @@ class CartController extends Controller
 
     public function store(StoreCartRequest $request)
     {
+        $request['type'] = 'create';
         return self::getCartService()->createOrUpdate($request->all());
     }
 
@@ -52,6 +53,7 @@ class CartController extends Controller
 
     public function update(UpdateCartRequest $request)
     {
+        $request['type'] = 'update';
         return self::getCartService()->createOrUpdate($request->all());
     }
 }
