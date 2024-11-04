@@ -76,4 +76,17 @@ class SizeService
             ], 500);
         }
     }
+    public function deleteSizes(array $ids)
+    {
+        if (empty($ids)) {
+            return response()->json(['message' => 'Không có ID nào được cung cấp!'], 400);
+        }
+        try {
+            $deletedCount = $this->sizeRepository->deleteSizesByIds($ids);
+            return response()->json(['message' => 'Đã xóa thành công ' . $deletedCount . ' size!'], 200);
+        } catch (\Exception $e) {
+            Log::error('Error deleting sizes: ' . $e->getMessage());
+            return response()->json(['message' => 'Có lỗi xảy ra khi xóa size.', 'error' => $e->getMessage()], 500);
+        }
+    }
 }

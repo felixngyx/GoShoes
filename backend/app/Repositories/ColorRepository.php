@@ -31,4 +31,9 @@ class ColorRepository implements ColorRepositoryInterface
     {
         return $color->delete();
     }
+    public function deleteColorsByIds(array $ids)
+    {
+        return VariantColor::whereIn('id', $ids)->delete();  // Xóa tất cả màu sắc theo ID
+    }
+
 }
