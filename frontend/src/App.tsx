@@ -24,7 +24,7 @@ import ProfileAdmin from "./pages/Admin/Profile";
 import Order from "./pages/Client/User/Order";
 import NotfoundPage from "./pages/Client/NotfoundPage";
 import OrderDetail from "./pages/Client/User/OrderDetail";
-import Address from "./pages/Client/User/Address";
+import Address from "./pages/Client/User/Address/Address";
 import User from "./pages/Admin/User";
 import ResetPassword from "./pages/Client/ResetPassword";
 import ForgetPassword from "./pages/Client/ForgetPassword";
@@ -33,6 +33,8 @@ import { Toaster } from "react-hot-toast";
 import Attribute from "./pages/Admin/Attribute";
 import Homepage from "./pages/Client/home";
 import AddProduct from "./pages/Admin/Product/AddProduct";
+import ContactUs from "./pages/Client/ContactUs";
+import ChatUI from "./components/client/ChatUi";
 
 function App() {
   const { pathname } = useLocation();
@@ -40,6 +42,7 @@ function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+  const isAdminPage = pathname.startsWith("/admin");
 
   return (
     <>
@@ -176,6 +179,7 @@ function App() {
         </Route>
       </Routes>
       <Toaster position="top-right" reverseOrder={false} />
+      {!isAdminPage && <ChatUI />}
     </>
   );
 }
