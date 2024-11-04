@@ -36,6 +36,8 @@ php artisan migrate
 ```bash
 php artisan serve
 php artisan queue:work
+php artisan schedule:work
+
 ```
 
 6. Open your browser and go to http://localhost:8000
