@@ -2,6 +2,7 @@ import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 import Navbar from '../../../components/client/Navbar';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { env } from '../../../environment/env';
 import Joi from 'joi';
 import { useForm } from 'react-hook-form';
 import { IUser } from '../../../types/client/user';
@@ -11,6 +12,7 @@ import Cookies from 'js-cookie';
 import { useDispatch } from 'react-redux';
 import { login } from '../../../store/client/userSlice';
 import toast from 'react-hot-toast';
+import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
 
 const schema = Joi.object({
 	email: Joi.string()
@@ -54,17 +56,32 @@ const SignIn = () => {
 		}
 	};
 
-	const handleFacebookLogin = async () => {
-		try {
-			// window.open(
-			// 	'http://localhost:8000/api/auth/facebook',
-			// 	'_blank',
-			// 	'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=500,width=500'
-			// );
-			// const response = await authService.facebookLogin();
-			// console.log(response);
-		} catch (error: any) {
-			toast.error(error.response.data.message);
+	const responseFacebook = async (response: any) => {
+		if (response.accessToken) {
+			try {
+				// Gửi access token tới backend
+				const serverResponse = await authService.loginWithFacebook({
+					access_token: response.accessToken,
+				});
+
+				// Kiểm tra phản hồi từ server
+				if (serverResponse.data.success) {
+					// Lưu token vào cookie
+					Cookies.set('access_token', serverResponse.data.access_token);
+					Cookies.set('refresh_token', serverResponse.data.refresh_token);
+					dispatch(login(serverResponse.data.user));
+					toast.success(serverResponse.data.message);
+					navigate('/');
+				} else {
+					toast.error(serverResponse.data.message);
+				}
+			} catch (error) {
+				console.error('Facebook login error:', error);
+				toast.error('Facebook login failed. Please try again.');
+			}
+		} else {
+			console.error('Facebook login failed:', response);
+			toast.error('Facebook login failed.');
 		}
 	};
 
@@ -87,7 +104,11 @@ const SignIn = () => {
 								</Link>
 							</p>
 						</div>
-						<img src="user_login.svg" alt="" />
+						<img
+							// className="absolute top-0 right-0 w-100px"
+							src="user_login.svg"
+							alt=""
+						/>
 					</div>
 					<div className="w-1/3 flex justify-center items-center">
 						<form
@@ -137,11 +158,21 @@ const SignIn = () => {
 								or continue with
 							</p>
 							<div className="flex justify-center items-center gap-5 mt-5">
-								<img
-									onClick={handleFacebookLogin}
-									className="w-8 cursor-pointer"
-									src="images/fb_logo.png"
-									alt=""
+								<FacebookLogin
+									appId={env.FACEBOOK_APP_ID}
+									autoLoad={true}
+									fields="name,email,picture"
+									callback={responseFacebook}
+									icon="fa-facebook"
+									size="small"
+									render={(renderProps) => (
+										<img
+											onClick={renderProps.onClick}
+											className="w-8 cursor-pointer"
+											src="images/fb_logo.png"
+											alt=""
+										/>
+									)}
 								/>
 								<img
 									className="w-8"

@@ -32,7 +32,6 @@ import Product from './pages/Admin/Product';
 import { Toaster } from 'react-hot-toast';
 import Attribute from './pages/Admin/Attribute';
 import Homepage from './pages/Client/home';
-import AddProduct from './pages/Admin/Product/AddProduct';
 import Cart from './pages/Client/Cart';
 
 function App() {
@@ -75,7 +74,6 @@ function App() {
 					<Route path="user" element={<User />} />
 					<Route path="product" element={<Product />} />
 					<Route path="attribute" element={<Attribute />} />
-					<Route path="product/create" element={<AddProduct />} />
 					<Route
 						path="calendar" // Changed from "/calendar" to "calendar"
 						element={

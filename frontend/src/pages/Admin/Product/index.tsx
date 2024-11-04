@@ -1,10 +1,17 @@
-import { PencilLine } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Eye, PencilLine } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaSort } from 'react-icons/fa';
 import { formatVNCurrency } from '../../../common/formatVNCurrency';
+import productService, { PRODUCT } from '../../../services/admin/product';
+import LoadingTable from '../LoadingTable';
+import ModalProduct from './ModalProduct';
+import { toast } from 'react-hot-toast';
+import { CATEGORY } from '../../../services/admin/category';
+import categoryService from '../../../services/admin/category';
+import sizeService, { SIZE } from '../../../services/admin/size';
+import brandService, { BRAND } from '../../../services/admin/brand';
 
 export enum Status {
 	PUBLIC = 'public',
@@ -15,59 +22,59 @@ export enum Status {
 const Product = () => {
 	const [selectAll, setSelectAll] = useState(false); // State for select all
 	const [selectedItems, setSelectedItems] = useState<number[]>([]); // State for individual selections
+	const [productData, setProductData] = useState<PRODUCT[]>([]);
+	const [categories, setCategories] = useState<CATEGORY[]>([]);
+	const [sizes, setSizes] = useState<SIZE[]>([]);
+	const [brands, setBrands] = useState<BRAND[]>([]);
+	const [loading, setLoading] = useState(false);
+	const [page, setPage] = useState(1);
+	const [limit] = useState(10);
+	const [totalPages, setTotalPages] = useState(0);
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [selectedProduct, setSelectedProduct] = useState<PRODUCT | null>(null);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-	const productData = [
-		{
-			name: 'Product 1',
-			price: 100000,
-			category: 'Category 1',
-			status: 'Active',
-			image: 'https://placehold.co/100x100',
-			rating: 4.5,
-			reviews: 100,
-			size: [38, 39, 40, 41, 42, 43],
-		},
-		{
-			name: 'Product 2',
-			price: 150000,
-			category: 'Category 2',
-			status: 'Active',
-			image: 'https://placehold.co/100x100',
-			rating: 4.0,
-			reviews: 80,
-			size: [39, 40, 41],
-		},
-		{
-			name: 'Product 3',
-			price: 200000,
-			category: 'Category 3',
-			status: 'Inactive',
-			image: 'https://placehold.co/100x100',
-			rating: 3.5,
-			reviews: 50,
-			size: [40, 41, 42],
-		},
-		{
-			name: 'Product 4',
-			price: 250000,
-			category: 'Category 1',
-			status: 'Active',
-			image: 'https://placehold.co/100x100',
-			rating: 5.0,
-			reviews: 200,
-			size: [38, 39, 40, 41],
-		},
-		{
-			name: 'Product 5',
-			price: 300000,
-			category: 'Category 2',
-			status: 'Active',
-			image: 'https://placehold.co/100x100',
-			rating: 4.8,
-			reviews: 150,
-			size: [39, 40, 41, 42],
-		},
-	];
+	const fetchProducts = async () => {
+		try {
+			const res = await productService.getAll(page, limit);
+			setProductData(res.data.data.data);
+			setTotalPages(res.data.data.last_page);
+		} catch (error) {
+			console.error(error);
+		}
+	};
+
+	const deleteProduct = async (id: number) => {
+		if (window.confirm('Are you sure you want to delete this product?')) {
+			try {
+				await productService.delete(id);
+				toast.success('Product deleted successfully');
+				fetchProducts();
+			} catch (error) {
+				console.error(error);
+			}
+		}
+	};
+
+	useEffect(() => {
+		(async () => {
+			try {
+				const categories = await categoryService.getAll();
+				const sizes = await sizeService.getAll();
+				const brands = await brandService.getAll();
+
+				setCategories(categories.data.category.data);
+				setSizes(sizes.data.sizes.data);
+				setBrands(brands.data.brands.data);
+			} catch (error) {
+				console.error(error);
+			}
+		})();
+	}, []);
+
+	useEffect(() => {
+		fetchProducts();
+	}, [page, limit]);
 
 	const handleSelectAll = () => {
 		if (selectAll) {
@@ -84,6 +91,117 @@ const Product = () => {
 		} else {
 			setSelectedItems([...selectedItems, index]); // Select item
 		}
+	};
+
+	const handlePageChange = (newPage: number) => {
+		setPage(newPage);
+	};
+
+	const renderPaginationButtons = () => {
+		const buttons = [];
+		const maxVisibleButtons = 5;
+
+		// Always show first page
+		buttons.push(
+			<button
+				key={1}
+				onClick={() => handlePageChange(1)}
+				className={`join-item btn btn-sm ${page === 1 ? 'btn-active' : ''}`}
+			>
+				1
+			</button>
+		);
+
+		if (totalPages <= maxVisibleButtons) {
+			// Show all pages if total is small
+			for (let i = 2; i <= totalPages; i++) {
+				buttons.push(
+					<button
+						key={i}
+						onClick={() => handlePageChange(i)}
+						className={`join-item btn btn-sm ${
+							page === i ? 'btn-active' : ''
+						}`}
+					>
+						{i}
+					</button>
+				);
+			}
+		} else {
+			// Show dots and last few pages
+			if (page > 3) {
+				buttons.push(
+					<button
+						key="dots1"
+						className="join-item btn btn-sm btn-disabled"
+					>
+						...
+					</button>
+				);
+			}
+
+			// Show current page and neighbors
+			for (
+				let i = Math.max(2, page - 1);
+				i <= Math.min(page + 1, totalPages - 1);
+				i++
+			) {
+				buttons.push(
+					<button
+						key={i}
+						onClick={() => handlePageChange(i)}
+						className={`join-item btn btn-sm ${
+							page === i ? 'btn-active' : ''
+						}`}
+					>
+						{i}
+					</button>
+				);
+			}
+
+			if (page < totalPages - 2) {
+				buttons.push(
+					<button
+						key="dots2"
+						className="join-item btn btn-sm btn-disabled"
+					>
+						...
+					</button>
+				);
+			}
+
+			// Always show last page
+			buttons.push(
+				<button
+					key={totalPages}
+					onClick={() => handlePageChange(totalPages)}
+					className={`join-item btn btn-sm ${
+						page === totalPages ? 'btn-active' : ''
+					}`}
+				>
+					{totalPages}
+				</button>
+			);
+		}
+
+		return <div className="join ms-auto">{buttons}</div>;
+	};
+
+	const openModal = () => setIsModalOpen(true);
+	const closeModal = () => setIsModalOpen(false);
+	const handleSuccess = () => {
+		fetchProducts(); // Refresh product list after successful creation
+		closeModal();
+	};
+
+	const openEditModal = async (product: PRODUCT) => {
+		setSelectedProduct(product);
+		setIsEditModalOpen(true);
+	};
+
+	const closeEditModal = () => {
+		setIsEditModalOpen(false);
+		setSelectedProduct(null);
 	};
 
 	return (
@@ -103,13 +221,13 @@ const Product = () => {
 						<Trash2 size={16} />
 						<p>Delete {selectedItems.length} items</p>
 					</button>
-					<Link
-						to="/admin/product/create"
+					<button
+						onClick={openModal}
 						className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 					>
 						<Plus size={16} />
 						Add Product
-					</Link>
+					</button>
 				</div>
 			</div>
 
@@ -151,10 +269,36 @@ const Product = () => {
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								Category
+								<div className="flex items-center">
+									Sale Price
+									<a>
+										<FaSort />
+									</a>
+								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								Status
+								<div className="flex items-center">
+									Quantity
+									<a>
+										<FaSort />
+									</a>
+								</div>
+							</th>
+							<th scope="col" className="px-6 py-3">
+								<div className="flex items-center">
+									Category
+									<a>
+										<FaSort />
+									</a>
+								</div>
+							</th>
+							<th scope="col" className="px-6 py-3">
+								<div className="flex items-center">
+									Status
+									<a>
+										<FaSort />
+									</a>
+								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
 								Action
@@ -162,79 +306,123 @@ const Product = () => {
 						</tr>
 					</thead>
 					<tbody>
-						{productData.map((product, key) => (
-							<tr
-								className={`bg-white dark:bg-slate-800 ${
-									key !== productData.length - 1
-										? 'border-b border-stroke'
-										: ''
-								}`}
-								key={key}
-							>
-								<td className="w-4 p-4">
-									<div className="flex items-center">
-										<input
-											id={`checkbox-table-search-${key}`} // Unique ID for each checkbox
-											type="checkbox"
-											className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-											checked={selectedItems.includes(key)} // Bind checked state to individual selection
-											onChange={() => handleSelectItem(key)} // Add onChange handler for individual checkboxes
-										/>
-										<label
-											htmlFor={`checkbox-table-search-${key}`}
-											className="sr-only"
+						{loading ? (
+							<LoadingTable />
+						) : (
+							productData.map((product, key) => (
+								<tr
+									className={`bg-white dark:bg-slate-800 ${
+										key !== productData.length - 1
+											? 'border-b border-stroke'
+											: ''
+									}`}
+									key={key}
+								>
+									<td className="w-4 p-4">
+										<div className="flex items-center">
+											<input
+												id={`checkbox-table-search-${key}`} // Unique ID for each checkbox
+												type="checkbox"
+												className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+												checked={selectedItems.includes(key)} // Bind checked state to individual selection
+												onChange={() => handleSelectItem(key)} // Add onChange handler for individual checkboxes
+											/>
+											<label
+												htmlFor={`checkbox-table-search-${key}`}
+												className="sr-only"
+											>
+												checkbox
+											</label>
+										</div>
+									</td>
+									<td className="px-6 py-3">
+										<div className="flex items-center gap-2">
+											<img
+												src={product.thumbnail as string}
+												alt={product.name}
+												className="size-10 rounded-full"
+											/>
+											<p className="font-semibold">{product.name}</p>
+										</div>
+									</td>
+									<td className="px-6 py-3 font-semibold">
+										{formatVNCurrency(Number(product.price))}
+									</td>
+									<td className="px-6 py-3 font-semibold">
+										{formatVNCurrency(
+											Number(product.promotional_price)
+										)}
+									</td>
+									<td className="px-6 py-3">
+										{product.stock_quantity}
+									</td>
+									<td className="px-6 py-3">
+										{product.categories?.map((category) => (
+											<p key={category.id}>{category.name}</p>
+										))}
+									</td>
+									<td className="px-6 py-3">
+										<div
+											className={`badge text-white badge-${
+												product.status === Status.PUBLIC
+													? 'success'
+													: product.status === Status.UNPUBLIC
+													? 'warning'
+													: 'error'
+											}`}
 										>
-											checkbox
-										</label>
-									</div>
-								</td>
-								<td className="px-6 py-3">{product.name}</td>
-								<td className="px-6 py-3">
-									{formatVNCurrency(product.price)}
-								</td>
-								<td className="px-6 py-3">{product.category}</td>
-								<td className="px-6 py-3">
-									<div
-										className={`badge text-white badge-${
-											product.status === Status.PUBLIC
-												? 'success'
-												: product.status === Status.UNPUBLIC
-												? 'warning'
-												: 'error'
-										}`}
-									>
-										{product.status}
-									</div>
-								</td>
-								<td className="px-6 py-3 flex items-center gap-2">
-									<button
-										onClick={() => {
-											const modal = document.getElementById(
-												'modal-product'
-											) as HTMLDialogElement; // Assert type
-											modal?.showModal(); // Now showModal is recognized
-										}}
-										className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
-									>
-										<PencilLine size={16} />
-									</button>
-									<button className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error">
-										<Trash2 size={16} />
-									</button>
-								</td>
-							</tr>
-						))}
+											{product.status}
+										</div>
+									</td>
+									<td className="px-6 py-3 flex items-center gap-2">
+										<button className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary">
+											<Eye size={16} />
+										</button>
+										<button
+											onClick={() => openEditModal(product)}
+											className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+										>
+											<PencilLine size={16} />
+										</button>
+										<button
+											onClick={() =>
+												deleteProduct(Number(product.id))
+											}
+											className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error"
+										>
+											<Trash2 size={16} />
+										</button>
+									</td>
+								</tr>
+							))
+						)}
 					</tbody>
 				</table>
 			</div>
 
-			<div className="join ms-auto">
-				<button className="join-item btn btn-sm">1</button>
-				<button className="join-item btn btn-sm">2</button>
-				<button className="join-item btn btn-sm btn-disabled">...</button>
-				<button className="join-item btn btn-sm">99</button>
-				<button className="join-item btn btn-sm">100</button>
-			</div>
+			{renderPaginationButtons()}
+
+			<ModalProduct
+				categories={categories}
+				sizes={sizes}
+				brands={brands}
+				isOpen={isEditModalOpen}
+				onClose={closeEditModal}
+				onSuccess={() => {
+					fetchProducts();
+					closeEditModal();
+				}}
+				product={selectedProduct}
+			/>
+
+			<ModalProduct
+				categories={categories}
+				sizes={sizes}
+				brands={brands}
+				isOpen={isModalOpen}
+				onClose={closeModal}
+				onSuccess={handleSuccess}
+			/>
 		</div>
 	);
 };
