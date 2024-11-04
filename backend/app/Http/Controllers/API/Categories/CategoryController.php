@@ -7,6 +7,7 @@ use App\Http\Requests\Category\CategoryRequest;
 use App\Models\Category;
 use App\Repositories\RepositoryInterfaces\CategoryRepositoryInterface;
 use App\Services\ServiceInterfaces\Category\CategoryServiceInterface;
+use Doctrine\DBAL\Driver\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;   
 
