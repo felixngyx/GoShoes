@@ -1,83 +1,31 @@
-import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
-import React, { useState } from "react";
-import {
-  fetchDistricts,
-  fetchProvinces,
-  fetchWards,
-} from "../../../../services/client/locationService";
+import React from "react";
+
 import { District, Province, Ward } from "../../../../types/client/address";
+import useLocationSelect from "../../../../hooks/client/useLocationSelect";
 
 const LocationSelect: React.FC<{
   onLocationSelect: (location: string) => void;
   onClose: () => void;
 }> = ({ onLocationSelect, onClose }) => {
-  const [selectedProvince, setSelectedProvince] = useState<Province | null>(
-    null
-  );
-  const [selectedDistrict, setSelectedDistrict] = useState<District | null>(
-    null
-  );
-  const [selectedWard, setSelectedWard] = useState<Ward | null>(null);
-  const [showDistricts, setShowDistricts] = useState(false);
-  const [showWards, setShowWards] = useState(false);
-
-  const { data: provinces = [], error: provinceError } = useQuery({
-    queryKey: ["provinces"],
-    queryFn: fetchProvinces,
-  });
-
-  const { data: districts = [], error: districtError } = useQuery({
-    queryKey: ["districts", selectedProvince?.code],
-    queryFn: () =>
-      selectedProvince
-        ? fetchDistricts(selectedProvince.code)
-        : Promise.resolve([]),
-    enabled: !!selectedProvince,
-  });
-
-  const { data: wards = [], error: wardError } = useQuery({
-    queryKey: ["wards", selectedDistrict?.code],
-    queryFn: () =>
-      selectedDistrict
-        ? fetchWards(selectedDistrict.code)
-        : Promise.resolve([]),
-    enabled: !!selectedDistrict,
-  });
-
-  const handleProvinceSelect = (province: Province) => {
-    setSelectedProvince(province);
-    setSelectedDistrict(null);
-    setSelectedWard(null);
-    setShowDistricts(true); // Show districts
-  };
-
-  const handleDistrictSelect = (district: District) => {
-    if (district && district.code) {
-      setSelectedDistrict(district);
-      setSelectedWard(null);
-      setShowWards(true); // Show wards
-    } else {
-      console.error("Invalid district selected");
-    }
-  };
-
-  const handleWardSelect = (ward: Ward) => {
-    setSelectedWard(ward);
-    if (selectedProvince && selectedDistrict && ward) {
-      const locationString = `${selectedProvince.name} | ${selectedDistrict.name} | ${ward.name}`;
-      onLocationSelect(locationString);
-      onClose(); // Close the popup
-    }
-  };
-
-  const handleReset = () => {
-    setSelectedProvince(null);
-    setSelectedDistrict(null);
-    setSelectedWard(null);
-    setShowDistricts(false); // Reset visibility
-    setShowWards(false); // Reset visibility
-  };
+  const {
+    provinces,
+    districts,
+    wards,
+    provinceError,
+    districtError,
+    wardError,
+    selectedProvince,
+    selectedDistrict,
+    selectedWard,
+    showDistricts,
+    showWards,
+    handleProvinceSelect,
+    handleDistrictSelect,
+    handleWardSelect,
+    handleReset,
+    groupByFirstLetter,
+  } = useLocationSelect();
 
   const renderLocationDisplay = () => {
     if (selectedWard) {
@@ -141,80 +89,96 @@ const LocationSelect: React.FC<{
       )}
 
       {!selectedProvince && (
-        <>
-          <h3 className="text-xs font-thin mb-2">Tỉnh/Thành phố:</h3>
-          <div className="overflow-y-auto max-h-100 border border-gray-300 rounded-md mb-4 bg-white shadow-sm">
-            <table className="w-full">
-              <tbody>
-                {provinces?.map((province: any, index: number) => (
-                  <tr
-                    key={index}
-                    className="cursor-pointer hover:bg-blue-100 transition duration-200"
-                    onClick={() => handleProvinceSelect(province)}
-                  >
-                    <td className="border-b border-gray-200 p-2">
-                      {province.name}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+        <div className="overflow-y-auto max-h-100 border border-gray-300 rounded-md mb-4 bg-white shadow-sm">
+          {Object.keys(groupByFirstLetter(provinces))
+            .sort()
+            .map((letter) => (
+              <div key={letter}>
+                <h3 className="text-xs font-semibold bg-gray-100 p-2">
+                  {letter}
+                </h3>
+                <table className="w-full">
+                  <tbody>
+                    {groupByFirstLetter(provinces)[letter].map(
+                      (province: Province) => (
+                        <tr
+                          key={province.code}
+                          className="cursor-pointer hover:bg-blue-100 transition duration-200"
+                          onClick={() => handleProvinceSelect(province)}
+                        >
+                          <td className="border-b border-gray-200 p-2">
+                            {province.name}
+                          </td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+        </div>
       )}
 
       {selectedProvince && !selectedDistrict && showDistricts && (
-        <>
-          <h3 className="text-xs font-thin mb-2">Quận/Huyện:</h3>
-          <div
-            className={`overflow-y-auto max-h-100 border border-gray-300 rounded-md mb-4 bg-white shadow-sm transition-opacity duration-500 ${
-              showDistricts ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <table className="w-full">
-              <tbody>
-                {districts?.map((district: any, index: number) => (
-                  <tr
-                    key={index}
-                    className="cursor-pointer hover:bg-blue-100 transition duration-200"
-                    onClick={() => handleDistrictSelect(district)}
-                  >
-                    <td className="border-b border-gray-200 p-2">
-                      {district.name}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+        <div className="overflow-y-auto max-h-100 border border-gray-300 rounded-md mb-4 bg-white shadow-sm">
+          {Object.keys(groupByFirstLetter(districts))
+            .sort()
+            .map((letter) => (
+              <div key={letter}>
+                <h3 className="text-xs font-semibold bg-gray-100 p-2">
+                  {letter}
+                </h3>
+                <table className="w-full">
+                  <tbody>
+                    {groupByFirstLetter(districts)[letter].map(
+                      (district: District) => (
+                        <tr
+                          key={district.code}
+                          className="cursor-pointer hover:bg-blue-100 transition duration-200"
+                          onClick={() => handleDistrictSelect(district)}
+                        >
+                          <td className="border-b border-gray-200 p-2">
+                            {district.name}
+                          </td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+        </div>
       )}
 
       {selectedDistrict && showWards && (
-        <>
-          <h3 className="text-xs font-thin mb-2">Phường/Xã:</h3>
-          <div
-            className={`overflow-y-auto max-h-100 border border-gray-300 rounded-md mb-4 bg-white shadow-sm transition-opacity duration-500 ${
-              showWards ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <table className="w-full">
-              <tbody>
-                {wards?.map((ward: any, index: number) => (
-                  <tr
-                    key={index}
-                    className="cursor-pointer hover:bg-blue-100 transition duration-200"
-                    onClick={() => handleWardSelect(ward)}
-                  >
-                    <td className="border-b border-gray-200 p-2">
-                      {ward.name}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+        <div className="overflow-y-auto max-h-100 border border-gray-300 rounded-md mb-4 bg-white shadow-sm">
+          {Object.keys(groupByFirstLetter(wards))
+            .sort()
+            .map((letter) => (
+              <div key={letter}>
+                <h3 className="text-xs font-semibold bg-gray-100 p-2">
+                  {letter}
+                </h3>
+                <table className="w-full">
+                  <tbody>
+                    {groupByFirstLetter(wards)[letter].map((ward: Ward) => (
+                      <tr
+                        key={ward.code}
+                        className="cursor-pointer hover:bg-blue-100 transition duration-200"
+                        onClick={() =>
+                          handleWardSelect(ward, onLocationSelect, onClose)
+                        }
+                      >
+                        <td className="border-b border-gray-200 p-2">
+                          {ward.name}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+        </div>
       )}
     </div>
   );

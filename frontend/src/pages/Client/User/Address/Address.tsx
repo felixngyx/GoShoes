@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash } from "lucide-react";
+import { ChevronLeft, Pencil, Plus, Trash } from "lucide-react";
 import React, { useState } from "react";
 import { Address } from "../../../../types/client/address";
 import LocationSelect from "./LocationSelector";
@@ -37,13 +37,13 @@ const AddressComponent: React.FC = () => {
 
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [showPopup1, setShowPopup1] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   const handleLocationSelect = (location: string) => {
     setSelectedLocation(location);
     setShowPopup1(false);
   };
 
-  const [showPopup, setShowPopup] = useState(false);
   const [newAddress, setNewAddress] = useState<Address>({
     name: "",
     phone: "",
@@ -53,32 +53,6 @@ const AddressComponent: React.FC = () => {
     detail: "",
     isDefault: false,
   });
-
-  // const handleSave = () => {
-  //   if (
-  //     !newAddress.name ||
-  //     !newAddress.phone ||
-  //     !newAddress.detail ||
-  //     !newAddress.province ||
-  //     !newAddress.district ||
-  //     !newAddress.ward
-  //   ) {
-  //     alert("Please fill out all fields.");
-  //     return;
-  //   }
-
-  //   setAddresses((prev) => [...prev, newAddress]);
-  //   setShowPopup(false);
-  //   setNewAddress({
-  //     name: "",
-  //     phone: "",
-  //     province: null,
-  //     district: null,
-  //     ward: null,
-  //     detail: "",
-  //     isDefault: false,
-  //   });
-  // };
 
   return (
     <div className="col-span-9 rounded-lg border border-gray-200 shadow-lg h-fit font-sans">
@@ -172,9 +146,33 @@ const AddressComponent: React.FC = () => {
                 </button>
 
                 {showPopup1 && (
-                  <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50 ">
                     <div className="bg-white p-8 rounded-lg max-w-md w-full shadow-lg">
-                      <h2 className="text-lg font-bold mb-4">Chọn Địa Điểm</h2>
+                      <div className="flex items-center mb-4">
+                        <ChevronLeft
+                          onClick={() => setShowPopup1(false)}
+                          className="w-6 h-6  mr-2 cursor-pointer text-blue-500"
+                        />
+                        <label className="w-full input input-bordered flex items-center gap-2">
+                          <input
+                            type="text"
+                            className="grow"
+                            placeholder="Search"
+                          />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                            className="h-4 w-4 opacity-70"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </label>
+                      </div>
                       <LocationSelect
                         onLocationSelect={handleLocationSelect}
                         onClose={() => setShowPopup1(false)}
