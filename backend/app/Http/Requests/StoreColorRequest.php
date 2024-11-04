@@ -24,8 +24,7 @@ class StoreColorRequest extends FormRequest
     {
         return [
             'color' => 'required|string|max:255|unique:variant_colors,color',
-            // 'hex_code' => 'required|string|max:20|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'
-            'hex_code' => 'required|string|max:20',
+            'link_image' => 'required|string|max:255',
         ];
         Log::info('Validation rules executed successfully');
     }

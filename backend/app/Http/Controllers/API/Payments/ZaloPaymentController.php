@@ -123,7 +123,6 @@ class ZaloPaymentController extends Controller
         }
 
         $order = Order::where("sku", $sku)->first();
-        Log::info("". $order->id ."") ;
 
         if (!$order) {
             return redirect()->away(env('FRONTEND_URL') . '/payment-fail?message=Order not found');

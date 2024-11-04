@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
 use App\Http\Controllers\API\Wishlist\WishlistController;
 use App\Http\Controllers\API\Cart\CartController;
@@ -44,11 +45,16 @@ Route::resource('wishlist', WishlistController::class);
 Route::resource('cart', CartController::class);
 
 // API Product
-Route::get('/products', [ProductController::class, 'index']);
-Route::post('/products', [ProductController::class, 'store']);
+Route::get('/products/trashed', [ProductController::class, 'trashedProducts']);
+Route::post('/products/restore/{id}', [ProductController::class, 'restore']);
+Route::post('/restore-multiple', [ProductController::class, 'restoreMultiple']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::put('/products/{id}', [ProductController::class, 'update']);
 Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+Route::get('/products', [ProductController::class, 'index']);
+Route::post('/products', [ProductController::class, 'store']);
+
+
 
 // API Color
 
@@ -57,18 +63,23 @@ Route::post('/colors', [ColorController::class, 'store']);
 Route::get('/colors/{id}', [ColorController::class, 'show']);
 Route::put('/colors/{id}', [ColorController::class, 'update']);
 Route::delete('/colors/{id}', [ColorController::class, 'destroy']);
+Route::delete('colors', [ColorController::class, 'destroyMultiple']);
+
 // API Size
 Route::get('/sizes', [SizeController::class, 'index']);
 Route::post('/sizes', [SizeController::class, 'store']);
 Route::get('/sizes/{id}', [SizeController::class, 'show']);
 Route::put('/sizes/{id}', [SizeController::class, 'update']);
 Route::delete('/sizes/{id}', [SizeController::class, 'destroy']);
+Route::delete('sizes', [SizeController::class, 'destroyMultiple']);
+
 
 Route::get('/brands', [BrandController::class, 'index']);
 Route::post('/brands', [BrandController::class, 'store']);
 Route::get('/brands/{id}', [BrandController::class, 'show']);
 Route::put('/brands/{id}', [BrandController::class, 'update']);
 Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
+Route::delete('brands', [BrandController::class, 'destroyMultiple']);
 
 
 
@@ -81,9 +92,11 @@ Route::group([
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'OrderOneUser']);
         Route::post('/', [OrderController::class, 'store']);
-        Route::get('/{id}', [OrderController::class, 'show']);
+        // Route::get('/{id}', [OrderController::class, 'show']);
         Route::put('/{id}', [OrderController::class, 'update']);
         Route::get('/{id}/check-payment', [OrderController::class, 'checkPaymentStatus']);
+        Route::put('/{id}/update', [OrderController::class,'UpdateOrder']);
+        Route::post('/{id}/renew-payment', [OrderController::class, 'renewPaymentLink']);
     });
 
     Route::prefix('discounts')->group(function () {
@@ -121,8 +134,8 @@ Route::prefix('payment')->group(function () {
 });
 
 
-Route::get('auth/facebook', [FacebookAuthController::class, 'redirectToFacebook'])->middleware('web');
-Route::get('auth/facebook/callback', [FacebookAuthController::class, 'handleFacebookCallback'])->middleware('web');
+Route::post('/auth/facebook-login', [FacebookAuthController::class, 'loginWithFacebook']);
+
 
 Route::get('categories', [CategoryController::class, 'index']);
 Route::post('categories', [CategoryController::class, 'store']);

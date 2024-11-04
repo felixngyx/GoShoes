@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use App\Services\Product\ProductService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 
 class ProductController extends Controller
@@ -18,33 +19,98 @@ class ProductController extends Controller
     {
         $this->productService = $productService;
     }
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::paginate(2);
+        $page = $request->input('page', 1);
+        $limit = $request->input('limit', 9);
+        $orderBy = $request->input('orderBy', 'id');
+        $order = $request->input('order', 'asc');
+        $minPrice = $request->input('minPrice') ? (float) $request->input('minPrice') : null;
+        $maxPrice = $request->input('maxPrice') ? (float) $request->input('maxPrice') : null;
+        $category = $request->input('category');
+        $color = $request->input('color');
+        $name = $request->input('name');
+        $brand_name = $request->input('brand_name');
+        $brand_id = $request->input('brand_id');
+
+        // Truy vấn sản phẩm
+        $query = Product::with(['variants.color', 'variants.size', 'categories', 'brand'])
+            ->where('is_deleted', false);
+
+        // Áp dụng các điều kiện lọc
+        if (!is_null($minPrice)) {
+            $query->where('price', '>=', $minPrice);
+        }
+    
+        if (!is_null($maxPrice)) {
+            $query->where('price', '<=', $maxPrice);
+        }
+        // dd($query->toSql(), $query->getBindings());
+        if ($name) {
+
+            $query->where('name', 'LIKE', '%' . $name . '%');
+        }
+        if ($category) {
+
+            if (is_array($category)) {
+                $query->whereHas('categories', function ($q) use ($category) {
+                    $q->whereIn('id', $category);
+                });
+            } else {
+
+                $query->whereHas('categories', function ($q) use ($category) {
+                    $q->where('id', $category);
+                });
+            }
+        }
+
+        if ($color) {
+            $query->whereHas('variants.color', function ($q) use ($color) {
+                $q->where('color', $color);
+            });
+        }
+        if ($brand_name) {
+            $query->whereHas('brand', function ($q) use ($brand_name) {
+                $q->where('name', $brand_name);
+            });
+        }
+
+        if ($brand_id) {
+            $query->where('brand_id', $brand_id); // Apply filter for brand_id
+        }
+
+
+        // Sắp xếp
+        $products = $query->orderBy($orderBy, $order)
+            ->paginate($limit, ['*'], 'page', $page);
 
         return response()->json([
-            'message' => 'Danh sách sản phẩm',
-            'product' => $products
-        ], 201);
+            'status' => 'success',
+            'message' => 'Products retrieved successfully',
+            'data' => $products,
+        ]);
     }
-
-  
-    public function create()
-    {
-        //
-    }
-
     public function store(StoreProductRequest $request)
     {
-        $validated = $request->validated();
-        // Log::info($validated);
-        // $validated = $request->validated();
-        $product = $this->productService->storeProduct($validated);
+        try {
+            $validated = $request->validated();
+            $product = $this->productService->storeProduct($validated);
 
-        return response()->json([
-            'message' => 'Sản phẩm đã được thêm thành công!',
-            'product' => $product
-        ], 201);
+            // Kiểm tra nếu product là response (tức là có lỗi)
+            if ($product instanceof \Illuminate\Http\JsonResponse) {
+                return $product;
+            }
+
+            return response()->json([
+                'message' => 'Sản phẩm đã được thêm thành công!',
+                'product' => $product
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi thêm sản phẩm.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function show(string $id)
@@ -57,9 +123,10 @@ class ProductController extends Controller
         }
         return response()->json([
             'product' => $product['product'],
-            'variantDetails' => $product['variantDetails'],
-            'brandName' => $product['brandName'],
-            'categoryNames' => $product['categoryNames'],
+            'relatedProducts' => $product['relatedProducts'],
+            // 'variantDetails' => $product['variantDetails'],
+            // 'brandName' => $product['brandName'],
+            // 'categoryNames' => $product['categoryNames'],
         ]);
     }
 
@@ -67,49 +134,33 @@ class ProductController extends Controller
     {
         //
     }
-
     public function update(UpdateProductRequest $request, string $id)
     {
-
-
-        // // Xác thực dữ liệu đầu vào
-        // $validated = $request->validate([
-        //     'name' => 'required|string|max:255',
-        //     'description' => 'nullable|string',
-        //     'price' => 'nullable|numeric',
-        //     'stock_quantity' => 'required|integer|min:1',
-        //     'promotional_price' => 'nullable|numeric|min:0',
-        //     'status' => 'required|in:public,unpublic,hidden',
-        //     'brand_id' => 'required|exists:brands,id',
-        //     'sku' => 'required|string|unique:products,sku,' . $id,
-        //     'hagtag' => 'nullable|string',
-        //     'category_ids' => 'required|array',
-        //     'category_ids.*' => 'exists:categories,id',
-        //     'variants' => 'required|array',
-        //     'variants.*.color_id' => 'required|exists:variant_colors,id',
-        //     'variants.*.size_id' => 'required|exists:variant_sizes,id',
-        //     'variants.*.quantity' => 'required|integer|min:1',
-        //     'variants.*.image_variant' => 'nullable|image|mimes:jpeg,png,jpg',
-        //     'images' => 'sometimes|nullable|array',
-        //     'images.*' => 'image|mimes:jpeg,png,jpg'
-        // ]);
-
+        // Xác thực dữ liệu đầu vào
         $validated = $request->validated();
-        $product = $this->productService->updateProduct($id, $validated);
-        $product_findID = $this->productService->findProductWithRelations($id);
+
+        // Tìm sản phẩm theo ID
+        $product = $this->productService->findProductForDeletion($id);
+
+        // Kiểm tra sự tồn tại của sản phẩm
         if (!$product) {
             return response()->json(['message' => 'Sản phẩm không tồn tại!'], 404);
         }
+
+        // Cập nhật sản phẩm
+        $this->productService->updateProduct($product, $validated);
+
+        // Lấy lại thông tin sản phẩm cùng với các quan hệ
+        $product_findID = $this->productService->findProductWithRelations($id);
+
+        // Trả về thông tin sản phẩm đã được cập nhật
         return response()->json([
             'product' => $product_findID['product'],
-            'variantDetails' => $product_findID['variantDetails'],
-            'brandName' => $product_findID['brandName'],
-            'categoryNames' => $product_findID['categoryNames'],
-        ]);
-        // return response()->json([
-        //     'message' => 'Sản phẩm đã được cập nhật thành công!',
-        //     'product' => $product
-        // ], 200);
+            // 'variantDetails' => $product_findID['variantDetails'],
+            // 'brandName' => $product_findID['brandName'],
+            // 'categoryNames' => $product_findID['categoryNames'],
+            'message' => 'Sản phẩm đã được cập nhật thành công!',
+        ], 200);
     }
 
     /**
@@ -128,5 +179,84 @@ class ProductController extends Controller
         $this->productService->deleteProduct($product);
 
         return response()->json(['message' => 'Sản phẩm đã được xóa thành công!'], 200);
+    }
+    public function trashedProducts(Request $request)
+    {
+        try {
+            // Lấy các tham số từ request
+            $page = $request->input('page', 1);
+            $limit = $request->input('limit', 9);
+            $orderBy = $request->input('orderBy', 'id');
+            $order = $request->input('order', 'asc');
+            $name = $request->input('name');
+
+            // Khởi tạo query với các relationship cần thiết
+            $query = Product::with(['variants.color', 'variants.size', 'categories', 'brand'])
+                ->where('is_deleted', true); // Chỉ lấy sản phẩm đã xóa mềm
+            if ($name) {
+                $query->where('name', 'LIKE', '%' . $name . '%');
+            }
+            // Sắp xếp và phân trang
+            $trashedProducts = $query->orderBy($orderBy, $order)
+                ->paginate($limit, ['*'], 'page', $page);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Sản phẩm thùng rác được truy xuất thành công',
+                'data' => $trashedProducts
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Có lỗi xảy ra khi lấy danh sách sản phẩm đã xóa.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function restore($id)
+    {
+        try {
+            $product = Product::where('id', $id)
+                ->where('is_deleted', 1)
+                ->firstOrFail();
+
+            $this->productService->restoreProduct($product);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Sản phẩm đã được phục hồi thành công!',
+                'product' => $product
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Không tìm thấy sản phẩm hoặc sản phẩm chưa bị xóa.',
+                'error' => $e->getMessage()
+            ], 404);
+        }
+    }
+    public function restoreMultiple(Request $request)
+    {
+        try {
+            $productIds = $request->input('product_ids', []);
+
+            $products = Product::whereIn('id', $productIds)
+                ->where('is_deleted', 1)
+                ->get();
+
+            foreach ($products as $product) {
+                $this->productService->restoreProduct($product);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Khôi phục thành công ' . count($products) . ' sản phẩm.'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Có lỗi xảy ra khi khôi phục sản phẩm.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

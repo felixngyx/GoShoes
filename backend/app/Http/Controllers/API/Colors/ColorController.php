@@ -21,14 +21,20 @@ class ColorController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
 
-        $colors = VariantColor::paginate(2);
+        $page = $request->input('page', 1);
+        $limit = $request->input('limit', 9);
+        $orderBy = $request->input('orderBy', 'id');
+        $order = $request->input('order', 'asc');
 
+        $query = VariantColor::query();
+        $clors = $query->orderBy($orderBy, $order)
+        ->paginate($limit, ['*'], 'page', $page);
         return response()->json([
-            'message' => 'Danh sách colors',
-            'product' => $colors
+            'message' => 'Danh sách sizes',
+            'clors' => $clors
         ], 201);
     }
 
@@ -76,7 +82,7 @@ class ColorController extends Controller
     {
         $validated = $request->validate([
             'color' => 'required|string|max:255|unique:variant_colors,color,' . $id,
-            'hex_code' => 'required|string|max:20',
+            'link_image' => 'required|string|max:255',
         ]);
 
         $color = $this->colorService->updateColor($id, $validated);
@@ -100,5 +106,9 @@ class ColorController extends Controller
         $this->colorService->deleteColor($color);
 
         return response()->json(['message' => 'Màu sắc đã được xóa thành công!'], 200);
+    }
+    public function destroyMultiple(Request $request){
+        $ids = $request->input('ids');
+        return $this->colorService->deleteColors($ids);
     }
 }

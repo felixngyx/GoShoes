@@ -1,6 +1,6 @@
 import ProductOne from '../../../images/product/product-01.png';
 import ProductTwo from '../../../images/product/product-02.png';
-import { Product } from '../../../types/admin/product';
+import { Product } from '../../../types/admin/template/product';
 import ProductThree from '../../../images/product/product-03.png';
 import ProductFour from '../../../images/product/product-04.png';
 

@@ -1,270 +1,238 @@
-import Banner from '../../../components/client/Banner';
-import { FaListUl } from 'react-icons/fa';
-import { BsGrid3X3GapFill } from 'react-icons/bs';
-import { useState } from 'react';
-import Breadcrumb from '../../../components/client/Breadcrumb';
-import ProductCard from '../ProductCard';
-import ProductCardList from './ProductCardList';
+import Slider from "@mui/material/Slider";
+import { useQuery } from "@tanstack/react-query";
+import React, { useCallback, useState } from "react";
+import { BsGrid3X3GapFill } from "react-icons/bs";
+import { FaListUl } from "react-icons/fa";
+import Banner from "../../../components/client/Banner";
+import Breadcrumb from "../../../components/client/Breadcrumb";
+import useDebounce from "../../../hooks/client/useDebounce";
+import { filterProduct } from "../../../services/client/filterPrice";
+import { IProduct } from "../../../types/client/products/products";
+import ProductCardList from "./ProductCardList";
+import ProductItems from "./ProductItem";
 
 const ProductList = () => {
-	const [layout, setLayout] = useState<'grid' | 'list'>('grid');
+  const [layout, setLayout] = useState<"grid" | "list">("grid");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+  const [showCount, setShowCount] = useState(9);
 
-	return (
-		<>
-			<Breadcrumb
-				items={[
-					{ name: 'Home', link: '' },
-					{ name: 'Products', link: 'products' },
-				]}
-			/>
-			<div className="container max-w-7xl mx-auto grid grid-cols-12 my-10 gap-10">
-				<div className="col-span-3 flex flex-col gap-10">
-					{/* Hot Deals */}
-					<div className="bg-[#F6F7F8] collapse collapse-arrow rounded-none">
-						<input type="checkbox" className="peer" defaultChecked />
-						<div className="collapse-title text-xl font-semibold">
-							Hot Deals
-						</div>
-						<div className="collapse-content">
-							<ul className="flex flex-col gap-5">
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">Air Jordan</p>
-									<p className="text-sm text-gray-500">30</p>
-								</li>
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">Nike Air Max</p>
-									<p className="text-sm text-gray-500">20</p>
-								</li>
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">Puma</p>
-									<p className="text-sm text-gray-500">10</p>
-								</li>
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">Air Force 1</p>
-									<p className="text-sm text-gray-500">12</p>
-								</li>
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">Converse</p>
-									<p className="text-sm text-gray-500">9</p>
-								</li>
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">Balenciaga</p>
-									<p className="text-sm text-gray-500">10</p>
-								</li>
-							</ul>
-						</div>
-					</div>
+  const { data: products, refetch } = useQuery<IProduct[]>({
+    queryKey: ["PRODUCT_KEY", priceRange, showCount],
+    queryFn: () => filterProduct(priceRange[0], priceRange[1], showCount),
+    staleTime: 2,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+  });
 
-					{/* Price */}
-					<div className="bg-[#F6F7F8] collapse collapse-arrow rounded-none">
-						<input type="checkbox" className="peer" defaultChecked />
-						<div className="collapse-title text-xl font-semibold">
-							Price
-						</div>
-						<div className="collapse-content">
-							<ul className="flex flex-col gap-5">
-								<li className="flex gap-5">
-									<input
-										type="text"
-										placeholder="From"
-										className="input input-sm input-bordered w-1/2 rounded-none"
-									/>
+  const formatPrice = (price: number) => {
+    if (price < 1000000) return (price / 1000).toFixed(0) + " K";
+    return (price / 1000000).toFixed(1) + " M";
+  };
 
-									<input
-										type="text"
-										placeholder="To"
-										className="input input-sm input-bordered w-1/2 rounded-none"
-									/>
-								</li>
-								<li>
-									<button className="btn btn-sm bg-[#40BFFF] w-full text-[#fff] rounded-none ">
-										Apply
-									</button>
-								</li>
-							</ul>
-						</div>
-					</div>
+  const handlePriceChange = (event: Event, newValue: number | number[]) => {
+    if (Array.isArray(newValue)) {
+      setPriceRange(newValue as [number, number]);
+      console.log("data", products);
+    }
+  };
+  const debouncedRefetch = useCallback(
+    useDebounce(() => {
+      refetch();
+    }, 1000),
+    [refetch]
+  );
 
-					{/* Size */}
-					<div className="bg-[#F6F7F8] collapse collapse-arrow rounded-none">
-						<input type="checkbox" className="peer" defaultChecked />
-						<div className="collapse-title text-xl font-semibold">
-							Size
-						</div>
-						<div className="collapse-content flex flex-row flex-wrap gap-5">
-							<button className="btn btn-sm text-black bg-white rounded-none">
-								37
-							</button>
-							<button className="btn btn-sm text-black bg-white rounded-none">
-								38
-							</button>
-							<button className="btn btn-sm text-black bg-white rounded-none">
-								39
-							</button>
-							<button className="btn btn-sm text-black bg-white rounded-none">
-								40
-							</button>
-							<button className="btn btn-sm text-black bg-white rounded-none">
-								41
-							</button>
-							<button className="btn btn-sm text-black bg-white rounded-none">
-								42
-							</button>
-							<button className="btn btn-sm text-black bg-white rounded-none">
-								43
-							</button>
-						</div>
-					</div>
+  const handlePriceChangeCommitted = () => {
+    refetch();
+  };
 
-					{/* Color */}
-					<div className="bg-[#F6F7F8] collapse collapse-arrow rounded-none">
-						<input type="checkbox" className="peer" defaultChecked />
-						<div className="collapse-title text-xl font-semibold">
-							Color
-						</div>
-						<div className="collapse-content flex gap-5">
-							<input
-								type="radio"
-								name="radio-2"
-								className="radio bg-[#40BFFF] checked:bg-[#40BFFF]"
-								defaultChecked
-							/>
-							<input
-								type="radio"
-								name="radio-2"
-								className="radio bg-[#FF6464] checked:bg-[#FF6464]"
-							/>
-							<input
-								type="radio"
-								name="radio-2"
-								className="radio bg-[#FFC83D] checked:bg-[#FFC83D]"
-							/>
-							<input
-								type="radio"
-								name="radio-2"
-								className="radio bg-[#34C759] checked:bg-[#34C759]"
-							/>
-							<input
-								type="radio"
-								name="radio-2"
-								className="radio bg-[#8BC34A] checked:bg-[#8BC34A]"
-							/>
-							<input
-								type="radio"
-								name="radio-2"
-								className="radio bg-[#00A8CC] checked:bg-[#00A8CC]"
-							/>
-						</div>
-					</div>
+  const handleShowCountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setShowCount(Number(e.target.value));
+  };
 
-					{/* Brand */}
-					<div className="bg-[#F6F7F8] collapse collapse-arrow rounded-none">
-						<input type="checkbox" className="peer" />
-						<div className="collapse-title text-xl font-semibold">
-							Brand
-						</div>
-						<div className="collapse-content">
-							<ul className="flex flex-col gap-5">
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">Nike</p>
-									<p className="text-sm text-gray-500">30</p>
-								</li>
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">Adidas</p>
-									<p className="text-sm text-gray-500">20</p>
-								</li>
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">Puma</p>
-									<p className="text-sm text-gray-500">10</p>
-								</li>
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">Adidas</p>
-									<p className="text-sm text-gray-500">12</p>
-								</li>
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">All Starts</p>
-									<p className="text-sm text-gray-500">9</p>
-								</li>
-								<li className="flex justify-between">
-									<p className="text-sm font-normal">Air Jordan</p>
-									<p className="text-sm text-gray-500">10</p>
-								</li>
-							</ul>
-						</div>
-					</div>
+  return (
+    <>
+      <Breadcrumb
+        items={[
+          { name: "Home", link: "" },
+          { name: "Products", link: "products" },
+        ]}
+      />
+      <div className="container max-w-7xl mx-auto grid grid-cols-12 my-10 gap-10 font-sans">
+        <div className="col-span-3 flex flex-col gap-10">
+          {/* Hot Deals */}
+          <div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2">
+            <h2 className="text-xl font-semibold capitalize">HOT DEALS</h2>
+            <ul className="flex flex-col gap-3">
+              {[
+                "Air Jordan",
+                "Nike Air Max",
+                "Puma",
+                "Air Force 1",
+                "Converse",
+                "Balenciaga",
+              ].map((item) => (
+                <li key={item} className="flex justify-between">
+                  <p className="text-sm capitalize">{item}</p>
+                  <p className="text-sm text-gray-500">30</p>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-					<button className="btn  rounded-none text-md">More</button>
-				</div>
-				<div className="col-span-9 flex flex-col gap-10">
-					<Banner />
+          {/* Price Slider */}
+          <div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2">
+            <h2 className="text-xl font-semibold capitalize">PRICE</h2>
+            <div className="flex flex-col gap-3">
+              <span className="flex gap-8">
+                <p className="text-[16px]">Range:</p>
+                <p>
+                  {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
+                </p>
+              </span>
+              <Slider
+                value={priceRange}
+                onChange={handlePriceChange}
+                onChangeCommitted={handlePriceChangeCommitted}
+                valueLabelDisplay="off"
+                min={0}
+                max={10000000}
+                step={500000}
+                sx={{
+                  color: "#40BFFF",
+                  height: 4,
+                  "& .MuiSlider-thumb": {
+                    height: 20,
+                    width: 20,
+                    backgroundColor: "white",
+                    border: "2px solid #40BFFF",
+                    "&:hover": {
+                      boxShadow: "inherit",
+                    },
+                  },
+                  "& .MuiSlider-track": {
+                    border: "none",
+                    height: 4,
+                  },
+                  "& .MuiSlider-rail": {
+                    color: "#C1C8CE",
+                    height: 4,
+                  },
+                }}
+              />
+            </div>
+          </div>
 
-					{/* Filter */}
-					<div
-						data-theme="corporate"
-						className="flex flex-row gap-5 bg-[#F6F7F8] px-5 py-2 items-center"
-					>
-						<p className="text-lg">Sort by</p>
-						<select className="select select-sm select-bordered w-fit">
-							<option defaultValue="Name">Name</option>
-							<option>Price</option>
-							<option>Rating</option>
-						</select>
-						<p className="text-lg ms-2">Show</p>
-						<select className="select select-sm select-bordered w-fit">
-							<option defaultValue={9}>9</option>
-							<option>12</option>
-							<option>15</option>
-						</select>
-						<button
-							className="ms-auto btn btn-sm bg-inherit hover:bg-inherit"
-							onClick={() => setLayout('grid')}
-						>
-							<BsGrid3X3GapFill
-								size={20}
-								color={layout === 'grid' ? '#40BFFF' : '#C1C8CE'}
-							/>
-						</button>
-						<button
-							className="btn btn-sm bg-inherit hover:bg-inherit"
-							onClick={() => setLayout('list')}
-						>
-							<FaListUl
-								size={20}
-								color={layout === 'list' ? '#40BFFF' : '#C1C8CE'}
-							/>
-						</button>
-					</div>
+          {/* Size */}
+          <div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2">
+            <h2 className="text-xl font-semibold capitalize">SIZE</h2>
+            <div className="flex flex-wrap gap-2">
+              {[37, 38, 39, 40, 41, 42, 43].map((size) => (
+                <button
+                  key={size}
+                  className="btn btn-sm text-black bg-white rounded-full capitalize"
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
 
-					{/* Product List */}
-					<div
-						className={`grid grid-cols-${
-							layout === 'grid' ? '3' : '1'
-						} gap-5`}
-					>
-						{Array.from({ length: 9 }).map((_, index) => (
-							<>
-								{layout === 'grid' ? (
-									<ProductCard key={index} />
-								) : (
-									<ProductCardList key={index} />
-								)}
-								{/* Add <hr /> for non-grid layout */}
-								{layout !== 'grid' && index < 8 && <hr />}
-							</>
-						))}
-					</div>
+          {/* Brand */}
+          <div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2">
+            <h2 className="text-xl font-semibold capitalize">BRAND</h2>
+            <ul className="flex flex-col gap-3">
+              {["Nike", "Adidas", "Puma", "All Starts", "Air Jordan"].map(
+                (brand) => (
+                  <li key={brand} className="flex justify-between">
+                    <p className="text-sm capitalize">{brand}</p>
+                    <p className="text-sm text-gray-500">10</p>
+                  </li>
+                )
+              )}
+            </ul>
+          </div>
 
-					<div className="join mx-auto">
-						<button className="join-item btn">1</button>
-						<button className="join-item btn">2</button>
-						<button className="join-item btn btn-disabled">...</button>
-						<button className="join-item btn">99</button>
-						<button className="join-item btn">100</button>
-					</div>
-				</div>
-			</div>
-		</>
-	);
+          <button className="btn rounded-none text-md">More</button>
+        </div>
+
+        <div className="col-span-9 flex flex-col gap-10">
+          <Banner />
+
+          {/* Filter */}
+          <div className="flex flex-row gap-5 bg-[#F6F7F8] px-5 py-2 items-center">
+            <p className="text-lg">Sort by</p>
+            <select className="select select-sm select-bordered w-fit">
+              <option defaultValue="Name">Name</option>
+              <option>Price</option>
+              <option>Rating</option>
+            </select>
+            <p className="text-lg">Show</p>
+            <select
+              className="select select-sm select-bordered w-fit"
+              onChange={handleShowCountChange}
+            >
+              <option defaultValue={9}>9</option>
+              <option>12</option>
+              <option>15</option>
+            </select>
+            <button
+              className="ms-auto btn btn-sm bg-inherit hover:bg-inherit"
+              onClick={() => setLayout("grid")}
+            >
+              <BsGrid3X3GapFill
+                size={20}
+                color={layout === "grid" ? "#40BFFF" : "#C1C8CE"}
+              />
+            </button>
+            <button
+              className="btn btn-sm bg-inherit hover:bg-inherit"
+              onClick={() => setLayout("list")}
+            >
+              <FaListUl
+                size={20}
+                color={layout === "list" ? "#40BFFF" : "#C1C8CE"}
+              />
+            </button>
+          </div>
+
+          {/* Product List */}
+          <div
+            className={`grid ${
+              layout === "grid" ? "grid-cols-3" : "grid-cols-1"
+            } gap-5`}
+          >
+            {products === undefined ? (
+              // Hiển thị loader khi đang tải dữ liệu
+              <span className="loading loading-spinner loading-lg"></span>
+            ) : products.length > 0 ? (
+              // Hiển thị danh sách sản phẩm nếu có
+              products.map((product) =>
+                layout === "grid" ? (
+                  <ProductItems key={product.id} product={product} />
+                ) : (
+                  <ProductCardList key={product.id} />
+                )
+              )
+            ) : (
+              // Hiển thị thông báo khi không có sản phẩm nào
+              <p className="text-center text-gray-500">
+                Không có sản phẩm nào phù hợp.
+              </p>
+            )}
+          </div>
+
+          <div className="join mx-auto">
+            <button className="join-item btn">1</button>
+            <button className="join-item btn">2</button>
+            <button className="join-item btn btn-disabled">...</button>
+            <button className="join-item btn">99</button>
+            <button className="join-item btn">100</button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 };
 
 export default ProductList;

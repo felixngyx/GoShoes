@@ -35,37 +35,59 @@ class ProductRepository implements ProductRepositoryInterface
     }
     public function findProductWithRelations(string $id)
     {
-        // return Product::with(['variants', 'images', 'categories' , 'brand'])->find($id);
-        // Truy vấn sản phẩm cùng với các quan hệ
-        $product = Product::with(['variants.color', 'variants.size', 'images', 'categories', 'brand'])->find($id);
+        $product = Product::where('is_deleted', false)
+            ->with(['variants.color', 'variants.size', 'images', 'categories', 'brand'])
+            ->find($id);
+            
         if (!$product) {
-            return null; 
+            return null;
         }
-        $variantDetails = $product->variants->map(function ($variant) {
-            return [
-                'color' => $variant->color->color, // Lấy tên màu sắc
-                'size' => $variant->size->size, // Lấy tên kích thước
-            ];
-        });
-        $brandName = $product->brand ? $product->brand->name : null;
-        
-        $categoryNames = $product->categories->pluck('name')->toArray(); 
-
+    
+        $categories = $product->categories;
+        $relatedProducts = Product::whereHas('categories', function ($query) use ($categories) {
+            $query->whereIn('categories.id', $categories->pluck('id'));
+        })
+            ->where('id', '!=', $product->id)
+            ->where('is_deleted', false)  // Chỉ lấy sản phẩm liên quan chưa bị xóa
+            ->get();
+            
         return [
             'product' => $product,
-            'variantDetails' => $variantDetails,
-            'brandName' => $brandName,
-            'categoryNames' => $categoryNames, // Lấy tên danh mục sản phẩm
+            'relatedProducts' => $relatedProducts,
         ];
     }
-    public function deleteProduct(Product $product)
-
+   
+    public function softDeleteProduct(Product $product)
     {
-        return $product->delete();
+        return $product->update(['is_deleted' => 1]);
+    }
+    public function restoreProduct(Product $product)
+    {
+        return $product->update(['is_deleted' => 0]);
     }
 
-    public function find($id)
+     public function find($id)
     {
-        return Product::findOrFail($id);
+        return Product::where('is_deleted', false)->findOrFail($id);
     }
 }
+
+    // $variantDetails = $product->variants->map(function ($variant) {
+        //     return [
+        //         'id' => $variant->id,
+        //         'quantity' => $variant->quantity,
+        //         'image_variant' => $variant->image_variant, // Lấy ảnh biến thể
+        //         'color_id' => $variant->color_id,
+        //         'size_id' => $variant->size_id,
+        //         'colorDetails' => $variant->color, // Lấy tên màu sắc
+        //         'size' => $variant->size, // Lấy tên kích thước
+        //     ];
+        // });
+        // $brandName = $product->brand ? $product->brand->name : null;
+        
+        // $categoryNames = $product->categories->pluck('name')->toArray(); 
+   // 'variantDetails' => $variantDetails,
+            // 'brandName' => $brandName,
+            // 'categoryNames' => $categoryNames, // Lấy tên danh mục sản phẩm
+               // return Product::with(['variants', 'images', 'categories' , 'brand'])->find($id);
+        // Truy vấn sản phẩm cùng với các quan hệ
