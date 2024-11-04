@@ -33,7 +33,8 @@ import { Toaster } from "react-hot-toast";
 import Attribute from "./pages/Admin/Attribute";
 import Homepage from "./pages/Client/home";
 import AddProduct from "./pages/Admin/Product/AddProduct";
-import Cart from "./pages/Client/Cart";
+import ContactUs from "./pages/Client/ContactUs";
+import ChatUI from "./components/client/ChatUi";
 
 function App() {
   const { pathname } = useLocation();
@@ -41,6 +42,7 @@ function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+  const isAdminPage = pathname.startsWith("/admin");
 
   return (
     <>
@@ -55,7 +57,7 @@ function App() {
             <Route path="my-order/:id" element={<OrderDetail />} />
             <Route path="my-address" element={<Address />} />
           </Route>
-          <Route path="/cart" element={<Cart />} />
+          <Route path="/contact-us" element={<ContactUs />}></Route>
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/forget-password" element={<ForgetPassword />} />
           <Route path="*" element={<NotfoundPage />} />
@@ -178,6 +180,7 @@ function App() {
         </Route>
       </Routes>
       <Toaster position="top-right" reverseOrder={false} />
+      {!isAdminPage && <ChatUI />}
     </>
   );
 }
