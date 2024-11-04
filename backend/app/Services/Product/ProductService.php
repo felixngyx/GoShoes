@@ -22,7 +22,7 @@ class ProductService
     {
         try {
             // Tạo SKU
-            $sku = 'shope-' . 'T' . date('m') . rand(10, 99);
+            // $sku = 'shope-' . 'T' . date('m') . rand(10, 99);
             
             // Chuẩn bị dữ liệu sản phẩm
             $productData = [
@@ -31,9 +31,9 @@ class ProductService
                 'price' => $validated['price'],
                 'stock_quantity' => $validated['stock_quantity'],
                 'promotional_price' => $validated['promotional_price'] ?? null, // Thêm null nếu không có
-                'sku' => $sku,
+                'sku' =>  $validated['sku'],
                 'thumbnail' => $validated['thumbnail'],
-                'hagtag' => $validated['hagtag'] ?? null, // Thêm null nếu không có
+                'hagtag' => $validated['hagtag'] ?? null,
                 'brand_id' => $validated['brand_id'],
             ];
     
