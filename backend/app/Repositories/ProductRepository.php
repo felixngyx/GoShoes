@@ -38,25 +38,69 @@ class ProductRepository implements ProductRepositoryInterface
         $product = Product::where('is_deleted', false)
             ->with(['variants.color', 'variants.size', 'images', 'categories', 'brand'])
             ->find($id);
-            
+
         if (!$product) {
             return null;
         }
-    
-        $categories = $product->categories;
-        $relatedProducts = Product::whereHas('categories', function ($query) use ($categories) {
-            $query->whereIn('categories.id', $categories->pluck('id'));
+
+        // Transform main product data
+        $transformedProduct = [
+            'id' => $product->id,
+            'name' => $product->name,
+            'price' => (float) $product->price,
+            'promotional_price' => (float) $product->promotional_price,
+            'stock_quantity' => $product->stock_quantity,
+            'sku' => $product->sku,
+            'categories' => $product->categories->pluck('name')->toArray(),
+            'status' => $product->status,
+            'thumbnail' => $product->thumbnail,
+            'images' => $product->images->pluck('id','image_path')->toArray(),
+            'variants' => $product->variants->map(function ($variant) {
+                return [
+                    'color' => $variant->color->color,
+                    'size' => (int) $variant->size->size,
+                    'quantity' => $variant->quantity,
+                    'image_variant' => $variant->image_variant
+                ];
+            })->toArray()
+        ];
+
+        // Get related products (assuming they're products in the same category)
+        $relatedProducts = Product::whereHas('categories', function ($query) use ($product) {
+            $query->whereIn('categories.id', $product->categories->pluck('id'));
         })
             ->where('id', '!=', $product->id)
-            ->where('is_deleted', false)  // Chỉ lấy sản phẩm liên quan chưa bị xóa
-            ->get();
-            
+            ->where('is_deleted', false)
+            ->limit(8)
+            ->get()
+            ->map(function ($relatedProduct) {
+                return [
+                    'id' => $relatedProduct->id,
+                    'name' => $relatedProduct->name,
+                    'price' => (float) $relatedProduct->price,
+                    'promotional_price' => (float) $relatedProduct->promotional_price,
+                    'stock_quantity' => $relatedProduct->stock_quantity,
+                    'categories' => $relatedProduct->categories->pluck('name')->toArray(),
+                    'status' => $relatedProduct->status,
+                    'thumbnail' => $relatedProduct->thumbnail,
+                    'images' => $relatedProduct->images->pluck('image_path')->toArray(),
+                    'variants' => $relatedProduct->variants->map(function ($variant) {
+                        return [
+                            'color' => $variant->color->color,
+                            'size' => (int) $variant->size->size,
+                            'quantity' => $variant->quantity,
+                            'image_variant' => $variant->image_variant
+                        ];
+                    })->toArray()
+                ];
+            });
+
         return [
-            'product' => $product,
-            'relatedProducts' => $relatedProducts,
+            'product' => $transformedProduct,
+            'relatedProducts' => $relatedProducts
         ];
     }
-   
+
     public function softDeleteProduct(Product $product)
     {
         return $product->update(['is_deleted' => 1]);
@@ -66,7 +110,7 @@ class ProductRepository implements ProductRepositoryInterface
         return $product->update(['is_deleted' => 0]);
     }
 
-     public function find($id)
+    public function find($id)
     {
         return Product::where('is_deleted', false)->findOrFail($id);
     }
