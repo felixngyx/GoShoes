@@ -12,7 +12,7 @@ class ProductSeeder extends Seeder
     public function run()
     {
         // Tạo 10 sản phẩm mẫu với các thông tin khác nhau
-        for ($i = 1; $i <= 20; $i++) {
+        for ($i = 1; $i <= 10; $i++) {
             Product::create([
                 'brand_id' => rand(1, 5), // Ví dụ tạo ngẫu nhiên brand_id từ 1 đến 5
                 'name' => 'Sample Product ' . $i, // Tên sản phẩm khác nhau cho mỗi vòng lặp
