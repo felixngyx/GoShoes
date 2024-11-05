@@ -37,13 +37,22 @@ class CategoryController extends Controller
     }
 
     public function show($id)
-    {
-        $category = $this->categoryService->getCategoryById($id);
-        if (!$category) {
-            return response()->json(['message' => 'Category not found'], 404);
-        }
-        return response()->json($category, 200);
+{
+    $category = $this->categoryService->getCategoryById($id);
+    if (!$category) {
+        return response()->json(['message' => 'Category not found'], 404);
     }
+
+    $result = [
+        'id' => $category->id,
+        'name' => $category->name
+    ];
+
+    return response()->json([
+        'message' => 'Category detail',
+        'category' => $result
+    ], 200);
+}
 
     public function store(CategoryRequest $request)
     {
