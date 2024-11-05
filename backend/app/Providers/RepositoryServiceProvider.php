@@ -11,12 +11,14 @@ class RepositoryServiceProvider extends ServiceProvider
      */
 
      public $bindings = [
-       'App\Repositories\RepositoryInterfaces\UserRepositoryInterface' => 'App\Repositories\UserRepository',
+        'App\Repositories\RepositoryInterfaces\UserRepositoryInterface' => 'App\Repositories\UserRepository',
         'App\Repositories\RepositoryInterfaces\PasswordChangeHistoryRepositoryInterface' => 'App\Repositories\PasswordChangeHistoryRepository',
         'App\Repositories\RepositoryInterfaces\CategoryRepositoryInterface' => 'App\Repositories\CategoryRepository',
         'App\Repositories\RepositoryInterfaces\TokenRepositoryInterface' => 'App\Repositories\TokenRepository',
+        'App\Repositories\RepositoryInterfaces\CartRepositoryInterface' => 'App\Repositories\CartRepository',
+        'App\Repositories\RepositoryInterfaces\WishlistRepositoryInterface' => 'App\Repositories\WishlistRepository',
         'App\Repositories\RepositoryInterfaces\ReviewRepositoryInterface' => 'App\Repositories\ReviewRepository',
-    ];
+     ];
 
     public function register(): void
     {

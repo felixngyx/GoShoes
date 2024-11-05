@@ -15,4 +15,10 @@ Interface BaseRepositoryInterface
 
     public function findById(int $id);
 
+    public function upsert(array $data, array $condition);
+
+    public function forceDelete(int $id);
+
+    public static function getDataFromCache(array $columns, array $condition);
+
 }
