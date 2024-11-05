@@ -2,6 +2,8 @@
 
 use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
+use App\Http\Controllers\API\Wishlist\WishlistController;
+use App\Http\Controllers\API\Cart\CartController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\Categories\CategoryController;
 use App\Http\Controllers\API\Auth\SocialAuthController\FacebookAuthController;
@@ -37,6 +39,10 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
     Route::post('/refresh-token', [AuthController::class, 'refreshTokenController'])->middleware('jwt.refresh.token');
 });
+
+
+Route::resource('wishlist', WishlistController::class);
+Route::resource('cart', CartController::class);
 
 // API Product
 Route::get('/products/trashed', [ProductController::class, 'trashedProducts']);
@@ -100,6 +106,19 @@ Route::group([
         Route::put('/{id}', [DiscountController::class, 'update']);
         Route::delete('/{id}', [DiscountController::class, 'destroy']);
         Route::post('/validate', [DiscountController::class, 'validateCode']);
+    });
+
+    Route::prefix('wishlist')->group(function () {
+        Route::get('/', [WishlistController::class, 'index']);
+        Route::post('/', [WishlistController::class, 'store']);
+        Route::delete('/', [WishlistController::class, 'destroy']);
+    });
+
+    Route::prefix('cart')->group(function () {
+        Route::get('/', [CartController::class, 'index']);
+        Route::post('/', [CartController::class, 'store']);
+        Route::delete('/', [CartController::class, 'destroy']);
+        Route::put('/', [CartController::class, 'update']);
     });
 });
 
