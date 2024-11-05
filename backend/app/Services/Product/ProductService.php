@@ -22,7 +22,7 @@ class ProductService
     {
         try {
             // Tạo SKU
-            $sku = 'shope-' . 'T' . date('m') . rand(10, 99);
+            // $sku = 'shope-' . 'T' . date('m') . rand(10, 99);
             
             // Chuẩn bị dữ liệu sản phẩm
             $productData = [
@@ -31,9 +31,9 @@ class ProductService
                 'price' => $validated['price'],
                 'stock_quantity' => $validated['stock_quantity'],
                 'promotional_price' => $validated['promotional_price'] ?? null, // Thêm null nếu không có
-                'sku' => $sku,
+                'sku' =>  $validated['sku'],
                 'thumbnail' => $validated['thumbnail'],
-                'hagtag' => $validated['hagtag'] ?? null, // Thêm null nếu không có
+                'hagtag' => $validated['hagtag'] ?? null,
                 'brand_id' => $validated['brand_id'],
             ];
     
@@ -228,18 +228,31 @@ class ProductService
             }
     
             // Cập nhật hình ảnh
-            if (isset($validated['images'])) {
-                // Xóa ảnh cũ nếu cần
-                // $product->images()->delete();
-                
-                foreach ($validated['images'] as $image) {
+         if (isset($validated['images'])) {
+            // Lấy danh sách ID hình ảnh mới
+            $newImageIds = collect($validated['images'])->pluck('id')->filter()->toArray();
+            
+            // Xóa những hình ảnh không có trong danh sách mới
+            $product->images()
+                ->whereNotIn('id', $newImageIds)
+                ->delete();
+            
+            foreach ($validated['images'] as $imageData) {
+                if (isset($imageData['id'])) {
+                    // Cập nhật hình ảnh hiện có
+                    $product->images()
+                        ->where('id', $imageData['id'])
+                        ->update(['image_path' => $imageData['image_path']]);
+                } else {
+                    // Tạo hình ảnh mới
                     $this->productRepository->createProductImage([
                         'product_id' => $product->id,
-                        'image_path' => $image,
+                        'image_path' => $imageData['image_path'],
                     ]);
                 }
-                Log::info('Đã cập nhật hình ảnh sản phẩm', ['product_id' => $product->id]);
             }
+            Log::info('Đã cập nhật hình ảnh sản phẩm', ['product_id' => $product->id]);
+        }
     
             // Load relationships và trả về
             $updatedProduct = $product->load(['categories', 'variants.color', 'variants.size', 'images', 'brand']);

@@ -6,12 +6,10 @@ import { FaSort } from 'react-icons/fa';
 import { formatVNCurrency } from '../../../common/formatVNCurrency';
 import productService, { PRODUCT } from '../../../services/admin/product';
 import LoadingTable from '../LoadingTable';
-import ModalProduct from './ModalProduct';
 import { toast } from 'react-hot-toast';
+import Pagination from '../../../components/admin/Pagination';
+import { Link } from 'react-router-dom';
 import { CATEGORY } from '../../../services/admin/category';
-import categoryService from '../../../services/admin/category';
-import sizeService, { SIZE } from '../../../services/admin/size';
-import brandService, { BRAND } from '../../../services/admin/brand';
 
 export enum Status {
 	PUBLIC = 'public',
@@ -19,28 +17,44 @@ export enum Status {
 	HIDDEN = 'hidden',
 }
 
+type Product = {
+	id: number;
+	name: string;
+	price: number;
+	promotional_price: number;
+	stock_quantity: number;
+	categories: string[];
+	status: string;
+	thumbnail: string;
+	images: string[];
+	variants: {
+		color: string;
+		size: number;
+		quantity: number;
+		image_variant: string;
+	}[];
+};
+
 const Product = () => {
 	const [selectAll, setSelectAll] = useState(false); // State for select all
 	const [selectedItems, setSelectedItems] = useState<number[]>([]); // State for individual selections
 	const [productData, setProductData] = useState<PRODUCT[]>([]);
-	const [categories, setCategories] = useState<CATEGORY[]>([]);
-	const [sizes, setSizes] = useState<SIZE[]>([]);
-	const [brands, setBrands] = useState<BRAND[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [page, setPage] = useState(1);
 	const [limit] = useState(10);
 	const [totalPages, setTotalPages] = useState(0);
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [selectedProduct, setSelectedProduct] = useState<PRODUCT | null>(null);
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
 	const fetchProducts = async () => {
 		try {
+			setLoading(true);
 			const res = await productService.getAll(page, limit);
+			console.log(res.data.data.data);
 			setProductData(res.data.data.data);
 			setTotalPages(res.data.data.last_page);
 		} catch (error) {
 			console.error(error);
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -55,22 +69,6 @@ const Product = () => {
 			}
 		}
 	};
-
-	useEffect(() => {
-		(async () => {
-			try {
-				const categories = await categoryService.getAll();
-				const sizes = await sizeService.getAll();
-				const brands = await brandService.getAll();
-
-				setCategories(categories.data.category.data);
-				setSizes(sizes.data.sizes.data);
-				setBrands(brands.data.brands.data);
-			} catch (error) {
-				console.error(error);
-			}
-		})();
-	}, []);
 
 	useEffect(() => {
 		fetchProducts();
@@ -97,113 +95,6 @@ const Product = () => {
 		setPage(newPage);
 	};
 
-	const renderPaginationButtons = () => {
-		const buttons = [];
-		const maxVisibleButtons = 5;
-
-		// Always show first page
-		buttons.push(
-			<button
-				key={1}
-				onClick={() => handlePageChange(1)}
-				className={`join-item btn btn-sm ${page === 1 ? 'btn-active' : ''}`}
-			>
-				1
-			</button>
-		);
-
-		if (totalPages <= maxVisibleButtons) {
-			// Show all pages if total is small
-			for (let i = 2; i <= totalPages; i++) {
-				buttons.push(
-					<button
-						key={i}
-						onClick={() => handlePageChange(i)}
-						className={`join-item btn btn-sm ${
-							page === i ? 'btn-active' : ''
-						}`}
-					>
-						{i}
-					</button>
-				);
-			}
-		} else {
-			// Show dots and last few pages
-			if (page > 3) {
-				buttons.push(
-					<button
-						key="dots1"
-						className="join-item btn btn-sm btn-disabled"
-					>
-						...
-					</button>
-				);
-			}
-
-			// Show current page and neighbors
-			for (
-				let i = Math.max(2, page - 1);
-				i <= Math.min(page + 1, totalPages - 1);
-				i++
-			) {
-				buttons.push(
-					<button
-						key={i}
-						onClick={() => handlePageChange(i)}
-						className={`join-item btn btn-sm ${
-							page === i ? 'btn-active' : ''
-						}`}
-					>
-						{i}
-					</button>
-				);
-			}
-
-			if (page < totalPages - 2) {
-				buttons.push(
-					<button
-						key="dots2"
-						className="join-item btn btn-sm btn-disabled"
-					>
-						...
-					</button>
-				);
-			}
-
-			// Always show last page
-			buttons.push(
-				<button
-					key={totalPages}
-					onClick={() => handlePageChange(totalPages)}
-					className={`join-item btn btn-sm ${
-						page === totalPages ? 'btn-active' : ''
-					}`}
-				>
-					{totalPages}
-				</button>
-			);
-		}
-
-		return <div className="join ms-auto">{buttons}</div>;
-	};
-
-	const openModal = () => setIsModalOpen(true);
-	const closeModal = () => setIsModalOpen(false);
-	const handleSuccess = () => {
-		fetchProducts(); // Refresh product list after successful creation
-		closeModal();
-	};
-
-	const openEditModal = async (product: PRODUCT) => {
-		setSelectedProduct(product);
-		setIsEditModalOpen(true);
-	};
-
-	const closeEditModal = () => {
-		setIsEditModalOpen(false);
-		setSelectedProduct(null);
-	};
-
 	return (
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
 			<div className="flex justify-between items-center">
@@ -221,13 +112,13 @@ const Product = () => {
 						<Trash2 size={16} />
 						<p>Delete {selectedItems.length} items</p>
 					</button>
-					<button
-						onClick={openModal}
+					<Link
+						to="/admin/create"
 						className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 					>
 						<Plus size={16} />
 						Add Product
-					</button>
+					</Link>
 				</div>
 			</div>
 
@@ -357,8 +248,8 @@ const Product = () => {
 										{product.stock_quantity}
 									</td>
 									<td className="px-6 py-3">
-										{product.categories?.map((category) => (
-											<p key={category.id}>{category.name}</p>
+										{product.category_ids?.map((category) => (
+											<p key={category}>{category}</p>
 										))}
 									</td>
 									<td className="px-6 py-3">
@@ -378,10 +269,7 @@ const Product = () => {
 										<button className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary">
 											<Eye size={16} />
 										</button>
-										<button
-											onClick={() => openEditModal(product)}
-											className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
-										>
+										<button className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary">
 											<PencilLine size={16} />
 										</button>
 										<button
@@ -400,28 +288,10 @@ const Product = () => {
 				</table>
 			</div>
 
-			{renderPaginationButtons()}
-
-			<ModalProduct
-				categories={categories}
-				sizes={sizes}
-				brands={brands}
-				isOpen={isEditModalOpen}
-				onClose={closeEditModal}
-				onSuccess={() => {
-					fetchProducts();
-					closeEditModal();
-				}}
-				product={selectedProduct}
-			/>
-
-			<ModalProduct
-				categories={categories}
-				sizes={sizes}
-				brands={brands}
-				isOpen={isModalOpen}
-				onClose={closeModal}
-				onSuccess={handleSuccess}
+			<Pagination
+				currentPage={page}
+				totalPages={totalPages}
+				onPageChange={handlePageChange}
 			/>
 		</div>
 	);

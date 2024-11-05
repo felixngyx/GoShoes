@@ -2,6 +2,7 @@ import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 import Navbar from '../../../components/client/Navbar';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
 import { env } from '../../../environment/env';
 import Joi from 'joi';
 import { useForm } from 'react-hook-form';
@@ -12,7 +13,6 @@ import Cookies from 'js-cookie';
 import { useDispatch } from 'react-redux';
 import { login } from '../../../store/client/userSlice';
 import toast from 'react-hot-toast';
-import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
 
 const schema = Joi.object({
 	email: Joi.string()

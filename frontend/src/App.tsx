@@ -24,7 +24,7 @@ import ProfileAdmin from './pages/Admin/Profile';
 import Order from './pages/Client/User/Order';
 import NotfoundPage from './pages/Client/NotfoundPage';
 import OrderDetail from './pages/Client/User/OrderDetail';
-import Address from './pages/Client/User/Address';
+import Address from './pages/Client/User/Address/Address';
 import User from './pages/Admin/User';
 import ResetPassword from './pages/Client/ResetPassword';
 import ForgetPassword from './pages/Client/ForgetPassword';
@@ -32,7 +32,9 @@ import Product from './pages/Admin/Product';
 import { Toaster } from 'react-hot-toast';
 import Attribute from './pages/Admin/Attribute';
 import Homepage from './pages/Client/home';
-import Cart from './pages/Client/Cart';
+import ContactUs from './pages/Client/ContactUs';
+import ChatUI from './components/client/ChatUi';
+import AddProduct from './pages/Admin/Product/AddProduct';
 
 function App() {
 	const { pathname } = useLocation();
@@ -40,6 +42,7 @@ function App() {
 	useEffect(() => {
 		window.scrollTo(0, 0);
 	}, [pathname]);
+	const isAdminPage = pathname.startsWith('/admin');
 
 	return (
 		<>
@@ -54,7 +57,7 @@ function App() {
 						<Route path="my-order/:id" element={<OrderDetail />} />
 						<Route path="my-address" element={<Address />} />
 					</Route>
-					<Route path="/cart" element={<Cart />} />
+					<Route path="/contact-us" element={<ContactUs />}></Route>
 					<Route path="/reset-password" element={<ResetPassword />} />
 					<Route path="/forget-password" element={<ForgetPassword />} />
 					<Route path="*" element={<NotfoundPage />} />
@@ -74,6 +77,7 @@ function App() {
 					<Route path="user" element={<User />} />
 					<Route path="product" element={<Product />} />
 					<Route path="attribute" element={<Attribute />} />
+					<Route path="create" element={<AddProduct />} />
 					<Route
 						path="calendar" // Changed from "/calendar" to "calendar"
 						element={
@@ -176,6 +180,7 @@ function App() {
 				</Route>
 			</Routes>
 			<Toaster position="top-right" reverseOrder={false} />
+			{!isAdminPage && <ChatUI />}
 		</>
 	);
 }
