@@ -98,6 +98,9 @@ class ProductService
     {
         return $this->productRepository->findProductWithRelations($id);
     }
+    public function findProductWithRelationsClient(string $id){
+        return $this->productRepository->findProductWithRelationsClient($id);
+    }
     public function deleteProduct(Product $product)
     {
         try {

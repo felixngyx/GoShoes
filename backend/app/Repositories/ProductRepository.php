@@ -100,6 +100,29 @@ class ProductRepository implements ProductRepositoryInterface
             'relatedProducts' => $relatedProducts
         ];
     }
+    public function findProductWithRelationsClient(string $id){
+        $product = Product::where('is_deleted', false)
+            ->with(['variants.color', 'variants.size', 'images', 'categories', 'brand'])
+            ->find($id);
+
+        if (!$product) {
+            return null;
+        }
+        $relatedProducts = Product::whereHas('categories', function ($query) use ($product) {
+            $query->whereIn('categories.id', $product->categories->pluck('id'));
+        })
+            ->where('id', '!=', $product->id)
+            ->where('is_deleted', false)
+            ->limit(8)
+            ->get();
+
+        
+        return [
+            'product' => $product,
+            'relatedProducts' => $relatedProducts
+        ];
+    }
+
 
     public function softDeleteProduct(Product $product)
     {
