@@ -19,5 +19,5 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 
 
 Broadcast::channel('admin-channel', function ($user) {
-    return $user->is_admin;
+    return true;
 });

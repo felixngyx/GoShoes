@@ -2,13 +2,17 @@ import { useState } from 'react';
 import Header from '../components/admin/Header';
 import Sidebar from '../components/admin/Sidebar';
 import { Outlet } from 'react-router-dom';
-
+import OrderNotifications from '../components/admin/OrderNotifications';
+import { Toaster } from 'react-hot-toast';
 const DefaultLayout = () => {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 
 	return (
 		<div className="dark:bg-boxdark-2 dark:text-bodydark">
 			{/* <!-- ===== Page Wrapper Start ===== --> */}
+
+			{/* Order Notifications Component */}
+			<OrderNotifications />
 			<div className="flex h-screen overflow-hidden">
 				{/* <!-- ===== Sidebar Start ===== --> */}
 				<Sidebar
