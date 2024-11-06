@@ -15,6 +15,8 @@ use App\Http\Controllers\API\Products\ProductController;
 
 
 use App\Http\Controllers\API\Discount\DiscountController;
+use App\Http\Controllers\API\PostCategory\PostCategoryController;
+use App\Http\Controllers\API\Products\ProductClientController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +50,7 @@ Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::post('/products', [ProductController::class, 'store']);
 
+Route::get('/product/{id}', [ProductClientController::class, 'show']);
 
 
 // API Color
@@ -75,7 +78,13 @@ Route::put('/brands/{id}', [BrandController::class, 'update']);
 Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
 Route::delete('brands', [BrandController::class, 'destroyMultiple']);
 
-
+// API PostCategoryController
+Route::get('/post-categories', [PostCategoryController::class, 'index']);
+Route::post('/post-categories', [PostCategoryController::class, 'store']);
+Route::get('/post-categories/{id}', [PostCategoryController::class, 'show']);
+Route::put('/post-categories/{id}', [PostCategoryController::class, 'update']);
+Route::delete('/post-categories/{id}', [PostCategoryController::class, 'destroy']);
+Route::delete('post-categories', [PostCategoryController::class, 'destroyMultiple']);
 
 // This route is Authenticated
 Route::group([

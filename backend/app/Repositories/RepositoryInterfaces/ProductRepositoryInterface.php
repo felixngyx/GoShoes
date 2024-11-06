@@ -13,6 +13,7 @@ interface ProductRepositoryInterface
     public function createProductImage(array $imageData);
     public function findProductForDeletion(string $id);
     public function findProductWithRelations(string $id);
+    public function findProductWithRelationsClient(string $id);
     public function softDeleteProduct(Product $product);
     public function restoreProduct(Product $product);
   
