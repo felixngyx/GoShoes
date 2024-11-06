@@ -13,31 +13,26 @@ use Illuminate\Queue\SerializesModels;
 class NewOrderCreated implements ShouldBroadcast  // Thêm implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-    public $orderId;
-    public $message;
-
-
-    public function __construct($orderId)
+    public $order_id;
+    public function __construct($order_id)
     {
-        $this->orderId = $orderId;
+        $this->order_id = $order_id;
     }
-
-    public function broadcastOn(): array
+    public function broadcastOn()
     {
-        return [new PrivateChannel('admin-channel')]; // Thêm new Channel()
-    }
-
-    public function broadcastAs(): string  // Thêm kiểu trả về string
-    {
-        return 'order.created';
+        return new Channel('admin-channel'); // Tên channel mà event sẽ broadcast tới
     }
 
     public function broadcastWith()
     {
-        $this->message = 'Ting Ting ! New Order';
         return [
-            'order_id' => $this->orderId,
-            'message' => $this->message
+            'message' => 'New order created',
+            'order_id' => $this->order_id
         ];
+    }
+
+    public function broadcastAs()
+    {
+        return 'new-order-created';
     }
 }
