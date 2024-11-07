@@ -3,34 +3,25 @@
 namespace App\Http\Controllers\API\Discount;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Discound\DiscountStoreRequest;
-use App\Models\Discount;
-use Carbon\Carbon;
+use App\Http\Requests\Discount\DiscountStoreRequest;
+use App\Http\Requests\Discount\DiscountUpdateRequest;
+use App\Services\DiscountService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DiscountController extends Controller
 {
-    public function index(Request $request){
+    protected $discountService;
+
+    public function __construct(DiscountService $discountService)
+    {
+        $this->discountService = $discountService;
+    }
+
+    public function index(Request $request)
+    {
         try {
-            $discounts = Discount::with('products')
-                ->when($request->status === 'active', function($q) {
-                    return $q->where('valid_from', '<=', now())
-                            ->where('valid_to', '>=', now())
-                            ->where('usage_limit', '>', DB::raw('used_count'));
-                })
-                ->when($request->status === 'expired', function($q) {
-                    return $q->where('valid_to', '<', now())
-                            ->orWhere('usage_limit', '<=', DB::raw('used_count'));
-                })
-                ->orderBy('created_at', 'desc')
-                ->paginate($request->per_page ?? 10);
-
-            return response()->json([
-                'status' => true,
-                'data' => $discounts
-            ]);
-
+            $discounts = $this->discountService->getAllDiscounts($request);
+            return response()->json(['status' => true, 'data' => $discounts]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -39,113 +30,52 @@ class DiscountController extends Controller
             ], 500);
         }
     }
+
     public function store(DiscountStoreRequest $request)
     {
-        DB::beginTransaction();
         try {
-            $discount = Discount::create($request->validated());
+            \Log::info('Request data:', $request->validated());
 
-            if ($request->has('product_ids')) {
-                $discount->products()->attach($request->product_ids);
-            }
+            $discount = $this->discountService->createDiscount($request->validated());
 
-            DB::commit();
+            \Log::info('Created discount:', [
+                'discount' => $discount->toArray(),
+                'has_products' => $discount->products->isNotEmpty(),
+                'product_count' => $discount->products->count()
+            ]);
 
             return response()->json([
                 'status' => true,
-                'message' => 'Tạo mã giảm giá thành công',
-                'data' => $discount->load('products')
+                'message' => 'Discount created successfully',
+                'data' => $discount
             ], 201);
-
         } catch (\Exception $e) {
-            DB::rollBack();
+            \Log::error('Error in discount creation:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'status' => false,
-                'message' => 'Có lỗi xảy ra khi tạo mã giảm giá',
+                'message' => 'Failed to create discount',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
-    public function show($id)
+    public function update(DiscountUpdateRequest $request, $id)
     {
         try {
-            $discount = Discount::with('products')->findOrFail($id);
-            return response()->json([
-                'status' => true,
-                'data' => $discount
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Không tìm thấy mã giảm giá',
-                'error' => $e->getMessage()
-            ], 404);
-        }
-    }
-
-    public function update(DiscountStoreRequest $request, $id)
-    {
-        DB::beginTransaction();
-        try {
-            $discount = Discount::findOrFail($id);
-
-            // Không cho phép sửa code nếu đã có người sử dụng
-            if ($discount->used_count > 0 && $discount->code !== $request->code) {
-                throw new \Exception('Không thể thay đổi mã giảm giá đã được sử dụng');
-            }
-
-            $discount->update($request->validated());
-
-            if ($request->has('product_ids')) {
-                $discount->products()->sync($request->product_ids);
-            }
-
-            DB::commit();
-
+            $discount = $this->discountService->updateDiscount($id, $request->validated());
             return response()->json([
                 'status' => true,
                 'message' => 'Cập nhật mã giảm giá thành công',
-                'data' => $discount->load('products')
+                'data' => $discount
             ]);
-
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
                 'status' => false,
                 'message' => 'Có lỗi xảy ra khi cập nhật mã giảm giá',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function destroy($id)
-    {
-        DB::beginTransaction();
-        try {
-            $discount = Discount::findOrFail($id);
-
-            // Không cho phép xóa nếu đã có người sử dụng
-            if ($discount->used_count > 0) {
-                throw new \Exception('Không thể xóa mã giảm giá đã được sử dụng');
-            }
-
-            $discount->products()->detach();
-            $discount->delete();
-
-            DB::commit();
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Xóa mã giảm giá thành công'
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'status' => false,
-                'message' => 'Có lỗi xảy ra khi xóa mã giảm giá',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -161,46 +91,16 @@ class DiscountController extends Controller
                 'product_ids.*' => 'exists:products,id'
             ]);
 
-            $discount = Discount::where('code', $request->code)
-                ->with('products')
-                ->first();
-
-            // Kiểm tra thời gian hiệu lực
-            if (Carbon::now()->lt($discount->valid_from) || Carbon::now()->gt($discount->valid_to)) {
-                throw new \Exception('Mã giảm giá chưa có hiệu lực hoặc đã hết hạn');
-            }
-
-            // Kiểm tra số lần sử dụng
-            if ($discount->used_count >= $discount->usage_limit) {
-                throw new \Exception('Mã giảm giá đã hết lượt sử dụng');
-            }
-
-            // Kiểm tra giá trị đơn hàng tối thiểu
-            if ($request->total_amount < $discount->min_order_amount) {
-                throw new \Exception('Giá trị đơn hàng chưa đạt mức tối thiểu để sử dụng mã giảm giá');
-            }
-
-            // Kiểm tra sản phẩm áp dụng (nếu có)
-            if ($discount->products->isNotEmpty() && $request->has('product_ids')) {
-                $validProductIds = $discount->products->pluck('id')->toArray();
-                $requestProductIds = $request->product_ids;
-
-                if (!array_intersect($validProductIds, $requestProductIds)) {
-                    throw new \Exception('Mã giảm giá không áp dụng cho các sản phẩm trong đơn hàng');
-                }
-            }
-
-            // Tính số tiền được giảm
-            $discountAmount = $request->total_amount * ($discount->percent / 100);
+            $result = $this->discountService->validateDiscount(
+                $request->code,
+                $request->total_amount,
+                $request->product_ids
+            );
 
             return response()->json([
                 'status' => true,
                 'message' => 'Mã giảm giá hợp lệ',
-                'data' => [
-                    'discount' => $discount,
-                    'discount_amount' => $discountAmount,
-                    'final_amount' => $request->total_amount - $discountAmount
-                ]
+                'data' => $result
             ]);
 
         } catch (\Exception $e) {

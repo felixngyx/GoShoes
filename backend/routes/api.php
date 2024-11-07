@@ -14,8 +14,6 @@ use App\Http\Controllers\API\Brands\BrandController;
 use App\Http\Controllers\API\Order\OrderController;
 use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use App\Http\Controllers\API\Products\ProductController;
-
-
 use App\Http\Controllers\API\Discount\DiscountController;
 use App\Http\Controllers\API\PostCategory\PostCategoryController;
 use App\Http\Controllers\API\Products\ProductClientController;
@@ -100,9 +98,10 @@ Route::group([
     Route::post('/logout', [AuthController::class, 'logoutController']);
 
     Route::prefix('orders')->group(function () {
+        Route::get('/all', [OrderController::class, 'index']);
+        Route::get('/{id}', [OrderController::class, 'show']);
         Route::get('/', [OrderController::class, 'OrderOneUser']);
         Route::post('/', [OrderController::class, 'store']);
-        // Route::get('/{id}', [OrderController::class, 'show']);
         Route::put('/{id}', [OrderController::class, 'update']);
         Route::get('/{id}/check-payment', [OrderController::class, 'checkPaymentStatus']);
         Route::put('/{id}/update', [OrderController::class, 'UpdateOrder']);
@@ -116,6 +115,8 @@ Route::group([
         Route::put('/{id}', [DiscountController::class, 'update']);
         Route::delete('/{id}', [DiscountController::class, 'destroy']);
         Route::post('/validate', [DiscountController::class, 'validateCode']);
+        Route::patch('/{id}/status', [DiscountController::class, 'updateStatus']);
+        Route::get('/{id}/statistics', [DiscountController::class, 'getStatistics']);
     });
 
     Route::prefix('wishlist')->group(function () {
