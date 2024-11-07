@@ -503,15 +503,15 @@ class OrderController extends Controller
                 ->firstOrFail();
 
             // Kiểm tra trạng thái đơn hàng - mở rộng các trạng thái hợp lệ
-            $validStatuses = ['pending', 'failed', 'canceled'];
+            $validStatuses = ['pending', 'failed', 'canceled', 'expired'];
             if (!in_array($order->status, $validStatuses)) {
-                throw new \Exception('Đơn hàng không thể tạo lại link thanh toán');
+                throw new \Exception('This order is not supported to renew payment link');
             }
 
             // Kiểm tra phương thức thanh toán
             $payment = $order->payment;
             if (!$payment || $payment->method_id == 2) { // 2 là COD
-                throw new \Exception('Đơn hàng không hỗ trợ tạo lại link thanh toán');
+                throw new \Exception('This order is not supported to renew payment link');
             }
 
             // Tạo SKU mới cho giao dịch mới
@@ -550,19 +550,19 @@ class OrderController extends Controller
                 return response()->json([
                     'success' => true,
                     'payment_url' => $payment_url,
-                    'message' => 'Đã tạo lại link thanh toán thành công'
+                    'message' => 'Renew payment link successfully, you have 15 minutes to complete the payment'
                 ]);
             } else {
                 // Khôi phục SKU cũ nếu tạo link thất bại
                 $order->update(['sku' => $oldSku]);
-                throw new \Exception('Khởi tạo thanh toán thất bại: ' . json_encode($paymentResponse));
+                throw new \Exception('Failed to create payment: ' . json_encode($paymentResponse));
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Tạo lại link thanh toán thất bại: ' . $e->getMessage());
+            Log::error('Failed to renew payment link: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'error' => 'Tạo lại link thanh toán thất bại',
+                'error' => 'Failed to renew payment link',
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -571,25 +571,24 @@ class OrderController extends Controller
     public function show($id)
     {
         try {
-            $order = Order::with([
+            // Kiểm tra quyền truy cập
+            $user = auth()->user();
+            $order = Order::findOrFail($id);
+
+            if (!$user->is_admin && $order->user_id !== $user->id) {
+                throw new \Exception('Bạn không có quyền truy cập đơn hàng này');
+            }
+
+            $order->load([
                 'user:id,name,email',
                 'shipping:id,address,city',
                 'items:id,order_id,product_id,variant_id,quantity,price',
                 'items.product:id,name,thumbnail',
                 'items.variant:id,size_id,color_id',
-                'items.variant.size:id,name',
-                'items.variant.color:id,name',
+                'items.variant.size:id,size',
+                'items.variant.color:id,color',
                 'payment:order_id,method_id,status,url',
                 'payment.method:id,name'
-            ])
-            ->findOrFail($id, [
-                'id',
-                'user_id',
-                'shipping_id',
-                'total',
-                'status',
-                'sku',
-                'created_at'
             ]);
 
             return response()->json([
@@ -624,15 +623,15 @@ class OrderController extends Controller
                     'items' => $order->items->map(function ($item) {
                         return [
                             'quantity' => $item->quantity,
-                            'price' => $item->price,
-                            'subtotal' => $item->quantity * $item->price,
+                            'price' => $item->price * 100,
+                            'subtotal' => $item->quantity * $item->price * 100,
                             'product' => [
                                 'name' => $item->product->name,
                                 'thumbnail' => (string)$item->product->thumbnail,
                             ],
                             'variant' => $item->variant ? [
-                                'size' => $item->variant->size->name,
-                                'color' => $item->variant->color->name,
+                                'size' => $item->variant->size->size,
+                                'color' => $item->variant->color->color,
                             ] : null
                         ];
                     })
@@ -641,11 +640,9 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy đơn hàng',
+                'message' => 'Không thể truy cập đơn hàng',
                 'error' => $e->getMessage()
-            ], 404);
+            ], 403);
         }
     }
-
-    
 }

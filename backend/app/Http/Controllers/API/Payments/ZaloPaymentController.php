@@ -223,7 +223,7 @@ class ZaloPaymentController extends Controller
                 $result = $response->json();
                 if ($result['return_code'] == 1) {
                     // Cập nhật trạng thái đơn hàng thành cancelled
-                    $order->status = 'cancelled';
+                    $order->status = 'refunded';
                     $order->save();
 
                     // Cập nhật trạng thái thanh toán
