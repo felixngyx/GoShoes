@@ -30,15 +30,83 @@ class OrderController extends Controller
         $this->zaloPaymentController = $zaloPaymentController;
     }
 
-    public function index() {}
+    public function index()
+    {
+        $orders = Order::with([
+            'user:id,name,email',
+            'shipping:id,address,city',
+            'items:id,order_id,product_id,variant_id,quantity,price',
+            'items.product:id,name,thumbnail',
+            'items.variant:id,size_id,color_id',
+            'items.variant.size:id,name',
+            'items.variant.color:id,name',
+            'payment:order_id,method_id,status,url',
+            'payment.method:id,name'
+        ])
+            ->orderBy('created_at', 'desc')
+            ->get([
+                'id',
+                'user_id',
+                'shipping_id',
+                'total',
+                'status',
+                'sku',
+                'created_at'
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'sku' => $order->sku,
+                    'status' => $order->status,
+                    'total' => $order->total,
+                    // Thông tin khách hàng
+                    'customer' => [
+                        'name' => $order->user->name,
+                        'email' => $order->user->email,
+                    ],
+
+                    // Thông tin địa chỉ giao hàng
+                    'shipping' => $order->shipping ? [
+                        'address' => $order->shipping->address,
+                        'city' => $order->shipping->city,
+                    ] : null,
+
+                    // Thông tin thanh toán
+                    'payment' => $order->payment ? [
+                        'method' => $order->payment->method->name,
+                        'status' => $order->payment->status,
+                        'url' => $order->payment->url,
+                    ] : null,
+
+                    // Chi tiết sản phẩm
+                    'items' => $order->items->map(function ($item) {
+                        return [
+                            'quantity' => $item->quantity,
+                            'price' => $item->price,
+                            'subtotal' => $item->quantity * $item->price,
+                            'product' => [
+                                'name' => $item->product->name,
+                                'thumbnail' => (string)$item->product->thumbnail,
+                            ],
+                            'variant' => $item->variant ? [
+                                'size' => $item->variant->size->name,
+                                'color' => $item->variant->color->name,
+                            ] : null
+                        ];
+                    })
+                ];
+            })
+        ]);
+    }
 
     public function OrderOneUser()
     {
         $user_id = auth()->user()->id;
         $orders = Order::with([
-            // Chỉ lấy thông tin địa chỉ giao hàng cần thiết
             'shipping:id,address,city',
-            // Chỉ lấy thông tin sản phẩm cơ bản
             'items:id,order_id,product_id,quantity,price',
             'items.product:id,name,thumbnail'
         ])
@@ -56,7 +124,8 @@ class OrderController extends Controller
             'data' => $orders->map(function ($order) {
                 return [
                     'id' => $order->id,
-                    'total' => $order->total,
+                    'total' => $order->total * 100,
+                    'original_total' => $order->total * 100,
                     'created_at' => $order->created_at->format('Y-m-d'),
 
                     // Thông tin địa chỉ giao hàng
@@ -69,11 +138,11 @@ class OrderController extends Controller
                     'items' => $order->items->map(function ($item) {
                         return [
                             'quantity' => $item->quantity,
-                            'price' => $item->price,
-                            'subtotal' => $item->quantity * $item->price,
+                            'price' => $item->price * 100,
+                            'subtotal' => $item->quantity * $item->price * 100,
                             'product' => [
                                 'name' => $item->product->name,
-                                'thumbnail' => $item->product->thumbnail,
+                                'thumbnail' => (string)$item->product->thumbnail,
                             ]
                         ];
                     })
@@ -246,7 +315,6 @@ class OrderController extends Controller
             } else {
                 throw new \Exception('Khởi tạo thanh toán thất bại: ' . json_encode($paymentResponse));
             }
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Tạo đơn hàng thất bại: ' . $e->getMessage());
@@ -499,4 +567,85 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+    public function show($id)
+    {
+        try {
+            $order = Order::with([
+                'user:id,name,email',
+                'shipping:id,address,city',
+                'items:id,order_id,product_id,variant_id,quantity,price',
+                'items.product:id,name,thumbnail',
+                'items.variant:id,size_id,color_id',
+                'items.variant.size:id,name',
+                'items.variant.color:id,name',
+                'payment:order_id,method_id,status,url',
+                'payment.method:id,name'
+            ])
+            ->findOrFail($id, [
+                'id',
+                'user_id',
+                'shipping_id',
+                'total',
+                'status',
+                'sku',
+                'created_at'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $order->id,
+                    'sku' => $order->sku,
+                    'status' => $order->status,
+                    'total' => $order->total,
+                    'created_at' => $order->created_at->format('Y-m-d H:i:s'),
+
+                    // Thông tin khách hàng
+                    'customer' => [
+                        'name' => $order->user->name,
+                        'email' => $order->user->email,
+                    ],
+
+                    // Thông tin địa chỉ giao hàng
+                    'shipping' => $order->shipping ? [
+                        'address' => $order->shipping->address,
+                        'city' => $order->shipping->city,
+                    ] : null,
+
+                    // Thông tin thanh toán
+                    'payment' => $order->payment ? [
+                        'method' => $order->payment->method->name,
+                        'status' => $order->payment->status,
+                        'url' => $order->payment->url,
+                    ] : null,
+
+                    // Chi tiết sản phẩm
+                    'items' => $order->items->map(function ($item) {
+                        return [
+                            'quantity' => $item->quantity,
+                            'price' => $item->price,
+                            'subtotal' => $item->quantity * $item->price,
+                            'product' => [
+                                'name' => $item->product->name,
+                                'thumbnail' => (string)$item->product->thumbnail,
+                            ],
+                            'variant' => $item->variant ? [
+                                'size' => $item->variant->size->name,
+                                'color' => $item->variant->color->name,
+                            ] : null
+                        ];
+                    })
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy đơn hàng',
+                'error' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    
 }

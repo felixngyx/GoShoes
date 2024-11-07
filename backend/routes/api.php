@@ -91,9 +91,10 @@ Route::group([
     Route::post('/logout', [AuthController::class, 'logoutController']);
 
     Route::prefix('orders')->group(function () {
+        Route::get('/all', [OrderController::class, 'index']);
+        Route::get('/{id}', [OrderController::class, 'show']);
         Route::get('/', [OrderController::class, 'OrderOneUser']);
         Route::post('/', [OrderController::class, 'store']);
-        // Route::get('/{id}', [OrderController::class, 'show']);
         Route::put('/{id}', [OrderController::class, 'update']);
         Route::get('/{id}/check-payment', [OrderController::class, 'checkPaymentStatus']);
         Route::put('/{id}/update', [OrderController::class, 'UpdateOrder']);

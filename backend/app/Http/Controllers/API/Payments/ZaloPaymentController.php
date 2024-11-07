@@ -195,4 +195,54 @@ class ZaloPaymentController extends Controller
 
         return response()->json($results);
     }
+
+    public function refund(Request $request)
+    {
+        try {
+            $order = Order::where('sku', $request->order_id)->firstOrFail();
+            $timestamp = round(microtime(true) * 1000);
+
+            $params = [
+                "app_id" => $this->config["app_id"],
+                "m_refund_id" => date("ymd") . "_" . $this->config["app_id"] . "_" . $timestamp . rand(111,999),
+                "timestamp" => $timestamp,
+                "zp_trans_id" => $request->zp_trans_id,
+                "amount" => $request->amount,
+                "description" => "Hoàn tiền đơn hàng #" . $order->sku
+            ];
+
+            // Tạo chuỗi data để tạo chữ ký
+            $data = $params["app_id"] . "|" . $params["zp_trans_id"] . "|" . $params["amount"]
+                . "|" . $params["description"] . "|" . $params["timestamp"];
+            $params["mac"] = hash_hmac("sha256", $data, $this->config["key1"]);
+
+            $response = Http::withOptions(['verify' => false])
+                ->post("https://sb-openapi.zalopay.vn/v2/refund", $params);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                if ($result['return_code'] == 1) {
+                    // Cập nhật trạng thái đơn hàng thành cancelled
+                    $order->status = 'cancelled';
+                    $order->save();
+
+                    // Cập nhật trạng thái thanh toán
+                    $order->payment->status = 'refunded';
+                    $order->payment->save();
+                    return response()->json($result);
+                } else {
+                    throw new Exception('ZaloPay refund error: ' . $result['return_message']);
+                }
+            } else {
+                Log::error('ZaloPay refund response: ' . $response->body());
+                throw new Exception('Failed to connect to ZaloPay refund API');
+            }
+        } catch (Exception $e) {
+            Log::error('ZaloPay refund failed: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Refund failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
