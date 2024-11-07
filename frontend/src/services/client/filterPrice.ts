@@ -11,7 +11,7 @@ export const filterProduct = async (
       `/products?minPrice=${minPrice}&maxPrice=${maxPrice}&limit=${limit}`
     );
     console.log("API Response:", response.data);
-    return response.data.data.data;
+    return response.data.data.products;
   } catch (error: unknown) {
     console.error("An error occurred:", error);
     return [];

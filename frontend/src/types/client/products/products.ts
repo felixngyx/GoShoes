@@ -1,6 +1,3 @@
-import { Category } from "../category";
-import { Variant } from "./variants";
-
 export interface IProduct {
   id: number;
   brand_id: number;
@@ -14,7 +11,8 @@ export interface IProduct {
   hashtag: string;
   rating_count: number;
   slug: string;
+  images: [];
   thumbnail: string;
-  variants: Variant[];
-  categories: Category[];
+  variants: [];
+  categories: [];
 }

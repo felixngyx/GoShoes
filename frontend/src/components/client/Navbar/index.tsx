@@ -49,17 +49,23 @@ const Navbar = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       if (debouncedSearchTerm) {
-        setLoading(true); // Bắt đầu tải
+        setLoading(true);
         try {
-          const response = await getProductsByName(debouncedSearchTerm);
-          setProducts(response.data.data);
+          const products = await getProductsByName(debouncedSearchTerm);
+          if (products.length === 0) {
+            setProducts([]); // Nếu không có sản phẩm, xóa danh sách
+            console.log("Không có sản phẩm nào.");
+          } else {
+            setProducts(products); // Cập nhật danh sách sản phẩm nếu có
+          }
         } catch (error) {
           console.error("Error fetching products:", error);
+          setProducts([]); // Nếu có lỗi, xóa danh sách sản phẩm
         } finally {
-          setLoading(false); // Kết thúc tải
+          setLoading(false);
         }
       } else {
-        setProducts([]);
+        setProducts([]); // Nếu không có từ khóa tìm kiếm, xóa danh sách
       }
     };
 
@@ -279,9 +285,7 @@ const Navbar = () => {
                               </h3>
                             </Link>
                             <p className="text-gray-600 text-sm">
-                              {product.categories
-                                .map((category: Category) => category.name)
-                                .join(", ")}
+                              {product.categories}
                             </p>
                             <div className="flex justify-between items-center mt-2">
                               <p className="font-bold text-blue-600 text-xl">

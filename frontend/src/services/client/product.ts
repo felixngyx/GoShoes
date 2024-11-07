@@ -3,63 +3,43 @@ import { IProduct } from "../../types/client/products/products";
 
 export const getAllProducts = async (page: number, limit: number) => {
   try {
-    const response = await fetch(
-      `http://localhost:8000/api/products?page=${page}&limit=${limit}`
+    const response = await axiosClient.get(
+      `/products?page=${page}&limit=${limit}`
     );
 
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
-
-    const result = await response.json();
-
-    // Kiểm tra xem dữ liệu có đúng định dạng không
-    if (!result.data || !Array.isArray(result.data.data)) {
-      console.warn("Unexpected response structure:", result);
-      return { data: [] }; // Trả về cấu trúc mặc định nếu không đúng
-    }
-
-    return result.data; // Trả về dữ liệu đúng
-  } catch (err) {
-    console.error("An error occurred:", err);
-    return null;
+    return response.data.data.products || [];
+  } catch (error: unknown) {
+    console.error("An error occurred:", error);
+    return [];
   }
 };
 
 export const getProductById = async (id: number) => {
   try {
-    const response = await axiosClient.get(`/products/${id}`);
-    return response.data.product;
+    const response = await axiosClient.get(`/product/${id}`);
+    return response.data.product?.product;
   } catch (error: unknown) {
-    console.error("An error occurred:", error);
+    console.error("Unknown error occurred:", error);
+
     return null;
   }
 };
 
-export const getAllRelatedProducts = async (
-  id: number
-): Promise<IProduct[]> => {
+export const getAllRelatedProducts = async (id: number) => {
   try {
     const response = await axiosClient.get(`/products/${id}`);
-
-    // Kiểm tra nếu API trả về lỗi "Sản phẩm không tồn tại!"
-    if (response.data?.message === "Sản phẩm không tồn tại!") {
-      console.warn("Sản phẩm không tồn tại.");
-      return []; // Trả về mảng rỗng để tránh lỗi ở phía React component
-    }
-
-    console.log("Result:", response.data.relatedProducts);
-    return response.data.relatedProducts ?? []; // Trả về mảng rỗng nếu không có dữ liệu
+    return response.data.Data?.relatedProducts;
   } catch (error) {
     console.error("An error occurred:", error);
-    return []; // Trả về mảng rỗng nếu có lỗi
+    return [];
   }
 };
 
 export const getProductsByName = async (name: string) => {
   try {
     const response = await axiosClient.get(`/products?name=${name}`);
-    return response.data; // Trả về dữ liệu từ phản hồi
+
+    return response.data.data.products;
   } catch (error) {
     console.error("Error fetching products:", error);
     throw new Error("Failed to fetch products");
