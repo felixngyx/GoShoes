@@ -6,6 +6,7 @@ use App\Repositories\DiscountRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Product;
+use App\Models\Discount;
 
 class DiscountService
 {
@@ -93,13 +94,17 @@ class DiscountService
 
     public function deleteDiscount($id)
     {
-        $discount = $this->discountRepository->findById($id);
+        try {
+            $discount = $this->discountRepository->findById($id);
 
-        if ($discount->used_count > 0) {
-            throw new \Exception('Không thể xóa mã giảm giá đã được sử dụng');
+            if ($discount->used_count > 0) {
+                throw new \Exception('Không thể xóa mã giảm giá đã được sử dụng');
+            }
+
+            return $this->discountRepository->delete($id);
+        } catch (\Exception $e) {
+            throw new \Exception('Không tìm thấy mã giảm giá');
         }
-
-        return $this->discountRepository->delete($id);
     }
 
     public function validateDiscount($code, $totalAmount, $productIds = [])
@@ -156,5 +161,21 @@ class DiscountService
     protected function calculateDiscountAmount($discount, $totalAmount)
     {
         return $totalAmount * ($discount->percent / 100);
+    }
+
+    public function getStatistics($id)
+    {
+        $discount = $this->discountRepository->findById($id);
+
+        return [
+            'total_uses' => $discount->uses_count,
+            'total_amount_saved' => $discount->total_amount_saved,
+            'last_used_at' => $discount->last_used_at
+        ];
+    }
+
+    public function getDiscountById($id)
+    {
+        return Discount::with('products')->findOrFail($id);
     }
 }

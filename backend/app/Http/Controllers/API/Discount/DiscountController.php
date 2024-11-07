@@ -110,4 +110,43 @@ class DiscountController extends Controller
             ], 400);
         }
     }
+
+    public function destroy($id)
+    {
+        try {
+            $this->discountService->deleteDiscount($id);
+            return response()->json([
+                'status' => true,
+                'message' => 'Xóa mã giảm giá thành công'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    public function show($id)
+    {
+        try {
+            $discount = $this->discountService->getDiscountById($id);
+            return response()->json([
+                'status' => true,
+                'data' => $discount
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    public function getStatistics($id)
+    {
+        $statistics = $this->discountService->getStatistics($id);
+        return response()->json(['status' => true, 'data' => $statistics]);
+    }
+
 }

@@ -38,8 +38,8 @@ class OrderController extends Controller
             'items:id,order_id,product_id,variant_id,quantity,price',
             'items.product:id,name,thumbnail',
             'items.variant:id,size_id,color_id',
-            'items.variant.size:id,name',
-            'items.variant.color:id,name',
+            'items.variant.size:id,size',
+            'items.variant.color:id,color',
             'payment:order_id,method_id,status,url',
             'payment.method:id,name'
         ])
