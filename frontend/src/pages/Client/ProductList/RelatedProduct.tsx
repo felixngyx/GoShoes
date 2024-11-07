@@ -25,6 +25,8 @@ const RelatedProduct: React.FC<RelatedProductProps> = ({ id }) => {
     enabled: !!id,
   });
 
+  console.log("1", relatedProducts);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const itemsToShow = 4; // Số sản phẩm hiển thị mỗi lần
 
@@ -75,7 +77,7 @@ const RelatedProduct: React.FC<RelatedProductProps> = ({ id }) => {
               <div className="space-y-4 border rounded-sm">
                 <div className="flex flex-col gap-2">
                   <Link to={`/products/${product.id}`}>
-                    <img src={product.thumbnail} alt="" />
+                    <img src={product.thumbnail} alt={product.name} />
                   </Link>
                   <div className="flex items-center justify-center gap-1 my-2">
                     <RatingStars rating={product.rating_count} />
