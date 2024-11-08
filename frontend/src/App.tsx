@@ -35,6 +35,7 @@ import Homepage from './pages/Client/home';
 import ContactUs from './pages/Client/ContactUs';
 import ChatUI from './components/client/ChatUi';
 import AddProduct from './pages/Admin/Product/AddProduct';
+import UpdateProduct from './pages/Admin/Product/UpdateProduct';
 
 function App() {
 	const { pathname } = useLocation();
@@ -78,6 +79,7 @@ function App() {
 					<Route path="product" element={<Product />} />
 					<Route path="attribute" element={<Attribute />} />
 					<Route path="create" element={<AddProduct />} />
+					<Route path="update/:id" element={<UpdateProduct />} />
 					<Route
 						path="calendar" // Changed from "/calendar" to "calendar"
 						element={

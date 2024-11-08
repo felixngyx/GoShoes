@@ -19,76 +19,110 @@ class ProductController extends Controller
     {
         $this->productService = $productService;
     }
-    public function index(Request $request)
-    {
-        $page = $request->input('page', 1);
-        $limit = $request->input('limit', 9);
-        $orderBy = $request->input('orderBy', 'id');
-        $order = $request->input('order', 'asc');
-        $minPrice = $request->input('minPrice') ? (float) $request->input('minPrice') : null;
-        $maxPrice = $request->input('maxPrice') ? (float) $request->input('maxPrice') : null;
-        $category = $request->input('category');
-        $color = $request->input('color');
-        $name = $request->input('name');
-        $brand_name = $request->input('brand_name');
-        $brand_id = $request->input('brand_id');
-
-        // Truy vấn sản phẩm
-        $query = Product::with(['variants.color', 'variants.size', 'categories', 'brand'])
-            ->where('is_deleted', false);
-
-        // Áp dụng các điều kiện lọc
-        if (!is_null($minPrice)) {
-            $query->where('price', '>=', $minPrice);
-        }
-    
-        if (!is_null($maxPrice)) {
-            $query->where('price', '<=', $maxPrice);
-        }
-        // dd($query->toSql(), $query->getBindings());
-        if ($name) {
-
-            $query->where('name', 'LIKE', '%' . $name . '%');
-        }
-        if ($category) {
-
-            if (is_array($category)) {
-                $query->whereHas('categories', function ($q) use ($category) {
-                    $q->whereIn('id', $category);
-                });
-            } else {
-
-                $query->whereHas('categories', function ($q) use ($category) {
-                    $q->where('id', $category);
+        public function index(Request $request)
+        {
+            $page = $request->input('page', 1);
+            $limit = $request->input('limit', 9);
+            $orderBy = $request->input('orderBy', 'id');
+            $order = $request->input('order', 'asc');
+            $minPrice = $request->input('minPrice') ? (float) $request->input('minPrice') : null;
+            $maxPrice = $request->input('maxPrice') ? (float) $request->input('maxPrice') : null;
+            $category = $request->input('category');
+            $color = $request->input('color');
+            $name = $request->input('name');
+            $brand_name = $request->input('brand_name');
+            $brand_id = $request->input('brand_id');
+        
+            // Khởi tạo query với các relations cần thiết
+            $query = Product::with(['variants.color', 'variants.size', 'categories', 'brand', 'images'])
+                ->where('is_deleted', false);
+        
+            // Áp dụng các điều kiện lọc
+            if (!is_null($minPrice)) {
+                $query->where('price', '>=', $minPrice);
+            }
+        
+            if (!is_null($maxPrice)) {
+                $query->where('price', '<=', $maxPrice);
+            }
+        
+            if ($name) {
+                $query->where('name', 'LIKE', '%' . $name . '%');
+            }
+        
+            if ($category) {
+                if (is_array($category)) {
+                    $query->whereHas('categories', function ($q) use ($category) {
+                        $q->whereIn('id', $category);
+                    });
+                } else {
+                    $query->whereHas('categories', function ($q) use ($category) {
+                        $q->where('id', $category);
+                    });
+                }
+            }
+        
+            if ($color) {
+                $query->whereHas('variants.color', function ($q) use ($color) {
+                    $q->where('color', $color);
                 });
             }
-        }
-
-        if ($color) {
-            $query->whereHas('variants.color', function ($q) use ($color) {
-                $q->where('color', $color);
+        
+            if ($brand_name) {
+                $query->whereHas('brand', function ($q) use ($brand_name) {
+                    $q->where('name', $brand_name);
+                });
+            }
+        
+            if ($brand_id) {
+                $query->where('brand_id', $brand_id);
+            }
+        
+            // Thực hiện phân trang
+            $paginatedProducts = $query->orderBy($orderBy, $order)
+                ->paginate($limit, ['*'], 'page', $page);
+        
+            // Transform dữ liệu theo format mong muốn
+            $transformedProducts = $paginatedProducts->through(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => (float) $product->price,
+                    'promotional_price' => (float) $product->promotional_price,
+                    'stock_quantity' => $product->stock_quantity,
+                    'sku' => $product->sku,
+                    'brand' => $product->brand->name,
+                    'categories' => $product->categories->pluck('name')->toArray(),
+                    'status' => $product->status,
+                    'thumbnail' => $product->thumbnail,
+                    'images' => $product->images->pluck('image_path')->toArray(),
+                    'variants' => $product->variants->map(function ($variant) {
+                        return [
+                            'color' => $variant->color->color,
+                            'size' => (int) $variant->size->size,
+                            'quantity' => $variant->quantity,
+                            'image_variant' => $variant->image_variant
+                        ];
+                    })->toArray()
+                ];
             });
-        }
-        if ($brand_name) {
-            $query->whereHas('brand', function ($q) use ($brand_name) {
-                $q->where('name', $brand_name);
-            });
-        }
-
-        if ($brand_id) {
-            $query->where('brand_id', $brand_id); // Apply filter for brand_id
-        }
-
-
-        // Sắp xếp
-        $products = $query->orderBy($orderBy, $order)
-            ->paginate($limit, ['*'], 'page', $page);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Products retrieved successfully',
-            'data' => $products,
-        ]);
+        
+            // Chuẩn bị response
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Products retrieved successfully',
+                'data' => [
+                    'products' => $transformedProducts->items(),
+                    'pagination' => [
+                        'total' => $paginatedProducts->total(),
+                        'per_page' => $paginatedProducts->perPage(),
+                        'current_page' => $paginatedProducts->currentPage(),
+                        'last_page' => $paginatedProducts->lastPage(),
+                        'from' => $paginatedProducts->firstItem(),
+                        'to' => $paginatedProducts->lastItem(),
+                    ]
+                ]
+            ]);
     }
     public function store(StoreProductRequest $request)
     {
@@ -115,18 +149,27 @@ class ProductController extends Controller
 
     public function show(string $id)
     {
-        // Tìm sản phẩm theo ID
+        // // Tìm sản phẩm theo ID
+        // $product = $this->productService->findProductWithRelations($id);
+
+        // if (!$product) {
+        //     return response()->json(['message' => 'Sản phẩm không tồn tại!'], 404);
+        // }
+        // return response()->json([
+        //     'product' => $product['product'],
+        //     'relatedProducts' => $product['relatedProducts'],
+        //     // 'variantDetails' => $product['variantDetails'],
+        //     // 'brandName' => $product['brandName'],
+        //     // 'categoryNames' => $product['categoryNames'],
+        // ]);
         $product = $this->productService->findProductWithRelations($id);
 
         if (!$product) {
             return response()->json(['message' => 'Sản phẩm không tồn tại!'], 404);
         }
+
         return response()->json([
-            'product' => $product['product'],
-            'relatedProducts' => $product['relatedProducts'],
-            // 'variantDetails' => $product['variantDetails'],
-            // 'brandName' => $product['brandName'],
-            // 'categoryNames' => $product['categoryNames'],
+            'Data' => $product
         ]);
     }
 

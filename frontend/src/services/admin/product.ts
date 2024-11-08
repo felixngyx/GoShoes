@@ -11,8 +11,8 @@ export type PRODUCT = {
 	hagtag: string;
 	category_ids: number[];
 	brand_id: number;
-	thumbnail: string | File;
-	images: string[] | File[];
+	thumbnail: string;
+	images: string[];
 	stock_quantity: number;
 	variants: {
 		color: string;
@@ -24,7 +24,9 @@ export type PRODUCT = {
 
 const productService = {
 	getAll: (page: number = 1, limit: number = 5) => {
-		return axiosClient.get(`/products?page=${page}&limit=${limit}`);
+		return axiosClient.get(
+			`/products?page=${page}&limit=${limit}&order_by=created_at&order=desc`
+		);
 	},
 	getById: (id: number) => {
 		return axiosClient.get(`/products/${id}`);

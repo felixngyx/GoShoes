@@ -135,8 +135,7 @@ class AuthService implements AuthServiceInterface
                     'user' => $user->name,
                     'email' => $user->email,
                     'email_is_verified' => (bool)$user->email_verified_at,
-                    'is_admin' => $user->is_admin,
-                    'verification_link' => $verificationLink
+                    'is_admin' => $user->is_admin
                 ]
             ], 201);
         } catch (\Exception $e) {

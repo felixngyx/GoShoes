@@ -9,7 +9,6 @@ import LoadingTable from '../LoadingTable';
 import { toast } from 'react-hot-toast';
 import Pagination from '../../../components/admin/Pagination';
 import { Link } from 'react-router-dom';
-import { CATEGORY } from '../../../services/admin/category';
 
 export enum Status {
 	PUBLIC = 'public',
@@ -48,9 +47,8 @@ const Product = () => {
 		try {
 			setLoading(true);
 			const res = await productService.getAll(page, limit);
-			console.log(res.data.data.data);
-			setProductData(res.data.data.data);
-			setTotalPages(res.data.data.last_page);
+			setProductData(res.data.data.products);
+			setTotalPages(res.data.data.pagination.last_page);
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -177,14 +175,6 @@ const Product = () => {
 							</th>
 							<th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
-									Category
-									<a>
-										<FaSort />
-									</a>
-								</div>
-							</th>
-							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
 									Status
 									<a>
 										<FaSort />
@@ -248,11 +238,6 @@ const Product = () => {
 										{product.stock_quantity}
 									</td>
 									<td className="px-6 py-3">
-										{product.category_ids?.map((category) => (
-											<p key={category}>{category}</p>
-										))}
-									</td>
-									<td className="px-6 py-3">
 										<div
 											className={`badge text-white badge-${
 												product.status === Status.PUBLIC
@@ -269,9 +254,12 @@ const Product = () => {
 										<button className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary">
 											<Eye size={16} />
 										</button>
-										<button className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary">
+										<Link
+											to={`/admin/update/${product.id}`}
+											className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+										>
 											<PencilLine size={16} />
-										</button>
+										</Link>
 										<button
 											onClick={() =>
 												deleteProduct(Number(product.id))

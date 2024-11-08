@@ -44,10 +44,10 @@ const productSchema = Joi.object({
 	brand_id: Joi.number().required().messages({
 		'number.base': 'Brand is required',
 	}),
-	thumbnail: Joi.any().required().messages({
-		'any.required': 'Thumbnail is required',
+	thumbnail: Joi.string().required().messages({
+		'string.empty': 'Thumbnail is required',
 	}),
-	images: Joi.array().items(Joi.any()).required().messages({
+	images: Joi.array().items(Joi.string()).required().messages({
 		'array.base': 'Images must be an array',
 		'array.min': 'At least one image is required',
 	}),
@@ -137,7 +137,7 @@ const AddProduct = () => {
 		if (file) {
 			setThumbnailFile(file);
 			// Set the value for the thumbnail field
-			setValue('thumbnail', file);
+			setValue('thumbnail', file.name);
 			clearErrors('thumbnail');
 		}
 	};
@@ -169,7 +169,10 @@ const AddProduct = () => {
 		if (files) {
 			const filesArray = Array.from(files);
 			setProductImageFiles((prev) => [...prev, ...filesArray]);
-			setValue('images', [...productImageFiles, ...filesArray]);
+			setValue(
+				'images',
+				[...productImageFiles, ...filesArray].map((file) => file.name)
+			);
 			clearErrors('images');
 		}
 	};
@@ -177,7 +180,10 @@ const AddProduct = () => {
 	const removeProductImage = (index: number) => {
 		setProductImageFiles((prev) => {
 			const newFiles = prev.filter((_, i) => i !== index);
-			setValue('images', newFiles);
+			setValue(
+				'images',
+				newFiles.map((file) => file.name)
+			);
 			return newFiles;
 		});
 	};

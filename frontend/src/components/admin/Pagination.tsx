@@ -47,7 +47,7 @@ const Pagination = ({
 			if (currentPage > 3) {
 				buttons.push(
 					<button
-						key="dots1"
+						key="ellipsis-start"
 						className="join-item btn btn-sm btn-disabled"
 					>
 						...
@@ -63,7 +63,7 @@ const Pagination = ({
 			) {
 				buttons.push(
 					<button
-						key={i}
+						key={`page-${i}`}
 						onClick={() => onPageChange(i)}
 						className={`join-item btn btn-sm ${
 							currentPage === i ? 'btn-active' : ''
@@ -77,7 +77,7 @@ const Pagination = ({
 			if (currentPage < totalPages - 2) {
 				buttons.push(
 					<button
-						key="dots2"
+						key="ellipsis-end"
 						className="join-item btn btn-sm btn-disabled"
 					>
 						...
