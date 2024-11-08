@@ -1,10 +1,11 @@
 import { ChevronLeft, Pencil, Plus, Trash } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Address } from "../../../../types/client/address";
 import LocationSelect from "./LocationSelector";
 
 const AddressComponent: React.FC = () => {
   const addressLimit = 5;
+
   const [addresses, setAddresses] = useState<Address[]>([
     {
       name: "Nguyễn Văn A",
@@ -39,6 +40,17 @@ const AddressComponent: React.FC = () => {
   const [showPopup1, setShowPopup1] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
 
+  useEffect(() => {
+    if (showPopup || showPopup1) {
+      document.body.classList.add("overflow-hidden");
+    } else {
+      document.body.classList.remove("overflow-hidden");
+    }
+    return () => {
+      document.body.classList.remove("overflow-hidden");
+    };
+  }, [showPopup, showPopup1]);
+
   const handleLocationSelect = (location: string) => {
     setSelectedLocation(location);
     setShowPopup1(false);
@@ -68,9 +80,6 @@ const AddressComponent: React.FC = () => {
               <div className="flex space-x-2">
                 <button>
                   <Pencil className="w-5 h-5 text-blue-500" />
-                </button>
-                <button>
-                  <Trash className="w-5 h-5 text-red-500" />
                 </button>
               </div>
             </div>
