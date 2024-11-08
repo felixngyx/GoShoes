@@ -33,7 +33,7 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Order::with([
-            'user:id,name,email',
+            'user:id,name,email,avt',
             'shipping:id,address,city',
             'items:id,order_id,product_id,variant_id,quantity,price',
             'items.product:id,name,thumbnail',
@@ -44,7 +44,7 @@ class OrderController extends Controller
             'payment.method:id,name'
         ])
             ->orderBy('created_at', 'desc')
-            ->get([
+            ->paginate(10, [  // Sử dụng paginate và chỉ định số lượng bản ghi trên mỗi trang
                 'id',
                 'user_id',
                 'shipping_id',
@@ -56,7 +56,7 @@ class OrderController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $orders->map(function ($order) {
+            'data' => $orders->getCollection()->map(function ($order) {
                 return [
                     'id' => $order->id,
                     'sku' => $order->sku,
@@ -64,6 +64,7 @@ class OrderController extends Controller
                     'total' => $order->total,
                     // Thông tin khách hàng
                     'customer' => [
+                        'avt' => $order->user->avt,
                         'name' => $order->user->name,
                         'email' => $order->user->email,
                     ],
@@ -85,20 +86,26 @@ class OrderController extends Controller
                     'items' => $order->items->map(function ($item) {
                         return [
                             'quantity' => $item->quantity,
-                            'price' => $item->price,
+                            'price' => $item->price ,
                             'subtotal' => $item->quantity * $item->price,
                             'product' => [
                                 'name' => $item->product->name,
-                                'thumbnail' => (string)$item->product->thumbnail,
+                                'thumbnail' => (string) $item->product->thumbnail,
                             ],
                             'variant' => $item->variant ? [
-                                'size' => $item->variant->size->name,
-                                'color' => $item->variant->color->name,
+                                'size' => $item->variant->size->size,
+                                'color' => $item->variant->color->color,
                             ] : null
                         ];
                     })
                 ];
-            })
+            }),
+            'pagination' => [
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+                'per_page' => $orders->perPage(),
+                'total' => $orders->total(),
+            ]
         ]);
     }
 
@@ -142,7 +149,7 @@ class OrderController extends Controller
                             'subtotal' => $item->quantity * $item->price * 100,
                             'product' => [
                                 'name' => $item->product->name,
-                                'thumbnail' => (string)$item->product->thumbnail,
+                                'thumbnail' => (string) $item->product->thumbnail,
                             ]
                         ];
                     })
@@ -627,7 +634,7 @@ class OrderController extends Controller
                             'subtotal' => $item->quantity * $item->price * 100,
                             'product' => [
                                 'name' => $item->product->name,
-                                'thumbnail' => (string)$item->product->thumbnail,
+                                'thumbnail' => (string) $item->product->thumbnail,
                             ],
                             'variant' => $item->variant ? [
                                 'size' => $item->variant->size->size,

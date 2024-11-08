@@ -3,6 +3,7 @@ import { Box, Boxes } from 'lucide-react';
 import { useRef, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import Logo from '../../../images/logo/logo.svg';
+import { BsCart2 } from 'react-icons/bs';
 interface SidebarProps {
 	sidebarOpen: boolean;
 	setSidebarOpen: (arg: boolean) => void;
@@ -237,6 +238,19 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 								>
 									<Boxes />
 									Attribute
+								</NavLink>
+							</li>
+
+							<li>
+								<NavLink
+									to="/admin/orders"
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+										pathname.includes('orders') &&
+										'bg-graydark dark:bg-meta-4'
+									}`}
+								>
+									<BsCart2 />
+									Orders
 								</NavLink>
 							</li>
 
