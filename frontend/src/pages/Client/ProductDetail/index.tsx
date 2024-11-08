@@ -37,7 +37,7 @@ const ProductDetail = () => {
     if (product) {
       setSelectedThumbnail(product.thumbnail);
       setSelectedColor(product.variants[0]?.color.id || null);
-      setSelectedSize(product.variants[0]?.size.code || null);
+      setSelectedSize(product.variants[0]?.size.size || null);
       setAvailableQuantity(product.variants[0]?.quantity || 0);
     }
   }, [product]);
@@ -52,31 +52,31 @@ const ProductDetail = () => {
 
     if (matchedVariant) {
       setSelectedColor(matchedVariant.color.id); // Cập nhật màu tương ứng
-      setSelectedSize(matchedVariant.size.code); // Cập nhật size tương ứng nếu có
+      setSelectedSize(matchedVariant.size.size); // Cập nhật size tương ứng nếu có
       setAvailableQuantity(matchedVariant.quantity); // Cập nhật số lượng có sẵn tương ứng
     }
   };
 
   const handleSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedSizeCode = e.target.value;
-    setSelectedSize(selectedSizeCode);
+    const selectedSize = e.target.value;
+    setSelectedSize(selectedSize);
 
     const sizeVariant = product?.variants.find(
       (variant: any) =>
-        variant.size.code === selectedSizeCode &&
-        variant.color.id === selectedColor
+        variant.size.size === selectedSize && variant.color.id === selectedColor
     );
 
     if (sizeVariant) {
       setAvailableQuantity(sizeVariant.quantity);
     }
   };
+
   const handleColorChange = (colorId: string) => {
     setSelectedColor(colorId);
 
     const colorVariant = product?.variants.find(
       (variant: any) =>
-        variant.color.id === colorId && variant.size.code === selectedSize
+        variant.color.id === colorId && variant.size.size === selectedSize
     );
 
     if (colorVariant) {
@@ -86,7 +86,7 @@ const ProductDetail = () => {
 
   const uniqueSizes = product?.variants
     ? Array.from(
-        new Set(product.variants.map((variant: Variant) => variant.size.code))
+        new Set(product.variants.map((variant: Variant) => variant.size.size))
       )
     : [];
 
@@ -102,10 +102,13 @@ const ProductDetail = () => {
   useEffect(() => {
     if (product && product.images && product.images.length > 0) {
       const interval = setInterval(() => {
-        setSelectedThumbnail(
-          (prevIndex) => (prevIndex + 1) % product.images.length
-        );
-      }, 3000);
+        setSelectedThumbnail((prevIndex: any) => {
+          if (prevIndex === product.images.length - 1) {
+            return product.thumbnail;
+          }
+          return product.images[prevIndex + 1];
+        });
+      }, 7000);
 
       return () => clearInterval(interval);
     }
@@ -143,14 +146,16 @@ const ProductDetail = () => {
   };
 
   const handleNextSlide = () => {
-    setCurrentSlide((prevSlide) => (prevSlide + 1) % product.images.length);
+    const nextIndex = (currentSlide + 1) % product.images.length;
+    setCurrentSlide(nextIndex);
+    setSelectedThumbnail(product.images[nextIndex].image_path);
   };
 
   const handlePrevSlide = () => {
-    setCurrentSlide(
-      (prevSlide) =>
-        (prevSlide - 1 + product.images.length) % product.images.length
-    );
+    const prevIndex =
+      (currentSlide - 1 + product.images.length) % product.images.length;
+    setCurrentSlide(prevIndex);
+    setSelectedThumbnail(product.images[prevIndex].image_path);
   };
 
   if (isLoading) return <div>Loading...</div>;
@@ -163,7 +168,7 @@ const ProductDetail = () => {
           <div className="md:col-span-5">
             <div className="relative overflow-hidden rounded-lg bg-gray-100 mb-2">
               <img
-                src={selectedThumbnail || product.images[0].image_path}
+                src={selectedThumbnail || product.thumbnail}
                 // alt={product.name}
                 className="w-[575px] h-[571px] object-cover transition-transform duration-500 hover:scale-105"
               />
@@ -264,14 +269,14 @@ const ProductDetail = () => {
                 value={selectedSize ?? ""}
                 onChange={handleSizeChange}
               >
-                {uniqueSizes.map((sizeCode) => {
+                {uniqueSizes.map((size) => {
                   const sizeVariant = product?.variants.find(
-                    (variant: Variant) => variant.size.code === sizeCode
+                    (variant: Variant) => variant.size.size === size
                   );
                   return (
                     <option
                       key={sizeVariant?.size.id}
-                      value={sizeVariant?.size.code || ""}
+                      value={sizeVariant?.size.size || ""}
                     >
                       {sizeVariant?.size.size}
                     </option>
@@ -528,7 +533,7 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          <RelatedProduct id={id} />
+          <RelatedProduct id={product.id} />
         </div>
       </div>
     </>

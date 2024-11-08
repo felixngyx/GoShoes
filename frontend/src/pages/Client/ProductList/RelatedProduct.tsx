@@ -25,8 +25,6 @@ const RelatedProduct: React.FC<RelatedProductProps> = ({ id }) => {
     enabled: !!id,
   });
 
-  console.log("1", relatedProducts);
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const itemsToShow = 4; // Số sản phẩm hiển thị mỗi lần
 

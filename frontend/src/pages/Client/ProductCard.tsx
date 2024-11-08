@@ -61,6 +61,7 @@ const ProductCard = () => {
                 color="#40BFFF"
               />
               <IoCart
+                // onClick={() => handleAddToCart(product)}
                 className="cursor-pointer p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
                 size={52}
                 color="#40BFFF"

@@ -35,6 +35,8 @@ import Homepage from "./pages/Client/home";
 import AddProduct from "./pages/Admin/Product/AddProduct";
 import ContactUs from "./pages/Client/ContactUs";
 import ChatUI from "./components/client/ChatUi";
+import Cart from "./pages/Client/Cart";
+import CheckoutPage from "./pages/Client/Cart/checkout";
 import OrderDashboard from "./pages/Admin/orders";
 import DetailOrder from "./pages/Admin/orders/detail";
 
@@ -53,6 +55,8 @@ function App() {
           <Route index element={<Homepage />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/account" element={<Account />}>
             <Route index element={<Profile />} />
             <Route path="my-order" element={<Order />} />
