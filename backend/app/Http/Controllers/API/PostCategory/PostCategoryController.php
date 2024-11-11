@@ -127,4 +127,8 @@ class PostCategoryController extends Controller
             ], 500);
         }
     }
+    public function destroyMultiple(Request $request){
+        $ids = $request->input('ids');
+        return $this->postCategoryService->deleteCategories($ids);
+    }
 }

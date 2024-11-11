@@ -45,4 +45,8 @@ class PostCategoryRepository implements PostCategoryRepositoryInterface
         $postCategory = $this->findById($id);
         return $postCategory->delete();
     }
+    public function deletePostCategoryByIds(array $ids){
+        return $this->postCategory->whereIn('id', $ids)->delete();
+    }
+
 }

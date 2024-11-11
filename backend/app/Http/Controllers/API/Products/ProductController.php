@@ -91,6 +91,7 @@ class ProductController extends Controller
                     'promotional_price' => (float) $product->promotional_price,
                     'stock_quantity' => $product->stock_quantity,
                     'sku' => $product->sku,
+                    'rating_count' => $product->rating_count,
                     'brand' => $product->brand->name,
                     'categories' => $product->categories->pluck('name')->toArray(),
                     'status' => $product->status,
