@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Repositories\BrandRepository;
 use App\Repositories\ColorRepository;
+use App\Repositories\PostCategoryRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\RepositoryInterfaces\BrandRepositoryInterface;
 use App\Repositories\RepositoryInterfaces\ColorRepositoryInterface;
+use App\Repositories\RepositoryInterfaces\PostCategoryRepositoryInterface;
 use App\Repositories\RepositoryInterfaces\ProductRepositoryInterface;
 use App\Repositories\RepositoryInterfaces\SizeRepositoryInterface;
 use App\Repositories\SizeRepository;
@@ -21,9 +23,9 @@ class AppServiceProvider extends ServiceProvider
         'App\Services\ServiceInterfaces\PasswordChangeHistory\PasswordChangeHistoryServiceInterface' => 'App\Services\PasswordChangeHistory\PasswordChangeHistoryService',
         'App\Services\ServiceInterfaces\Category\CategoryServiceInterface' => 'App\Services\Category\CategoryService',
         'App\Services\ServiceInterfaces\Token\TokenServiceInterface' => 'App\Services\Token\TokenService',
-        'App\Repositories\RepositoryInterfaces\CategoryRepositoryInterface' => 'App\Repositories\CategoryRepository',
         'App\Services\ServiceInterfaces\Cart\CartServiceInterface' => 'App\Services\Cart\CartService',
         'App\Services\ServiceInterfaces\Wishlist\WishlistServiceInterface' => 'App\Services\Wishlist\WishlistService',
+        'App\Services\ServiceInterfaces\Review\ReviewServiceInterface' => 'App\Services\Review\ReviewService',
     ];
     /**
      * Register any application services.
@@ -40,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ColorRepositoryInterface::class, ColorRepository::class);
         $this->app->bind(SizeRepositoryInterface::class, SizeRepository::class);
         $this->app->bind(BrandRepositoryInterface::class, BrandRepository::class);
+        $this->app->bind(PostCategoryRepositoryInterface::class, PostCategoryRepository::class);
 
         $this->app->bind('GuzzleHttp\Client', function($app) {
             return new \GuzzleHttp\Client([

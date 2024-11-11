@@ -25,14 +25,14 @@ class HandleExpiredZaloPayments extends Command
                     $query->where('method_id', '!=', 2) // Không phải COD
                         ->where('status', 'pending');
                 })
-                ->where('created_at', '<=', Carbon::now()->subMinutes(15))
+                ->where('updated_at', '<=', Carbon::now()->subMinutes(15))
                 ->with(['payment', 'items'])
                 ->get();
 
             foreach ($expiredOrders as $order) {
                 // Cập nhật trạng thái đơn hàng
                 $order->update(['status' => 'expired']);
-                
+
                 // Cập nhật trạng thái thanh toán
                 $order->payment->update(['status' => 'expired']);
 

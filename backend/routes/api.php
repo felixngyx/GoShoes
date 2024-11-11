@@ -14,9 +14,10 @@ use App\Http\Controllers\API\Brands\BrandController;
 use App\Http\Controllers\API\Order\OrderController;
 use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use App\Http\Controllers\API\Products\ProductController;
-
-
 use App\Http\Controllers\API\Discount\DiscountController;
+use App\Http\Controllers\API\PostCategory\PostCategoryController;
+use App\Http\Controllers\API\Products\ProductClientController;
+use App\Http\Controllers\Api\Review\ReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +55,7 @@ Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::post('/products', [ProductController::class, 'store']);
 
+Route::get('/product/{id}', [ProductClientController::class, 'show']);
 
 
 // API Color
@@ -81,7 +83,13 @@ Route::put('/brands/{id}', [BrandController::class, 'update']);
 Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
 Route::delete('brands', [BrandController::class, 'destroyMultiple']);
 
-
+// API PostCategoryController
+Route::get('/post-categories', [PostCategoryController::class, 'index']);
+Route::post('/post-categories', [PostCategoryController::class, 'store']);
+Route::get('/post-categories/{id}', [PostCategoryController::class, 'show']);
+Route::put('/post-categories/{id}', [PostCategoryController::class, 'update']);
+Route::delete('/post-categories/{id}', [PostCategoryController::class, 'destroy']);
+Route::delete('post-categories', [PostCategoryController::class, 'destroyMultiple']);
 
 // This route is Authenticated
 Route::group([
@@ -90,12 +98,13 @@ Route::group([
     Route::post('/logout', [AuthController::class, 'logoutController']);
 
     Route::prefix('orders')->group(function () {
+        Route::get('/all', [OrderController::class, 'index']);
+        Route::get('/{id}', [OrderController::class, 'show']);
         Route::get('/', [OrderController::class, 'OrderOneUser']);
         Route::post('/', [OrderController::class, 'store']);
-        // Route::get('/{id}', [OrderController::class, 'show']);
         Route::put('/{id}', [OrderController::class, 'update']);
         Route::get('/{id}/check-payment', [OrderController::class, 'checkPaymentStatus']);
-        Route::put('/{id}/update', [OrderController::class,'UpdateOrder']);
+        Route::put('/{id}/update', [OrderController::class, 'UpdateOrder']);
         Route::post('/{id}/renew-payment', [OrderController::class, 'renewPaymentLink']);
     });
 
@@ -106,6 +115,8 @@ Route::group([
         Route::put('/{id}', [DiscountController::class, 'update']);
         Route::delete('/{id}', [DiscountController::class, 'destroy']);
         Route::post('/validate', [DiscountController::class, 'validateCode']);
+        Route::patch('/{id}/status', [DiscountController::class, 'updateStatus']);
+        Route::get('/{id}/statistics', [DiscountController::class, 'getStatistics']);
     });
 
     Route::prefix('wishlist')->group(function () {
@@ -120,6 +131,20 @@ Route::group([
         Route::delete('/', [CartController::class, 'destroy']);
         Route::put('/', [CartController::class, 'update']);
     });
+
+    // API review
+    Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::put('/reviews/{id}', [ReviewController::class, 'update']);
+    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
+    Route::get('/products/{id}/reviews', [ReviewController::class, 'productReviews']);
+    Route::get('/user/reviews', [ReviewController::class, 'userReviews']);
+
+
+    Route::get('categories', [CategoryController::class, 'index']);
+    Route::post('categories', [CategoryController::class, 'store']);
+    Route::get('categories/{id}', [CategoryController::class, 'show']);
+    Route::put('categories/{id}', [CategoryController::class, 'update']);
+    Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
 });
 
 
@@ -136,9 +161,4 @@ Route::prefix('payment')->group(function () {
 
 Route::post('/auth/facebook-login', [FacebookAuthController::class, 'loginWithFacebook']);
 
-
-Route::get('categories', [CategoryController::class, 'index']);
-Route::post('categories', [CategoryController::class, 'store']);
-Route::get('categories/{id}', [CategoryController::class, 'show']);
-Route::put('categories/{id}', [CategoryController::class, 'update']);
-Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
+// API Categories

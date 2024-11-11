@@ -7,6 +7,7 @@ use App\Http\Requests\Category\CategoryRequest;
 use App\Models\Category;
 use App\Repositories\RepositoryInterfaces\CategoryRepositoryInterface;
 use App\Services\ServiceInterfaces\Category\CategoryServiceInterface;
+use Doctrine\DBAL\Driver\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;   
 
@@ -36,13 +37,22 @@ class CategoryController extends Controller
     }
 
     public function show($id)
-    {
-        $category = $this->categoryService->getCategoryById($id);
-        if (!$category) {
-            return response()->json(['message' => 'Category not found'], 404);
-        }
-        return response()->json($category, 200);
+{
+    $category = $this->categoryService->getCategoryById($id);
+    if (!$category) {
+        return response()->json(['message' => 'Category not found'], 404);
     }
+
+    $result = [
+        'id' => $category->id,
+        'name' => $category->name
+    ];
+
+    return response()->json([
+        'message' => 'Category detail',
+        'category' => $result
+    ], 200);
+}
 
     public function store(CategoryRequest $request)
     {
