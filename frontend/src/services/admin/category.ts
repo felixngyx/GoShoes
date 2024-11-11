@@ -1,7 +1,7 @@
 import axiosClient from '../../apis/axiosClient';
 
 export type CATEGORY = {
-	id?: string;
+	id?: number;
 	name: string;
 };
 
@@ -12,10 +12,10 @@ const categoryService = {
 	create: (data: CATEGORY) => {
 		return axiosClient.post('/categories', data);
 	},
-	update: (id: string, data: CATEGORY) => {
+	update: (id: number, data: CATEGORY) => {
 		return axiosClient.put(`/categories/${id}`, data);
 	},
-	delete: (id: string) => {
+	delete: (id: number) => {
 		return axiosClient.delete(`/categories/${id}`);
 	},
 };
