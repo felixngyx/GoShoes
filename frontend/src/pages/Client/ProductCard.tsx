@@ -7,7 +7,7 @@ import { IProduct } from "../../types/client/products/products";
 
 const ProductCard = () => {
   const {
-    data: response,
+    data: products,
     isLoading,
     isError,
   } = useQuery({
@@ -15,39 +15,35 @@ const ProductCard = () => {
     queryFn: () => getAllProducts(1, 8),
   });
 
-  const productList = response?.data || [];
-
-  const RatingStars = ({ rating }: { rating: number }) => {
-    return (
-      <div className="flex items-center">
-        {[...Array(5)].map((_, index) => (
-          <span key={index}>
-            {index < Math.floor(rating) ? (
-              <AiFillStar className="text-yellow-400 text-xs" />
-            ) : (
-              <AiOutlineStar className="text-yellow-400 text-xs" />
-            )}
-          </span>
-        ))}
-      </div>
-    );
-  };
+  const RatingStars = ({ rating }: { rating: number }) => (
+    <div className="flex items-center">
+      {[...Array(5)].map((_, index) => (
+        <span key={index}>
+          {index < Math.floor(rating) ? (
+            <AiFillStar className="text-yellow-400 text-xs" />
+          ) : (
+            <AiOutlineStar className="text-yellow-400 text-xs" />
+          )}
+        </span>
+      ))}
+    </div>
+  );
 
   if (isLoading) {
     return <span className="loading loading-spinner loading-lg"></span>;
   }
   if (isError) {
-    return <p>Error.......</p>;
+    return <p>Error loading products. Please try again.</p>;
   }
-  // Kiểm tra loại dữ liệu
-  if (!Array.isArray(productList)) {
-    console.warn("Expected productList to be an array but got:", productList);
-    return <p>No products found.</p>;
+
+  // Ensure products is an array before mapping
+  if (!Array.isArray(products)) {
+    return <p>No products available.</p>;
   }
 
   return (
     <>
-      {productList?.map((product: IProduct) => (
+      {products.map((product: IProduct) => (
         <div
           key={product.id}
           className="col-span-1 border border-[#F6F7F8] rounded-lg group overflow-hidden shadow-sm transition-shadow duration-300 hover:shadow-lg"
@@ -65,6 +61,7 @@ const ProductCard = () => {
                 color="#40BFFF"
               />
               <IoCart
+                // onClick={() => handleAddToCart(product)}
                 className="cursor-pointer p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
                 size={52}
                 color="#40BFFF"

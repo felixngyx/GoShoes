@@ -16,10 +16,15 @@ class Discount extends Model
     protected $casts = [
         'valid_from' => 'datetime',
         'valid_to' => 'datetime',
+        'min_order_amount' => 'decimal:2',
+        'percent' => 'decimal:2',
+        'usage_limit' => 'integer',
+        'used_count' => 'integer'
     ];
 
     public function products()
     {
-        return $this->belongsToMany(Product::class, 'discount_products');
+        return $this->belongsToMany(Product::class, 'discount_products')
+            ->withTimestamps();
     }
 }

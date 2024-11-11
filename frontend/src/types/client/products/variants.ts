@@ -17,5 +17,5 @@ export interface Color {
 
 export interface Size {
   id: number;
-  code: string;
+  size: string;
 }
