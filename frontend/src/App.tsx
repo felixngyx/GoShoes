@@ -36,6 +36,10 @@ import ContactUs from './pages/Client/ContactUs';
 import ChatUI from './components/client/ChatUi';
 import AddProduct from './pages/Admin/Product/AddProduct';
 import UpdateProduct from './pages/Admin/Product/UpdateProduct';
+import Cart from './pages/Client/Cart';
+import CheckoutPage from './pages/Client/Cart/checkout';
+import OrderDashboard from './pages/Admin/orders';
+import DetailOrder from './pages/Admin/orders/detail';
 
 function App() {
 	const { pathname } = useLocation();
@@ -52,13 +56,15 @@ function App() {
 					<Route index element={<Homepage />} />
 					<Route path="/products" element={<ProductList />} />
 					<Route path="/products/:id" element={<ProductDetail />} />
+					<Route path="/cart" element={<Cart />} />
+					<Route path="/checkout" element={<CheckoutPage />} />
 					<Route path="/account" element={<Account />}>
 						<Route index element={<Profile />} />
 						<Route path="my-order" element={<Order />} />
 						<Route path="my-order/:id" element={<OrderDetail />} />
 						<Route path="my-address" element={<Address />} />
 					</Route>
-					<Route path="/contact-us" element={<ContactUs />}></Route>
+					<Route path="/contact-us" element={<ContactUs />} />
 					<Route path="/reset-password" element={<ResetPassword />} />
 					<Route path="/forget-password" element={<ForgetPassword />} />
 					<Route path="*" element={<NotfoundPage />} />
@@ -78,8 +84,11 @@ function App() {
 					<Route path="user" element={<User />} />
 					<Route path="product" element={<Product />} />
 					<Route path="attribute" element={<Attribute />} />
-					<Route path="create" element={<AddProduct />} />
-					<Route path="update/:id" element={<UpdateProduct />} />
+					<Route path="product/create" element={<AddProduct />} />
+					<Route path="orders">
+						<Route index element={<OrderDashboard />} />
+						<Route path="detail/:id" element={<DetailOrder />} />
+					</Route>
 					<Route
 						path="calendar" // Changed from "/calendar" to "calendar"
 						element={
