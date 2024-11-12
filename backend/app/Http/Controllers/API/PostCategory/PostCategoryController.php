@@ -18,13 +18,66 @@ class PostCategoryController extends Controller
         $this->postCategoryService = $postCategoryService;
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         try {
-            $categories = $this->postCategoryService->getAllCategories();
+            $page = $request->input('page', 1);
+            $limit = $request->input('limit', 2);
+            $orderBy = $request->input('orderBy', 'id');
+            $order = $request->input('order', 'asc');
+
+            $categories = $this->postCategoryService->getAllCategories($page, $limit, $orderBy, $order);
+
+            if (!method_exists($categories, 'total')) {
+                $totalItems = $categories->count();
+                $totalPages = ceil($totalItems / $limit);
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => $categories->isEmpty() ? 'Không có danh mục nào.' : 'Lấy danh sách danh mục thành công.',
+                    'data' => [
+                        'categories' => $categories->forPage($page, $limit)->values(),
+                        'pagination' => [
+                            'currentPage' => (int)$page,
+                            'totalPages' => $totalPages,
+                            'totalItems' => $totalItems,
+                            'perPage' => (int)$limit,
+                        ]
+                    ]
+                ]);
+            }
+
+            $totalItems = $categories->total();
+            $totalPages = ceil($totalItems / $limit);
+
+            if ($categories->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Không có danh mục nào.',
+                    'data' => [
+                        'categories' => [],
+                        'pagination' => [
+                            'currentPage' => $page,
+                            'totalPages' => $totalPages,
+                            'totalItems' => $totalItems,
+                            'perPage' => $limit,
+                        ]
+                    ]
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
-                'data' => $categories
+                'message' => 'Lấy danh sách danh mục thành công.',
+                'data' => [
+                    'categories' => $categories->items(),
+                    'pagination' => [
+                        'currentPage' => $categories->currentPage(),
+                        'totalPages' => $totalPages,
+                        'totalItems' => $totalItems,
+                        'perPage' => $limit,
+                    ]
+                ]
             ]);
         } catch (Exception $e) {
             return response()->json([

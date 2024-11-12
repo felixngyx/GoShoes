@@ -9,11 +9,15 @@ class Banner extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'image','start_date','end_date','position'
+        'title','start_date','end_date','active'
     ];
 
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
     ];
+    public function images()
+    {
+        return $this->hasMany(BannerImage::class);
+    }
 }

@@ -22,23 +22,65 @@ class PostController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $posts = $this->postService->getAllPosts();
+            $page = $request->input('page', 1);
+            $limit = $request->input('limit', 9);
+            $orderBy = $request->input('orderBy', 'id');
+            $order = $request->input('order', 'asc');
+            $posts = $this->postService->getAllPosts($page, $limit, $orderBy, $order);
+
+            if (!method_exists($posts, 'total')) {
+                $totalItems = $posts->count();
+                $totalPages = ceil($totalItems / $limit);
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => $posts->isEmpty() ? 'Không có bài viết nào.' : 'Lấy danh sách bài viết thành công.',
+                    'data' => [
+                        'posts' => $posts->forPage($page, $limit)->values(),
+                        'pagination' => [
+                            'currentPage' => (int)$page,
+                            'totalPages' => $totalPages,
+                            'totalItems' => $totalItems,
+                            'perPage' => (int)$limit,
+                        ]
+                    ]
+                ]);
+            }
+
+            $totalItems = $posts->total();
+            $totalPages = ceil($totalItems / $limit);
 
             if ($posts->isEmpty()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Không có bài viết nào.',
-                    'posts' => []
+                    'data' => [
+                        'posts' => [],
+                        'pagination' => [
+                            'currentPage' => $page,
+                            'totalPages' => $totalPages,
+                            'totalItems' => $totalItems,
+                            'perPage' => $limit,
+                        ]
+                    ]
                 ]);
             }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Lấy danh sách bài viết thành công.',
-                'posts' => $posts
+                'data' => [
+                    'posts' => $posts->items(),
+                    'pagination' => [
+                        'currentPage' => $posts->currentPage(),
+                        'totalPages' => $totalPages,
+                        'totalItems' => $totalItems,
+                        'perPage' => $limit,
+                    ]
+                ]
             ]);
         } catch (Exception $e) {
             return response()->json([

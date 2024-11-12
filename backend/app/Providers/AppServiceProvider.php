@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Repositories\BannerRepository;
 use App\Repositories\BrandRepository;
 use App\Repositories\ColorRepository;
 use App\Repositories\PostCategoryRepository;
 use App\Repositories\PostRepository;
 use App\Repositories\ProductRepository;
+use App\Repositories\RepositoryInterfaces\BannerRepositoryInterface;
 use App\Repositories\RepositoryInterfaces\BrandRepositoryInterface;
 use App\Repositories\RepositoryInterfaces\ColorRepositoryInterface;
 use App\Repositories\RepositoryInterfaces\PostCategoryRepositoryInterface;
@@ -46,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(BrandRepositoryInterface::class, BrandRepository::class);
         $this->app->bind(PostCategoryRepositoryInterface::class, PostCategoryRepository::class);
         $this->app->bind(PostRepositoryInterface::class, PostRepository::class);
+        $this->app->bind(BannerRepositoryInterface::class, BannerRepository::class);
         $this->app->bind('GuzzleHttp\Client', function($app) {
             return new \GuzzleHttp\Client([
                 'verify' => true,

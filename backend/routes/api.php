@@ -19,6 +19,7 @@ use App\Http\Controllers\API\Post\PostController;
 use App\Http\Controllers\API\PostCategory\PostCategoryController;
 use App\Http\Controllers\API\Products\ProductClientController;
 use App\Http\Controllers\Api\Review\ReviewController;
+use App\Http\Controllers\BannerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -95,6 +96,13 @@ Route::delete('post-categories', [PostCategoryController::class, 'destroyMultipl
 // API Post
 Route::get('/posts', [PostController::class, 'index']);
 Route::get('/posts/{id}', [PostController::class, 'show']);
+
+// API Banner
+Route::get('/banners', [BannerController::class, 'index']);
+Route::post('/banners', [BannerController::class, 'store']);
+Route::get('/banners/{id}', [BannerController::class, 'show']);
+Route::put('/banners/{id}', [BannerController::class, 'update']);
+Route::delete('/banners/{id}', [BannerController::class, 'destroy']);
 
 // This route is Authenticated
 Route::group([
