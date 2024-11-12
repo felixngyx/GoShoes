@@ -99,6 +99,7 @@ class ProductController extends Controller
                     'images' => $product->images->pluck('image_path')->toArray(),
                     'variants' => $product->variants->map(function ($variant) {
                         return [
+                            'id' => $variant->id,
                             'color' => $variant->color->color,
                             'size' => (int) $variant->size->size,
                             'quantity' => $variant->quantity,
