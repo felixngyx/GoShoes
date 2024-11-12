@@ -11,8 +11,10 @@ import { toast } from "react-hot-toast";
 import { LogIn, LogOut, SquarePen, UserRound } from "lucide-react";
 import { getProductsByName } from "../../../services/client/product";
 import { IProduct } from "../../../types/client/products/products";
-import { Category } from "../../../types/client/category";
+
 import { IoCart, IoHeartOutline } from "react-icons/io5";
+import { CartItem } from "../../../types/client/cart";
+import { getListCart } from "../../../services/client/cart";
 
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -34,9 +36,23 @@ const Navbar = () => {
   const [products, setProducts] = useState<IProduct[]>([]); // State để lưu trữ sản phẩm tìm được
   const [loading, setLoading] = useState(false); // State để theo dõi trạng thái tải
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.client.user);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      const items = await getListCart();
+      setCartItems(items);
+    };
+    fetchCartItems();
+  }, []);
+
+  const totalQuantity = cartItems.reduce(
+    (total, item: any) => total + item.quantity,
+    0
+  );
 
   const logoutHandler = () => {
     dispatch(logout());
@@ -121,7 +137,7 @@ const Navbar = () => {
                   className="relative p-2 rounded-full hover:bg-gray-100"
                 >
                   <span className="badge badge-error badge-xs absolute -top-1 -right-1 text-white font-semibold">
-                    0
+                    {totalQuantity}
                   </span>
                   <MdOutlineShoppingCart size={24} />
                 </Link>

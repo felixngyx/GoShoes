@@ -32,7 +32,6 @@ const ProductList = () => {
   const handlePriceChange = (event: Event, newValue: number | number[]) => {
     if (Array.isArray(newValue)) {
       setPriceRange(newValue as [number, number]);
-      console.log("data", products);
     }
   };
   const debouncedRefetch = useCallback(
@@ -58,7 +57,7 @@ const ProductList = () => {
           { name: "Products", link: "products" },
         ]}
       />
-      <div className="container max-w-7xl mx-auto grid grid-cols-12 my-10 gap-10 font-sans">
+      <div className="container max-w-7xl mx-auto grid grid-cols-12 my-10 gap-10 ">
         <div className="col-span-3 flex flex-col gap-10">
           {/* Hot Deals */}
           <div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2">
