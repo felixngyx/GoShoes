@@ -2,6 +2,7 @@
 
 use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
+use App\Http\Controllers\API\Shipping\ShippingController;
 use App\Http\Controllers\API\Wishlist\WishlistController;
 use App\Http\Controllers\API\Cart\CartController;
 use Illuminate\Support\Facades\Route;
@@ -40,10 +41,6 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
     Route::post('/refresh-token', [AuthController::class, 'refreshTokenController'])->middleware('jwt.refresh.token');
 });
-
-
-Route::resource('wishlist', WishlistController::class);
-Route::resource('cart', CartController::class);
 
 // API Product
 Route::get('/products/trashed', [ProductController::class, 'trashedProducts']);
@@ -145,6 +142,15 @@ Route::group([
     Route::get('categories/{id}', [CategoryController::class, 'show']);
     Route::put('categories/{id}', [CategoryController::class, 'update']);
     Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
+
+    // API Wishlist
+    Route::resource('wishlist', WishlistController::class);
+
+    // API Cart
+    Route::resource('cart', CartController::class);
+
+    //API Shipping
+    Route::resource('shipping', ShippingController::class);
 });
 
 
