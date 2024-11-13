@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Search, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Search, ArrowUpDown, ChevronLeft, ChevronRight, Copy, Download } from 'lucide-react';
+import { parse, unparse } from 'papaparse';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
 interface OrderItem {
     quantity: number;
@@ -20,7 +22,8 @@ interface OrderItem {
 interface OrderData {
     id: number;
     sku: string;
-    status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'refunded' | 'expired';
+    status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'refunded' | 'expired' | 'shipping' | 'failed';
+    created_at: string;
     total: string;
     customer: {
         avt: string;
@@ -65,10 +68,9 @@ const api = axios.create({
     timeout: 10000,
 });
 
-// Add request interceptor for JWT token
 api.interceptors.request.use(
     (config) => {
-        const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwMDAvYXBpL2F1dGgvbG9naW4iLCJpYXQiOjE3MzEwNTkwNDksImV4cCI6MTczMTA2MjY0OSwibmJmIjoxNzMxMDU5MDQ5LCJqdGkiOiJmN01tbWZaYW5OSm1tTlZtIiwic3ViIjoiNCIsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjciLCJ0b2tlbl90eXBlIjoiYWNjZXNzIn0.XXou6U7wYF3nti9X2Tta7jtQ8ZKSb6Ev3XVbYGRfC2I';
+        const token = Cookies.get('access_token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -81,7 +83,8 @@ api.interceptors.request.use(
 
 export default function OrderDashboard() {
     const navigate = useNavigate();
-    const [orders, setOrders] = useState<OrderData[]>([]);
+    const [allOrders, setAllOrders] = useState<OrderData[]>([]); // Lưu trữ tất cả orders
+    const [displayedOrders, setDisplayedOrders] = useState<OrderData[]>([]); // Orders được hiển thị sau khi filter/sort
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<{
         key: keyof OrderData | 'customer.name';
@@ -96,85 +99,185 @@ export default function OrderDashboard() {
         total: 0
     });
 
-    // Fetch orders from API using axios
+    // Fetch tất cả orders
     useEffect(() => {
-        const fetchOrders = async () => {
+        const fetchAllOrders = async () => {
             try {
                 setLoading(true);
-                const { data } = await api.get<ApiResponse>(`/orders/all?page=${pagination.currentPage}`);
+                // Fetch page đầu tiên để lấy tổng số trang
+                const firstPageResponse = await api.get<ApiResponse>('/orders/all?page=1');
+                const totalPages = firstPageResponse.data.pagination.last_page;
 
-                if (data.success) {
-                    setOrders(data.data);
-                    setPagination({
-                        currentPage: data.pagination.current_page,
-                        lastPage: data.pagination.last_page,
-                        perPage: data.pagination.per_page,
-                        total: data.pagination.total
-                    });
-                } else {
-                    throw new Error('Failed to get orders data');
+                // Fetch tất cả các trang
+                const promises = [];
+                for (let page = 1; page <= totalPages; page++) {
+                    promises.push(api.get<ApiResponse>(`/orders/all?page=${page}`));
                 }
+
+                const responses = await Promise.all(promises);
+                const allOrdersData = responses.flatMap(response => response.data.data);
+
+                setAllOrders(allOrdersData);
+                updateDisplayedOrders(allOrdersData, searchTerm, sortConfig, 1);
             } catch (err) {
-                if (axios.isAxiosError(err)) {
-                    // Handle Axios specific errors
-                    if (err.response) {
-                        // Server responded with error status
-                        setError(`Server error: ${err.response.data.message || 'Unknown error'}`);
-                    } else if (err.request) {
-                        // Request made but no response
-                        setError('No response from server. Please check your connection.');
-                    } else {
-                        // Error in request configuration
-                        setError(`Request error: ${err.message}`);
-                    }
-                } else {
-                    // Handle non-Axios errors
-                    setError('An unexpected error occurred');
-                }
+                handleError(err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchOrders();
-    }, [pagination.currentPage]);
+        fetchAllOrders();
+    }, []);
 
-    const handlePageChange = (newPage: number) => {
-        if (newPage >= 1 && newPage <= pagination.lastPage) {
-            setPagination(prev => ({ ...prev, currentPage: newPage }));
+    // Hàm xử lý lỗi
+    const handleError = (err: any) => {
+        if (axios.isAxiosError(err)) {
+            if (err.response) {
+                setError(`Server error: ${err.response.data.message || 'Unknown error'}`);
+            } else if (err.request) {
+                setError('No response from server. Please check your connection.');
+            } else {
+                setError(`Request error: ${err.message}`);
+            }
+        } else {
+            setError('An unexpected error occurred');
         }
     };
 
-    // Search functionality
-    const filteredOrders = orders.filter(order => {
-        const searchString = searchTerm.toLowerCase();
-        return (
-            order.sku.toLowerCase().includes(searchString) ||
-            order.customer.name.toLowerCase().includes(searchString) ||
-            order.customer.email.toLowerCase().includes(searchString) ||
-            order.shipping.city.toLowerCase().includes(searchString) ||
-            order.status.toLowerCase().includes(searchString) ||
-            order.items.some(item => item.product.name.toLowerCase().includes(searchString))
-        );
-    });
-
-    // Sorting functionality
-    const handleSort = (key: keyof OrderData | 'customer.name') => {
-        let direction: 'asc' | 'desc' = 'asc';
-        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-            direction = 'desc';
-        }
-        setSortConfig({ key, direction });
-
-        const sortedOrders = [...filteredOrders].sort((a, b) => {
-            let valA = key === 'customer.name' ? a.customer.name : a[key as keyof OrderData];
-            let valB = key === 'customer.name' ? b.customer.name : b[key as keyof OrderData];
-
-            if (valA < valB) return direction === 'asc' ? -1 : 1;
-            if (valA > valB) return direction === 'asc' ? 1 : -1;
-            return 0;
+    // Hàm cập nhật orders hiển thị
+    const updateDisplayedOrders = (
+        orders: OrderData[],
+        search: string,
+        sort: typeof sortConfig,
+        page: number
+    ) => {
+        // Lọc theo search term
+        let filtered = orders.filter(order => {
+            const searchString = search.toLowerCase();
+            return (
+                order.sku.toLowerCase().includes(searchString) ||
+                order.customer.name.toLowerCase().includes(searchString) ||
+                order.customer.email.toLowerCase().includes(searchString) ||
+                order.shipping.city.toLowerCase().includes(searchString) ||
+                order.status.toLowerCase().includes(searchString) ||
+                order.items.some(item => item.product.name.toLowerCase().includes(searchString)) ||
+                order.created_at.toLowerCase().includes(searchString)
+            );
         });
-        setOrders(sortedOrders);
+
+        // Sắp xếp nếu có
+        if (sort) {
+            filtered = [...filtered].sort((a, b) => {
+                let valA = sort.key === 'customer.name' ? a.customer.name : a[sort.key as keyof OrderData];
+                let valB = sort.key === 'customer.name' ? b.customer.name : b[sort.key as keyof OrderData];
+
+                if (valA < valB) return sort.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return sort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        // Cập nhật pagination
+        const totalItems = filtered.length;
+        const lastPage = Math.ceil(totalItems / pagination.perPage);
+        const currentPage = Math.min(page, lastPage);
+
+        // Phân trang
+        const start = (currentPage - 1) * pagination.perPage;
+        const end = start + pagination.perPage;
+        const paginatedOrders = filtered.slice(start, end);
+
+        setDisplayedOrders(paginatedOrders);
+        setPagination({
+            currentPage,
+            lastPage,
+            perPage: pagination.perPage,
+            total: totalItems
+        });
+    };
+
+    // Handle search
+    useEffect(() => {
+        updateDisplayedOrders(allOrders, searchTerm, sortConfig, 1);
+    }, [searchTerm]);
+
+    // Handle sort
+    const handleSort = (key: keyof OrderData | 'customer.name') => {
+        const direction: 'asc' | 'desc' =
+            sortConfig && sortConfig.key === key && sortConfig.direction === 'asc'
+                ? 'desc'
+                : 'asc';
+        const newSortConfig = { key, direction };
+        setSortConfig(newSortConfig);
+        updateDisplayedOrders(allOrders, searchTerm, newSortConfig, pagination.currentPage);
+    };
+
+    // Handle page change
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= pagination.lastPage) {
+            updateDisplayedOrders(allOrders, searchTerm, sortConfig, newPage);
+        }
+    };
+
+    // Export to CSV với tất cả dữ liệu đã được filter
+    const handleExportToCSV = () => {
+        // Áp dụng filter nhưng không áp dụng phân trang
+        const filteredOrders = allOrders.filter(order => {
+            const searchString = searchTerm.toLowerCase();
+            return (
+                order.sku.toLowerCase().includes(searchString) ||
+                order.customer.name.toLowerCase().includes(searchString) ||
+                order.customer.email.toLowerCase().includes(searchString) ||
+                order.shipping.city.toLowerCase().includes(searchString) ||
+                order.status.toLowerCase().includes(searchString) ||
+                order.items.some(item => item.product.name.toLowerCase().includes(searchString)) ||
+                order.created_at.toLowerCase().includes(searchString)
+            );
+        });
+
+        // Áp dụng sort nếu có
+        if (sortConfig) {
+            filteredOrders.sort((a, b) => {
+                let valA = sortConfig.key === 'customer.name' ? a.customer.name : a[sortConfig.key as keyof OrderData];
+                let valB = sortConfig.key === 'customer.name' ? b.customer.name : b[sortConfig.key as keyof OrderData];
+
+                if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        const csvData = unparse(
+            filteredOrders.map((order) => ({
+                id: order.id,
+                sku: order.sku,
+                'customer.name': order.customer.name,
+                'customer.email': order.customer.email,
+                status: order.status,
+                total: order.total,
+                created_at: order.created_at,
+            })),
+            {
+                header: true,
+            }
+        );
+
+        const currentDate = new Date();
+        const formattedDate = currentDate.toISOString().split('T')[0]; // Chỉ lấy phần ngày (yyyy-MM-dd)
+
+        // Tạo đối tượng Blob với dữ liệu CSV
+        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+
+        // Tạo liên kết tải xuống
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+
+        // Thiết lập tên tệp động với ngày hiện tại
+        link.setAttribute('download', `orders_download${formattedDate}.csv`);
+
+        // Kích hoạt tải xuống
+        link.click();
+
     };
 
     const getStatusColor = (status: OrderData['status']) => {
@@ -184,12 +287,14 @@ export default function OrderDashboard() {
             completed: 'bg-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-200',
             cancelled: 'bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-200',
             refunded: 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
-            expired: 'bg-purple-200 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200'
+            expired: 'bg-purple-200 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200',
+            shipping: 'bg-indigo-200 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200',
+            failed: 'bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-200',
         };
         return colors[status];
     };
 
-    const handleOrderClick = (orderId : number) => {
+    const handleOrderClick = (orderId: number) => {
         navigate(`/admin/orders/detail/${orderId}`);
     };
 
@@ -213,10 +318,10 @@ export default function OrderDashboard() {
     }
 
     return (
-        <div className="w-full max-w-6xl mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+        <div className="w-full max-w-10xl mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
             <div className="p-6 bg-white/60 dark:bg-gray-800/60">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Customer's Orders</h1>
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex">Customer's Orders <Download className='ml-4 mt-1 cursor-pointer hover:text-purple-600' size={25} onClick={handleExportToCSV}></Download></h1>
                     <div className="relative w-72">
                         <input
                             type="search"
@@ -228,7 +333,9 @@ export default function OrderDashboard() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
+
                         <Search className="absolute right-3 top-2.5 text-gray-400 dark:text-gray-500" size={20} />
+
                     </div>
                 </div>
 
@@ -269,17 +376,35 @@ export default function OrderDashboard() {
                                         <ArrowUpDown size={16} />
                                     </div>
                                 </th>
+                                <th onClick={() => handleSort('created_at')} className="px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-200 cursor-pointer hover:text-purple-600 dark:hover:text-purple-400">
+                                    <div className="flex items-center gap-2">
+                                        Created_at
+                                        <ArrowUpDown size={16} />
+                                    </div>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredOrders.map((order) => (
+                            {displayedOrders.map((order) => (
                                 <tr
                                     key={order.id}
                                     className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                     onClick={() => handleOrderClick(order.id)}
                                 >
-                                    <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{order.id}</td>
-                                    <td className="px-6 py-4 text-gray-800 dark:text-gray-200">{order.sku}</td>
+                                    <td className="px-6 py-4 text-gray-800 dark:text-gray-200 flex items-center">
+                                        {order.id}
+                                    </td>
+                                    <td className="px-6 py-4 text-gray-800 dark:text-gray-200 ">{order.sku}
+                                        <Copy
+                                            className="px-1 py-1 bg-gray-200 dark:bg-gray-600 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigator.clipboard.writeText(order.sku);
+                                                alert("SKU copied to clipboard!");
+                                            }}
+                                        >
+                                        </Copy>
+                                    </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <img
@@ -305,7 +430,6 @@ export default function OrderDashboard() {
                                                     ...
                                                 </div>
                                             )}
-
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -314,8 +438,16 @@ export default function OrderDashboard() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 font-medium text-gray-800 dark:text-gray-200">
-                                        ${parseFloat(order.total).toFixed(2)}
+                                    {new Intl.NumberFormat('de-DE', { style: 'decimal' }).format(Number(order.total))}đ
                                     </td>
+                                    <td className="px-6 py-4 font-medium text-gray-800 dark:text-gray-200">
+                                        {new Date(order.created_at).toLocaleDateString('en-en', {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                        })}
+                                    </td>
+
                                 </tr>
                             ))}
                         </tbody>

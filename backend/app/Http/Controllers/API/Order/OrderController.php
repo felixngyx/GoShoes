@@ -62,6 +62,7 @@ class OrderController extends Controller
                     'sku' => $order->sku,
                     'status' => $order->status,
                     'total' => $order->total,
+                    'created_at' => $order->created_at->format('Y-m-d H:i:s'),
                     // Thông tin khách hàng
                     'customer' => [
                         'avt' => $order->user->avt,
@@ -86,7 +87,7 @@ class OrderController extends Controller
                     'items' => $order->items->map(function ($item) {
                         return [
                             'quantity' => $item->quantity,
-                            'price' => $item->price ,
+                            'price' => $item->price,
                             'subtotal' => $item->quantity * $item->price,
                             'product' => [
                                 'name' => $item->product->name,
@@ -217,7 +218,7 @@ class OrderController extends Controller
             }
 
             // 3. Tính tổng giá trị cuối cùng
-            $finalTotal = $originalTotal - $discountAmount;
+            $finalTotal = $originalTotal - $discountAmount * 100;
 
             // Kiểm tra phương thức thanh toán
             $paymentMethod = PaymentMethod::findOrFail($request->payment_method_id);
@@ -279,7 +280,7 @@ class OrderController extends Controller
                 }
 
                 DB::commit();
-
+                event(new NewOrderCreated($order->id));
                 return response()->json([
                     'order' => $order->load(['items.product', 'items.variant.size', 'items.variant.color', 'shipping']),
                     'payment_url' => null,
@@ -391,7 +392,7 @@ class OrderController extends Controller
     {
         $paymentRequest = new Request([
             'order_id' => $order->sku,
-            'amount' => $order->total * 100, // Chuyển đổi sang đơn vị xu
+            'amount' => $order->total * 100,
         ]);
 
         $response = $this->zaloPaymentController->paymentZalo($paymentRequest);
@@ -429,8 +430,8 @@ class OrderController extends Controller
 
     protected function handleFailedPayment($order)
     {
-        $order->update(['status' => 'canceled']);
-        $order->payment()->update(['status' => 'canceled']);
+        $order->update(['status' => 'cancelled']);
+        $order->payment()->update(['status' => 'failed']);
 
         // Hoàn trả số lượng sản phẩm
         foreach ($order->items as $item) {
@@ -472,14 +473,23 @@ class OrderController extends Controller
             if ($orderPayment->method_id == 2) { // COD
                 switch ($status) {
                     case 'completed':
-                        $orderPayment->update(['status' => 'paid']);
+                        $orderPayment->update(['status' => 'success']);
                         break;
-                    case 'canceled':
-                        $orderPayment->update(['status' => 'canceled']);
+                    case 'cancelled':
+                        $orderPayment->update(['status' => 'failed']);
                         // Hoàn trả số lượng sản phẩm và mã giảm giá nếu đơn bị hủy
-                        if ($prevStatus != 'canceled') {
+                        if ($prevStatus != 'cancelled') {
                             $this->handleFailedPayment($order);
                         }
+                        break;
+                    case 'expired':
+                        $orderPayment->update(['status' => 'expired']);
+                        if ($prevStatus != 'expired' && $prevStatus != 'cancelled') {
+                            $this->handleFailedPayment($order);
+                        }
+                        break;
+                    case 'shipping':
+                        $orderPayment->update(['status' => 'pending']);
                         break;
                     default:
                         $orderPayment->update(['status' => 'pending']);
@@ -505,19 +515,21 @@ class OrderController extends Controller
             DB::beginTransaction();
 
             // Tìm đơn hàng của user hiện tại
-            $order = Order::where('user_id', auth()->id())
+            $order = Order::when(!auth()->user()->is_admin, function ($query) {
+                $query->where('user_id', auth()->id());
+            })
                 ->where('id', $id)
                 ->firstOrFail();
 
             // Kiểm tra trạng thái đơn hàng - mở rộng các trạng thái hợp lệ
-            $validStatuses = ['pending', 'failed', 'canceled', 'expired'];
+            $validStatuses = ['failed', 'cancelled', 'expired'];
             if (!in_array($order->status, $validStatuses)) {
                 throw new \Exception('This order is not supported to renew payment link');
             }
 
             // Kiểm tra phương thức thanh toán
             $payment = $order->payment;
-            if (!$payment || $payment->method_id == 2) { // 2 là COD
+            if (!$payment || $payment->method_id == 2) { 
                 throw new \Exception('This order is not supported to renew payment link');
             }
 
@@ -534,7 +546,7 @@ class OrderController extends Controller
             // Khởi tạo request cho ZaloPay với số tiền đã được chuyển đổi sang xu
             $paymentRequest = new Request([
                 'order_id' => $newSku,
-                'amount' => $order->total * 100, // Chuyển đổi sang xu cho ZaloPay
+                'amount' => $order->total * 100,
             ]);
 
             // Khởi tạo thanh toán ZaloPay mới
@@ -601,48 +613,49 @@ class OrderController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'id' => $order->id,
-                    'sku' => $order->sku,
-                    'status' => $order->status,
-                    'total' => $order->total,
-                    'created_at' => $order->created_at->format('Y-m-d H:i:s'),
+                        'id' => $order->id,
+                        'sku' => $order->sku,
+                        'status' => $order->status,
+                        'total' => $order->total,
+                        'created_at' => $order->created_at->format('Y-m-d H:i:s'),
 
-                    // Thông tin khách hàng
-                    'customer' => [
-                        'name' => $order->user->name,
-                        'email' => $order->user->email,
-                    ],
+                        // Thông tin khách hàng
+                        'customer' => [
+                            'name' => $order->user->name,
+                            'email' => $order->user->email,
+                            'phone' => $order->user->phone,
+                        ],
 
-                    // Thông tin địa chỉ giao hàng
-                    'shipping' => $order->shipping ? [
-                        'address' => $order->shipping->address,
-                        'city' => $order->shipping->city,
-                    ] : null,
+                        // Thông tin địa chỉ giao hàng
+                        'shipping' => $order->shipping ? [
+                            'address' => $order->shipping->address,
+                            'city' => $order->shipping->city,
+                        ] : null,
 
-                    // Thông tin thanh toán
-                    'payment' => $order->payment ? [
-                        'method' => $order->payment->method->name,
-                        'status' => $order->payment->status,
-                        'url' => $order->payment->url,
-                    ] : null,
+                        // Thông tin thanh toán
+                        'payment' => $order->payment ? [
+                            'method' => $order->payment->method->name,
+                            'status' => $order->payment->status,
+                            'url' => $order->payment->url,
+                        ] : null,
 
-                    // Chi tiết sản phẩm
-                    'items' => $order->items->map(function ($item) {
-                        return [
-                            'quantity' => $item->quantity,
-                            'price' => $item->price * 100,
-                            'subtotal' => $item->quantity * $item->price * 100,
-                            'product' => [
-                                'name' => $item->product->name,
-                                'thumbnail' => (string) $item->product->thumbnail,
-                            ],
-                            'variant' => $item->variant ? [
-                                'size' => $item->variant->size->size,
-                                'color' => $item->variant->color->color,
-                            ] : null
-                        ];
-                    })
-                ]
+                        // Chi tiết sản phẩm
+                        'items' => $order->items->map(function ($item) {
+                            return [
+                                'quantity' => $item->quantity,
+                                'price' => $item->price,
+                                'subtotal' => $item->quantity * $item->price,
+                                'product' => [
+                                        'name' => $item->product->name,
+                                        'thumbnail' => (string) $item->product->thumbnail,
+                                    ],
+                                'variant' => $item->variant ? [
+                                    'size' => $item->variant->size->size,
+                                    'color' => $item->variant->color->color,
+                                ] : null
+                            ];
+                        })
+                    ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
