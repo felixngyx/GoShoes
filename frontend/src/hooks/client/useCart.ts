@@ -1,13 +1,16 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
 import { useDebouncedCallback } from "use-debounce";
 import {
+  addToCart,
+  CartParams,
   deleteCartItem,
   getListCart,
   updateCartQuantity,
 } from "../../services/client/cart";
 import { CartItem } from "../../types/client/cart";
-import { useDispatch } from "react-redux";
 import { removeFromCart } from "./cartSlice";
 
 const useCart = () => {
@@ -22,6 +25,61 @@ const useCart = () => {
     queryKey: ["CART"],
     queryFn: () => getListCart(),
   });
+
+  const totalQuantity = cartItems.reduce(
+    (total, item: any) => total + item.quantity,
+    0
+  );
+  const addToCartMutation = useMutation({
+    mutationFn: addToCart,
+    onSuccess: (data: any) => {
+      toast.success(data.message);
+      queryClient.invalidateQueries({
+        queryKey: ["CART"],
+      });
+    },
+    onError: () => {
+      toast.error("Something went wrong. Please try again.");
+    },
+  });
+
+  const handleAddToCartDetail = (
+    productVariantId: number,
+    selectedSize: string,
+    selectedColor: string,
+    quantity: number
+  ) => {
+    if (!selectedSize || !selectedColor || quantity < 1) {
+      toast.error(
+        "Vui lòng chọn đầy đủ kích thước, màu sắc và số lượng sản phẩm."
+      );
+      return;
+    }
+
+    const params: CartParams = {
+      product_variant_id: productVariantId,
+      quantity,
+    };
+
+    addToCartMutation.mutate(params);
+  };
+
+  const { mutate: addProductToCart } = useMutation({
+    mutationFn: addToCart,
+    onSuccess: () => {
+      toast.success("Product added successfully");
+      queryClient.invalidateQueries({ queryKey: ["CART"] }); // Làm mới dữ liệu giỏ hàng sau khi thêm
+    },
+    onError: (error) => {
+      console.error("Error adding product to cart:", error);
+      setError("Failed to add product to cart. Please try again.");
+    },
+  });
+
+  const handleAddToCart = (productVariantId: number, quantity: number) => {
+    // Gọi API để thêm sản phẩm vào giỏ hàng
+    addProductToCart({ product_variant_id: productVariantId, quantity });
+  };
 
   useEffect(() => {
     if (cartItems.length > 0 && cartItemsWithSelected.length === 0) {
@@ -99,7 +157,6 @@ const useCart = () => {
         });
         dispatch(removeFromCart(productVariantId));
 
-        // Invalidate để fetch lại dữ liệu từ server
         queryClient.invalidateQueries({
           queryKey: ["CART"],
         });
@@ -163,6 +220,9 @@ const useCart = () => {
     selectedCount,
     orderSummary,
     cartItems,
+    totalQuantity,
+    handleAddToCart,
+    handleAddToCartDetail,
     setCartItemsWithSelected,
     toggleSelectItem,
     toggleSelectAll,

@@ -1,22 +1,23 @@
 import axiosClient from "../../apis/axiosClient";
-import Cookies from "js-cookie";
 
-interface UpdateCartQuantityParams {
+export interface CartParams {
   product_variant_id: number;
   quantity: number;
 }
 
+export const addToCart = async (params: CartParams) => {
+  try {
+    const response = await axiosClient.post("/cart", params);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
+    throw error;
+  }
+};
+
 export const getListCart = async () => {
   try {
-    const accessToken = Cookies.get("access_token");
-    if (!accessToken) {
-      throw new Error("Access token không tồn tại");
-    }
-    const response = await axiosClient.get("/cart", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const response = await axiosClient.get("/cart");
     return response.data;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách giỏ hàng:", error);
@@ -24,7 +25,7 @@ export const getListCart = async () => {
   }
 };
 
-export const updateCartQuantity = async (params: UpdateCartQuantityParams) => {
+export const updateCartQuantity = async (params: CartParams) => {
   try {
     const response = await axiosClient.put("/cart", params);
     return response.data;

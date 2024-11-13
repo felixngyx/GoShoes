@@ -1,12 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { CartItem } from "../../types/client/cart";
 
-// Định nghĩa giao diện cho trạng thái giỏ hàng
 interface CartState {
   items: CartItem[];
 }
 
-// Khởi tạo giá trị ban đầu cho giỏ hàng
 const initialState: CartState = {
   items: [],
 };
@@ -15,7 +13,6 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    // Cập nhật toàn bộ giỏ hàng (thường dùng khi load từ API)
     setCartItems: (state, action: PayloadAction<CartItem[]>) => {
       state.items = action.payload;
     },
@@ -54,9 +51,7 @@ const cartSlice = createSlice({
   },
 });
 
-// Xuất ra các action để sử dụng trong các component
 export const { setCartItems, addToCart, removeFromCart, updateCartQuantity } =
   cartSlice.actions;
 
-// Xuất reducer của slice để thêm vào store
 export default cartSlice.reducer;

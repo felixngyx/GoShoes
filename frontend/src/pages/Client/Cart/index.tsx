@@ -108,10 +108,12 @@ const Cart = () => {
                         }
                         className="checkbox checkbox-sm checkbox-primary rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                       />
-                      <img
-                        src={item.product_variant.image_variant}
-                        className="w-32 h-32 object-cover rounded"
-                      />
+                      <Link to={`/products/${item.product_variant.product_id}`}>
+                        <img
+                          src={item.product_variant.image_variant}
+                          className="w-32 h-32 object-cover rounded"
+                        />
+                      </Link>
                       <div className="flex-1">
                         <h3 className="text-xl font-medium text-gray-900">
                           {item.product_variant.product.name}

@@ -15,6 +15,7 @@ import { IProduct } from "../../../types/client/products/products";
 import { IoCart, IoHeartOutline } from "react-icons/io5";
 import { CartItem } from "../../../types/client/cart";
 import { getListCart } from "../../../services/client/cart";
+import useCart from "../../../hooks/client/useCart";
 
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -49,10 +50,7 @@ const Navbar = () => {
     fetchCartItems();
   }, []);
 
-  const totalQuantity = cartItems.reduce(
-    (total, item: any) => total + item.quantity,
-    0
-  );
+  const { totalQuantity } = useCart();
 
   const logoutHandler = () => {
     dispatch(logout());
@@ -137,7 +135,7 @@ const Navbar = () => {
                   className="relative p-2 rounded-full hover:bg-gray-100"
                 >
                   <span className="badge badge-error badge-xs absolute -top-1 -right-1 text-white font-semibold">
-                    0
+                    {totalQuantity}
                   </span>
                   <MdOutlineShoppingCart size={24} />
                 </Link>
