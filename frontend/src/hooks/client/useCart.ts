@@ -82,19 +82,14 @@ const useCart = () => {
   };
 
   useEffect(() => {
-    if (cartItems.length > 0 && cartItemsWithSelected.length === 0) {
-      const itemsWithSelected = cartItems.map((item) => ({
+    if (cartItems) {
+      const updatedCartItems = cartItems.map((item) => ({
         ...item,
-        selected: false,
+        select: false,
       }));
-      if (
-        JSON.stringify(itemsWithSelected) !==
-        JSON.stringify(cartItemsWithSelected)
-      ) {
-        setCartItemsWithSelected(itemsWithSelected);
-      }
+      setCartItemsWithSelected(updatedCartItems);
     }
-  }, [cartItems, cartItemsWithSelected]);
+  }, [cartItems]);
 
   const toggleSelectItem = (id: number) => {
     const updatedItems = cartItemsWithSelected.map((item: any) =>
@@ -141,7 +136,7 @@ const useCart = () => {
   };
 
   const { mutate: deleteProductFromCart } = useMutation({
-    mutationFn: deleteCartItem, // Hàm gọi API để xóa sản phẩm khỏi giỏ
+    mutationFn: deleteCartItem,
     onSuccess: () => {
       toast.success("Sản phẩm đã được xóa khỏi giỏ hàng.");
       queryClient.invalidateQueries({ queryKey: ["CART"] }); // Làm mới dữ liệu giỏ hàng sau khi xóa
@@ -162,7 +157,6 @@ const useCart = () => {
       // Gọi API để xóa sản phẩm
       deleteProductFromCart(productVariantId);
 
-      // Nếu có trạng thái giỏ hàng ở frontend (ví dụ như sử dụng state hoặc Redux):
       setCartItemsWithSelected((prevItems) => {
         const updatedItems = prevItems.filter(
           (item) => item.product_variant.id !== productVariantId
@@ -170,7 +164,6 @@ const useCart = () => {
         return updatedItems;
       });
 
-      // Xóa sản phẩm khỏi giỏ hàng trong Redux (nếu sử dụng Redux)
       dispatch(removeFromCart(productVariantId));
     }
   };
