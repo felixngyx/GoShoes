@@ -18,7 +18,7 @@ class PostCategoryService
 
     public function getAllCategories()
     {
-        return PostCategory::select('name', 'slug')->get();
+        return PostCategory::select('id','name', 'slug')->get();
     }
 
     public function getCategoryById($id)
@@ -39,5 +39,17 @@ class PostCategoryService
     public function deleteCategory($id)
     {
         return $this->postCategoryRepository->delete($id);
+    }
+    public function deleteCategories(array $ids){
+        if (empty($ids)) {
+            return response()->json(['message' => 'Không có ID nào được cung cấp!'], 400);
+        }
+        try {
+            $deletedCount = $this->postCategoryRepository->deletePostCategoryByIds($ids);
+            return response()->json(['message' => 'Đã xóa thành công ' . $deletedCount . ' PostCategory!'], 200);
+        } catch (\Exception $e) {
+            Log::error('Error deleting PostCategory: ' . $e->getMessage());
+            return response()->json(['message' => 'Có lỗi xảy ra khi xóa PostCategory.', 'error' => $e->getMessage()], 500);
+        }
     }
 }

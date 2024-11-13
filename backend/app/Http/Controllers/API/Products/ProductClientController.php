@@ -50,6 +50,7 @@ class ProductClientController extends Controller
 
         return response()->json([
             'product' => $product
+            
         ]);
     }
 

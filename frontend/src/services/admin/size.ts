@@ -3,7 +3,6 @@ import axiosClient from '../../apis/axiosClient';
 export type SIZE = {
 	id?: string;
 	size: string;
-	code: string;
 	created_at: string;
 	updated_at: string;
 };

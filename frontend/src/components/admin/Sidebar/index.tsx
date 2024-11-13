@@ -1,8 +1,9 @@
 import { FaUser } from 'react-icons/fa';
-import { Box, Boxes } from 'lucide-react';
+import { Box, Boxes, TicketPercent } from 'lucide-react';
 import { useRef, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import Logo from '../../../images/logo/logo.svg';
+import { BsCart2 } from 'react-icons/bs';
 interface SidebarProps {
 	sidebarOpen: boolean;
 	setSidebarOpen: (arg: boolean) => void;
@@ -58,7 +59,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 	return (
 		<aside
 			ref={sidebar}
-			className={`absolute left-0 top-0 z-9999 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear dark:bg-boxdark lg:static lg:translate-x-0 ${
+			className={`absolute left-0 top-0 z-100 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear dark:bg-boxdark lg:static lg:translate-x-0 ${
 				sidebarOpen ? 'translate-x-0' : '-translate-x-full'
 			}`}
 		>
@@ -235,8 +236,34 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 										'bg-graydark dark:bg-meta-4'
 									}`}
 								>
-									<Boxes />
+									<Boxes size={18} />
 									Attribute
+								</NavLink>
+							</li>
+
+							<li>
+								<NavLink
+									to="/admin/orders"
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+										pathname.includes('orders') &&
+										'bg-graydark dark:bg-meta-4'
+									}`}
+								>
+									<BsCart2 size={18} />
+									Orders
+								</NavLink>
+							</li>
+
+							<li>
+								<NavLink
+									to="/admin/discounts"
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+										pathname.includes('discounts') &&
+										'bg-graydark dark:bg-meta-4'
+									}`}
+								>
+									<TicketPercent size={18} />
+									Discounts
 								</NavLink>
 							</li>
 

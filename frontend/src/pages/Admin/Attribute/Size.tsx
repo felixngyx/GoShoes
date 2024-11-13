@@ -12,12 +12,7 @@ const schema = Joi.object({
 	size: Joi.string().required().messages({
 		'string.empty': 'Size name is required',
 	}),
-	code: Joi.string().required().messages({
-		'string.empty': 'Code is required',
-	}),
 });
-
-// Add interface for form data
 
 // Update PaginationType to match Brand component
 type PaginationType = {
@@ -122,7 +117,6 @@ const Size = () => {
 			// Reset form with existing values
 			reset({
 				size: sizeToEdit.size,
-				code: sizeToEdit.code,
 			});
 			setIsModalOpen(true);
 		}
@@ -329,11 +323,8 @@ const Size = () => {
 									</label>
 								</div>
 							</th>
-							<th scope="col" className="px-6 py-3 w-1/3">
+							<th scope="col" className="px-6 py-3 w-2/3">
 								Size
-							</th>
-							<th scope="col" className="px-6 py-3 w-1/3">
-								Code
 							</th>
 							<th scope="col" className="px-6 py-3 w-1/3">
 								Action
@@ -368,7 +359,6 @@ const Size = () => {
 									</div>
 								</td>
 								<td className="px-6 py-3">{size.size}</td>
-								<td className="px-6 py-3">{size.code}</td>
 								<td className="px-6 py-3 flex items-center gap-2">
 									<button
 										className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
@@ -413,17 +403,7 @@ const Size = () => {
 									{errors.size.message}
 								</p>
 							)}
-							<input
-								type="text"
-								className="w-full p-2 border rounded mb-2"
-								placeholder="Code"
-								{...register('code')}
-							/>
-							{errors.code && (
-								<p className="text-red-500 text-sm mb-4">
-									{errors.code.message}
-								</p>
-							)}
+
 							<div className="flex justify-end gap-2">
 								<button
 									type="button"

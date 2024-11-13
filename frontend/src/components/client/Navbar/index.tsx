@@ -137,7 +137,7 @@ const Navbar = () => {
                   className="relative p-2 rounded-full hover:bg-gray-100"
                 >
                   <span className="badge badge-error badge-xs absolute -top-1 -right-1 text-white font-semibold">
-                    {totalQuantity}
+                    0
                   </span>
                   <MdOutlineShoppingCart size={24} />
                 </Link>
@@ -152,7 +152,7 @@ const Navbar = () => {
                     <FaUser size={24} />
                   </div>
                   <ul className="dropdown-content bg-white shadow-lg rounded-lg p-2 w-48 mt-2 text-sm font-medium text-gray-700">
-                    {user.name ? (
+                    {user.access_token ? (
                       <>
                         <li>
                           <Link
