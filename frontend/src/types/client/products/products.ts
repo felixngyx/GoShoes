@@ -13,6 +13,14 @@ export interface IProduct {
   slug: string;
   images: [];
   thumbnail: string;
-  variants: [];
+  variants: Variant[];
   categories: [];
+}
+
+interface Variant {
+  id: number;
+  color: string;
+  size: 0;
+  image_variant: string;
+  quantity: number;
 }

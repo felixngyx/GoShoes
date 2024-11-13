@@ -2,10 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { IoCart, IoHeartOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
+import useCart from "../../hooks/client/useCart";
 import { getAllProducts } from "../../services/client/product";
 import { IProduct } from "../../types/client/products/products";
 
 const ProductCard = () => {
+  const { handleAddToCart } = useCart();
   const {
     data: products,
     isLoading,
@@ -14,6 +16,12 @@ const ProductCard = () => {
     queryKey: ["PRODUCT_KEY"],
     queryFn: () => getAllProducts(1, 8),
   });
+
+  const addCart = (product: IProduct) => {
+    const productVariantId = product.variants[0].id;
+    const quantity = 1;
+    handleAddToCart(productVariantId, quantity);
+  };
 
   const RatingStars = ({ rating }: { rating: number }) => (
     <div className="flex items-center">
@@ -61,7 +69,7 @@ const ProductCard = () => {
                 color="#40BFFF"
               />
               <IoCart
-                // onClick={() => handleAddToCart(product)}
+                onClick={() => addCart(product)}
                 className="cursor-pointer p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
                 size={52}
                 color="#40BFFF"

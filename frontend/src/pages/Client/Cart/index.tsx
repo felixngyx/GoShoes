@@ -1,111 +1,52 @@
 /* eslint-disable */
-import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   FiCreditCard,
   FiMinus,
   FiPlus,
   FiShoppingBag,
   FiTrash2,
-  FiTruck,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import { getListCart } from "../../../services/client/cart";
+import useCart from "../../../hooks/client/useCart";
 
 const Cart = () => {
-  // const { data: cart, isLoading } = useQuery({
-  //   queryKey: "CARD_KEY",
-  //   queryFn:  () => getListCart(),
-  // });
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Premium Wireless Headphones",
-      price: 199.99,
-      quantity: 1,
-      image: "images.unsplash.com/photo-1505740420928-5e560c06d30e",
-      selected: false,
-      description: "High-quality wireless headphones with noise cancellation",
-      color: "Black",
-    },
-  ]);
-
-  const [error, setError] = useState("");
-  const [orderSummary, setOrderSummary] = useState({
-    subtotal: 0,
-    shipping: 15.99,
-    tax: 0,
-    total: 0,
-  });
-
-  const calculateSubtotal = (item: any) => {
-    return item.price * item.quantity;
-  };
-
-  const calculateTotal = () => {
-    const subtotal = cartItems.reduce(
-      (total, item) => total + calculateSubtotal(item),
-      0
-    );
-    const tax = subtotal * 0.1; // 10% tax
-    return {
-      subtotal,
-      tax,
-      total: subtotal + tax + orderSummary.shipping,
-    };
-  };
+  const {
+    cartItemsWithSelected,
+    isLoading,
+    error,
+    orderSummary,
+    cartItems,
+    setCartItemsWithSelected,
+    toggleSelectItem,
+    toggleSelectAll,
+    handleQuantityChange,
+    onDelete,
+  } = useCart();
 
   useEffect(() => {
-    const totals = calculateTotal();
-    setOrderSummary((prev) => ({
-      ...prev,
-      ...totals,
-    }));
-  }, [cartItems]);
+    setCartItemsWithSelected((prevCartItems) => {
+      const updatedItems = prevCartItems.map((item) => ({
+        ...item,
+        totalPrice:
+          item.quantity *
+          (parseFloat(item.product_variant.product.promotional_price) ||
+            parseFloat(item.product_variant.product.price)),
+      }));
 
-  const handleQuantityChange = (id: number, newQuantity: number) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) => {
-        if (item.id === id) {
-          if (newQuantity < 1) {
-            setError("Quantity cannot be less than 1");
-            return item;
-          }
-          setError("");
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      })
-    );
-  };
+      if (JSON.stringify(updatedItems) !== JSON.stringify(prevCartItems)) {
+        return updatedItems;
+      }
+      return prevCartItems;
+    });
+  }, [cartItemsWithSelected, setCartItemsWithSelected]);
 
-  const toggleSelectItem = (id: number) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === id ? { ...item, selected: !item.selected } : item
-      )
-    );
-  };
+  const isAnyItemSelected = cartItemsWithSelected.some(
+    (item: any) => item.selected
+  );
 
-  const toggleSelectAll = () => {
-    const allSelected = cartItems.every((item) => item.selected);
-    setCartItems((prevItems) =>
-      prevItems.map((item) => ({ ...item, selected: !allSelected }))
-    );
-  };
-
-  const removeSelectedItems = () => {
-    setCartItems((prevItems) => prevItems.filter((item) => !item.selected));
-    setError("");
-  };
-
-  const removeItem = (id: number) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
-    setError("");
-  };
-
-  const selectedCount = cartItems.filter((item) => item.selected).length;
+  if (isLoading) return <p>Đang tải...</p>;
 
   return (
     <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
@@ -124,23 +65,13 @@ const Cart = () => {
                         type="checkbox"
                         checked={
                           cartItems.length > 0 &&
-                          cartItems.every((item) => item.selected)
+                          cartItems.every((item: any) => item.selected)
                         }
                         onChange={toggleSelectAll}
                         className="checkbox checkbox-sm checkbox-primary rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                       />
                       <span className="text-sm text-gray-600">Select All</span>
                     </label>
-                    {selectedCount > 0 && (
-                      <button
-                        onClick={removeSelectedItems}
-                        className="text-red-600 hover:text-red-800 focus:outline-none focus:underline flex items-center"
-                        aria-label="Remove selected items"
-                      >
-                        <FiTrash2 className="w-5 h-5 mr-1" />
-                        Remove Selected ({selectedCount})
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
@@ -159,9 +90,9 @@ const Cart = () => {
 
               <div className="space-y-4">
                 <AnimatePresence>
-                  {cartItems.map((item) => (
+                  {cartItemsWithSelected.map((item: any) => (
                     <motion.div
-                      key={item.id}
+                      key={item.product_variant.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20 }}
@@ -171,67 +102,73 @@ const Cart = () => {
                     >
                       <input
                         type="checkbox"
-                        checked={item.selected}
-                        onChange={() => toggleSelectItem(item.id)}
+                        checked={item.selected || false}
+                        onChange={() =>
+                          toggleSelectItem(item.product_variant.id)
+                        }
                         className="checkbox checkbox-sm checkbox-primary rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                       />
-                      <img
-                        src={`https://${item.image}`}
-                        alt={item.name}
-                        className="w-32 h-32 object-cover rounded"
-                      />
+                      <Link to={`/products/${item.product_variant.product_id}`}>
+                        <img
+                          src={item.product_variant.image_variant}
+                          className="w-32 h-32 object-cover rounded"
+                        />
+                      </Link>
                       <div className="flex-1">
                         <h3 className="text-xl font-medium text-gray-900">
-                          {item.name}
+                          {item.product_variant.product.name}
                         </h3>
                         <p className="text-gray-500 mt-1">{item.description}</p>
                         <div className="mt-2 space-y-1">
-                          <p className="text-sm text-gray-600">
-                            Color: {item.color}
-                          </p>
+                          <span className="text-sm text-gray-600">
+                            <p>Color: {item.product_variant.color.color}</p>
+                            <p>Size: {item.product_variant.size.size}</p>
+                          </span>
                         </div>
                         <div className="flex items-center space-x-2 mt-4">
-                          <button
-                            onClick={() =>
-                              handleQuantityChange(item.id, item.quantity - 1)
-                            }
-                            className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            aria-label="Decrease quantity"
-                          >
-                            <FiMinus className="w-5 h-5 text-gray-600" />
+                          <button className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <FiMinus
+                              onClick={() =>
+                                handleQuantityChange(
+                                  item.product_variant.id,
+                                  String(item.quantity - 1)
+                                )
+                              }
+                              className="w-5 h-5 text-gray-600"
+                            />
                           </button>
                           <input
                             type="number"
                             value={item.quantity}
                             onChange={(e) =>
                               handleQuantityChange(
-                                item.id,
-                                parseInt(e.target.value)
+                                item.product_variant.id,
+                                e.target.value
                               )
                             }
                             className="w-16 text-center border-gray-300 rounded-md"
                             min="1"
-                            aria-label="Item quantity"
                           />
-                          <button
-                            onClick={() =>
-                              handleQuantityChange(item.id, item.quantity + 1)
-                            }
-                            className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            aria-label="Increase quantity"
-                          >
-                            <FiPlus className="w-5 h-5 text-gray-600" />
+                          <button className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <FiPlus
+                              onClick={() =>
+                                handleQuantityChange(
+                                  item.product_variant.id,
+                                  String(item.quantity + 1)
+                                )
+                              }
+                              className="w-5 h-5 text-gray-600"
+                            />
                           </button>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-medium text-gray-900">
-                          ${calculateSubtotal(item).toFixed(2)}
+                          ${item.totalPrice}
                         </p>
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => onDelete(item.product_variant.id)}
                           className="mt-4 text-red-600 hover:text-red-800 focus:outline-none focus:underline flex items-center justify-end"
-                          aria-label={`Remove ${item.name} from cart`}
                         >
                           <FiTrash2 className="w-5 h-5 mr-1" />
                           Remove
@@ -242,7 +179,7 @@ const Cart = () => {
                 </AnimatePresence>
               </div>
 
-              {cartItems.length === 0 && (
+              {cartItemsWithSelected.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -262,57 +199,34 @@ const Cart = () => {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-lg p-6 sticky top-8 border border-gray-200">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">
+          <div className="bg-white rounded-lg shadow-lg p-6 sticky top-20">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Order Summary
             </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="text-gray-900">
-                  ${orderSummary.subtotal.toFixed(2)}
-                </span>
+            <div className="space-y-2">
+              <div className="flex justify-between text-gray-600">
+                <span>Subtotal</span>
+                <span>${orderSummary.subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Shipping</span>
-                <span className="text-gray-900">
-                  ${orderSummary.shipping.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tax (10%)</span>
-                <span className="text-gray-900">
-                  ${orderSummary.tax.toFixed(2)}
-                </span>
-              </div>
-              <div className="border-t pt-4">
-                <div className="flex justify-between">
-                  <span className="text-lg font-bold text-gray-900">Total</span>
-                  <span className="text-2xl font-bold text-gray-900">
-                    ${orderSummary.total.toFixed(2)}
-                  </span>
-                </div>
+              <div className="flex justify-between text-gray-600">
+                <span>Shipping</span>
+                <span>${orderSummary.shipping.toFixed(2)}</span>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center text-green-600">
-                  <FiTruck className="w-5 h-5 mr-2" />
-                  <span>Free shipping on orders over $100</span>
-                </div>
-                <div className="flex items-center text-blue-600">
-                  <FiCreditCard className="w-5 h-5 mr-2" />
-                  <span>Secure payment processing</span>
-                </div>
+              <div className="border-t border-gray-200 pt-4 flex justify-between text-gray-900 font-semibold">
+                <span>Total</span>
+                <span>${orderSummary.total.toFixed(2)}</span>
               </div>
-
-              <button
-                className="mt-6 w-full bg-indigo-600 border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                aria-label="Proceed to checkout"
-                // disabled={cartItems.length === 0}
-              >
-                <Link to="/checkout">Proceed to Checkout</Link>
-              </button>
             </div>
+            <Link
+              to={isAnyItemSelected ? "/checkout" : "#"} // Nếu không có sản phẩm nào được chọn, không điều hướng
+              className={`mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg flex items-center justify-center hover:bg-indigo-700 transition duration-200 ${
+                !isAnyItemSelected ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              <FiCreditCard className="w-5 h-5 mr-2" />
+              Proceed to Checkout
+            </Link>
           </div>
         </div>
       </div>
