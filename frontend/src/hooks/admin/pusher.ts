@@ -1,8 +1,9 @@
+import React from "react";
 import { useEffect } from "react";
 import Pusher from 'pusher-js';
 import { toast } from 'react-hot-toast';
 import { PUSHER_CONFIG } from "../../common/pusher";
-
+import { useNavigate } from 'react-router-dom';
 
 interface PusherData {
     order_id: string;
@@ -15,6 +16,8 @@ interface PusherHookOptions {
 }
 
 export const usePusherAdmin = (options: PusherHookOptions = {}) => {
+    const navigate = useNavigate();
+
     useEffect(() => {
         const pusher = new Pusher(PUSHER_CONFIG.key, {
             cluster: PUSHER_CONFIG.cluster,
@@ -28,15 +31,37 @@ export const usePusherAdmin = (options: PusherHookOptions = {}) => {
             }
 
             if (!options.customToast) {
-                toast.success(`${data.message}: ${data.order_id}`, {
-                    duration: 5000,
-                    position: 'top-right',
-                    style: {
-                        background: '#10B981',
-                        color: '#fff',
-                        top: '80px',
-                    },
-                });
+                const toastId = toast.success(
+                    React.createElement(
+                        'div',
+                        { className: 'flex flex-col' },
+                        React.createElement(
+                            'span',
+                            null,
+                            `${data.message}: ${data.order_id}`
+                        ),
+                        React.createElement(
+                            'button',
+                            {
+                                onClick: () => {
+                                    navigate(`/admin/orders/detail/${data.order_id}`);
+                                    toast.dismiss(toastId);
+                                },
+                                className: 'mt-2 text-sm font-semibold text-white underline hover:no-underline'
+                            },
+                            'View Details →'
+                        )
+                    ),
+                    {
+                        duration: 5000,
+                        position: 'top-right',
+                        style: {
+                            background: '#10B981',
+                            color: '#fff',
+                            top: '80px',
+                        }
+                    }
+                );
             }
         });
 
@@ -45,5 +70,5 @@ export const usePusherAdmin = (options: PusherHookOptions = {}) => {
             pusher.unsubscribe(PUSHER_CONFIG.channels.admin);
             pusher.disconnect();
         };
-    }, [options]);
+    }, [options, navigate]);
 };

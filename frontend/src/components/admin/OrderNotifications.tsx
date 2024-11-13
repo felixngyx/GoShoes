@@ -2,7 +2,11 @@ import { usePusherAdmin } from "../../hooks/admin/pusher";
 
 
 const OrderNotifications = () => {
-    usePusherAdmin();
+    usePusherAdmin({
+        onNewOrder: (data) => {
+          console.log('New order:', data);
+        }
+      });
     return null;
 };
 
