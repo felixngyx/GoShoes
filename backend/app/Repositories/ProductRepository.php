@@ -51,6 +51,7 @@ class ProductRepository implements ProductRepositoryInterface
             'promotional_price' => (float) $product->promotional_price,
             'stock_quantity' => $product->stock_quantity,
             'sku' => $product->sku,
+            'rating_count' => $product->rating_count,
             'categories' => $product->categories->pluck('name')->toArray(),
             'status' => $product->status,
             'thumbnail' => $product->thumbnail,
@@ -79,6 +80,7 @@ class ProductRepository implements ProductRepositoryInterface
                     'name' => $relatedProduct->name,
                     'price' => (float) $relatedProduct->price,
                     'promotional_price' => (float) $relatedProduct->promotional_price,
+                    'rating_count' => $relatedProduct->rating_count,
                     'stock_quantity' => $relatedProduct->stock_quantity,
                     'categories' => $relatedProduct->categories->pluck('name')->toArray(),
                     'status' => $relatedProduct->status,
@@ -114,6 +116,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->where('id', '!=', $product->id)
             ->where('is_deleted', false)
             ->limit(8)
+            
             ->get();
 
         

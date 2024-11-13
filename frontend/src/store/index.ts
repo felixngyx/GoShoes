@@ -1,10 +1,10 @@
-import { configureStore } from '@reduxjs/toolkit';
-import clientReducer from './client';
+import { configureStore } from "@reduxjs/toolkit";
+import clientReducer from "./client";
 
 const store = configureStore({
-	reducer: {
-		client: clientReducer,
-	},
+  reducer: {
+    client: clientReducer,
+  },
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -2,7 +2,6 @@
 
 use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
-use App\Http\Controllers\API\Shipping\ShippingController;
 use App\Http\Controllers\API\Wishlist\WishlistController;
 use App\Http\Controllers\API\Cart\CartController;
 use Illuminate\Support\Facades\Route;
@@ -16,9 +15,11 @@ use App\Http\Controllers\API\Order\OrderController;
 use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use App\Http\Controllers\API\Products\ProductController;
 use App\Http\Controllers\API\Discount\DiscountController;
+use App\Http\Controllers\API\Post\PostController;
 use App\Http\Controllers\API\PostCategory\PostCategoryController;
 use App\Http\Controllers\API\Products\ProductClientController;
 use App\Http\Controllers\Api\Review\ReviewController;
+use App\Http\Controllers\BannerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,6 +89,17 @@ Route::put('/post-categories/{id}', [PostCategoryController::class, 'update']);
 Route::delete('/post-categories/{id}', [PostCategoryController::class, 'destroy']);
 Route::delete('post-categories', [PostCategoryController::class, 'destroyMultiple']);
 
+// API Post
+Route::get('/posts', [PostController::class, 'index']);
+Route::get('/posts/{id}', [PostController::class, 'show']);
+
+// API Banner
+Route::get('/banners', [BannerController::class, 'index']);
+Route::post('/banners', [BannerController::class, 'store']);
+Route::get('/banners/{id}', [BannerController::class, 'show']);
+Route::put('/banners/{id}', [BannerController::class, 'update']);
+Route::delete('/banners/{id}', [BannerController::class, 'destroy']);
+
 // This route is Authenticated
 Route::group([
     'middleware' => 'jwt.auth',
@@ -151,6 +163,14 @@ Route::group([
 
     //API Shipping
     Route::resource('shipping', ShippingController::class);
+
+    Route::prefix('posts')->group(function () {
+        Route::post('/', [PostController::class, 'store']);
+        Route::put('/{id}', [PostController::class, 'update']);
+        Route::delete('/{id}', [PostController::class, 'destroy']);
+        Route::delete('/', [PostController::class, 'destroyMultiple']);
+
+    });
 });
 
 

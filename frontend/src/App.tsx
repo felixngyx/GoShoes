@@ -40,6 +40,7 @@ import Cart from './pages/Client/Cart';
 import CheckoutPage from './pages/Client/Cart/checkout';
 import OrderDashboard from './pages/Admin/orders';
 import DetailOrder from './pages/Admin/orders/detail';
+import DiscountPage from './pages/Admin/discounts';
 
 function App() {
 	const { pathname } = useLocation();
@@ -89,6 +90,10 @@ function App() {
 						<Route index element={<OrderDashboard />} />
 						<Route path="detail/:id" element={<DetailOrder />} />
 					</Route>
+					<Route path='discounts'>
+						<Route index element={<DiscountPage/>}></Route>
+					</Route>
+					
 					<Route
 						path="calendar" // Changed from "/calendar" to "calendar"
 						element={
