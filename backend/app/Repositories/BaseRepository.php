@@ -41,7 +41,7 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
 
     public function findById(int $id)
     {
-        return $this->model->find($id)->findOrFail();
+        return $this->model->findOrFail($id);
     }
 
     public function upsert(array $data, array $condition)
@@ -51,7 +51,7 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
 
     public function forceDelete(int $id)
     {
-        return $this->model->findById($id)->forceDelete();
+        return $this->findById($id)->forceDelete();
     }
 
     protected static final function cacheTable()
@@ -92,5 +92,10 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
     public static final function getDataFromCache(array $columns, array $condition)
     {
         return self::getCachedTable();
+    }
+
+    public function getListByUserId(int $userId)
+    {
+        return $this->model->where('user_id', $userId)->get();
     }
 }

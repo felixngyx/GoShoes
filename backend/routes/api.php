@@ -43,10 +43,6 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('/refresh-token', [AuthController::class, 'refreshTokenController'])->middleware('jwt.refresh.token');
 });
 
-
-Route::resource('wishlist', WishlistController::class);
-Route::resource('cart', CartController::class);
-
 // API Product
 Route::get('/products/trashed', [ProductController::class, 'trashedProducts']);
 Route::post('/products/restore/{id}', [ProductController::class, 'restore']);
@@ -121,8 +117,6 @@ Route::group([
         Route::post('/{id}/renew-payment', [OrderController::class, 'renewPaymentLink']);
     });
 
-
-
     Route::prefix('discounts')->group(function () {
         Route::get('/', [DiscountController::class, 'index']);
         Route::post('/', [DiscountController::class, 'store']);
@@ -160,6 +154,15 @@ Route::group([
     Route::get('categories/{id}', [CategoryController::class, 'show']);
     Route::put('categories/{id}', [CategoryController::class, 'update']);
     Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
+
+    // API Wishlist
+    Route::resource('wishlist', WishlistController::class);
+
+    // API Cart
+    Route::resource('cart', CartController::class);
+
+    //API Shipping
+    Route::resource('shipping', ShippingController::class);
 
     Route::prefix('posts')->group(function () {
         Route::post('/', [PostController::class, 'store']);
