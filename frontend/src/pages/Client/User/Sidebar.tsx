@@ -13,9 +13,10 @@ const Sidebar = () => {
   const { pathname } = useLocation();
 
   const isActive = (path: string) => {
-    if (pathname.includes(path)) {
-      return "text-[#4182F9]";
+    if (path === "account") {
+      return pathname === "/account" ? "text-[#4182F9]" : "";
     }
+    return pathname.includes(path) ? "text-[#4182F9]" : "";
   };
 
   return (
@@ -29,7 +30,7 @@ const Sidebar = () => {
         </Link>
         <Link
           to="/account/my-order"
-          className={`flex items-center gap-4 ${isActive("orders")}`}
+          className={`flex items-center gap-4 ${isActive("my-order")}`}
         >
           <FaShoppingCart /> Orders
         </Link>

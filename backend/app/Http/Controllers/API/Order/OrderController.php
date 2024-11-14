@@ -110,30 +110,55 @@ class OrderController extends Controller
         ]);
     }
 
-    public function OrderOneUser()
+    public function OrderOneUser(Request $request)
     {
+        $perPage = $request->get('per_page', 10);
+        $status = $request->get('status');
+        $search = $request->get('search');
         $user_id = auth()->user()->id;
-        $orders = Order::with([
+
+        $query = Order::with([
             'shipping:id,address,city',
             'items:id,order_id,product_id,quantity,price',
             'items.product:id,name,thumbnail'
         ])
-            ->where('user_id', $user_id)
-            ->orderBy('created_at', 'desc')
-            ->get([
+            ->where('user_id', $user_id);
+
+        // Filter theo status nếu có
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // Search theo keyword
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('sku', 'like', "%{$search}%")
+                  ->orWhereHas('items.product', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage, [
                 'id',
                 'shipping_id',
                 'total',
+                'original_total',
+                'sku',
+                'status',
                 'created_at'
             ]);
 
         return response()->json([
             'success' => true,
-            'data' => $orders->map(function ($order) {
+            'data' => $orders->getCollection()->map(function ($order) {
                 return [
                     'id' => $order->id,
-                    'total' => $order->total * 100,
-                    'original_total' => $order->total * 100,
+                    'total' => $order->total,
+                    'original_total' => $order->original_total,
+                    'sku' => $order->sku,
+                    'status' => $order->status,
                     'created_at' => $order->created_at->format('Y-m-d'),
 
                     // Thông tin địa chỉ giao hàng
@@ -146,8 +171,8 @@ class OrderController extends Controller
                     'items' => $order->items->map(function ($item) {
                         return [
                             'quantity' => $item->quantity,
-                            'price' => $item->price * 100,
-                            'subtotal' => $item->quantity * $item->price * 100,
+                            'price' => $item->price,
+                            'subtotal' => $item->quantity * $item->price,
                             'product' => [
                                 'name' => $item->product->name,
                                 'thumbnail' => (string) $item->product->thumbnail,
@@ -155,7 +180,19 @@ class OrderController extends Controller
                         ];
                     })
                 ];
-            })
+            }),
+            'pagination' => [
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+                'per_page' => $orders->perPage(),
+                'total' => $orders->total(),
+                'next_page_url' => $orders->nextPageUrl(),
+                'prev_page_url' => $orders->previousPageUrl(),
+            ],
+            'filters' => [
+                'status' => $status,
+                'search' => $search
+            ]
         ]);
     }
 
@@ -167,22 +204,29 @@ class OrderController extends Controller
             // 1. Tính toán tổng giá trị ban đầu và kiểm tra tồn kho
             $originalTotal = 0;
             $items = [];
+            $lockedProducts = [];
+            $lockedVariants = [];
 
             foreach ($request->items as $item) {
-                $product = Product::findOrFail($item['product_id']);
+                // Lock sản phẩm để tránh race condition
+                $product = Product::lockForUpdate()->findOrFail($item['product_id']);
+                $lockedProducts[] = $product;
                 $variant = null;
 
                 // Kiểm tra nếu sản phẩm có biến thể
                 if (isset($item['variant_id'])) {
-                    $variant = ProductVariant::findOrFail($item['variant_id']);
+                    // Lock variant để tránh race condition
+                    $variant = ProductVariant::lockForUpdate()->findOrFail($item['variant_id']);
+                    $lockedVariants[] = $variant;
+
                     if ($variant->quantity < $item['quantity']) {
-                        throw new \Exception("Sản phẩm {$product->name} không đủ số lượng trong kho");
+                        throw new \Exception("Sản phẩm {$product->name} ({$variant->size->size}/{$variant->color->color}) chỉ còn {$variant->quantity} sản phẩm");
                     }
                     $price = $product->promotional_price ?? $product->price;
                 } else {
                     // Nếu không có biến thể, kiểm tra số lượng sản phẩm trực tiếp
-                    if ($product['stock_quantity'] < $item['quantity']) {
-                        throw new \Exception("Sản phẩm {$product->name} không đủ số lượng trong kho");
+                    if ($product->stock_quantity < $item['quantity']) {
+                        throw new \Exception("Sản phẩm {$product->name} chỉ còn {$product->stock_quantity} sản phẩm");
                     }
                     $price = $product->promotional_price ?? $product->price;
                 }
@@ -191,10 +235,12 @@ class OrderController extends Controller
                 $originalTotal += $itemTotal;
 
                 $items[] = [
-                    'variant_id' => $item['variant_id'] ?? null, // Biến thể có thể null
+                    'variant_id' => $item['variant_id'] ?? null,
                     'product_id' => $item['product_id'],
                     'quantity' => $item['quantity'],
                     'price' => $price,
+                    'variant' => $variant,
+                    'product' => $product
                 ];
             }
 
@@ -205,7 +251,8 @@ class OrderController extends Controller
                 $discountValidation = $this->validateDiscount(
                     $request->discount_code,
                     $originalTotal,
-                    array_column($items, 'product_id')
+                    array_column($items, 'product_id'),
+                    $items
                 );
 
                 if (!$discountValidation['status']) {
@@ -218,11 +265,16 @@ class OrderController extends Controller
             }
 
             // 3. Tính tổng giá trị cuối cùng
-            $finalTotal = $originalTotal - $discountAmount * 100;
+            $finalTotal = $originalTotal - $discountAmount;
 
             // Kiểm tra phương thức thanh toán
             $paymentMethod = PaymentMethod::findOrFail($request->payment_method_id);
-            $isCOD = $paymentMethod->id === 2; // Giả sử ID 1 là COD
+            $isCOD = $paymentMethod->id === 2;
+
+            // Làm tròn các giá trị tiền
+            $originalTotal = round($originalTotal);
+            $discountAmount = round($discountAmount);
+            $finalTotal = round($originalTotal - $discountAmount);
 
             // 4. Tạo đơn hàng
             $order = Order::create([
@@ -246,12 +298,21 @@ class OrderController extends Controller
                     'price' => $item['price'],
                 ]);
 
+                // Kiểm tra lại số lượng một lần nữa trước khi cập nhật
                 if ($item['variant_id']) {
-                    ProductVariant::find($item['variant_id'])
-                        ->decrement('quantity', $item['quantity']);
+                    $variant = $item['variant'];
+                    // Kiểm tra lại lần cuối để đảm bảo số lượng vẫn đủ
+                    if ($variant->quantity < $item['quantity']) {
+                        throw new \Exception("Sản phẩm {$item['product']->name} đã hết hàng trong quá trình xử lý");
+                    }
+                    $variant->decrement('quantity', $item['quantity']);
                 } else {
-                    Product::find($item['product_id'])
-                        ->decrement('stock_quantity', $item['quantity']);
+                    $product = $item['product'];
+                    // Kiểm tra lại lần cuối để đảm bảo số lượng vẫn đủ
+                    if ($product->stock_quantity < $item['quantity']) {
+                        throw new \Exception("Sản phẩm {$product->name} đã hết hàng trong quá trình xử lý");
+                    }
+                    $product->decrement('stock_quantity', $item['quantity']);
                 }
             }
 
@@ -260,7 +321,7 @@ class OrderController extends Controller
                 'order_id' => $order->id,
                 'method_id' => $request->payment_method_id,
                 'status' => $this->determinePaymentStatus($finalTotal, $isCOD),
-                'url' => null, // Khởi tạo là null, sẽ cập nhật sau nếu có thanh toán online
+                'url' => null,
                 'amount' => $finalTotal,
             ]);
 
@@ -271,13 +332,8 @@ class OrderController extends Controller
                     Discount::where('code', $discountCode)->increment('used_count');
                 }
 
-                // Gửi email xác nhận đơn hàng
-                try {
-                    Mail::to(auth()->user()->email)->queue(new OrderCreated($order));
-                } catch (\Exception $e) {
-                    Log::error('Gửi email thất bại: ' . $e->getMessage());
-                    // Không throw exception ở đây để không ảnh hưởng đến việc tạo đơn hàng
-                }
+                // Gửi email xác nhận đơn hàng qua queue
+                Mail::to(auth()->user()->email)->queue(new OrderCreated($order));
 
                 DB::commit();
                 event(new NewOrderCreated($order->id));
@@ -390,9 +446,12 @@ class OrderController extends Controller
 
     protected function initiatePayment($order)
     {
+        // Làm tròn số tiền về số nguyên và chuyển đổi sang xu
+        $amount = round($order->total); // Làm tròn để bỏ phần thập phân
+
         $paymentRequest = new Request([
             'order_id' => $order->sku,
-            'amount' => $order->total * 100,
+            'amount' => (int)$amount, // Không cần nhân 100 nữa vì ZaloPay đã tính theo VND
         ]);
 
         $response = $this->zaloPaymentController->paymentZalo($paymentRequest);
@@ -529,7 +588,7 @@ class OrderController extends Controller
 
             // Kiểm tra phương thức thanh toán
             $payment = $order->payment;
-            if (!$payment || $payment->method_id == 2) { 
+            if (!$payment || $payment->method_id == 2) {
                 throw new \Exception('This order is not supported to renew payment link');
             }
 
@@ -540,7 +599,7 @@ class OrderController extends Controller
             $oldSku = $order->sku;
             Log::info("Renewing payment for order: Old SKU: {$oldSku}, New SKU: {$newSku}");
 
-            // Cập nhật SKU mới cho đơn hàng
+            // Cp nhật SKU mới cho đơn hàng
             $order->update(['sku' => $newSku]);
 
             // Khởi tạo request cho ZaloPay với số tiền đã được chuyển đổi sang xu
@@ -663,6 +722,101 @@ class OrderController extends Controller
                 'message' => 'Không thể truy cập đơn hàng',
                 'error' => $e->getMessage()
             ], 403);
+        }
+    }
+
+    protected function validateDiscount($code, $total, $productIds, $items)
+    {
+        try {
+            // Tìm mã giảm giá
+            $discount = Discount::with('products')
+                ->where('code', $code)
+                ->where('valid_from', '<=', now())
+                ->where('valid_to', '>=', now())
+                ->first();
+
+            if (!$discount) {
+                return [
+                    'status' => false,
+                    'message' => 'Mã giảm giá không hợp lệ hoặc đã hết hạn'
+                ];
+            }
+
+            // Kiểm tra số lần sử dụng
+            if ($discount->usage_limit > 0 && $discount->used_count >= $discount->usage_limit) {
+                return [
+                    'status' => false,
+                    'message' => 'Mã giảm giá đã hết lượt sử dụng'
+                ];
+            }
+
+            // Kiểm tra giá trị đơn hàng tối thiểu
+            if ($discount->min_order_amount && $total < $discount->min_order_amount) {
+                return [
+                    'status' => false,
+                    'message' => sprintf(
+                        'Giá trị đơn hàng tối thiểu phải từ %s để sử dụng mã này',
+                        number_format($discount->min_order_amount, 0, ',', '.')
+                    )
+                ];
+            }
+
+            // Kiểm tra sản phẩm áp dụng
+            $discountProducts = $discount->products;
+            if ($discountProducts->isNotEmpty()) {
+                // Tính tổng giá trị các sản phẩm được áp dụng giảm giá
+                $applicableTotal = 0;
+                $hasValidProduct = false;
+
+                foreach ($items as $item) {
+                    $product = Product::find($item['product_id']);
+                    if (!$product) continue;
+
+                    // Kiểm tra xem sản phẩm có trong danh sách được giảm giá không
+                    if ($discountProducts->contains('id', $product->id)) {
+                        $hasValidProduct = true;
+
+                        // Xử lý giá dựa trên variant nếu có
+                        if (isset($item['variant_id'])) {
+                            $variant = ProductVariant::find($item['variant_id']);
+                            if ($variant) {
+                                $price = $product->promotional_price ?? $product->price;
+                            }
+                        } else {
+                            $price = $product->promotional_price ?? $product->price;
+                        }
+
+                        $applicableTotal += $price * $item['quantity'];
+                    }
+                }
+
+                if (!$hasValidProduct) {
+                    return [
+                        'status' => false,
+                        'message' => 'Mã giảm giá chỉ áp dụng cho một số sản phẩm nhất định'
+                    ];
+                }
+
+                // Tính số tiền giảm dựa trên tổng giá trị sản phẩm được áp dụng
+                $discountAmount = ($applicableTotal * $discount->percent) / 100;
+            } else {
+                // Nếu không có sản phẩm cụ thể, áp dụng giảm giá cho toàn bộ đơn hàng
+                $discountAmount = ($total * $discount->percent) / 100;
+            }
+
+            return [
+                'status' => true,
+                'discount' => $discount,
+                'discount_amount' => $discountAmount,
+                'message' => 'Áp dụng mã giảm giá thành công'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Lỗi xử lý mã giảm giá: ' . $e->getMessage());
+            return [
+                'status' => false,
+                'message' => 'Lỗi khi xử lý mã giảm giá: ' . $e->getMessage()
+            ];
         }
     }
 }
