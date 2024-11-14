@@ -1,12 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
+import Cookies from "js-cookie";
+import { useState } from "react";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { IoCart, IoHeartOutline } from "react-icons/io5";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useCart from "../../hooks/client/useCart";
 import { getAllProducts } from "../../services/client/product";
 import { IProduct } from "../../types/client/products/products";
 
 const ProductCard = () => {
+  const accessToken = Cookies.get("access_token");
+  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
   const { handleAddToCart } = useCart();
   const {
     data: products,
@@ -36,6 +41,23 @@ const ProductCard = () => {
       ))}
     </div>
   );
+
+  const handleCheckAdd = (product: IProduct) => {
+    if (!accessToken) {
+      setShowModal(true);
+      return;
+    }
+    addCart(product);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+  };
+
+  const handleLoginNow = () => {
+    navigate("/signin");
+    closeModal();
+  };
 
   if (isLoading) {
     return <span className="loading loading-spinner loading-lg"></span>;
@@ -69,7 +91,7 @@ const ProductCard = () => {
                 color="#40BFFF"
               />
               <IoCart
-                onClick={() => addCart(product)}
+                onClick={() => handleCheckAdd(product)}
                 className="cursor-pointer p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
                 size={52}
                 color="#40BFFF"
@@ -98,6 +120,36 @@ const ProductCard = () => {
           </div>
         </div>
       ))}
+
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center ">
+          <div className="modal modal-open ">
+            <div className="modal-box relative">
+              <h2 className="text-2xl font-semibold text-center mb-4">
+                You need to login
+              </h2>
+              <p className="mb-6 text-center">
+                Please login to add this product to your cart.
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={handleLoginNow}
+                  className="btn bg-blue-500 text-white hover:bg-blue-600 w-32"
+                >
+                  Login Now
+                </button>
+              </div>
+              {/* Close button */}
+              <button
+                className="absolute top-2 right-2 text-xl"
+                onClick={closeModal}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
