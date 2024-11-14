@@ -19,6 +19,7 @@ use App\Http\Controllers\API\Post\PostController;
 use App\Http\Controllers\API\PostCategory\PostCategoryController;
 use App\Http\Controllers\API\Products\ProductClientController;
 use App\Http\Controllers\Api\Review\ReviewController;
+use App\Http\Controllers\API\Shipping\ShippingController;
 use App\Http\Controllers\BannerController;
 
 /*
