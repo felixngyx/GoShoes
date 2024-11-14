@@ -48,10 +48,20 @@ const cartSlice = createSlice({
         item.quantity = action.payload.quantity;
       }
     },
+
+    // Reset giỏ hàng về trạng thái ban đầu (trống)
+    resetCart: (state) => {
+      state.items = [];
+    },
   },
 });
 
-export const { setCartItems, addToCart, removeFromCart, updateCartQuantity } =
-  cartSlice.actions;
+export const {
+  setCartItems,
+  addToCart,
+  removeFromCart,
+  updateCartQuantity,
+  resetCart,
+} = cartSlice.actions;
 
 export default cartSlice.reducer;

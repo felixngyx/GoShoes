@@ -104,16 +104,22 @@ const ProductDetail = () => {
 
   const uniqueSizes = product?.variants
     ? Array.from(
-        new Set(product.variants.map((variant: Variant) => variant.size.size))
+        new Set(
+          product.variants
+            .map((variant: Variant) => variant.size?.size)
+            .filter((size: any) => size !== null) // Lọc bỏ các giá trị null
+        )
       )
     : [];
 
   const uniqueColors = Array.from(
     new Map(
-      product?.variants.map((variant: Variant) => [
-        variant.color.color,
-        variant,
-      ])
+      product?.variants
+        .map((variant: Variant) => [
+          variant.color?.color, // Kiểm tra màu sắc không null
+          variant,
+        ])
+        .filter(([color]: any) => color !== null) // Lọc bỏ các giá trị màu sắc null
     ).values()
   );
 

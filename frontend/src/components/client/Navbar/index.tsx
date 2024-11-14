@@ -1,20 +1,17 @@
+import Cookies from "js-cookie";
+import { LogIn, LogOut, SquarePen, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 import { FaUser } from "react-icons/fa";
 import { IoSearch } from "react-icons/io5";
 import { MdOutlineShoppingCart } from "react-icons/md";
-import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../../store/index";
-import { logout } from "../../../store/client/userSlice";
-import Cookies from "js-cookie";
-import { toast } from "react-hot-toast";
-import { LogIn, LogOut, SquarePen, UserRound } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { getProductsByName } from "../../../services/client/product";
+import { logout } from "../../../store/client/userSlice";
+import { RootState } from "../../../store/index";
 import { IProduct } from "../../../types/client/products/products";
-
 import { IoCart, IoHeartOutline } from "react-icons/io5";
-import { CartItem } from "../../../types/client/cart";
-import { getListCart } from "../../../services/client/cart";
 import useCart from "../../../hooks/client/useCart";
 
 const useDebounce = (value: string, delay: number) => {
@@ -37,19 +34,10 @@ const Navbar = () => {
   const [products, setProducts] = useState<IProduct[]>([]); // State để lưu trữ sản phẩm tìm được
   const [loading, setLoading] = useState(false); // State để theo dõi trạng thái tải
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const dispatch = useDispatch();
-  const user = useSelector((state: RootState) => state.client.user);
+  // const user = useSelector((state: RootState) => state.client.user);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchCartItems = async () => {
-      const items = await getListCart();
-      setCartItems(items);
-    };
-    fetchCartItems();
-  }, []);
-
+  const accessToken = Cookies.get("access_token");
   const { totalQuantity } = useCart();
 
   const logoutHandler = () => {
@@ -58,6 +46,14 @@ const Navbar = () => {
     Cookies.remove("refresh_token");
     toast.success("Logout successfully");
     navigate("/");
+  };
+  const handleCartClick = () => {
+    if (!accessToken) {
+      toast.error("You need to login");
+      navigate("/signin");
+    } else {
+      navigate("/cart");
+    }
   };
 
   useEffect(() => {
@@ -130,15 +126,15 @@ const Navbar = () => {
                 </label>
 
                 {/* Cart Icon */}
-                <Link
-                  to="/cart"
+                <button
+                  onClick={handleCartClick}
                   className="relative p-2 rounded-full hover:bg-gray-100"
                 >
                   <span className="badge badge-error badge-xs absolute -top-1 -right-1 text-white font-semibold">
                     {totalQuantity}
                   </span>
                   <MdOutlineShoppingCart size={24} />
-                </Link>
+                </button>
 
                 {/* User Dropdown */}
                 <div className="dropdown dropdown-end">
@@ -150,12 +146,12 @@ const Navbar = () => {
                     <FaUser size={24} />
                   </div>
                   <ul className="dropdown-content bg-white shadow-lg rounded-lg p-2 w-48 mt-2 text-sm font-medium text-gray-700">
-                    {user.access_token ? (
+                    {accessToken ? (
                       <>
                         <li>
                           <Link
                             to="/account"
-                            className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200"
+                            className="flex items-center w-full gap-2 p-2 rounded-lg hover:bg-gray-200"
                           >
                             <UserRound size={18} /> Account
                           </Link>
@@ -163,7 +159,7 @@ const Navbar = () => {
                         <li>
                           <button
                             onClick={logoutHandler}
-                            className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200"
+                            className="flex items-center w-full gap-2 p-2 rounded-lg hover:bg-gray-200"
                           >
                             <LogOut size={18} /> Logout
                           </button>

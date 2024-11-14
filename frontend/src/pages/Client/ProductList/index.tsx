@@ -210,7 +210,7 @@ const ProductList = () => {
                 layout === "grid" ? (
                   <ProductItems key={product.id} product={product} />
                 ) : (
-                  <ProductCardList key={product.id} />
+                  <ProductCardList key={product.id} product={product} />
                 )
               )
             ) : (
