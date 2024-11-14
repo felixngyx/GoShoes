@@ -21,6 +21,7 @@ class RepositoryServiceProvider extends ServiceProvider
         'App\Repositories\RepositoryInterfaces\WishlistRepositoryInterface' => 'App\Repositories\WishlistRepository',
         'App\Repositories\RepositoryInterfaces\ReviewRepositoryInterface' => 'App\Repositories\ReviewRepository',
         'App\Repositories\RepositoryInterfaces\DiscountRepositoryInterface' => 'App\Repositories\DiscountRepository',
+        'App\Repositories\RepositoryInterfaces\ShippingRepositoryInterface' => 'App\Repositories\ShippingRepository',
      ];
 
     public function register(): void

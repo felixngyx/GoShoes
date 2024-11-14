@@ -37,6 +37,22 @@ class ShippingSeeder extends Seeder
                 'country' => 'USA',
                 'phone_number' => '1122334455',
             ],
+            [
+                'user_id' => 4,
+                'address' => '789 Oak St',
+                'city' => 'Chicago',
+                'postal_code' => '60601',
+                'country' => 'USA',
+                'phone_number' => '1122334455',
+            ],
+            [
+                'user_id' => 5,
+                'address' => '789 Oak St',
+                'city' => 'Chicago',
+                'postal_code' => '60601',
+                'country' => 'USA',
+                'phone_number' => '1122334455',
+            ],
         ];
 
         // Thêm dữ liệu vào bảng shipping

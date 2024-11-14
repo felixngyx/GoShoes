@@ -1,5 +1,5 @@
 import { FaUser } from 'react-icons/fa';
-import { Box, Boxes } from 'lucide-react';
+import { Box, Boxes, TicketPercent } from 'lucide-react';
 import { useRef, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import Logo from '../../../images/logo/logo.svg';
@@ -236,7 +236,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 										'bg-graydark dark:bg-meta-4'
 									}`}
 								>
-									<Boxes />
+									<Boxes size={18} />
 									Attribute
 								</NavLink>
 							</li>
@@ -249,8 +249,21 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 										'bg-graydark dark:bg-meta-4'
 									}`}
 								>
-									<BsCart2 />
+									<BsCart2 size={18} />
 									Orders
+								</NavLink>
+							</li>
+
+							<li>
+								<NavLink
+									to="/admin/discounts"
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+										pathname.includes('discounts') &&
+										'bg-graydark dark:bg-meta-4'
+									}`}
+								>
+									<TicketPercent size={18} />
+									Discounts
 								</NavLink>
 							</li>
 

@@ -21,4 +21,5 @@ Interface BaseRepositoryInterface
 
     public static function getDataFromCache(array $columns, array $condition);
 
+    public function getListByUserId(int $userId);
 }

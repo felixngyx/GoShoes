@@ -30,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         'App\Services\ServiceInterfaces\Cart\CartServiceInterface' => 'App\Services\Cart\CartService',
         'App\Services\ServiceInterfaces\Wishlist\WishlistServiceInterface' => 'App\Services\Wishlist\WishlistService',
         'App\Services\ServiceInterfaces\Review\ReviewServiceInterface' => 'App\Services\Review\ReviewService',
+        'App\Services\ServiceInterfaces\Shipping\ShippingServiceInterface' => 'App\Services\Shipping\ShippingService',
     ];
     /**
      * Register any application services.

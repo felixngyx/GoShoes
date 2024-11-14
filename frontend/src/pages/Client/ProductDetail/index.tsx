@@ -1,19 +1,19 @@
+import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { FaShoppingCart } from "react-icons/fa";
 import { IoMdAdd, IoMdRemove } from "react-icons/io";
-import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
+import useCart from "../../../hooks/client/useCart";
 import { getProductById } from "../../../services/client/product";
+import { Category } from "../../../types/client/category";
 import { IImages } from "../../../types/client/products/images";
 import { Variant } from "../../../types/client/products/variants";
-import { Category } from "../../../types/client/category";
 import RelatedProduct from "../ProductList/RelatedProduct";
 
 const ProductDetail = () => {
   const { id } = useParams();
-
   const { data: product, isLoading } = useQuery({
     queryKey: ["PRODUCT_KEY", id],
     queryFn: async () => await getProductById(Number(id)),
@@ -32,7 +32,7 @@ const ProductDetail = () => {
   const [newComment, setNewComment] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
   const [availableQuantity, setAvailableQuantity] = useState(0);
-
+  const { handleAddToCartDetail } = useCart();
   useEffect(() => {
     if (product) {
       setSelectedThumbnail(product.thumbnail);
@@ -41,6 +41,24 @@ const ProductDetail = () => {
       setAvailableQuantity(product.variants[0]?.quantity || 0);
     }
   }, [product]);
+
+  const handleAdd = () => {
+    if (selectedSize && selectedColor && quantity > 0) {
+      const selectedVariant = product?.variants.find(
+        (variant: any) =>
+          variant.size.size === selectedSize &&
+          variant.color.id === selectedColor
+      );
+      if (selectedVariant) {
+        handleAddToCartDetail(
+          selectedVariant.id,
+          selectedSize,
+          selectedColor,
+          quantity
+        );
+      }
+    }
+  };
 
   const handleImageClick = (image: IImages) => {
     setSelectedThumbnail(image.image_path);
@@ -334,7 +352,10 @@ const ProductDetail = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <button className="btn bg-[#ebf6ff] text-[#40BFFF] hover:bg-[#ebf6ff]/80 hover:border-[#40BFFF]">
+              <button
+                onClick={handleAdd}
+                className="btn bg-[#ebf6ff] text-[#40BFFF] hover:bg-[#ebf6ff]/80 hover:border-[#40BFFF]"
+              >
                 <FaShoppingCart />
                 Add to Cart
               </button>
