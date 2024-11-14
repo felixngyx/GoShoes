@@ -82,19 +82,14 @@ const useCart = () => {
   };
 
   useEffect(() => {
-    if (cartItems.length > 0 && cartItemsWithSelected.length === 0) {
-      const itemsWithSelected = cartItems.map((item) => ({
+    if (cartItems) {
+      const updatedCartItems = cartItems.map((item) => ({
         ...item,
-        selected: false,
+        select: false,
       }));
-      if (
-        JSON.stringify(itemsWithSelected) !==
-        JSON.stringify(cartItemsWithSelected)
-      ) {
-        setCartItemsWithSelected(itemsWithSelected);
-      }
+      setCartItemsWithSelected(updatedCartItems);
     }
-  }, [cartItems, cartItemsWithSelected]);
+  }, [cartItems]);
 
   const toggleSelectItem = (id: number) => {
     const updatedItems = cartItemsWithSelected.map((item: any) =>
@@ -140,29 +135,36 @@ const useCart = () => {
     }
   };
 
-  const onDelete = async (productVariantId: number) => {
+  const { mutate: deleteProductFromCart } = useMutation({
+    mutationFn: deleteCartItem,
+    onSuccess: () => {
+      toast.success("Sản phẩm đã được xóa khỏi giỏ hàng.");
+      queryClient.invalidateQueries({ queryKey: ["CART"] }); // Làm mới dữ liệu giỏ hàng sau khi xóa
+    },
+    onError: (error) => {
+      console.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng:", error);
+      toast.error("Xóa sản phẩm khỏi giỏ hàng thất bại. Vui lòng thử lại.");
+    },
+  });
+
+  // Hàm xử lý xóa sản phẩm khỏi giỏ hàng
+  const handleDeleteFromCart = (productVariantId: number) => {
     const confirm = window.confirm(
-      "Are you sure you want to delete this item from your cart?"
+      "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?"
     );
 
     if (confirm) {
-      try {
-        await deleteCartItem(productVariantId);
+      // Gọi API để xóa sản phẩm
+      deleteProductFromCart(productVariantId);
 
-        setCartItemsWithSelected((prevItems) => {
-          const updatedItems = prevItems.filter(
-            (item) => item.product_variant.id !== productVariantId
-          );
-          return updatedItems;
-        });
-        dispatch(removeFromCart(productVariantId));
+      setCartItemsWithSelected((prevItems) => {
+        const updatedItems = prevItems.filter(
+          (item) => item.product_variant.id !== productVariantId
+        );
+        return updatedItems;
+      });
 
-        queryClient.invalidateQueries({
-          queryKey: ["CART"],
-        });
-      } catch (error) {
-        console.error("Failed to delete cart item:", error);
-      }
+      dispatch(removeFromCart(productVariantId));
     }
   };
 
@@ -227,7 +229,7 @@ const useCart = () => {
     toggleSelectItem,
     toggleSelectAll,
     handleQuantityChange,
-    onDelete,
+    handleDeleteFromCart,
   };
 };
 

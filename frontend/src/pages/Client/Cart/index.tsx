@@ -22,7 +22,7 @@ const Cart = () => {
     toggleSelectItem,
     toggleSelectAll,
     handleQuantityChange,
-    onDelete,
+    handleDeleteFromCart,
   } = useCart();
 
   useEffect(() => {
@@ -58,14 +58,16 @@ const Cart = () => {
                 <h2 className="text-3xl font-bold text-gray-900">
                   Shopping Cart
                 </h2>
-                {cartItems.length > 0 && (
+                {cartItemsWithSelected.length > 0 && (
                   <div className="flex items-center space-x-4">
                     <label className="flex items-center space-x-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={
-                          cartItems.length > 0 &&
-                          cartItems.every((item: any) => item.selected)
+                          cartItemsWithSelected.length > 0 &&
+                          cartItemsWithSelected.every(
+                            (item: any) => item.selected
+                          )
                         }
                         onChange={toggleSelectAll}
                         className="checkbox checkbox-sm checkbox-primary rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
@@ -167,7 +169,9 @@ const Cart = () => {
                           ${item.totalPrice}
                         </p>
                         <button
-                          onClick={() => onDelete(item.product_variant.id)}
+                          onClick={() =>
+                            handleDeleteFromCart(item.product_variant.id)
+                          }
                           className="mt-4 text-red-600 hover:text-red-800 focus:outline-none focus:underline flex items-center justify-end"
                         >
                           <FiTrash2 className="w-5 h-5 mr-1" />
