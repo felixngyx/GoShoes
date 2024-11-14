@@ -125,4 +125,8 @@ class BannerRepository implements BannerRepositoryInterface
             throw new Exception("Error deleting banner: " . $e->getMessage());
         }
     }
+    public function deleteMultiple(array $ids)
+    {
+        return Banner::whereIn('id', $ids)->delete();
+    }
 }

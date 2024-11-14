@@ -82,4 +82,10 @@ class BannerController extends Controller
             return response()->json(['success' => false, 'message' => 'Không thể xóa banner.', 'error' => $e->getMessage()], 500);
         }
     }
+    public function destroyMultiple(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+        $this->bannerService->deleteMultipleBanners($request->ids);
+        return response()->json(['success' => true, 'message' => 'Xóa banner thành công.']);
+    }
 }

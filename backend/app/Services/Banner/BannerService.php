@@ -50,4 +50,12 @@ class BannerService
             throw new Exception("Error deleting banner: " . $e->getMessage());
         }
     }
+    public function deleteMultipleBanners(array $ids)
+    {
+        try {
+            return $this->bannerRepository->deleteMultiple($ids);
+        } catch (Exception $e) {
+            throw new Exception("Error deleting banners: " . $e->getMessage());
+        }
+    }
 }

@@ -99,6 +99,7 @@ Route::post('/banners', [BannerController::class, 'store']);
 Route::get('/banners/{id}', [BannerController::class, 'show']);
 Route::put('/banners/{id}', [BannerController::class, 'update']);
 Route::delete('/banners/{id}', [BannerController::class, 'destroy']);
+Route::delete('/banners', [BannerController::class, 'destroyMultiple']);
 
 // This route is Authenticated
 Route::group([
