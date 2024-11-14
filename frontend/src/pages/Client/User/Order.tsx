@@ -1,222 +1,365 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from 'use-debounce';
+import axios, { AxiosInstance } from 'axios';
+import Cookies from 'js-cookie';
+import { Link } from 'react-router-dom';
+import { Order, OrderStatus, Tab } from '../../../types/client/order';
+import { Search } from 'lucide-react';
+import { 
+  Paper,
+  TextField,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Chip,
+  Skeleton,
+  Box,
+  Pagination
+} from '@mui/material';
+import { Tab as MuiTab, Tabs } from '@mui/material';
 
-const Order = () => {
-  // Dữ liệu đơn hàng mẫu
-  const orders = [
-    {
-      id: 1,
-      name: "Gucci Shoes",
-      date: "2024-07-12",
-      price: 70,
-      quantity: 2,
-      image:
-        "https://shopgiayreplica.com/wp-content/uploads/2020/08/giay-gucci-ace-classic-800x650.jpg",
-      status: "Processing",
+const tabs: Tab[] = [
+  { id: 'all', label: 'ALL', color: 'text-red-500' },
+  { id: 'pending', label: 'Pending', color: 'text-gray-700' },
+  { id: 'processing', label: 'Processing', color: 'text-gray-700' },
+  { id: 'shipping', label: 'Shipping', color: 'text-gray-700' },
+  { id: 'completed', label: 'Completed', color: 'text-gray-700' },
+  { id: 'cancelled', label: 'Cancelled', color: 'text-gray-700' },
+  { id: 'refunded', label: 'Refunded', color: 'text-gray-700' },
+  { id: 'expired', label: 'Expired', color: 'text-gray-700' },
+  { id: 'failed', label: 'Failed', color: 'text-gray-700' }
+];
+
+interface ApiResponse {
+  success: boolean;
+  data: Order[];
+  pagination: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+  };
+}
+
+const api: AxiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  timeout: 10000,
+});
+
+api.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+export default function OrderList(): JSX.Element {
+  const [activeTab, setActiveTab] = useState<'all' | OrderStatus>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [page, setPage] = useState(1);
+  const [openDialog, setOpenDialog] = useState<{ type: string; orderId: string | null }>({ type: '', orderId: null });
+
+  const { data: ordersData, isLoading } = useQuery<ApiResponse>({
+    queryKey: ['orders', activeTab, searchTerm, page],
+    queryFn: async () => {
+      let url = '/orders?';
+      const params = new URLSearchParams({
+        page: page.toString()
+      });
+
+      if (activeTab !== 'all') {
+        params.append('status', activeTab);
+      }
+
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+
+      const response = await api.get<ApiResponse>(`${url}${params.toString()}`);
+      
+      if (!response.data.success) {
+        throw new Error('Failed to fetch orders');
+      }
+
+      return response.data;
     },
-    {
-      id: 2,
-      name: "Nike Shoes",
-      date: "2024-07-12",
-      price: 20,
-      quantity: 3,
-      image:
-        "https://product.hstatic.net/1000219207/product/nike-air-force-1-low-like-auth-sieu-cap-rep-1-1_d07f962c30fa4adf928c53a81a56b58d_master.jpg",
-      status: "Completed",
-    },
-    {
-      id: 3,
-      name: "Adidas Shoes",
-      date: "2024-08-12",
-      price: 18,
-      quantity: 1,
-      image: "https://footgearh.vn/thumbs/500x500x2/upload/product/a-8647.jpg",
-      status: "Cancelled",
-    },
-  ];
-
-  // State
-  const [filterStatus, setFilterStatus] = useState("");
-
-  // Hàm lọc đơn hàng
-  const filteredOrders = orders.filter((order) => {
-    // Lọc theo trạng thái
-    const matchesStatus = filterStatus ? order.status === filterStatus : true;
-
-    return matchesStatus;
   });
 
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const searchValue = formData.get('search') as string;
+    setSearchTerm(searchValue);
+    setPage(1);
+  };
+
+  const handleCancelOrder = async (orderId: string): Promise<void> => {
+    try {
+      await api.post(`/orders/${orderId}/cancel`);
+      setOpenDialog({ type: '', orderId: null });
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+    }
+  };
+
+  const handleRefundRequest = async (orderId: string): Promise<void> => {
+    try {
+      await api.post(`/orders/${orderId}/refund-request`);
+      setOpenDialog({ type: '', orderId: null });
+    } catch (error) {
+      console.error('Error requesting refund:', error);
+    }
+  };
+
+  const getStatusColor = (status: OrderStatus): { color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" } => {
+    const statusColors: Record<OrderStatus, { color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" }> = {
+      pending: { color: 'warning' },
+      processing: { color: 'info' },
+      completed: { color: 'success' },
+      cancelled: { color: 'error' },
+      refunded: { color: 'secondary' },
+      expired: { color: 'default' },
+      shipping: { color: 'primary' },
+      failed: { color: 'error' }
+    };
+    return statusColors[status];
+  };
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  };
+
+  const renderActionButtons = (order: Order): JSX.Element | null => {
+    switch (order.status) {
+      case 'completed':
+        return (
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setOpenDialog({ type: 'refund', orderId: order.id })}
+          >
+            Request Refund
+          </Button>
+        );
+
+      case 'processing':
+        return (
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setOpenDialog({ type: 'cancel', orderId: order.id })}
+          >
+            Cancel Order
+          </Button>
+        );
+
+      case 'expired':
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            component={Link}
+            to={`/products/${order.items[0]?.product.id}`}
+            color="primary"
+          >
+            Buy Again
+          </Button>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const handleTabChange = (_: React.SyntheticEvent, newValue: 'all' | OrderStatus) => {
+    setActiveTab(newValue);
+    setPage(1);
+  };
+
   return (
-    <div className="Order-all col-span-9 space-y-8">
-      <div className="title-order text-[#4182F9] font-semibold text-[16px]">
-        Order
-      </div>
-      {/* Bộ lọc */}
-      <div className="w-full ">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-lg grid gap-4">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <div className="flex flex-col">
-              <label
-                htmlFor="name"
-                className="text-stone-600 text-sm font-medium"
-              >
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                placeholder="Enter name"
-                className="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+    <div className="max-w-7xl mx-auto p-4">
+      <Paper className="mb-4">
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            {tabs.map(tab => (
+              <MuiTab
+                key={tab.id}
+                label={tab.label}
+                value={tab.id}
+                className={activeTab === tab.id ? 'text-red-500' : tab.color}
               />
-            </div>
+            ))}
+          </Tabs>
+        </Box>
+      </Paper>
 
-            <div className="flex flex-col">
-              <label
-                htmlFor="date"
-                className="text-stone-600 text-sm font-medium"
-              >
-                Start Date
-              </label>
-              <input
-                type="date"
-                id="date"
-                className="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label
-                htmlFor="date"
-                className="text-stone-600 text-sm font-medium"
-              >
-                End Date
-              </label>
-              <input
-                type="date"
-                id="date"
-                className="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label
-                htmlFor="status"
-                className="text-stone-600 text-sm font-medium"
-              >
-                Status
-              </label>
-              <select
-                id="status"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-              >
-                <option value="">All</option>
-                <option value="Processing">Processing</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid w-full grid-cols-2 justify-end space-x-4 md:flex">
-            <button className="active:scale-95 rounded-lg bg-gray-200 px-8 py-2 font-medium text-gray-600 outline-none focus:ring hover:opacity-90">
-              Reset
-            </button>
-            <button className="active:scale-95 rounded-lg bg-blue-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90">
-              Search
-            </button>
-          </div>
-        </div>
+      <div className="mb-6">
+        <form onSubmit={handleSearch}>
+          <TextField
+            fullWidth
+            name="search"
+            placeholder="You can search by shop name, order ID or product name"
+            defaultValue={searchTerm}
+            InputProps={{
+              startAdornment: <Search className="mr-2 h-4 w-4 text-gray-400" />,
+            }}
+          />
+        </form>
       </div>
 
-      <div className="order-list rounded-xl w-full border border-gray-200 shadow-lg">
-        <div className="main-data p-8 sm:p-14 bg-gray-50 rounded-3xl w-full">
-          <h2 className="text-center font-manrope font-semibold text-4xl text-black mb-16">
-            Order History
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="table-auto w-full">
-              <thead>
-                <tr className="pb-9">
-                  <th className="font-medium text-lg leading-8 text-indigo-600 text-left">
-                    Product
-                  </th>
-                  <th className="font-medium text-lg leading-8 text-gray-600 text-center">
-                    Price
-                  </th>
-                  <th className="font-medium text-lg leading-8 text-gray-600 text-center">
-                    Qty
-                  </th>
-                  <th className="font-medium text-lg leading-8 text-gray-500 text-center">
-                    Status
-                  </th>
-                  <th className="text-center"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {/* Hiển thị đơn hàng */}
-                {filteredOrders?.map((order) => (
-                  <tr className="cursor-pointer transition-all duration-500 hover:bg-indigo-50 ">
-                    <td className="flex items-center space-x-4 p-4">
-                      <img
-                        src={order.image}
-                        alt="earbuds image"
-                        className="w-26 h-16 rounded-xl object-cover"
-                      />
-                      <div>
-                        <h5 className="font-manrope font-semibold text-sm text-black mb-1 whitespace-nowrap">
-                          {order.name}
-                        </h5>
-                        <p className="order-time text-xs text-[#5C5F6A]">
-                          Ordered on: {order.date}
-                        </p>
-                        <p className="font-semibold text-sm text-gray-600">
-                          White
-                        </p>
+      <div className="space-y-4">
+        {isLoading ? (
+          <Box className="max-w-7xl mx-auto space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Paper key={i} className="p-6">
+                <div className="flex items-center space-x-4">
+                  <Skeleton variant="rectangular" width={80} height={80} />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton variant="text" width="60%" />
+                    <Skeleton variant="text" width="40%" />
+                  </div>
+                </div>
+              </Paper>
+            ))}
+          </Box>
+        ) : (
+          <>
+            {ordersData?.data.map((order) => (
+              <Paper key={order.id} className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={order.items[0]?.product.thumbnail}
+                      alt={order.items[0]?.product.name}
+                      className="w-20 h-20 rounded-lg object-cover"
+                    />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium">
+                          {order.items[0]?.product.name}
+                          {order.items.length > 1 && (
+                            <span className="text-sm text-gray-500 ml-2">
+                              +{order.items.length - 1} orther products
+                            </span>
+                          )}
+                        </h3>
+                        <Chip
+                          label={tabs.find(tab => tab.id === order.status)?.label || order.status}
+                          {...getStatusColor(order.status)}
+                          size="small"
+                        />
                       </div>
-                    </td>
-                    <td className="text-center text-[#0E1422] text-sm font-semibold p-4">
-                      ${order.price.toFixed(2)}
-                    </td>
-                    <td className="text-center font-semibold text-sm text-indigo-600 p-4">
-                      {order.quantity}
-                    </td>
-                    <td
-                      className={`status-order text-center font-medium text-sm whitespace-nowrap p-4 ${
-                        order.status === "Processing"
-                          ? "text-[#0E1422]"
-                          : order.status === "Completed"
-                          ? "text-emerald-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {order.status}
-                    </td>
-                    <td className="text-center">
-                      <Link
-                        to={`/account/my-order/${order.id}`}
-                        className="btn btn-outline hover:bg-[#4182F9]"
-                      >
-                        Detail
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {/* Phân trang */}
-            <div className="flex justify-center mt-4">
-              <div className="join">
-                <button className="join-item btn">1</button>
-                <button className="join-item btn">2</button>
-                <button className="join-item btn btn-disabled">...</button>
-                <button className="join-item btn">99</button>
-                <button className="join-item btn">100</button>
-              </div>
-            </div>
-          </div>
-        </div>
+                      <p className="text-sm text-gray-500">SKU: {order.sku}</p>
+                      <p className="text-sm text-gray-500">
+                        Order Date: {new Date(order.created_at).toLocaleDateString('vi-VN')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">
+                      {formatCurrency(order.total)}
+                    </p>
+                    {Number(order.original_total) - Number(order.total) > 0 && (
+                      <p className="text-sm text-green-600">
+                        Saving: {formatCurrency(Number(order.original_total) - Number(order.total))}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end items-center pt-4 space-x-2">
+                  <Button
+                    component={Link}
+                    to={`/account/my-order/${order.id}`}
+                    variant="contained"
+                    size="small"
+                  >
+                    View Details
+                  </Button>
+                  {renderActionButtons(order)}
+                </div>
+              </Paper>
+            ))}
+
+            {(!ordersData?.data || ordersData.data.length === 0) && (
+              <Paper className="p-12 text-center text-gray-500">
+                No orders found
+              </Paper>
+            )}
+
+            {ordersData?.pagination && (
+              <Box display="flex" justifyContent="center" mt={4}>
+                <Pagination
+                  count={ordersData.pagination.last_page}
+                  page={page}
+                  onChange={(_, newPage) => setPage(newPage)}
+                  color="primary"
+                />
+              </Box>
+            )}
+          </>
+        )}
       </div>
+
+      <Dialog
+        open={openDialog.type === 'cancel'}
+        onClose={() => setOpenDialog({ type: '', orderId: null })}
+      >
+        <DialogTitle>Confirm Cancel Order</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to cancel this order?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog({ type: '', orderId: null })}>No</Button>
+          <Button 
+            onClick={() => openDialog.orderId && handleCancelOrder(openDialog.orderId)} 
+            variant="contained"
+            color="error"
+          >
+            Yes, Cancel Order
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openDialog.type === 'refund'}
+        onClose={() => setOpenDialog({ type: '', orderId: null })}
+      >
+        <DialogTitle>Confirm Refund Request</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to request a refund for this order?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog({ type: '', orderId: null })}>Cancel</Button>
+          <Button 
+            onClick={() => openDialog.orderId && handleRefundRequest(openDialog.orderId)}
+            variant="contained"
+            color="primary"
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
-};
-
-export default Order;
+}

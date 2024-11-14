@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ChevronDown, MoreHorizontal, Filter } from 'lucide-react';
+import { Search, ChevronDown, MoreHorizontal, Filter, Plus } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
@@ -130,6 +130,14 @@ const DiscountList = () => {
           />
         </div>
         <div className="flex gap-2">
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Discount
+          </motion.button>
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
