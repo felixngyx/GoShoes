@@ -33,11 +33,12 @@ class BannerRepository implements BannerRepositoryInterface
             ]);
 
             // Kiểm tra và thêm ảnh nếu có
-            if (isset($data['images']) && is_array($data['images'])) {
-                foreach ($data['images'] as $image) {
+            if (!empty($data['images'])) {
+                foreach ($data['images'] as $imageData) {
                     $this->createBannerImage([
                         'banner_id' => $banner->id,
-                        'image_path' => $image,
+                        'image_path' => $imageData['image_path'],
+                        'title' => $imageData['title'] ?? null,
                     ]);
                 }
             }
@@ -70,24 +71,25 @@ class BannerRepository implements BannerRepositoryInterface
             ]);
 
             // Kiểm tra và xử lý các ảnh mới (thêm/xóa/cập nhật ảnh)
-            if (isset($data['images']) && is_array($data['images'])) {
-                // Lấy danh sách ID hình ảnh mới
+            if (!empty($data['images'])) {
                 $newImageIds = collect($data['images'])->pluck('id')->filter()->toArray();
 
                 // Xóa những hình ảnh không có trong danh sách mới
                 $banner->images()->whereNotIn('id', $newImageIds)->delete();
 
-                // Cập nhật hoặc thêm ảnh mới
                 foreach ($data['images'] as $imageData) {
                     if (isset($imageData['id'])) {
                         // Cập nhật ảnh đã tồn tại
-                        $this->updateBannerImage($imageData['id'], ['image_path' => $imageData['image_path']]);
+                        $this->updateBannerImage($imageData['id'], [
+                            'image_path' => $imageData['image_path'],
+                            'title' => $imageData['title'] ?? null,
+                        ]);
                     } else {
                         // Thêm ảnh mới
                         $this->createBannerImage([
                             'banner_id' => $banner->id,
                             'image_path' => $imageData['image_path'],
-                            'position' => $imageData['position'] ?? null,
+                            'title' => $imageData['title'] ?? null,
                         ]);
                     }
                 }
