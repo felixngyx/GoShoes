@@ -123,6 +123,15 @@ export default function OrderList(): JSX.Element {
     }
   };
 
+  const handleConfirmReceived = async (orderId: string): Promise<void> => {
+    try {
+      await api.post(`/orders/${orderId}/confirm-received`);
+      setOpenDialog({ type: '', orderId: null });
+    } catch (error) {
+      console.error('Error confirming order received:', error);
+    }
+  };
+
   const getStatusColor = (status: OrderStatus): { color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" } => {
     const statusColors: Record<OrderStatus, { color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" }> = {
       pending: { color: 'warning' },
@@ -143,6 +152,17 @@ export default function OrderList(): JSX.Element {
 
   const renderActionButtons = (order: Order): JSX.Element | null => {
     switch (order.status) {
+      case 'shipping':
+        return (
+          <Button
+            variant="contained"
+            size="small"
+            color="success"
+            onClick={() => setOpenDialog({ type: 'confirm-received', orderId: order.id })}
+          >
+            Confirm Received
+          </Button>
+        );
       case 'completed':
         return (
           <Button
@@ -153,7 +173,6 @@ export default function OrderList(): JSX.Element {
             Request Refund
           </Button>
         );
-
       case 'processing':
         return (
           <Button
@@ -164,7 +183,6 @@ export default function OrderList(): JSX.Element {
             Cancel Order
           </Button>
         );
-
       case 'expired':
         return (
           <Button
@@ -177,7 +195,6 @@ export default function OrderList(): JSX.Element {
             Buy Again
           </Button>
         );
-
       default:
         return null;
     }
@@ -355,6 +372,30 @@ export default function OrderList(): JSX.Element {
             onClick={() => openDialog.orderId && handleRefundRequest(openDialog.orderId)}
             variant="contained"
             color="primary"
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openDialog.type === 'confirm-received'}
+        onClose={() => setOpenDialog({ type: '', orderId: null })}
+      >
+        <DialogTitle>Confirm Order Received</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Have you received your order? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog({ type: '', orderId: null })}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => openDialog.orderId && handleConfirmReceived(openDialog.orderId)}
+            variant="contained"
+            color="success"
           >
             Confirm
           </Button>
