@@ -41,6 +41,7 @@ import CheckoutPage from './pages/Client/Cart/checkout';
 import OrderDashboard from './pages/Admin/orders';
 import DetailOrder from './pages/Admin/orders/detail';
 import DiscountPage from './pages/Admin/discounts';
+import AboutPage from './pages/Client/about';
 
 function App() {
 	const { pathname } = useLocation();
@@ -72,6 +73,7 @@ function App() {
 				</Route>
 				<Route path="/signin" element={<SignIn />} />
 				<Route path="/signup" element={<SignUp />} />
+				<Route path="/about" element={<AboutPage />} />
 				<Route path="/admin" element={<DefaultLayout />}>
 					<Route
 						index

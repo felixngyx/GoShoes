@@ -6,11 +6,49 @@ import useCart from "../../../hooks/client/useCart";
 import Cookies from "js-cookie";
 import { useState } from "react";
 
-const ProductItems = ({ product }: any) => {
+const ProductItemSkeleton = () => {
+  return (
+    <div className="col-span-1 border border-[#F6F7F8] rounded-lg group overflow-hidden shadow-sm">
+      {/* Phần ảnh */}
+      <div className="relative w-full h-[280px]">
+        <div className="w-full h-full bg-gray-200 animate-pulse" />
+        {/* Tag HOT */}
+        <div className="absolute top-2 left-2 h-6 w-12 bg-gray-200 animate-pulse rounded-md" />
+      </div>
+
+      {/* Phần tên sản phẩm */}
+      <div className="mt-2 px-2">
+        <div className="h-6 bg-gray-200 animate-pulse rounded w-3/4 mx-auto" />
+      </div>
+
+      {/* Phần rating */}
+      <div className="flex justify-center mt-1">
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map((index) => (
+            <div key={index} className="w-4 h-4 bg-gray-200 animate-pulse rounded" />
+          ))}
+        </div>
+      </div>
+
+      {/* Phần giá */}
+      <div className="flex items-center justify-center gap-2 mt-1 mb-3">
+        <div className="h-6 bg-gray-200 animate-pulse rounded w-24" />
+        <div className="h-4 bg-gray-200 animate-pulse rounded w-20" />
+        <div className="h-4 bg-gray-200 animate-pulse rounded w-12" />
+      </div>
+    </div>
+  );
+};
+
+const ProductItems = ({ product, isLoading }: { product: any, isLoading: boolean }) => {
   const accessToken = Cookies.get("access_token");
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const { handleAddToCart } = useCart();
+
+  if (isLoading) {
+    return <ProductItemSkeleton />;
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {

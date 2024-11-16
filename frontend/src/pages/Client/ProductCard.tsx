@@ -8,6 +8,39 @@ import useCart from "../../hooks/client/useCart";
 import { getAllProducts } from "../../services/client/product";
 import { IProduct } from "../../types/client/products/products";
 
+const ProductCardSkeleton = () => {
+  return (
+    <>
+      {Array(8).fill(null).map((_, index) => (
+        <div
+          key={index}
+          className="col-span-1 border border-[#F6F7F8] rounded-lg overflow-hidden shadow-sm"
+        >
+          {/* Phần ảnh */}
+          <div className="relative w-full h-[280px] bg-gray-200 animate-pulse" />
+          
+          {/* Phần tên sản phẩm */}
+          <div className="px-2 mt-2">
+            <div className="h-6 bg-gray-200 rounded animate-pulse w-3/4 mx-auto" />
+          </div>
+          
+          {/* Phần rating */}
+          <div className="flex justify-center mt-1">
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-24" />
+          </div>
+          
+          {/* Phần giá */}
+          <div className="flex items-center justify-center gap-2 mt-1 mb-3">
+            <div className="h-6 bg-gray-200 rounded animate-pulse w-20" />
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-16" />
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-10" />
+          </div>
+        </div>
+      ))}
+    </>
+  );
+};
+
 const ProductCard = () => {
   const accessToken = Cookies.get("access_token");
   const navigate = useNavigate();
@@ -60,7 +93,7 @@ const ProductCard = () => {
   };
 
   if (isLoading) {
-    return <span className="loading loading-spinner loading-lg"></span>;
+    return <ProductCardSkeleton />;
   }
   if (isError) {
     return <p>Error loading products. Please try again.</p>;

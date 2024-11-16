@@ -195,15 +195,23 @@ const ProductList = () => {
             } gap-5`}
           >
             {products === undefined ? (
-              // Hiển thị loader khi đang tải dữ liệu
-              <span className="loading loading-spinner loading-lg"></span>
+              // Hiển thị skeleton loading khi đang tải dữ liệu
+              <>
+                {Array(9).fill(null).map((_, index) => (
+                  layout === "grid" ? (
+                    <ProductItems key={index} product={null} isLoading={true} />
+                  ) : (
+                    <ProductCardList key={index} product={null} isLoading={true} />
+                  )
+                ))}
+              </>
             ) : products.length > 0 ? (
               // Hiển thị danh sách sản phẩm nếu có
               products.map((product) =>
                 layout === "grid" ? (
-                  <ProductItems key={product.id} product={product} />
+                  <ProductItems key={product.id} product={product} isLoading={false} />
                 ) : (
-                  <ProductCardList key={product.id} product={product} />
+                  <ProductCardList key={product.id} product={product} isLoading={false} />
                 )
               )
             ) : (

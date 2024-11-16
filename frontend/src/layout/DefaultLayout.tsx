@@ -3,7 +3,6 @@ import Header from '../components/admin/Header';
 import Sidebar from '../components/admin/Sidebar';
 import { Outlet } from 'react-router-dom';
 import OrderNotifications from '../components/admin/OrderNotifications';
-import { Toaster } from 'react-hot-toast';
 const DefaultLayout = () => {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 
