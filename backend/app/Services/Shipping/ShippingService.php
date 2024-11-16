@@ -210,7 +210,6 @@ class ShippingService implements ShippingServiceInterface
     private static function columnHidden() : array
     {
         return [
-            'id',
             'user_id',
             'created_at',
             'updated_at',
