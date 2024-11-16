@@ -20,6 +20,7 @@ class Shipping extends Model
 
     protected $casts = [
         'is_default' => 'boolean',
+        'shipping_detail' => 'array',
     ];
 
     public function user()
