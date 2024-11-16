@@ -13,11 +13,7 @@ class Shipping extends Model
     protected $table = 'shipping';
     protected $fillable = [
         'user_id',
-        'address',
-        'city',
-        'postal_code',
-        'country',
-        'phone_number',
+        'shipping_detail',
         'is_default',
         'deleted_at'
     ];
