@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { FaShoppingCart } from "react-icons/fa";
 import { IoMdAdd, IoMdRemove } from "react-icons/io";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import useCart from "../../../hooks/client/useCart";
 import { getProductById } from "../../../services/client/product";
 import { Category } from "../../../types/client/category";
 import { IImages } from "../../../types/client/products/images";
 import { Variant } from "../../../types/client/products/variants";
 import RelatedProduct from "../ProductList/RelatedProduct";
+import { toast } from "react-hot-toast";
 
 const ProductDetailSkeleton = () => {
   return (
@@ -135,6 +136,7 @@ const ProductDetailSkeleton = () => {
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data: product, isLoading } = useQuery({
     queryKey: ["PRODUCT_KEY", id],
     queryFn: async () => await getProductById(Number(id)),
@@ -301,6 +303,38 @@ const ProductDetail = () => {
       (currentSlide - 1 + product.images.length) % product.images.length;
     setCurrentSlide(prevIndex);
     setSelectedThumbnail(product.images[prevIndex].image_path);
+  };
+
+  const handleBuyNow = () => {
+    if (selectedSize && selectedColor && quantity > 0) {
+      const selectedVariant = product?.variants.find(
+        (variant: any) =>
+          variant.size.size === selectedSize &&
+          variant.color.id === selectedColor
+      );
+
+      if (selectedVariant) {
+        // Chỉ chuyển hướng đến trang checkout với thông tin sản phẩm
+        navigate('/checkout', {
+          state: {
+            productInfo: {
+              id: product.id,
+              name: product.name,
+              price: product.promotional_price || product.price,
+              thumbnail: selectedThumbnail || product.thumbnail,
+              variant: selectedVariant,
+              quantity: quantity,
+              size: selectedSize,
+              color: selectedColor,
+              // Thêm các thông tin khác nếu cần
+              total: (product.promotional_price || product.price) * quantity
+            }
+          }
+        });
+      }
+    } else {
+      toast.error("Vui lòng chọn size và màu sắc trước khi mua hàng");
+    }
   };
 
   if (isLoading) {
@@ -486,7 +520,10 @@ const ProductDetail = () => {
                 <FaShoppingCart />
                 Add to Cart
               </button>
-              <button className="btn bg-[#40BFFF] text-white hover:bg-[#40a5ff] hover:border-[#40BFFF]">
+              <button 
+                onClick={handleBuyNow}
+                className="btn bg-[#40BFFF] text-white hover:bg-[#40a5ff] hover:border-[#40BFFF]"
+              >
                 Buy Now
               </button>
             </div>
