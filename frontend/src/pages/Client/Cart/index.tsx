@@ -11,6 +11,95 @@ import {
 import { Link } from "react-router-dom";
 import useCart from "../../../hooks/client/useCart";
 
+const CartSkeleton = () => {
+  return (
+    <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Cart Items Section */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+            <div className="px-4 py-5 sm:p-6">
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6">
+                <div className="h-8 bg-gray-200 animate-pulse rounded w-32" />
+                <div className="h-5 bg-gray-200 animate-pulse rounded w-24" />
+              </div>
+
+              {/* Cart Items */}
+              <div className="space-y-4">
+                {[1, 2, 3].map((index) => (
+                  <div 
+                    key={index}
+                    className="flex items-center space-x-4 p-6 rounded-lg bg-gray-50"
+                  >
+                    {/* Checkbox */}
+                    <div className="h-5 w-5 bg-gray-200 animate-pulse rounded" />
+                    
+                    {/* Product Image */}
+                    <div className="w-32 h-32 bg-gray-200 animate-pulse rounded" />
+                    
+                    {/* Product Info */}
+                    <div className="flex-1 space-y-3">
+                      <div className="h-6 bg-gray-200 animate-pulse rounded w-3/4" />
+                      <div className="h-4 bg-gray-200 animate-pulse rounded w-1/2" />
+                      <div className="space-y-1">
+                        <div className="h-4 bg-gray-200 animate-pulse rounded w-24" />
+                        <div className="h-4 bg-gray-200 animate-pulse rounded w-24" />
+                      </div>
+                      {/* Quantity Controls */}
+                      <div className="flex items-center space-x-2">
+                        <div className="h-8 w-8 bg-gray-200 animate-pulse rounded-full" />
+                        <div className="h-8 w-16 bg-gray-200 animate-pulse rounded" />
+                        <div className="h-8 w-8 bg-gray-200 animate-pulse rounded-full" />
+                      </div>
+                    </div>
+
+                    {/* Price and Remove */}
+                    <div className="text-right space-y-2">
+                      <div className="h-6 bg-gray-200 animate-pulse rounded w-24" />
+                      <div className="h-8 bg-gray-200 animate-pulse rounded w-20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Order Summary Section */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-lg shadow-lg p-6 sticky top-20">
+            <div className="h-6 bg-gray-200 animate-pulse rounded w-32 mb-4" />
+            
+            <div className="space-y-4">
+              {/* Subtotal */}
+              <div className="flex justify-between">
+                <div className="h-4 bg-gray-200 animate-pulse rounded w-20" />
+                <div className="h-4 bg-gray-200 animate-pulse rounded w-24" />
+              </div>
+
+              {/* Shipping */}
+              <div className="flex justify-between">
+                <div className="h-4 bg-gray-200 animate-pulse rounded w-16" />
+                <div className="h-4 bg-gray-200 animate-pulse rounded w-24" />
+              </div>
+
+              {/* Total */}
+              <div className="border-t border-gray-200 pt-4 flex justify-between">
+                <div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
+                <div className="h-6 bg-gray-200 animate-pulse rounded w-28" />
+              </div>
+
+              {/* Checkout Button */}
+              <div className="h-12 bg-gray-200 animate-pulse rounded w-full mt-6" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Cart = () => {
   const {
     cartItemsWithSelected,
@@ -46,7 +135,9 @@ const Cart = () => {
     (item: any) => item.selected
   );
 
-  if (isLoading) return <p>Đang tải...</p>;
+  if (isLoading) {
+    return <CartSkeleton />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
