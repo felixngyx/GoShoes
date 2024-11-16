@@ -31,8 +31,13 @@ interface OrderData {
         email: string;
     };
     shipping: {
-        address: string;
-        city: string;
+        shipping_detail: {
+            name: string;
+            phone_number: string;
+            address: string;
+            address_detail: string;
+            is_default: boolean;
+        };
     };
     payment: {
         method: string;
