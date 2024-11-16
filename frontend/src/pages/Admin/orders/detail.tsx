@@ -77,8 +77,13 @@ interface Customer {
 }
 
 interface Shipping {
-  address: string;
-  city: string;
+  shipping_detail: {
+    name: string;
+    phone_number: string;
+    address: string;
+    address_detail: string;
+    is_default: boolean;
+  };
 }
 
 interface Payment {
@@ -586,8 +591,10 @@ const OrderDetails = () => {
           {
             title: "ADDRESS SHIPPING",
             content: [
-              order.shipping.address,
-              order.shipping.city
+              { label: "Recipient", value: order.shipping.shipping_detail.name },
+              { label: "Phone", value: order.shipping.shipping_detail.phone_number },
+              { label: "Address", value: order.shipping.shipping_detail.address_detail },
+              { label: "City/Province", value: order.shipping.shipping_detail.address },
             ]
           }
         ].map((card, index) => (
