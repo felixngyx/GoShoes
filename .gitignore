@@ -5,3 +5,4 @@ composer.phar
 
 ./frontend/package-lock.json
 frontend/package-lock.json
+frontend/.env
