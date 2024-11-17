@@ -87,8 +87,8 @@ class ProductController extends Controller
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'price' => (float) $product->price,
-                    'promotional_price' => (float) $product->promotional_price,
+                    'price' => number_format((float) $product->price, 0, ',', '.'),
+                    'promotional_price' => number_format((float) $product->promotional_price, 0, ',', '.'),
                     'stock_quantity' => $product->stock_quantity,
                     'sku' => $product->sku,
                     'rating_count' => $product->rating_count,
