@@ -51,6 +51,9 @@ axiosClient.interceptors.response.use(
 				Cookies.set('access_token', response.data.access_token);
 				return axiosClient(originalRequest);
 			} catch (error) {
+				Cookies.remove('access_token');
+				Cookies.remove('refresh_token');
+				window.location.href = '/sign-in';
 				return Promise.reject(error);
 			}
 		}
