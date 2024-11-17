@@ -2,7 +2,7 @@
 
 use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
-use App\Http\Controllers\API\Shipping\ShippingController;
+// use App\Http\Controllers\API\Shipping\ShippingController;
 use App\Http\Controllers\API\Wishlist\WishlistController;
 use App\Http\Controllers\API\Cart\CartController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +20,7 @@ use App\Http\Controllers\API\Post\PostController;
 use App\Http\Controllers\API\PostCategory\PostCategoryController;
 use App\Http\Controllers\API\Products\ProductClientController;
 use App\Http\Controllers\Api\Review\ReviewController;
+use App\Http\Controllers\API\Shipping\ShippingController;
 use App\Http\Controllers\BannerController;
 
 /*

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Post;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
+use App\Models\Post;
 use App\Services\Post\PostService;
 use Exception;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class PostController extends Controller
             $orderBy = $request->input('orderBy', 'id');
             $order = $request->input('order', 'asc');
             $posts = $this->postService->getAllPosts($page, $limit, $orderBy, $order);
-
+            $query = Post::with(['author', 'category']);
             if (!method_exists($posts, 'total')) {
                 $totalItems = $posts->count();
                 $totalPages = ceil($totalItems / $limit);
