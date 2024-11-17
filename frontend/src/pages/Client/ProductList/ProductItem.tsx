@@ -1,13 +1,83 @@
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { IoCart, IoHeartOutline } from "react-icons/io5";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { IProduct } from "../../../types/client/products/products";
+import useCart from "../../../hooks/client/useCart";
+import Cookies from "js-cookie";
+import { useState } from "react";
 
-const ProductItems = ({ product }: any) => {
+const ProductItemSkeleton = () => {
+  return (
+    <div className="col-span-1 border border-[#F6F7F8] rounded-lg group overflow-hidden shadow-sm">
+      {/* Phần ảnh */}
+      <div className="relative w-full h-[280px]">
+        <div className="w-full h-full bg-gray-200 animate-pulse" />
+        {/* Tag HOT */}
+        <div className="absolute top-2 left-2 h-6 w-12 bg-gray-200 animate-pulse rounded-md" />
+      </div>
+
+      {/* Phần tên sản phẩm */}
+      <div className="mt-2 px-2">
+        <div className="h-6 bg-gray-200 animate-pulse rounded w-3/4 mx-auto" />
+      </div>
+
+      {/* Phần rating */}
+      <div className="flex justify-center mt-1">
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map((index) => (
+            <div key={index} className="w-4 h-4 bg-gray-200 animate-pulse rounded" />
+          ))}
+        </div>
+      </div>
+
+      {/* Phần giá */}
+      <div className="flex items-center justify-center gap-2 mt-1 mb-3">
+        <div className="h-6 bg-gray-200 animate-pulse rounded w-24" />
+        <div className="h-4 bg-gray-200 animate-pulse rounded w-20" />
+        <div className="h-4 bg-gray-200 animate-pulse rounded w-12" />
+      </div>
+    </div>
+  );
+};
+
+const ProductItems = ({ product, isLoading }: { product: any, isLoading: boolean }) => {
+  const accessToken = Cookies.get("access_token");
+  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const { handleAddToCart } = useCart();
+
+  if (isLoading) {
+    return <ProductItemSkeleton />;
+  }
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
     }).format(amount);
+  };
+
+  const addCart = (product: IProduct) => {
+    const productVariantId = product.variants[0].id;
+    const quantity = 1;
+    handleAddToCart(productVariantId, quantity);
+  };
+
+  const handleCheckAdd = (product: IProduct) => {
+    if (!accessToken) {
+      setShowModal(true);
+      return;
+    }
+    addCart(product);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+  };
+
+  const handleLoginNow = () => {
+    navigate("/signin");
+    closeModal();
   };
 
   const RatingStars = ({ rating }: { rating: number }) => {
@@ -45,6 +115,7 @@ const ProductItems = ({ product }: any) => {
               color="#40BFFF"
             />
             <IoCart
+              onClick={() => handleCheckAdd(product)}
               className="cursor-pointer p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
               size={52}
               color="#40BFFF"
@@ -72,6 +143,36 @@ const ProductItems = ({ product }: any) => {
           <p className="text-[#E71D36] text-sm font-semibold">-10%</p>
         </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center ">
+          <div className="modal modal-open ">
+            <div className="modal-box relative">
+              <h2 className="text-2xl font-semibold text-center mb-4">
+                You need to login
+              </h2>
+              <p className="mb-6 text-center">
+                Please login to add this product to your cart.
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={handleLoginNow}
+                  className="btn bg-blue-500 text-white hover:bg-blue-600 w-32"
+                >
+                  Login Now
+                </button>
+              </div>
+              {/* Close button */}
+              <button
+                className="absolute top-2 right-2 text-xl"
+                onClick={closeModal}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

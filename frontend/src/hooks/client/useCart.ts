@@ -39,7 +39,7 @@ const useCart = () => {
       });
     },
     onError: () => {
-      toast.error("Something went wrong. Please try again.");
+      toast.error("You need to log in to be able to add to cart.");
     },
   });
 
@@ -70,9 +70,8 @@ const useCart = () => {
       toast.success("Product added successfully");
       queryClient.invalidateQueries({ queryKey: ["CART"] }); // Làm mới dữ liệu giỏ hàng sau khi thêm
     },
-    onError: (error) => {
-      console.error("Error adding product to cart:", error);
-      setError("Failed to add product to cart. Please try again.");
+    onError: () => {
+      toast.error("You need to log in to be able to add to cart.");
     },
   });
 
@@ -82,7 +81,7 @@ const useCart = () => {
   };
 
   useEffect(() => {
-    if (cartItems) {
+    if (cartItems.length) {
       const updatedCartItems = cartItems.map((item) => ({
         ...item,
         select: false,
@@ -92,23 +91,27 @@ const useCart = () => {
   }, [cartItems]);
 
   const toggleSelectItem = (id: number) => {
-    const updatedItems = cartItemsWithSelected.map((item: any) =>
-      item.product_variant.id === id
-        ? { ...item, selected: !item.selected }
-        : item
-    );
-    setCartItemsWithSelected(updatedItems);
+    setCartItemsWithSelected((prevItems) => {
+      const updatedItems = prevItems.map((item: any) =>
+        item.product_variant.id === id
+          ? { ...item, selected: !item.selected }
+          : item
+      );
+      return updatedItems;
+    });
   };
 
   const toggleSelectAll = () => {
     const allSelected = cartItemsWithSelected.every(
       (item: any) => item.selected
     );
-    const updatedItems = cartItemsWithSelected.map((item) => ({
-      ...item,
-      selected: !allSelected,
-    }));
-    setCartItemsWithSelected(updatedItems);
+    setCartItemsWithSelected((prevItems) => {
+      const updatedItems = prevItems.map((item) => ({
+        ...item,
+        selected: !allSelected,
+      }));
+      return updatedItems;
+    });
   };
 
   const handleQuantityChange = (
@@ -183,7 +186,7 @@ const useCart = () => {
           setError("Failed to update quantity. Please try again.");
         });
     },
-    500 // Thời gian debounce là 500ms
+    500
   );
 
   const selectedCount = cartItemsWithSelected.filter(

@@ -24,8 +24,13 @@ interface Customer {
 }
 
 interface Shipping {
-  address: string;
-  city: string;
+  shipping_detail: {
+    name: string;
+    phone_number: string;
+    address: string;
+    address_detail: string;
+    is_default: boolean;
+  };
 }
 
 interface OrderData {
@@ -108,8 +113,8 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
         <div>
           <h3 className="font-medium mb-2">Seller:</h3>
           <p className="text-sm text-gray-600">
-            Store :  GoShoes<br />
-            Address : FPOLY , TVB , HN<br />
+            Store: GoShoes<br />
+            Address: FPOLY, TVB, HN<br />
             Phone: 0999999888<br />
             email: contact@goshoes.com
           </p>
@@ -117,10 +122,11 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
         <div>
           <h3 className="font-medium mb-2">Customer:</h3>
           <p className="text-sm text-gray-600">
-            Name : {order.customer.name}<br />
-            Address: {order.shipping.address}<br />
-            City : {order.shipping.city}<br />
-            Email : {order.customer.email}
+            Name: {order.shipping.shipping_detail.name}<br />
+            Phone: {order.shipping.shipping_detail.phone_number}<br />
+            Address: {order.shipping.shipping_detail.address_detail}<br />
+            City/Province: {order.shipping.shipping_detail.address}<br />
+            Email: {order.customer.email}
           </p>
         </div>
       </div>

@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { Search, ChevronDown, MoreHorizontal, Filter } from 'lucide-react';
+import { Search, ChevronDown, MoreHorizontal, Filter, Plus } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import { motion } from 'framer-motion';
-import { Card, CardContent } from '@mui/material';
 
 // Create API instance outside component to avoid recreation on each render
 const api = axios.create({
@@ -94,32 +92,22 @@ const DiscountList = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-8 h-8 border-2 border-blue-500 rounded-full border-t-transparent"
-        />
+        <div className="w-8 h-8 border-2 border-blue-500 rounded-full border-t-transparent animate-spin" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <Card className="mt-6">
-        <CardContent>
-          <div className="text-red-600">Error: {error.message}</div>
-        </CardContent>
-      </Card>
+      <div className="mt-6">
+        <div className="text-red-600">{error.message}</div>
+      </div>
     );
   }
 
   return (
     <div className="p-6 bg-white/80 dark:bg-gray-800/80">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-6"
-      >
+      <div className="flex items-center justify-between mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <input
@@ -130,65 +118,56 @@ const DiscountList = () => {
           />
         </div>
         <div className="flex gap-2">
-          <motion.button 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <button className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Discount
+          </button>
+          <button 
             className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 flex items-center gap-2"
             onClick={() => setIsFilterOpen(!isFilterOpen)}
           >
             <Filter className="h-4 w-4" />
             Filters
-          </motion.button>
-          <motion.button 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50"
-          >
+          </button>
+          <button className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50">
             <MoreHorizontal className="h-4 w-4" />
-          </motion.button>
+          </button>
         </div>
-      </motion.div>
+      </div>
 
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="bg-white rounded-lg border"
-      >
-        <table className="w-full bg-white/80 dark:bg-gray-800/80">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700">
+        <table className="w-full">
           <thead>
-            <tr className="border-b">
+            <tr className="border-b dark:border-gray-700">
               <th className="w-12 px-4 py-3">
-                <input type="checkbox" className="rounded" />
+                <input type="checkbox" className="rounded dark:bg-gray-700 dark:border-gray-600" />
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Code</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Description</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">
+              <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">Code</th>
+              <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">Description</th>
+              <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
                 <div className="flex items-center gap-1">
                   Status
                   <ChevronDown className="h-4 w-4" />
                 </div>
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Valid From</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Valid To</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Discount</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Used</th>
+              <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">Valid From</th>
+              <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">Valid To</th>
+              <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">Discount</th>
+              <th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">Used</th>
               <th className="w-12 px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {filteredDiscounts.map((discount) => (
-              <motion.tr 
+              <tr 
                 key={discount.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                whileHover={{ backgroundColor: '#f9fafb' }}
-                className="border-b last:border-b-0"
+                className="border-b dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700/50"
               >
                 <td className="px-4 py-3">
-                  <input type="checkbox" className="rounded" />
+                  <input type="checkbox" className="rounded dark:bg-gray-700 dark:border-gray-600" />
                 </td>
-                <td className="px-4 py-3 text-sm font-mono">{discount.code}</td>
-                <td className="px-4 py-3 text-sm">{discount.description}</td>
+                <td className="px-4 py-3 text-sm font-mono dark:text-gray-200">{discount.code}</td>
+                <td className="px-4 py-3 text-sm dark:text-gray-300">{discount.description}</td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs
                     ${getStatusColor(discount.valid_from, discount.valid_to)}
@@ -201,54 +180,46 @@ const DiscountList = () => {
                 <td className="px-4 py-3 text-sm">{discount.percent}%</td>
                 <td className="px-4 py-3 text-sm">{discount.used_count}/{discount.usage_limit}</td>
                 <td className="px-4 py-3">
-                  <motion.button 
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="p-1 hover:bg-gray-100 rounded-full"
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </motion.button>
+                  <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                    <MoreHorizontal className="h-4 w-4 dark:text-gray-400" />
+                  </button>
                 </td>
-              </motion.tr>
+              </tr>
             ))}
           </tbody>
         </table>
-      </motion.div>
+      </div>
 
       {isFilterOpen && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="absolute top-16 right-6 bg-white border rounded-lg shadow-lg p-4 w-64 z-10 mt-32"
-        >
+        <div className="absolute top-16 right-6 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg p-4 w-64 z-10 mt-32">
           <div className="space-y-3">
-            <div className="font-medium">Filters</div>
+            <div className="font-medium dark:text-gray-200">Filters</div>
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="rounded" defaultChecked />
-              <span>Code</span>
+              <input type="checkbox" className="rounded dark:bg-gray-700 dark:border-gray-600" defaultChecked />
+              <span className="dark:text-gray-300">Code</span>
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="rounded" defaultChecked />
-              <span>Description</span>
+              <input type="checkbox" className="rounded dark:bg-gray-700 dark:border-gray-600" defaultChecked />
+              <span className="dark:text-gray-300">Description</span>
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="rounded" defaultChecked />
-              <span>Status</span>
+              <input type="checkbox" className="rounded dark:bg-gray-700 dark:border-gray-600" defaultChecked />
+              <span className="dark:text-gray-300">Status</span>
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="rounded" defaultChecked />
-              <span>Valid Period</span>
+              <input type="checkbox" className="rounded dark:bg-gray-700 dark:border-gray-600" defaultChecked />
+              <span className="dark:text-gray-300">Valid Period</span>
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="rounded" defaultChecked />
-              <span>Discount Amount</span>
+              <input type="checkbox" className="rounded dark:bg-gray-700 dark:border-gray-600" defaultChecked />
+              <span className="dark:text-gray-300">Discount Amount</span>
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="rounded" defaultChecked />
-              <span>Usage Count</span>
+              <input type="checkbox" className="rounded dark:bg-gray-700 dark:border-gray-600" defaultChecked />
+              <span className="dark:text-gray-300">Usage Count</span>
             </label>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );
