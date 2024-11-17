@@ -65,16 +65,18 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
     return { completed: false, current: false, color: 'text-gray-400' };
   };
 
+  const StatusIcon = getStatusInfo(status as OrderStatus).Icon;
+
   return (
-    <div className="w-full py-6">
-      {/* Payment Status */}
-      <div className="mb-6 flex items-center justify-between px-4">
+    <div className="w-full max-w-6xl mx-auto px-4 py-6">
+      {/* Payment Status - Responsive Layout */}
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-2">
-          <span className="font-medium">Payment Method:</span>
-          <span>{paymentMethod}</span>
+          <span className="font-medium text-sm sm:text-base">Payment Method:</span>
+          <span className="text-sm sm:text-base">{paymentMethod}</span>
         </div>
         <div className={`
-          px-3 py-1 rounded-full text-sm
+          px-3 py-1 rounded-full text-sm inline-flex items-center justify-center
           ${paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : ''}
           ${paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
           ${paymentStatus === 'failed' ? 'bg-red-100 text-red-800' : ''}
@@ -83,53 +85,69 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
         </div>
       </div>
 
-      {/* Order Status */}
-      <div className="flex items-center justify-between px-4">
-        {mainSteps.map((step, index) => {
-          const { Icon } = step;
-          const stepStatus = getStepStatus(step.id);
-          const StatusIcon = ['cancelled', 'refunded', 'expired', 'failed'].includes(status) 
-            ? getStatusInfo(status as OrderStatus).Icon 
-            : Icon;
-
-          return (
-            <div key={step.id} className="relative flex-1">
-              <div className="flex flex-col items-center">
-                {/* Connecting Line */}
-                {index < mainSteps.length - 1 && (
+      {/* Order Status - Responsive Layout */}
+      <div className="relative">
+        <div className="flex flex-col sm:flex-row items-center justify-between">
+          {mainSteps.map((step, index) => {
+            const stepStatus = getStepStatus(step.id);
+            const isLastStep = index === mainSteps.length - 1;
+            
+            return (
+              <div key={step.id} className="relative flex-1 w-full sm:w-auto">
+                <div className="flex flex-row sm:flex-col items-center justify-center gap-4 sm:gap-0">
+                  {/* Connecting Line - Adjusted positioning */}
+                  {!isLastStep && (
+                    <>
+                      {/* Vertical line for mobile */}
+                      <div className={`
+                        absolute h-8 w-[2px] left-6 top-12
+                        ${stepStatus.completed ? 'bg-green-600' : 'bg-gray-300'}
+                        sm:hidden -z-10
+                      `} />
+                      {/* Horizontal line for desktop - Adjusted width and positioning */}
+                      <div className={`
+                        hidden sm:block absolute w-[calc(100%-3rem)] h-[2px]
+                        ${stepStatus.completed ? 'bg-green-600' : 'bg-gray-300'}
+                        top-6 left-[calc(50%+1.5rem)] -z-10
+                      `} />
+                    </>
+                  )}
+                  
+                  {/* Step Circle */}
                   <div className={`
-                    absolute w-full h-[2px] top-6 left-[calc(50%+1rem)]
-                    ${stepStatus.completed ? 'bg-green-600' : 'bg-gray-300'}
-                  `} />
-                )}
-                
-                {/* Step Circle */}
-                <div className={`
-                  relative z-10
-                  rounded-full transition duration-500 ease-in-out
-                  border-2 h-12 w-12 flex items-center justify-center bg-white
-                  ${stepStatus.completed ? 'border-green-600 bg-green-600' : ''}
-                  ${stepStatus.current ? 'border-blue-600' : 'border-gray-300'}
-                `}>
-                  <StatusIcon 
-                    className={`w-6 h-6 ${
-                      stepStatus.completed ? 'text-white' : 
-                      status === 'completed' && index === mainSteps.length - 1 ? 'text-green-600' : 
-                      stepStatus.color
-                    }`} 
-                  />
-                </div>
-                
-                {/* Step Label */}
-                <div className={`mt-3 text-center text-xs font-medium ${stepStatus.color}`}>
-                  {['cancelled', 'refunded', 'expired', 'failed'].includes(status) && index === 0
-                    ? getStatusInfo(status as OrderStatus).label
-                    : step.label}
+                    relative z-20
+                    rounded-full transition duration-500 ease-in-out
+                    border-2 h-12 w-12 flex items-center justify-center
+                    ${stepStatus.completed ? 'border-green-600' : ''}
+                    ${stepStatus.current ? 'border-blue-600' : 'border-gray-300'}
+                    ${stepStatus.completed ? 'bg-green-600/20' : 'bg-white'}
+                    shrink-0
+                  `}>
+                    {['cancelled', 'refunded', 'expired', 'failed'].includes(status) && index === 0 ? (
+                      <StatusIcon 
+                        className={`w-6 h-6 ${stepStatus.color}`} 
+                      />
+                    ) : (
+                      <step.Icon 
+                        className={`w-6 h-6 ${stepStatus.color}`} 
+                      />
+                    )}
+                  </div>
+                  
+                  {/* Step Label */}
+                  <div className={`
+                    text-sm font-medium ${stepStatus.color}
+                    sm:mt-3 sm:text-center whitespace-nowrap
+                  `}>
+                    {['cancelled', 'refunded', 'expired', 'failed'].includes(status) && index === 0
+                      ? getStatusInfo(status as OrderStatus).label
+                      : step.label}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

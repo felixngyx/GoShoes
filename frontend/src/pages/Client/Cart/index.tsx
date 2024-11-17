@@ -11,6 +11,72 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import useCart from '../../../hooks/client/useCart';
 
+const CartSkeleton = () => {
+	return (
+		<div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+				<div className="lg:col-span-2">
+					<div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+						<div className="px-4 py-5 sm:p-6">
+							<div className="flex justify-between items-center mb-6">
+								<div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+								<div className="h-6 w-24 bg-gray-200 rounded animate-pulse"></div>
+							</div>
+
+							{[1, 2, 3].map((item) => (
+								<div
+									key={item}
+									className="flex items-center space-x-4 p-6 rounded-lg bg-gray-50 mb-4"
+								>
+									<div className="h-5 w-5 bg-gray-200 rounded animate-pulse"></div>
+
+									<div className="w-32 h-32 bg-gray-200 rounded animate-pulse"></div>
+
+									<div className="flex-1">
+										<div className="h-6 w-3/4 bg-gray-200 rounded animate-pulse mb-2"></div>
+										<div className="h-4 w-1/2 bg-gray-200 rounded animate-pulse mb-4"></div>
+										<div className="space-y-2">
+											<div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+											<div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+										</div>
+										<div className="flex items-center space-x-2 mt-4">
+											<div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse"></div>
+											<div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+											<div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse"></div>
+										</div>
+									</div>
+
+									<div className="text-right">
+										<div className="h-8 w-32 bg-gray-200 rounded animate-pulse mb-4"></div>
+										<div className="h-6 w-24 bg-gray-200 rounded animate-pulse"></div>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				</div>
+
+				<div className="lg:col-span-1">
+					<div className="bg-white rounded-lg shadow-lg p-6 sticky top-20">
+						<div className="h-6 w-40 bg-gray-200 rounded animate-pulse mb-6"></div>
+						<div className="space-y-4">
+							<div className="flex justify-between">
+								<div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+								<div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+							</div>
+							<div className="border-t border-gray-200 pt-4 flex justify-between">
+								<div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+								<div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+							</div>
+						</div>
+						<div className="h-12 w-full bg-gray-200 rounded animate-pulse mt-6"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+};
+
 const Cart = () => {
 	const navigate = useNavigate();
 	const {
@@ -26,22 +92,22 @@ const Cart = () => {
 		handleDeleteFromCart,
 	} = useCart();
 
-	// useEffect(() => {
-	//   setCartItemsWithSelected((prevCartItems) => {
-	//     const updatedItems = prevCartItems.map((item) => ({
-	//       ...item,
-	//       totalPrice:
-	//         item.quantity *
-	//         (parseFloat(item.product_variant.product.promotional_price) ||
-	//           parseFloat(item.product_variant.product.price)),
-	//     }));
+	useEffect(() => {
+		setCartItemsWithSelected((prevCartItems) => {
+			const updatedItems = prevCartItems.map((item) => ({
+				...item,
+				totalPrice:
+					item.quantity *
+					(parseFloat(item.product_variant.product.promotional_price) ||
+						parseFloat(item.product_variant.product.price)),
+			}));
 
-	//     if (JSON.stringify(updatedItems) !== JSON.stringify(prevCartItems)) {
-	//       return updatedItems;
-	//     }
-	//     return prevCartItems;
-	//   });
-	// }, [cartItemsWithSelected, setCartItemsWithSelected]);
+			if (JSON.stringify(updatedItems) !== JSON.stringify(prevCartItems)) {
+				return updatedItems;
+			}
+			return prevCartItems;
+		});
+	}, [cartItemsWithSelected, setCartItemsWithSelected]);
 
 	const isAnyItemSelected = cartItemsWithSelected.some(
 		(item: any) => item.selected
@@ -81,7 +147,14 @@ const Cart = () => {
 		});
 	};
 
-	if (isLoading) return <p>Đang tải...</p>;
+	const formatVND = (price: number) => {
+		return new Intl.NumberFormat('vi-VN', {
+			style: 'currency',
+			currency: 'VND',
+		}).format(price);
+	};
+
+	if (isLoading) return <CartSkeleton />;
 
 	return (
 		<div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
@@ -215,7 +288,7 @@ const Cart = () => {
 											</div>
 											<div className="text-right">
 												<p className="text-2xl font-medium text-gray-900">
-													${item.totalPrice}
+													{formatVND(item.totalPrice)}
 												</p>
 												<button
 													onClick={() =>
@@ -261,12 +334,12 @@ const Cart = () => {
 						<div className="space-y-2">
 							<div className="flex justify-between text-gray-600">
 								<span>Subtotal</span>
-								<span>${orderSummary.subtotal.toFixed(2)}</span>
+								<span>{formatVND(orderSummary.subtotal)}</span>
 							</div>
 
 							<div className="border-t border-gray-200 pt-4 flex justify-between text-gray-900 font-semibold">
 								<span>Total</span>
-								<span>${orderSummary.total.toFixed(2)}</span>
+								<span>{formatVND(orderSummary.total)}</span>
 							</div>
 						</div>
 						<button

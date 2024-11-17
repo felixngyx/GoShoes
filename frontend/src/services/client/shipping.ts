@@ -3,10 +3,11 @@ import axiosClient from "../../apis/axiosClient";
 export const getAllShipping = async () => {
   try {
     const response = await axiosClient.get(`/shipping`);
-    // Xử lý giải mã `shipping_detail`
     const shippingData = response.data.data.flat().map((item: any) => ({
       ...item,
-      shipping_detail: JSON.parse(item.shipping_detail), // Giải mã JSON
+      shipping_detail: typeof item.shipping_detail === 'string' 
+        ? JSON.parse(item.shipping_detail)
+        : item.shipping_detail
     }));
 
     return shippingData;

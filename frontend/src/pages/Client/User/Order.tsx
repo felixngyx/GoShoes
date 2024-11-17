@@ -150,8 +150,31 @@ export default function OrderList(): JSX.Element {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
-  const renderActionButtons = (order: Order): JSX.Element | null => {
-    switch (order.status) {
+  const renderActionButtons = (order: Order) => {
+    switch (order.status.toLowerCase()) {
+      case 'pending':
+        return (
+          <div className="space-x-2">
+            <Button
+              component={Link}
+              to={`/checkout?order_id=${order.id}`}
+              variant="contained"
+              size="small"
+              color="primary"
+              className="bg-blue-500 hover:bg-blue-600"
+            >
+              Pay Now
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              color="error"
+              onClick={() => setOpenDialog({ type: 'cancel', orderId: order.id })}
+            >
+              Cancel Order
+            </Button>
+          </div>
+        );
       case 'shipping':
         return (
           <Button

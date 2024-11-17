@@ -12,6 +12,7 @@ import { IImages } from '../../../types/client/products/images';
 import { Variant } from '../../../types/client/products/variants';
 import RelatedProduct from '../ProductList/RelatedProduct';
 import { toast } from 'react-hot-toast';
+import { formatVNCurrency } from '../../../common/formatVNCurrency';
 
 const ProductDetailSkeleton = () => {
 	return (
@@ -432,10 +433,10 @@ const ProductDetail = () => {
 						</div>
 						<div className="flex items-center gap-3">
 							<p className="text-2xl font-bold text-[#40BFFF]">
-								${product.promotional_price}
+								{formatVNCurrency(Number(product.promotional_price))}
 							</p>
 							<span className="text-[#9098B1] text-sm line-through">
-								${product.price}
+								{formatVNCurrency(Number(product.price))}
 							</span>
 							<span className="text-[#FB7181] text-sm font-bold">
 								24% Off
