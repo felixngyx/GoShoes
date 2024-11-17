@@ -33,14 +33,17 @@ class BannerRepository implements BannerRepositoryInterface
             ]);
 
             // Kiểm tra và thêm ảnh nếu có
-            if (isset($data['images']) && is_array($data['images'])) {
-                foreach ($data['images'] as $image) {
+            if (!empty($data['images'])) {
+                foreach ($data['images'] as $imageData) {
                     $this->createBannerImage([
                         'banner_id' => $banner->id,
-                        'image_path' => $image,
+                        'image_path' => $imageData['image_path'],
+                        'title' => $imageData['title'] ?? null,
+                        
                     ]);
                 }
             }
+
 
             DB::commit();
             return $banner->load('images'); // Trả về banner kèm danh sách ảnh
@@ -59,35 +62,40 @@ class BannerRepository implements BannerRepositoryInterface
         DB::beginTransaction();
         try {
             // Tìm banner theo ID
-            $banner = Banner::findOrFail($id);
+            $banner = Banner::find($id);
+
+            if (!$banner) {
+                throw new Exception("Banner not found with ID: " . $id);
+            }
 
             // Cập nhật thông tin của banner
             $banner->update([
-                'title' => $data['title'],
-                'start_date' => $data['start_date'],
-                'end_date' => $data['end_date'],
-                'active' => $data['active']
+                'title' => $data['title'] ?? $banner->title,
+                'start_date' => $data['start_date'] ?? $banner->start_date,
+                'end_date' => $data['end_date'] ?? $banner->end_date,
+                'active' => $data['active'] ?? $banner->active
             ]);
 
             // Kiểm tra và xử lý các ảnh mới (thêm/xóa/cập nhật ảnh)
             if (isset($data['images']) && is_array($data['images'])) {
-                // Lấy danh sách ID hình ảnh mới
+                // Lấy các ID ảnh mới
                 $newImageIds = collect($data['images'])->pluck('id')->filter()->toArray();
-
-                // Xóa những hình ảnh không có trong danh sách mới
+    
+                // Xóa ảnh không có trong danh sách mới
                 $banner->images()->whereNotIn('id', $newImageIds)->delete();
-
-                // Cập nhật hoặc thêm ảnh mới
+    
                 foreach ($data['images'] as $imageData) {
                     if (isset($imageData['id'])) {
-                        // Cập nhật ảnh đã tồn tại
-                        $this->updateBannerImage($imageData['id'], ['image_path' => $imageData['image_path']]);
+                        // Cập nhật ảnh hiện có
+                        BannerImage::where('id', $imageData['id'])->update([
+                            'image_path' => $imageData['image_path'],
+                            'title' => $imageData['title'] ?? null
+                        ]);
                     } else {
                         // Thêm ảnh mới
-                        $this->createBannerImage([
-                            'banner_id' => $banner->id,
+                        $banner->images()->create([
                             'image_path' => $imageData['image_path'],
-                            'position' => $imageData['position'] ?? null,
+                            'title' => $imageData['title'] ?? null
                         ]);
                     }
                 }
