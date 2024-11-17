@@ -5,17 +5,15 @@ export interface UserState {
 	email: string | null;
 	email_is_verified: boolean;
 	is_admin: boolean;
-	access_token: string | null;
 }
 
-const access_token = Cookies.get('access_token');
+const user = Cookies.get('user');
 
 const initialState: UserState = {
-	name: null,
-	email: null,
-	email_is_verified: false,
-	is_admin: false,
-	access_token: access_token || null,
+	name: user ? JSON.parse(user).name : null,
+	email: user ? JSON.parse(user).email : null,
+	email_is_verified: user ? JSON.parse(user).email_is_verified : false,
+	is_admin: user ? JSON.parse(user).is_admin : false,
 };
 
 const userSlice = createSlice({
@@ -27,14 +25,15 @@ const userSlice = createSlice({
 			state.email = action.payload.email;
 			state.email_is_verified = action.payload.email_is_verified;
 			state.is_admin = action.payload.is_admin;
-			state.access_token = action.payload.access_token;
 		},
 		logout(state) {
 			state.name = null;
 			state.email = null;
 			state.email_is_verified = false;
 			state.is_admin = false;
-			state.access_token = null;
+			Cookies.remove('user');
+			Cookies.remove('access_token');
+			Cookies.remove('refresh_token');
 		},
 	},
 });

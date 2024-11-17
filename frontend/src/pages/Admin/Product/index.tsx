@@ -111,7 +111,7 @@ const Product = () => {
 						<p>Delete {selectedItems.length} items</p>
 					</button>
 					<Link
-						to="/admin/create"
+						to="/admin/product/create"
 						className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 					>
 						<Plus size={16} />

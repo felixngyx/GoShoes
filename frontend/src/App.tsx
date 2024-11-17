@@ -41,6 +41,8 @@ import CheckoutPage from './pages/Client/Cart/checkout';
 import OrderDashboard from './pages/Admin/orders';
 import DetailOrder from './pages/Admin/orders/detail';
 import DiscountPage from './pages/Admin/discounts';
+import PrivateRoute from './components/common/PrivateRoute';
+import AdminRoute from './components/common/AdminRoute';
 
 function App() {
 	const { pathname } = useLocation();
@@ -57,9 +59,30 @@ function App() {
 					<Route index element={<Homepage />} />
 					<Route path="/products" element={<ProductList />} />
 					<Route path="/products/:id" element={<ProductDetail />} />
-					<Route path="/cart" element={<Cart />} />
-					<Route path="/checkout" element={<CheckoutPage />} />
-					<Route path="/account" element={<Account />}>
+					<Route
+						path="/cart"
+						element={
+							<PrivateRoute>
+								<Cart />
+							</PrivateRoute>
+						}
+					/>
+					<Route
+						path="/checkout"
+						element={
+							<PrivateRoute>
+								<CheckoutPage />
+							</PrivateRoute>
+						}
+					/>
+					<Route
+						path="/account"
+						element={
+							<PrivateRoute>
+								<Account />
+							</PrivateRoute>
+						}
+					>
 						<Route index element={<Profile />} />
 						<Route path="my-order" element={<Order />} />
 						<Route path="my-order/:id" element={<OrderDetail />} />
@@ -72,7 +95,14 @@ function App() {
 				</Route>
 				<Route path="/signin" element={<SignIn />} />
 				<Route path="/signup" element={<SignUp />} />
-				<Route path="/admin" element={<DefaultLayout />}>
+				<Route
+					path="/admin"
+					element={
+						<AdminRoute>
+							<DefaultLayout />
+						</AdminRoute>
+					}
+				>
 					<Route
 						index
 						element={
@@ -90,10 +120,10 @@ function App() {
 						<Route index element={<OrderDashboard />} />
 						<Route path="detail/:id" element={<DetailOrder />} />
 					</Route>
-					<Route path='discounts'>
-						<Route index element={<DiscountPage/>}></Route>
+					<Route path="discounts">
+						<Route index element={<DiscountPage />}></Route>
 					</Route>
-					
+
 					<Route
 						path="calendar" // Changed from "/calendar" to "calendar"
 						element={
@@ -175,15 +205,7 @@ function App() {
 							</>
 						}
 					/>
-					<Route
-						path="auth/signin"
-						element={
-							<>
-								<PageTitle title="Signin | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-								<SignInAdmin />
-							</>
-						}
-					/>
+
 					<Route
 						path="auth/signup"
 						element={
@@ -194,6 +216,7 @@ function App() {
 						}
 					/>
 				</Route>
+				<Route path="admin/signin" element={<SignInAdmin />} />
 			</Routes>
 			<Toaster position="top-right" reverseOrder={false} />
 			{!isAdminPage && <ChatUI />}
