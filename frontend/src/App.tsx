@@ -43,6 +43,7 @@ import DetailOrder from './pages/Admin/orders/detail';
 import DiscountPage from './pages/Admin/discounts';
 import PrivateRoute from './components/common/PrivateRoute';
 import AdminRoute from './components/common/AdminRoute';
+import AboutPage from './pages/Client/about';
 
 function App() {
 	const { pathname } = useLocation();
@@ -88,6 +89,7 @@ function App() {
 						<Route path="my-order/:id" element={<OrderDetail />} />
 						<Route path="my-address" element={<Address />} />
 					</Route>
+					<Route path="/about" element={<AboutPage />} />
 					<Route path="/contact-us" element={<ContactUs />} />
 					<Route path="/reset-password" element={<ResetPassword />} />
 					<Route path="/forget-password" element={<ForgetPassword />} />

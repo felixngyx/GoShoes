@@ -22,11 +22,10 @@ class StoreShippingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "address" => "required|string",
-            "city" => "required|string",
-            "postal_code" => "required|string",
-            "country" => "required|string",
+            "name" => "required|string|max:50",
             "phone_number" => "required|string|regex:/^([0-9\s\-\+\(\)]*)$/|min:10",
+            "address" => "required|string",
+            "address_detail" => "required|string",
             "is_default" => "nullable|boolean",
         ];
     }
@@ -40,15 +39,11 @@ class StoreShippingRequest extends FormRequest
     {
         return [
             "address.required" => "Address is required",
-            "city.required" => "City is required",
-            "postal_code.required" => "Postal code is required",
-            "country.required" => "Country is required",
+            "address_detail.required" => "Address detail is required",
             "phone_number.required" => "Phone number is required",
             "is_default.required" => "Is default is required",
             "address.string" => "Address must be a string",
-            "city.string" => "City must be a string",
-            "postal_code.string" => "Postal code must be a string",
-            "country.string" => "Country must be a string",
+            "address_detail.string" => "Address detail must be a string",
             "phone_number.string" => "Phone number must be a string",
             "is_default.boolean" => "Is default must be a boolean",
         ];

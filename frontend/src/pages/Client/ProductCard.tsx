@@ -1,12 +1,53 @@
 import { useQuery } from '@tanstack/react-query';
+import Cookies from 'js-cookie';
+import { useState } from 'react';
 import { AiFillStar, AiOutlineStar } from 'react-icons/ai';
 import { IoCart, IoHeartOutline } from 'react-icons/io5';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import useCart from '../../hooks/client/useCart';
 import { getAllProducts } from '../../services/client/product';
 import { IProduct } from '../../types/client/products/products';
-import { formatVNCurrency } from '../../common/formatVNCurrency';
+
+const ProductCardSkeleton = () => {
+	return (
+		<>
+			{Array(8)
+				.fill(null)
+				.map((_, index) => (
+					<div
+						key={index}
+						className="col-span-1 border border-[#F6F7F8] rounded-lg overflow-hidden shadow-sm"
+					>
+						{/* Phần ảnh */}
+						<div className="relative w-full h-[280px] bg-gray-200 animate-pulse" />
+
+						{/* Phần tên sản phẩm */}
+						<div className="px-2 mt-2">
+							<div className="h-6 bg-gray-200 rounded animate-pulse w-3/4 mx-auto" />
+						</div>
+
+						{/* Phần rating */}
+						<div className="flex justify-center mt-1">
+							<div className="h-4 bg-gray-200 rounded animate-pulse w-24" />
+						</div>
+
+						{/* Phần giá */}
+						<div className="flex items-center justify-center gap-2 mt-1 mb-3">
+							<div className="h-6 bg-gray-200 rounded animate-pulse w-20" />
+							<div className="h-4 bg-gray-200 rounded animate-pulse w-16" />
+							<div className="h-4 bg-gray-200 rounded animate-pulse w-10" />
+						</div>
+					</div>
+				))}
+		</>
+	);
+};
 
 const ProductCard = () => {
+	const accessToken = Cookies.get('access_token');
+	const navigate = useNavigate();
+	const [showModal, setShowModal] = useState(false);
+	const { handleAddToCart } = useCart();
 	const {
 		data: products,
 		isLoading,
@@ -15,6 +56,12 @@ const ProductCard = () => {
 		queryKey: ['PRODUCT_KEY'],
 		queryFn: () => getAllProducts(1, 8),
 	});
+
+	const addCart = (product: IProduct) => {
+		const productVariantId = product.variants[0].id;
+		const quantity = 1;
+		handleAddToCart(productVariantId, quantity);
+	};
 
 	const RatingStars = ({ rating }: { rating: number }) => (
 		<div className="flex items-center">
@@ -30,8 +77,25 @@ const ProductCard = () => {
 		</div>
 	);
 
+	const handleCheckAdd = (product: IProduct) => {
+		if (!accessToken) {
+			setShowModal(true);
+			return;
+		}
+		addCart(product);
+	};
+
+	const closeModal = () => {
+		setShowModal(false);
+	};
+
+	const handleLoginNow = () => {
+		navigate('/signin');
+		closeModal();
+	};
+
 	if (isLoading) {
-		return <span className="loading loading-spinner loading-lg"></span>;
+		return <ProductCardSkeleton />;
 	}
 	if (isError) {
 		return <p>Error loading products. Please try again.</p>;
@@ -62,7 +126,7 @@ const ProductCard = () => {
 								color="#40BFFF"
 							/>
 							<IoCart
-								// onClick={() => handleAddToCart(product)}
+								onClick={() => handleCheckAdd(product)}
 								className="cursor-pointer p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
 								size={52}
 								color="#40BFFF"
@@ -82,15 +146,45 @@ const ProductCard = () => {
 					</div>
 					<div className="flex items-center justify-center gap-2 mt-1 mb-3">
 						<p className="text-primary text-lg font-semibold">
-							{formatVNCurrency(product.promotional_price)}
+							{product.promotional_price} ₫
 						</p>
 						<p className="text-[#9098B1] text-sm font-medium line-through">
-							{formatVNCurrency(product.price)}
+							{product.price} ₫
 						</p>
 						<p className="text-[#E71D36] text-sm font-semibold">-10%</p>
 					</div>
 				</div>
 			))}
+
+			{showModal && (
+				<div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center ">
+					<div className="modal modal-open ">
+						<div className="modal-box relative">
+							<h2 className="text-2xl font-semibold text-center mb-4">
+								You need to login
+							</h2>
+							<p className="mb-6 text-center">
+								Please login to add this product to your cart.
+							</p>
+							<div className="flex justify-center gap-4">
+								<button
+									onClick={handleLoginNow}
+									className="btn bg-blue-500 text-white hover:bg-blue-600 w-32"
+								>
+									Login Now
+								</button>
+							</div>
+							{/* Close button */}
+							<button
+								className="absolute top-2 right-2 text-xl"
+								onClick={closeModal}
+							>
+								✕
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</>
 	);
 };

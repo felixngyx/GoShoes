@@ -34,7 +34,7 @@ class OrderController extends Controller
     {
         $orders = Order::with([
             'user:id,name,email,avt',
-            'shipping:id,address,city',
+            'shipping:id,user_id,shipping_detail,is_default',
             'items:id,order_id,product_id,variant_id,quantity,price',
             'items.product:id,name,thumbnail',
             'items.variant:id,size_id,color_id',
@@ -72,8 +72,9 @@ class OrderController extends Controller
 
                     // Thông tin địa chỉ giao hàng
                     'shipping' => $order->shipping ? [
-                        'address' => $order->shipping->address,
-                        'city' => $order->shipping->city,
+                        'id' => $order->shipping->id,
+                        'shipping_detail' => $order->shipping->shipping_detail,
+                        'is_default' => $order->shipping->is_default,
                     ] : null,
 
                     // Thông tin thanh toán
@@ -118,7 +119,7 @@ class OrderController extends Controller
         $user_id = auth()->user()->id;
 
         $query = Order::with([
-            'shipping:id,address,city',
+            'shipping:id,user_id,shipping_detail,is_default',
             'items:id,order_id,product_id,quantity,price',
             'items.product:id,name,thumbnail'
         ])
@@ -163,8 +164,9 @@ class OrderController extends Controller
 
                     // Thông tin địa chỉ giao hàng
                     'shipping' => $order->shipping ? [
-                        'address' => $order->shipping->address,
-                        'city' => $order->shipping->city,
+                        'id' => $order->shipping->id,
+                        'shipping_detail' => $order->shipping->shipping_detail,
+                        'is_default' => $order->shipping->is_default,
                     ] : null,
 
                     // Chi tiết sản phẩm
@@ -659,7 +661,7 @@ class OrderController extends Controller
 
             $order->load([
                 'user:id,name,email',
-                'shipping:id,address,city',
+                'shipping:id,user_id,shipping_detail,is_default',
                 'items:id,order_id,product_id,variant_id,quantity,price',
                 'items.product:id,name,thumbnail',
                 'items.variant:id,size_id,color_id',
@@ -687,8 +689,9 @@ class OrderController extends Controller
 
                         // Thông tin địa chỉ giao hàng
                         'shipping' => $order->shipping ? [
-                            'address' => $order->shipping->address,
-                            'city' => $order->shipping->city,
+                            'id' => $order->shipping->id,
+                            'shipping_detail' => $order->shipping->shipping_detail,
+                            'is_default' => $order->shipping->is_default,
                         ] : null,
 
                         // Thông tin thanh toán

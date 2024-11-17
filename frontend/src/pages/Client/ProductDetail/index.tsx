@@ -1,20 +1,154 @@
+import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AiFillStar, AiOutlineStar } from 'react-icons/ai';
 import { FaShoppingCart } from 'react-icons/fa';
 import { IoMdAdd, IoMdRemove } from 'react-icons/io';
-import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import useCart from '../../../hooks/client/useCart';
 import { getProductById } from '../../../services/client/product';
+import { Category } from '../../../types/client/category';
 import { IImages } from '../../../types/client/products/images';
 import { Variant } from '../../../types/client/products/variants';
-import { Category } from '../../../types/client/category';
 import RelatedProduct from '../ProductList/RelatedProduct';
-import { formatVNCurrency } from '../../../common/formatVNCurrency';
+import { toast } from 'react-hot-toast';
+
+const ProductDetailSkeleton = () => {
+	return (
+		<div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
+			<div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+				{/* Left Section - Product Images Skeleton */}
+				<div className="md:col-span-5">
+					<div className="relative overflow-hidden rounded-lg bg-gray-200 animate-pulse mb-2 h-[571px]" />
+					<div className="grid grid-cols-4 gap-2">
+						{[1, 2, 3, 4].map((index) => (
+							<div
+								key={index}
+								className="h-24 bg-gray-200 animate-pulse rounded-md"
+							/>
+						))}
+					</div>
+				</div>
+
+				{/* Right Section - Product Information Skeleton */}
+				<div className="md:col-span-5 space-y-4">
+					{/* Product Name */}
+					<div className="h-8 bg-gray-200 animate-pulse rounded w-3/4" />
+
+					{/* Rating & Reviews */}
+					<div className="flex items-center gap-4">
+						<div className="h-4 bg-gray-200 animate-pulse rounded w-32" />
+						<div className="h-4 bg-gray-200 animate-pulse rounded w-24" />
+					</div>
+
+					{/* Price */}
+					<div className="flex items-center gap-3">
+						<div className="h-8 bg-gray-200 animate-pulse rounded w-24" />
+						<div className="h-6 bg-gray-200 animate-pulse rounded w-20" />
+						<div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
+					</div>
+
+					<hr />
+
+					{/* Product Details */}
+					<div className="space-y-4">
+						{[1, 2, 3].map((index) => (
+							<div key={index} className="grid grid-cols-2 max-w-xs">
+								<div className="h-6 bg-gray-200 animate-pulse rounded w-20" />
+								<div className="h-6 bg-gray-200 animate-pulse rounded w-32" />
+							</div>
+						))}
+					</div>
+
+					{/* Size Selection */}
+					<div className="grid grid-cols-2 max-w-xs">
+						<div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
+						<div className="h-8 bg-gray-200 animate-pulse rounded w-24" />
+					</div>
+
+					{/* Color Selection */}
+					<div className="space-y-2">
+						<div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
+						<div className="flex flex-wrap gap-2">
+							{[1, 2, 3, 4].map((index) => (
+								<div
+									key={index}
+									className="h-10 bg-gray-200 animate-pulse rounded w-24"
+								/>
+							))}
+						</div>
+					</div>
+
+					{/* Quantity */}
+					<div className="flex items-center gap-4">
+						<div className="h-6 bg-gray-200 animate-pulse rounded w-20" />
+						<div className="h-10 bg-gray-200 animate-pulse rounded w-32" />
+						<div className="h-10 bg-gray-200 animate-pulse rounded w-10" />
+					</div>
+
+					{/* Buttons */}
+					<div className="grid grid-cols-2 gap-4">
+						<div className="h-12 bg-gray-200 animate-pulse rounded" />
+						<div className="h-12 bg-gray-200 animate-pulse rounded" />
+					</div>
+				</div>
+
+				{/* Best Sellers Skeleton */}
+				<div className="md:col-span-2">
+					<div className="h-6 bg-gray-200 animate-pulse rounded w-24 mb-2" />
+					<div className="space-y-4 border rounded-sm p-4">
+						<div className="h-40 bg-gray-200 animate-pulse rounded" />
+						<div className="flex justify-center">
+							<div className="h-4 bg-gray-200 animate-pulse rounded w-24" />
+						</div>
+						<div className="flex justify-center gap-2">
+							<div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
+							<div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
+						</div>
+					</div>
+				</div>
+
+				{/* Description Tab Skeleton */}
+				<div className="mt-8 col-span-1 md:col-span-10 bg-[#FAFAFB] p-5 rounded-lg shadow-md">
+					<div className="flex gap-4 md:gap-28 border-b mb-4">
+						{['Description', 'Reviews', 'Write Comment'].map((tab) => (
+							<div
+								key={tab}
+								className="h-8 bg-gray-200 animate-pulse rounded w-24"
+							/>
+						))}
+					</div>
+					<div className="space-y-4">
+						{[1, 2, 3].map((index) => (
+							<div
+								key={index}
+								className="h-4 bg-gray-200 animate-pulse rounded w-full"
+							/>
+						))}
+					</div>
+				</div>
+
+				{/* Related Products Skeleton */}
+				<div className="col-span-1 md:col-span-10">
+					<div className="h-6 bg-gray-200 animate-pulse rounded w-32 mb-4" />
+					<div className="grid grid-cols-4 gap-4">
+						{[1, 2, 3, 4].map((index) => (
+							<div key={index} className="border rounded-lg p-4">
+								<div className="h-40 bg-gray-200 animate-pulse rounded mb-2" />
+								<div className="h-6 bg-gray-200 animate-pulse rounded w-3/4 mb-2" />
+								<div className="h-4 bg-gray-200 animate-pulse rounded w-1/2" />
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+};
 
 const ProductDetail = () => {
 	const { id } = useParams();
-
+	const navigate = useNavigate();
 	const { data: product, isLoading } = useQuery({
 		queryKey: ['PRODUCT_KEY', id],
 		queryFn: async () => await getProductById(Number(id)),
@@ -33,16 +167,33 @@ const ProductDetail = () => {
 	const [newComment, setNewComment] = useState('');
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [availableQuantity, setAvailableQuantity] = useState(0);
-
+	const { handleAddToCartDetail } = useCart();
 	useEffect(() => {
 		if (product) {
-			console.log(product);
 			setSelectedThumbnail(product.thumbnail);
 			setSelectedColor(product.variants[0]?.color.id || null);
 			setSelectedSize(product.variants[0]?.size.size || null);
 			setAvailableQuantity(product.variants[0]?.quantity || 0);
 		}
 	}, [product]);
+
+	const handleAdd = () => {
+		if (selectedSize && selectedColor && quantity > 0) {
+			const selectedVariant = product?.variants.find(
+				(variant: any) =>
+					variant.size.size === selectedSize &&
+					variant.color.id === selectedColor
+			);
+			if (selectedVariant) {
+				handleAddToCartDetail(
+					selectedVariant.id,
+					selectedSize,
+					selectedColor,
+					quantity
+				);
+			}
+		}
+	};
 
 	const handleImageClick = (image: IImages) => {
 		setSelectedThumbnail(image.image_path);
@@ -90,17 +241,21 @@ const ProductDetail = () => {
 	const uniqueSizes = product?.variants
 		? Array.from(
 				new Set(
-					product.variants.map((variant: Variant) => variant.size.size)
+					product.variants
+						.map((variant: Variant) => variant.size?.size)
+						.filter((size: any) => size !== null) // Lọc bỏ các giá trị null
 				)
 		  )
 		: [];
 
 	const uniqueColors = Array.from(
 		new Map(
-			product?.variants.map((variant: Variant) => [
-				variant.color.color,
-				variant,
-			])
+			product?.variants
+				.map((variant: Variant) => [
+					variant.color?.color, // Kiểm tra màu sắc không null
+					variant,
+				])
+				.filter(([color]: any) => color !== null) // Lọc bỏ các giá trị màu sắc null
 		).values()
 	);
 
@@ -163,7 +318,42 @@ const ProductDetail = () => {
 		setSelectedThumbnail(product.images[prevIndex].image_path);
 	};
 
-	if (isLoading) return <div>Loading...</div>;
+	const handleBuyNow = () => {
+		if (selectedSize && selectedColor && quantity > 0) {
+			const selectedVariant = product?.variants.find(
+				(variant: any) =>
+					variant.size.size === selectedSize &&
+					variant.color.id === selectedColor
+			);
+
+			if (selectedVariant) {
+				// Chỉ chuyển hướng đến trang checkout với thông tin sản phẩm
+				navigate('/checkout', {
+					state: {
+						productInfo: {
+							id: product.id,
+							name: product.name,
+							price: product.promotional_price || product.price,
+							thumbnail: selectedThumbnail || product.thumbnail,
+							variant: selectedVariant,
+							quantity: quantity,
+							size: selectedSize,
+							color: selectedColor,
+							// Thêm các thông tin khác nếu cần
+							total:
+								(product.promotional_price || product.price) * quantity,
+						},
+					},
+				});
+			}
+		} else {
+			toast.error('Vui lòng chọn size và màu sắc trước khi mua hàng');
+		}
+	};
+
+	if (isLoading) {
+		return <ProductDetailSkeleton />;
+	}
 
 	return (
 		<>
@@ -242,10 +432,10 @@ const ProductDetail = () => {
 						</div>
 						<div className="flex items-center gap-3">
 							<p className="text-2xl font-bold text-[#40BFFF]">
-								{formatVNCurrency(Number(product.promotional_price))}
+								${product.promotional_price}
 							</p>
 							<span className="text-[#9098B1] text-sm line-through">
-								{formatVNCurrency(Number(product.price))}
+								${product.price}
 							</span>
 							<span className="text-[#FB7181] text-sm font-bold">
 								24% Off
@@ -351,11 +541,17 @@ const ProductDetail = () => {
 						</div>
 
 						<div className="grid grid-cols-2 gap-4">
-							<button className="btn bg-[#ebf6ff] text-[#40BFFF] hover:bg-[#ebf6ff]/80 hover:border-[#40BFFF]">
+							<button
+								onClick={handleAdd}
+								className="btn bg-[#ebf6ff] text-[#40BFFF] hover:bg-[#ebf6ff]/80 hover:border-[#40BFFF]"
+							>
 								<FaShoppingCart />
 								Add to Cart
 							</button>
-							<button className="btn bg-[#40BFFF] text-white hover:bg-[#40a5ff] hover:border-[#40BFFF]">
+							<button
+								onClick={handleBuyNow}
+								className="btn bg-[#40BFFF] text-white hover:bg-[#40a5ff] hover:border-[#40BFFF]"
+							>
 								Buy Now
 							</button>
 						</div>
@@ -376,12 +572,10 @@ const ProductDetail = () => {
 								</div>
 								<div className="flex items-center gap-2 justify-center mb-2">
 									<span className="text-sm text-[#FB7181]">
-										{formatVNCurrency(
-											Number(product.promotional_price)
-										)}
+										$159.99
 									</span>
 									<span className="text-xs text-[#9098B1] line-through">
-										{formatVNCurrency(Number(product.price))}
+										$199.99
 									</span>
 								</div>
 							</div>
@@ -476,7 +670,7 @@ const ProductDetail = () => {
 														//   }}
 													>
 														<img
-															src="https://placehold.co/400"
+															// src={image}
 															className="w-full h-32 object-cover hover:opacity-90 transition-opacity"
 														/>
 													</button>
@@ -487,7 +681,7 @@ const ProductDetail = () => {
 												<div className="flex items-start justify-between mb-4">
 													<div className="flex items-center space-x-4">
 														<img
-															src="https://placehold.co/400"
+															src={`https://placehold.co/400`}
 															className="w-12 h-12 rounded-full object-cover"
 														/>
 														<div>
@@ -517,7 +711,7 @@ const ProductDetail = () => {
 														//   }}
 													>
 														<img
-															src="https://placehold.co/400"
+															// src={image}
 															className="w-full h-32 object-cover hover:opacity-90 transition-opacity"
 														/>
 													</button>

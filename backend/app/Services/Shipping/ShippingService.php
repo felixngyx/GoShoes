@@ -46,22 +46,39 @@ class ShippingService implements ShippingServiceInterface
         ]);
     }
 
+    public function getShippingById(int $id) : \Illuminate\Http\JsonResponse
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+        $data = self::getShippingRepository()->getRecordByUserIdAndId($user->id, $id);
+        if ($data) {
+            return response()->json([
+                'success' => true,
+                'data' => $data->makeHidden(self::columnHidden()),
+            ]);
+        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Shipping not found',
+        ]);
+    }
+
     public function create(array $request) : \Illuminate\Http\JsonResponse
     {
         $user = JWTAuth::parseToken()->authenticate();
         $data = [
             'user_id' => $user->id,
-            'address' => $request['address'],
-            'city' => $request['city'],
-            'postal_code' => $request['postal_code'],
-            'country' => $request['country'],
-            'phone_number' => $request['phone_number'],
+            'shipping_detail' => json_encode([
+                "name" => $request["name"],
+                "phone_number" => $request["phone_number"],
+                "address" => $request["address"],
+                "address_detail" => $request["address_detail"],
+            ]),
             'is_default' => $request['is_default'] ?? false,
         ];
         DB::beginTransaction();
         try {
 
-            if ($data['is_default'] == true) {
+            if ($data['is_default']) {
                 $checkDefault = self::checkDefaultExits();
                 if ($checkDefault->count() > 0) {
                     foreach ($checkDefault as $item) {
@@ -84,34 +101,27 @@ class ShippingService implements ShippingServiceInterface
             return response()->json([
                 'success' => false,
                 'message' => 'Create shipping fail',
+                'data' => $e->getMessage(),
             ]);
         }
     }
 
-    public function update(array $request)
+    public function update(array $request) : \Illuminate\Http\JsonResponse
     {
         $user = JWTAuth::parseToken()->authenticate();
         $data = [
-            'address' => $request['address'] ?? null,
-            'city' => $request['city'] ?? null,
-            'postal_code' => $request['postal_code'] ?? null,
-            'country' => $request['country'] ?? null,
-            'phone_number' => $request['phone_number'] ?? null,
+            'user_id' => $user->id,
+            'shipping_detail' => [
+                "name" => $request["name"],
+                "phone_number" => $request["phone_number"],
+                "address" => $request["address"],
+                "address_detail" => $request["address_detail"],
+            ],
             'is_default' => $request['is_default'] ?? false,
         ];
 
-        $data = array_filter($data, function($value) {
-            return !is_null($value) && $value !== '';
-        });
         DB::beginTransaction();
         try {
-
-            if (self::getShippingRepository()->checkShippingInOrder($request['shipping'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This shipping is in order',
-                ], 400);
-            }
 
             if (!self::checkUserHaveShipping($user->id, $request['shipping'])) {
                 return response()->json([
@@ -120,7 +130,14 @@ class ShippingService implements ShippingServiceInterface
                 ], 403);
             }
 
-            if ($data['is_default'] == true) {
+            if (self::getShippingRepository()->checkShippingInOrder($request['shipping'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This shipping is in order',
+                ], 400);
+            }
+
+            if ($data['is_default']) {
                 $checkDefault = self::checkDefaultExits();
                 if ($checkDefault->count() > 0) {
                     foreach ($checkDefault as $item) {
@@ -131,7 +148,7 @@ class ShippingService implements ShippingServiceInterface
                 }
             }
 
-            self::getShippingRepository()->update($data, $request['shipping']);
+            $result = self::getShippingRepository()->update($data, $request['shipping']);
             DB::commit();
             return response()->json([
                 'success' => true,
@@ -146,11 +163,17 @@ class ShippingService implements ShippingServiceInterface
         }
     }
 
-    public function delete(int $id)
+    public function delete(int $id): \Illuminate\Http\JsonResponse
     {
         $user = JWTAuth::parseToken()->authenticate();
         DB::beginTransaction();
         try {
+            if (!self::checkUserHaveShipping($user->id, $id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have this shipping',
+                ], 403);
+            }
 
             if (self::getShippingRepository()->checkShippingInOrder($id)) {
                 return response()->json([
@@ -159,12 +182,6 @@ class ShippingService implements ShippingServiceInterface
                 ], 400);
             }
 
-            if (!self::checkUserHaveShipping($user->id, $id)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You do not have this shipping',
-                ], 403);
-            }
             self::getShippingRepository()->forceDelete($id);
             DB::commit();
             return response()->json([
@@ -190,18 +207,13 @@ class ShippingService implements ShippingServiceInterface
         return self::getShippingRepository()->getRecordByUserIdAndId($userId, $id);
     }
 
-    private static function checkShippingInOrder(int $id)
-    {
-        return self::getShippingRepository()->checkShippingInOrder($id);
-    }
-
     private static function columnHidden() : array
     {
         return [
-            'id',
             'user_id',
             'created_at',
             'updated_at',
+            'deleted_at',
         ];
     }
 

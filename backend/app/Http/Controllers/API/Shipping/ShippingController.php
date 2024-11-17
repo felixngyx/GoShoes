@@ -41,6 +41,11 @@ class ShippingController
         return self::getShippingService()->create($request->all());
     }
 
+    public function show(int $shipping): \Illuminate\Http\JsonResponse
+    {
+        return self::getShippingService()->getShippingById($shipping);
+    }
+
     public function update(UpdateShippingRequest $request, int $shipping): \Illuminate\Http\JsonResponse
     {
         $request['shipping'] = $shipping;
