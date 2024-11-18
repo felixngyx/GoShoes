@@ -56,6 +56,7 @@ Route::get('/products', [ProductController::class, 'index']);
 Route::post('/products', [ProductController::class, 'store']);
 
 Route::get('/product/{id}', [ProductClientController::class, 'show']);
+Route::get('/product/variant/{id}/stock', [ProductController::class, 'checkStockProductVariant']);
 
 
 // API Color

@@ -140,6 +140,11 @@ class ProductRepository implements ProductRepositoryInterface
     {
         return Product::where('is_deleted', false)->findOrFail($id);
     }
+    public function checkStockProductVariant($id)
+    {
+        return ProductVariant::find($id);
+
+    }
 }
 
     // $variantDetails = $product->variants->map(function ($variant) {
