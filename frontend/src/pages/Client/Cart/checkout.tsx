@@ -95,12 +95,15 @@ const CheckoutPage = () => {
   const [orderState, setOrderState] = useState(orderDetails);
 
   // Cập nhật hàm handleQuantityChange
-  const handleQuantityChange = (itemId: number, newQuantity: number) => {
+  const handleQuantityChange = async (itemId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
     
-    // Xử lý cho trường hợp mua ngay
+    let newSubtotal = 0;
+
     if (buyNowState) {
       const newTotal = buyNowState.price * newQuantity;
+      newSubtotal = newTotal;
+
       setBuyNowState(prev => ({
         ...prev,
         quantity: newQuantity,
@@ -117,40 +120,57 @@ const CheckoutPage = () => {
         subtotal: newTotal,
         total: newTotal
       }));
+    } else {
+      const updatedItems = orderState.items.map(item => {
+        if (item.id === itemId) {
+          const updatedTotal = item.price * newQuantity;
+          return {
+            ...item,
+            quantity: newQuantity,
+            total: updatedTotal
+          };
+        }
+        return item;
+      });
 
-      setQuantities(prev => ({
+      newSubtotal = updatedItems.reduce((sum, item) => sum + item.total, 0);
+
+      setOrderState(prev => ({
         ...prev,
-        [itemId]: newQuantity
+        items: updatedItems,
+        subtotal: newSubtotal,
+        total: newSubtotal
       }));
-      return;
     }
-
-    // Xử lý cho trường hợp giỏ hàng
-    const updatedItems = orderState.items.map(item => {
-      if (item.id === itemId) {
-        const updatedTotal = item.price * newQuantity;
-        return {
-          ...item,
-          quantity: newQuantity,
-          total: updatedTotal
-        };
-      }
-      return item;
-    });
-
-    const newSubtotal = updatedItems.reduce((sum, item) => sum + item.total, 0);
 
     setQuantities(prev => ({
       ...prev,
       [itemId]: newQuantity
     }));
 
-    setOrderState(prev => ({
-      ...prev,
-      items: updatedItems,
-      subtotal: newSubtotal,
-      total: newSubtotal
-    }));
+    if (discountCode && discountInfo) {
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/discounts/apply`,
+          {
+            code: discountCode,
+            total_amount: newSubtotal,
+            product_ids: orderState.items.map(item => item.id || item.product_id)
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${Cookies.get('access_token')}`
+            }
+          }
+        );
+
+        if (response.data.status) {
+          setDiscountInfo(response.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to update discount:", error);
+      }
+    }
   };
 
   const handleTogglePopup = () => {

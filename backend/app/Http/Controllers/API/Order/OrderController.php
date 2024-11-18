@@ -28,6 +28,7 @@ class OrderController extends Controller
     public function __construct(ZaloPaymentController $zaloPaymentController)
     {
         $this->zaloPaymentController = $zaloPaymentController;
+        $this->middleware('throttle:1000,1');
     }
 
     public function index()
