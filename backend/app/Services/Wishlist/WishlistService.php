@@ -110,9 +110,7 @@ class WishlistService implements WishlistServiceInterface
         return [
             'id',
             'user_id',
-            'created_at',
             'updated_at',
-            'product_id',
         ];
     }
 
