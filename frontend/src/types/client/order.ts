@@ -20,6 +20,15 @@ interface OrderItem {
   product: ProductItem;
   quantity: number;
   price: number;
+  variant?: {
+    id: string | number;
+    size?: {
+      size: string;
+    };
+    color?: {
+      color: string;
+    };
+  };
 }
 
 export interface Order {

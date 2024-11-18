@@ -1,24 +1,40 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import AddressComponent from "../User/Address/Address";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { X } from "lucide-react";
 import { useShipping } from "../../../hooks/client/useShipping";
 import axios from "axios";
 import Cookies from "js-cookie";
+import { toast } from "react-hot-toast";
 
 const CheckoutPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Lấy thông tin từ state
+  const { address, isLoading: isLoadingAddress } = useShipping();
+  
+  const [showPopup, setShowPopup] = useState(false);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState(2);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTermsAccepted, setIsTermsAccepted] = useState(false);
+  const [showOrderConfirm, setShowOrderConfirm] = useState(false);
+  const [quantities, setQuantities] = useState<{[key: string]: number}>({});
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountInfo, setDiscountInfo] = useState<any>(null);
+  const [isCheckingDiscount, setIsCheckingDiscount] = useState(false);
+  const [hasOrdered, setHasOrdered] = useState(false);
+  
   const buyNowProduct = location.state?.productInfo;
   const cartItems = location.state?.cartItems;
   const cartOrderSummary = location.state?.orderSummary;
-
+  const buyAgainItems = location.state?.items;
+  
+  const [buyNowState, setBuyNowState] = useState(buyNowProduct);
+  
   // Tính toán thông tin đơn hàng
-  const orderDetails = buyNowProduct
-    ? {
-        // Trường hợp mua ngay
+  const orderDetails = useMemo(() => {
+    if (buyNowProduct) {
+      return {
         items: [
           {
             id: buyNowProduct.id,
@@ -28,39 +44,52 @@ const CheckoutPage = () => {
             thumbnail: buyNowProduct.thumbnail,
             variant: buyNowProduct.variant,
             total: buyNowProduct.total,
+            size: buyNowProduct.variant?.size?.size,
+            color: buyNowProduct.variant?.color?.color
           },
         ],
         subtotal: buyNowProduct.total,
         total: buyNowProduct.total,
-      }
-    : {
-        // Trường hợp mua từ giỏ hàng
-        items: cartItems || [],
-        subtotal: cartOrderSummary?.subtotal || 0,
-        total: cartOrderSummary?.total || 0,
       };
-
-  const { address, isLoading: isLoadingAddress } = useShipping();
+    } else if (cartItems?.length > 0) {
+      return {
+        items: cartItems.map(item => ({
+          ...item,
+          price: Number(item.price),
+          total: Number(item.price) * item.quantity
+        })),
+        subtotal: cartOrderSummary?.subtotal || 0,
+        total: cartOrderSummary?.total || 0
+      };
+    } else {
+      return {
+        items: [],
+        subtotal: 0,
+        total: 0
+      };
+    }
+  }, [buyNowProduct, cartItems, cartOrderSummary]);
 
   console.log(address);
 
-  const [showPopup, setShowPopup] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState(2); // Default to COD (id: 2)
-  const [isLoading, setIsLoading] = useState(false);
-  const [isTermsAccepted, setIsTermsAccepted] = useState(false);
-  const [showOrderConfirm, setShowOrderConfirm] = useState(false);
-
-  // Thêm state để quản lý số lượng
-  const [quantities, setQuantities] = useState<{[key: string]: number}>({});
-
   // Khởi tạo quantities từ orderDetails
   useEffect(() => {
+    if (!orderDetails?.items?.length) return;
+    
     const initialQuantities = orderDetails.items.reduce((acc, item) => ({
       ...acc,
       [item.id]: item.quantity
     }), {});
-    setQuantities(initialQuantities);
-  }, [orderDetails.items]);
+    
+    // Kiểm tra nếu quantities đã thay đổi
+    const hasChanged = Object.keys(initialQuantities).some(
+      key => quantities[key] !== initialQuantities[key]
+    );
+    
+    if (hasChanged) {
+      setQuantities(initialQuantities);
+    }
+  }, [orderDetails.items]); // Chỉ phụ thuộc vào items
 
   // Thêm state để quản lý orderDetails
   const [orderState, setOrderState] = useState(orderDetails);
@@ -69,38 +98,59 @@ const CheckoutPage = () => {
   const handleQuantityChange = (itemId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
     
-    // Cập nhật lại tổng tiền
+    // Xử lý cho trường hợp mua ngay
+    if (buyNowState) {
+      const newTotal = buyNowState.price * newQuantity;
+      setBuyNowState(prev => ({
+        ...prev,
+        quantity: newQuantity,
+        total: newTotal
+      }));
+
+      setOrderState(prev => ({
+        ...prev,
+        items: [{
+          ...prev.items[0],
+          quantity: newQuantity,
+          total: newTotal
+        }],
+        subtotal: newTotal,
+        total: newTotal
+      }));
+
+      setQuantities(prev => ({
+        ...prev,
+        [itemId]: newQuantity
+      }));
+      return;
+    }
+
+    // Xử lý cho trường hợp giỏ hàng
     const updatedItems = orderState.items.map(item => {
       if (item.id === itemId) {
+        const updatedTotal = item.price * newQuantity;
         return {
           ...item,
-          quantity: newQuantity, // Sử dụng newQuantity trực tiếp
-          total: item.price * newQuantity
+          quantity: newQuantity,
+          total: updatedTotal
         };
       }
       return item;
     });
 
-    // Tính tổng tiền dựa trên newQuantity cho item hiện tại
-    const newSubtotal = updatedItems.reduce((sum, item) => {
-      if (item.id === itemId) {
-        return sum + (item.price * newQuantity);
-      }
-      return sum + (item.price * item.quantity);
-    }, 0);
+    const newSubtotal = updatedItems.reduce((sum, item) => sum + item.total, 0);
 
-    // Cập nhật cả hai state
     setQuantities(prev => ({
       ...prev,
       [itemId]: newQuantity
     }));
 
-    setOrderState({
-      ...orderState,
+    setOrderState(prev => ({
+      ...prev,
       items: updatedItems,
       subtotal: newSubtotal,
       total: newSubtotal
-    });
+    }));
   };
 
   const handleTogglePopup = () => {
@@ -108,11 +158,7 @@ const CheckoutPage = () => {
   };
 
   useEffect(() => {
-    if (showPopup) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
+    document.body.style.overflow = showPopup ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -126,20 +172,23 @@ const CheckoutPage = () => {
     }).format(price);
   };
 
-  // Thêm state để lưu trạng thái đã thanh toán
-  const [hasOrdered, setHasOrdered] = useState(false);
+  // Di chuyển defaultAddress ra ngoài thành một memo riêng
+  const defaultAddress = useMemo(() => {
+    if (!Array.isArray(address) || address.length === 0) return null;
+    return address.find((item: any) => item.is_default) || null;
+  }, [address]);
 
   // Cập nhật hàm handleCheckout
   const handleCheckout = async () => {
     try {
       setIsLoading(true);
-      setHasOrdered(true); // Đánh dấu đã thanh toán
-
-      const defaultAddress = address.find((item: any) => item.is_default);
+      setHasOrdered(true);
+      
       const shipping_id = defaultAddress?.id;
 
       if (!shipping_id) {
-        alert("Please select a shipping address");
+        toast.error("Please select a shipping address");
+        setHasOrdered(false);
         return;
       }
 
@@ -149,11 +198,17 @@ const CheckoutPage = () => {
         variant_id: item.variant?.id || item.product_variant?.id
       }));
 
+      // Tạo checkoutData mà không có discount_code mặc định
       const checkoutData = {
         items,
         shipping_id,
-        payment_method_id: paymentMethod
+        payment_method_id: paymentMethod,
       };
+
+      // Chỉ thêm discount_code nếu đã áp dụng mã giảm giá thành công
+      if (discountInfo?.discount_info?.code) {
+        checkoutData.discount_code = discountInfo.discount_info.code;
+      }
 
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/orders`, 
@@ -165,10 +220,9 @@ const CheckoutPage = () => {
         }
       );
 
+      // Xử lý response thành công
       if (paymentMethod === 1) {
         if (response.data.payment_url) {
-          // Lưu trạng thái vào sessionStorage trước khi redirect
-          sessionStorage.setItem('hasOrdered', 'true');
           window.location.href = response.data.payment_url;
         } else {
           throw new Error("Payment URL not found");
@@ -180,10 +234,79 @@ const CheckoutPage = () => {
         });
       }
 
-    } catch (error) {
-      console.error("Checkout error:", error);
-      alert("Failed to place order. Please try again.");
-      setHasOrdered(false); // Reset trạng thái nếu có lỗi
+    } catch (error: any) {
+      setHasOrdered(false);
+      setIsLoading(false);
+
+      // Xử lý lỗi từ backend
+      if (error.response?.data?.message) {
+        const errorMessage = error.response.data.message;
+        
+        // Kiểm tra nếu là lỗi về số lượng tồn kho
+        if (errorMessage.includes("không đủ") || errorMessage.includes("còn")) {
+          // Định dạng lại thông báo lỗi từ backend
+          const productName = errorMessage.match(/'([^']+)'/)?.[1] || 'Product';
+          const availableQty = errorMessage.match(/\d+/)?.[0] || '0';
+          
+          // Tìm sản phẩm trong orderState
+          const requestedItem = orderState.items.find(
+            item => item.name === productName || item.product?.name === productName
+          );
+          
+          // Lấy thông tin về size và color
+          const size = requestedItem?.size || 
+                       requestedItem?.variant?.size?.size || 
+                       requestedItem?.product_variant?.size?.size;
+          const color = requestedItem?.color || 
+                        requestedItem?.variant?.color?.color || 
+                        requestedItem?.product_variant?.color?.color;
+          
+          // Tạo thông báo với thông tin chi tiết về variant
+          const variantInfo = size && color ? ` (${color}/${size})` : '';
+          const message = `${productName}${variantInfo} is out of stock`;
+            
+          toast.error(message, {
+            position: "top-right",
+            duration: 5000
+          });
+        } else if (errorMessage.includes("hết hàng")) {
+          // Xử lý trường hợp sản phẩm hết hàng
+          const productName = errorMessage.match(/'([^']+)'/)?.[1] || 'Product';
+          const requestedItem = orderState.items.find(
+            item => item.name === productName || item.product?.name === productName
+          );
+          
+          // Lấy thông tin về size và color
+          const size = requestedItem?.size || 
+                       requestedItem?.variant?.size?.size || 
+                       requestedItem?.product_variant?.size?.size;
+          const color = requestedItem?.color || 
+                        requestedItem?.variant?.color?.color || 
+                        requestedItem?.product_variant?.color?.color;
+          
+          // Tạo thông báo với thông tin chi tiết về variant
+          const variantInfo = size && color ? ` (${color}/${size})` : '';
+          const message = `${productName}${variantInfo} is out of stock`;
+            
+          toast.error(message, {
+            position: "top-right",
+            duration: 5000
+          });
+        } else {
+          // Các lỗi khác
+          toast.error(errorMessage, {
+            position: "top-right",
+            duration: 3000
+          });
+        }
+      } else {
+        // Thông báo lỗi mặc định
+        toast.error("Something went wrong. Please try again later.", {
+          position: "top-right", 
+          duration: 3000
+        });
+      }
+      console.error("Order error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -194,31 +317,60 @@ const CheckoutPage = () => {
       alert("Please accept the terms and conditions");
       return;
     }
+
+    // Không cần check discount code nữa, chỉ cần gọi handleCheckout
     handleCheckout();
   };
 
-  // Cập nhật useEffect kiểm tra redirect
-  useEffect(() => {
-    // Kiểm tra nếu đã thanh toán (từ sessionStorage)
-    const orderStatus = sessionStorage.getItem('hasOrdered');
-    
-    if (orderStatus === 'true') {
-      // Xóa trạng thái và redirect
-      sessionStorage.removeItem('hasOrdered');
-      navigate("/account/my-order", { replace: true });
+  // Sửa lại hàm handleCheckDiscount
+  const handleCheckDiscount = async () => {
+    // Nếu không có mã giảm giá, return luôn không cần thông báo lỗi
+    if (!discountCode.trim()) {
       return;
     }
 
-    // Kiểm tra điều kiện redirect thông thường
-    if (!location.state?.productInfo && !location.state?.cartItems) {
-      navigate('/', { replace: true });
-    }
-  }, [location.state, navigate]);
+    try {
+      setIsCheckingDiscount(true);
 
-  // Thêm kiểm tra trong return
-  if (!location.state?.productInfo && !location.state?.cartItems) {
-    return null; // Tránh render component khi đang redirect
-  }
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/discounts/apply`,
+        {
+          code: discountCode,
+          total_amount: orderState.subtotal,
+          product_ids: orderState.items.map(item => item.id || item.product_id)
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${Cookies.get('access_token')}`
+          }
+        }
+      );
+
+      if (response.data.status) {
+        setDiscountInfo(response.data.data);
+        toast.success("Discount code applied successfully!");
+      }
+
+    } catch (error: any) {
+      setDiscountInfo(null);
+      // Chỉ hiển thị thông báo lỗi khi người dùng thực sự nhập mã
+      if (discountCode.trim()) {
+        if (error.response?.data?.message) {
+          toast.error(error.response.data.message);
+        } else {
+          toast.error("Failed to apply discount code");
+        }
+      }
+    } finally {
+      setIsCheckingDiscount(false);
+    }
+  };
+
+  // Thêm hàm remove discount
+  const handleRemoveDiscount = () => {
+    setDiscountCode('');
+    setDiscountInfo(null);
+  };
 
   // Thêm loading state
   if (isLoadingAddress) {
@@ -228,6 +380,12 @@ const CheckoutPage = () => {
       </div>
     );
   }
+
+  // Thêm callback để xử lý sau khi thêm địa chỉ thành công
+  const handleAddressAdded = () => {
+    setShowAddressForm(false); // Đóng form thêm địa chỉ
+    window.location.reload(); // Refresh lại trang để lấy địa chỉ mới
+  };
 
   return (
     <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
@@ -248,9 +406,9 @@ const CheckoutPage = () => {
                   <div className="flex-1">
                     <h3 className="font-medium">{item.name}</h3>
                     <p className="text-sm text-gray-500">
-                      Size: {item.size || item.product_variant?.size.size}
+                      Size: {item.size || item.variant?.size?.size || item.product_variant?.size?.size}
                       <br />
-                      Color: {item.color || item.product_variant?.color.color}
+                      Color: {item.color || item.variant?.color?.color || item.product_variant?.color?.color}
                     </p>
                     <div className="flex justify-between items-center mt-2">
                       <div className="flex items-center space-x-2">
@@ -279,13 +437,66 @@ const CheckoutPage = () => {
 
             {/* Order Summary */}
             <div className="mt-6 space-y-2">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>{formatVND(orderState.subtotal)}</span>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                  placeholder="Enter discount code"
+                  disabled={isCheckingDiscount || discountInfo}
+                  className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                />
+                {discountInfo ? (
+                  <button
+                    onClick={handleRemoveDiscount}
+                    className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200"
+                  >
+                    Remove
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleCheckDiscount}
+                    disabled={isCheckingDiscount}
+                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 disabled:bg-blue-400"
+                  >
+                    {isCheckingDiscount ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      'Apply'
+                    )}
+                  </button>
+                )}
               </div>
-              <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                <span>Total</span>
-                <span>{formatVND(orderState.total)}</span>
+
+              {/* Hiển thị thông tin giảm giá */}
+              {discountInfo && (
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>Code: {discountInfo.discount_info.code}</p>
+                  <p>Discount: {discountInfo.discount_info.percent}%</p>
+                  <p>Valid until: {new Date(discountInfo.discount_info.valid_to).toLocaleDateString()}</p>
+                  <p>Uses remaining: {discountInfo.discount_info.remaining_uses}</p>
+                </div>
+              )}
+
+              <div className="mt-6 space-y-2">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span>{formatVND(orderState.subtotal)}</span>
+                </div>
+                
+                {discountInfo && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount</span>
+                    <span>-{formatVND(discountInfo.discount_amount)}</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between font-semibold text-lg border-t pt-2">
+                  <span>Total</span>
+                  <span>
+                    {formatVND(discountInfo ? discountInfo.final_amount : orderState.total)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -338,7 +549,7 @@ const CheckoutPage = () => {
                         >
                           <X />
                         </button>
-                        <AddressComponent />
+                        <AddressComponent onAddressAdded={handleAddressAdded} />
                       </div>
                     </div>
                   )}
@@ -348,11 +559,29 @@ const CheckoutPage = () => {
             <div className="w-full mx-auto rounded-lg bg-white border border-gray-200 p-3 text-gray-800 font-light mb-6">
               <p className="text-center">Không có địa chỉ mặc định</p>
               <button
-                onClick={handleTogglePopup}
+                onClick={() => setShowAddressForm(true)}
                 className="w-full mt-2 text-blue-500 hover:text-blue-400"
               >
                 Thêm địa chỉ mới
               </button>
+            </div>
+          )}
+
+          {/* Form thêm địa chỉ mới */}
+          {showAddressForm && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-5 max-w-lg w-full relative">
+                <button
+                  onClick={() => setShowAddressForm(false)}
+                  className="absolute top-8 right-6 text-gray-500 hover:text-red-500"
+                >
+                  <X />
+                </button>
+                <AddressComponent 
+                  isPopup={true} 
+                  onAddressAdded={handleAddressAdded}
+                />
+              </div>
             </div>
           )}
 
@@ -367,7 +596,6 @@ const CheckoutPage = () => {
                   value={2}
                   checked={paymentMethod === 2}
                   onChange={(e) => setPaymentMethod(Number(e.target.value))}
-                  defaultChecked
                 />
                 <div className="ml-3">
                   <span className="font-semibold">Cash On Delivery</span>
@@ -418,7 +646,15 @@ const CheckoutPage = () => {
                 <h4 className="font-medium mb-2">Order Items</h4>
                 {orderState.items.map((item: any) => (
                   <div key={item.id} className="flex justify-between text-sm text-gray-600 mb-2">
-                    <span>{item.quantity}x {item.name}</span>
+                    <span>
+                      {item.quantity}x {item.name}
+                      {(item.size || item.color) && (
+                        <span className="text-gray-500">
+                          {' '}
+                          ({[item.color, item.size].filter(Boolean).join('/')})
+                        </span>
+                      )}
+                    </span>
                     <span>{formatVND(item.price * item.quantity)}</span>
                   </div>
                 ))}
@@ -429,9 +665,19 @@ const CheckoutPage = () => {
                   <span>Subtotal</span>
                   <span>{formatVND(orderState.subtotal)}</span>
                 </div>
+
+                {discountInfo && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount ({discountInfo.discount_info.percent}%)</span>
+                    <span>-{formatVND(discountInfo.discount_amount)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between font-semibold text-lg pt-2">
                   <span>Total</span>
-                  <span>{formatVND(orderState.total)}</span>
+                  <span>
+                    {formatVND(discountInfo ? discountInfo.final_amount : orderState.total)}
+                  </span>
                 </div>
               </div>
             </div>

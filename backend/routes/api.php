@@ -129,6 +129,7 @@ Route::group([
         Route::post('/validate', [DiscountController::class, 'validateCode']);
         Route::patch('/{id}/status', [DiscountController::class, 'updateStatus']);
         Route::get('/{id}/statistics', [DiscountController::class, 'getStatistics']);
+        Route::post('/apply', [DiscountController::class, 'applyDiscount']);
     });
 
     Route::prefix('wishlist')->group(function () {
