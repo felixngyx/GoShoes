@@ -492,6 +492,21 @@ export default function OrderList(): JSX.Element {
           </div>
         );
 
+      case 'shipping':
+        return (
+          <div className="space-x-2">
+            {viewDetailsButton}
+            <Button
+              variant="contained"
+              size="small"
+              color="success"
+              onClick={() => setOpenDialog({ type: 'confirm-received', orderId: order.id })}
+            >
+              Confirm Received
+            </Button>
+          </div>
+        );
+
       default:
         return viewDetailsButton;
     }
@@ -865,7 +880,7 @@ export default function OrderList(): JSX.Element {
             variant="contained"
             color="success"
           >
-            Confirm
+            Yes, I've Received It
           </Button>
         </DialogActions>
       </Dialog>

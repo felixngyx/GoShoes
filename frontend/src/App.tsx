@@ -44,6 +44,7 @@ import DiscountPage from './pages/Admin/discounts';
 import PrivateRoute from './components/common/PrivateRoute';
 import AdminRoute from './components/common/AdminRoute';
 import AboutPage from './pages/Client/about';
+import CreateDiscount from './pages/Admin/discounts/create';
 
 function App() {
 	const { pathname } = useLocation();
@@ -124,6 +125,7 @@ function App() {
 					</Route>
 					<Route path="discounts">
 						<Route index element={<DiscountPage />}></Route>
+						<Route path="create" element={<CreateDiscount />}></Route>
 					</Route>
 
 					<Route
