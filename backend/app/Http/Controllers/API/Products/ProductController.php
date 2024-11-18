@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Services\Product\ProductService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
@@ -303,5 +304,10 @@ class ProductController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function checkStockProductVariant($id)
+    {
+        return $this->productService->checkStockProductVariant($id);
     }
 }
