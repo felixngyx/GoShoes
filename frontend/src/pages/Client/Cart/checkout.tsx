@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AddressComponent from "../User/Address/Address";
 import { useState, useEffect, useMemo } from "react";
 import { X } from "lucide-react";
@@ -545,87 +545,55 @@ const CheckoutPage = () => {
         {/* Right Section - Payment Details */}
 
         <div className="md:col-span-5">
-          {address && address.length > 0 ? (
-            address
-              .filter((item: any) => item.is_default)
-              .map((item: any, index: number) => (
-                <div
-                  key={index}
-                  className="w-full mx-auto rounded-lg bg-white border border-gray-200 p-3 text-gray-800 font-light mb-6 relative"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="font-semibold">
-                        {item.shipping_detail.name}
-                      </span>{" "}
-                      |{" "}
-                      <span className="text-gray-600 font-semibold">
-                        (+84) {item.shipping_detail.phone_number}
-                      </span>
-                      <div className="text-gray-500 space-x-3">
-                        <p className="">
-                          {item.shipping_detail.address_detail}
-                        </p>
-                      </div>
-                      <div className="text-gray-500 space-x-3">
-                        <p className="">{item.shipping_detail.address}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleTogglePopup}
-                      className="absolute top-3 right-3 text-blue-500 hover:text-blue-400"
-                    >
-                      Change
-                    </button>
-                  </div>
-                  <div className="inline-block border-2 border-blue-500 text-xs p-[0.15rem] text-blue-400">
-                    default
-                  </div>
-
-                  {showPopup && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                      <div className="bg-white rounded-lg p-5 max-w-lg w-full relative">
-                        <button
-                          onClick={handleTogglePopup}
-                          className="absolute top-8 right-6 text-gray-500 hover:text-red-500"
-                        >
-                          <X />
-                        </button>
-                        <AddressComponent onAddressAdded={handleAddressAdded} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))
-          ) : (
-            <div className="w-full mx-auto rounded-lg bg-white border border-gray-200 p-3 text-gray-800 font-light mb-6">
-              <p className="text-center">Không có địa chỉ mặc định</p>
-              <button
-                onClick={() => setShowAddressForm(true)}
-                className="w-full mt-2 text-blue-500 hover:text-blue-400"
+          {address
+            .filter((item: any) => item.is_default)
+            .map((item: any, index: number) => (
+              <div
+                key={index}
+                className="w-full mx-auto rounded-lg bg-white border border-gray-200 p-3 text-gray-800 font-light mb-6 relative"
               >
-                Thêm địa chỉ mới
-              </button>
-            </div>
-          )}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="font-semibold">
+                      {item.shipping_detail.name}
+                    </span>{" "}
+                    |{" "}
+                    <span className="text-gray-600 font-semibold">
+                      (+84) {item.shipping_detail.phone_number}
+                    </span>
+                    <div className="text-gray-500 space-x-3">
+                      <p className="">{item.shipping_detail.address_detail}</p>
+                    </div>
+                    <div className="text-gray-500 space-x-3">
+                      <p className="">{item.shipping_detail.address}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleTogglePopup}
+                    className="absolute top-3 right-3 text-blue-500 hover:text-blue-400"
+                  >
+                    Change
+                  </button>
+                </div>
+                <div className="inline-block border-2 border-blue-500 text-xs p-[0.15rem] text-blue-400">
+                  default
+                </div>
 
-          {/* Form thêm địa chỉ mới */}
-          {showAddressForm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-5 max-w-lg w-full relative">
-                <button
-                  onClick={() => setShowAddressForm(false)}
-                  className="absolute top-8 right-6 text-gray-500 hover:text-red-500"
-                >
-                  <X />
-                </button>
-                <AddressComponent
-                  isPopup={true}
-                  onAddressAdded={handleAddressAdded}
-                />
+                {showPopup && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-5 max-w-lg w-full relative">
+                      <button
+                        onClick={handleTogglePopup}
+                        className="absolute top-8 right-6 text-gray-500 hover:text-red-500"
+                      >
+                        <X />
+                      </button>
+                      <AddressComponent />
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            ))}
 
           <div className="w-full mx-auto rounded-lg bg-white border border-gray-200 text-gray-800 font-light mb-6">
             <div className="w-full p-3">
