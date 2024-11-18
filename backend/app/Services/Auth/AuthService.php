@@ -302,6 +302,8 @@ class AuthService implements AuthServiceInterface
                 ], 403);
             }
 
+            //update token is used
+            self::getTokenService()->update(['is_used' => true], $user->id);
             // Update email_verified_at
             $this->userService->update(['email_verified_at' => now()], $user->id);
             DB::commit();
