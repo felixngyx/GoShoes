@@ -43,12 +43,12 @@ const AddressComponent: React.FC = () => {
         {address
           .sort((a: any, b: any) => {
             if (a.is_default && !b.is_default) {
-              return -1;
+              return -1; // Địa chỉ có is_default = true sẽ được đặt lên trên cùng
             }
             if (!a.is_default && b.is_default) {
-              return 1;
+              return 1; // Địa chỉ không có is_default = true sẽ ở dưới cùng
             }
-            return 0;
+            return 0; // Nếu cả hai đều có giá trị giống nhau, không thay đổi thứ tự
           })
           .map((items: any, index: number) => (
             <div key={index} className="p-4 mb-4 border rounded-md shadow-sm">

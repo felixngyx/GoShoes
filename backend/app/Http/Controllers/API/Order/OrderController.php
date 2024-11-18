@@ -120,8 +120,13 @@ class OrderController extends Controller
 
         $query = Order::with([
             'shipping:id,user_id,shipping_detail,is_default',
-            'items:id,order_id,product_id,quantity,price',
-            'items.product:id,name,thumbnail'
+            'items:id,order_id,product_id,variant_id,quantity,price',
+            'items.product:id,name,thumbnail',
+            'items.variant:id,size_id,color_id',
+            'items.variant.size:id,size',
+            'items.variant.color:id,color',
+            'payment:order_id,method_id,status,url',
+            'payment.method:id,name'
         ])
             ->where('user_id', $user_id);
 
@@ -176,11 +181,24 @@ class OrderController extends Controller
                             'price' => $item->price,
                             'subtotal' => $item->quantity * $item->price,
                             'product' => [
+                                'id' => $item->product->id,
                                 'name' => $item->product->name,
                                 'thumbnail' => (string) $item->product->thumbnail,
-                            ]
+                            ],
+                            'variant' => $item->variant ? [
+                                'id' => $item->variant->id,
+                                'size' => $item->variant->size->size,
+                                'color' => $item->variant->color->color,
+                            ] : null
                         ];
-                    })
+                    }),
+
+                    // Thông tin thanh toán và URL ZaloPay
+                    'payment' => $order->payment ? [
+                        'method' => $order->payment->method->name,
+                        'status' => $order->payment->status,
+                        'payment_url' => $this->getPaymentUrl($order)
+                    ] : null,
                 ];
             }),
             'pagination' => [
@@ -196,6 +214,22 @@ class OrderController extends Controller
                 'search' => $search
             ]
         ]);
+    }
+
+    // Helper method để lấy payment URL
+    private function getPaymentUrl($order)
+    {
+        if (!$order->payment) {
+            return null;
+        }
+
+        // Kiểm tra nếu là ZaloPay (giả sử method_id = 1 là ZaloPay)
+        if ($order->payment->method_id == 1) {
+            // Trả về URL nếu có, không cần kiểm tra trạng thái
+            return $order->payment->url;
+        }
+
+        return null;
     }
 
     public function store(OrderStoreRequest $request)
@@ -290,7 +324,7 @@ class OrderController extends Controller
                 'original_total' => $originalTotal,
             ]);
 
-            // 5. Tạo chi tiết đơn hàng và cập nhật tồn kho
+            // 5. Tạo chi tiết đơn hàng và cập nhật tn kho
             foreach ($items as $item) {
                 OrderItem::create([
                     'order_id' => $order->id,

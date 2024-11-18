@@ -3,6 +3,7 @@
 namespace App\Repositories\RepositoryInterfaces;
 
 use App\Models\Product;
+use App\Models\ProductVariant;
 
 interface ProductRepositoryInterface
 {
@@ -16,6 +17,7 @@ interface ProductRepositoryInterface
     public function findProductWithRelationsClient(string $id);
     public function softDeleteProduct(Product $product);
     public function restoreProduct(Product $product);
+    public function checkStockProductVariant($id);
   
    
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Services\Product\ProductService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
@@ -87,8 +88,8 @@ class ProductController extends Controller
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'price' => (float) $product->price,
-                    'promotional_price' => (float) $product->promotional_price,
+                    'price' => number_format((float) $product->price, 0, ',', '.'),
+                    'promotional_price' => number_format((float) $product->promotional_price, 0, ',', '.'),
                     'stock_quantity' => $product->stock_quantity,
                     'sku' => $product->sku,
                     'rating_count' => $product->rating_count,
@@ -303,5 +304,10 @@ class ProductController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function checkStockProductVariant($id)
+    {
+        return $this->productService->checkStockProductVariant($id);
     }
 }

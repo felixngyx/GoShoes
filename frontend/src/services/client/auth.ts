@@ -10,11 +10,7 @@ const authService = {
 		return axiosClient.post('/auth/login', credentials);
 	},
 	loginWithFacebook(data: FacebookLoginData) {
-		// Chỉ định kiểu cho tham số data
-		return axiosClient.post(
-			`${import.meta.env.VITE_API_URL}/auth/facebook-login`,
-			data
-		);
+		return axiosClient.post('/auth/facebook-login', data);
 	},
 	register: (credentials: {
 		email: string;

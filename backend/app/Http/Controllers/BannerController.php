@@ -30,10 +30,11 @@ class BannerController extends Controller
         $request->validate([
             'title' => 'required|string',
             'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
+            'end_date' => 'required|date',
             'active' => 'required|boolean',
-            'images' => 'sometimes|array',
-            'images.*' => 'required|string|max:255',
+            'images' => 'required|array',
+            'images.*.image_path' => 'required|string',
+            'images.*.title' => 'nullable|string',
         ]);
 
         try {
@@ -61,8 +62,9 @@ class BannerController extends Controller
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after:start_date',
             'active' => 'nullable|boolean',
-            'images' => 'nullable|array', // Đảm bảo images là mảng
-            'images.*.image_path' => 'required|string', // image_path phải là chuỗi
+            'images' => 'nullable|array',
+            'images.*.image_path' => 'required|string',
+            'images.*.title' => 'nullable|string'
         ]);
 
         try {

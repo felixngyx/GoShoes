@@ -10,9 +10,10 @@ import { IUser } from '../../../types/client/user';
 import { joiResolver } from '@hookform/resolvers/joi';
 import authService from '../../../services/client/auth';
 import Cookies from 'js-cookie';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../../../store/client/userSlice';
 import toast from 'react-hot-toast';
+import { RootState } from '../../../store';
 
 const schema = Joi.object({
 	email: Joi.string()
@@ -31,6 +32,9 @@ const SignIn = () => {
 	const [showPassword, setShowPassword] = useState(false);
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
+	const user = useSelector((state: RootState) => state.client.user);
+	const [loading, setLoading] = useState(false);
+	const { loginWithFacebook } = authService;
 	const {
 		register,
 		handleSubmit,
@@ -40,9 +44,10 @@ const SignIn = () => {
 	});
 	const onSubmit = async (data: IUser) => {
 		try {
+			setLoading(true);
 			const response = await authService.login(data);
-			console.log(response);
 			if (response.data.success) {
+				Cookies.set('user', JSON.stringify(response.data.user));
 				Cookies.set('access_token', response.data.access_token);
 				Cookies.set('refresh_token', response.data.refresh_token);
 				dispatch(login(response.data.user));
@@ -52,13 +57,16 @@ const SignIn = () => {
 				toast.error(response.data.message);
 			}
 		} catch (error: any) {
-			toast.error(error.response.data.message);
+			toast.error('Invalid email or password');
+		} finally {
+			setLoading(false);
 		}
 	};
 
 	const responseFacebook = async (response: any) => {
 		if (response.accessToken) {
 			try {
+				setLoading(true);
 				// Gửi access token tới backend
 				const serverResponse = await authService.loginWithFacebook({
 					access_token: response.accessToken,
@@ -67,9 +75,17 @@ const SignIn = () => {
 				// Kiểm tra phản hồi từ server
 				if (serverResponse.data.success) {
 					// Lưu token vào cookie
+					const user = {
+						name: serverResponse.data.user.name,
+						email: serverResponse.data.user.email,
+						email_is_verified: true,
+						is_admin: false,
+					};
+					Cookies.set('user', JSON.stringify(user));
 					Cookies.set('access_token', serverResponse.data.access_token);
 					Cookies.set('refresh_token', serverResponse.data.refresh_token);
-					dispatch(login(serverResponse.data.user));
+					await loginWithFacebook({ access_token: response.accessToken });
+					dispatch(login(user));
 					toast.success(serverResponse.data.message);
 					navigate('/');
 				} else {
@@ -78,6 +94,8 @@ const SignIn = () => {
 			} catch (error) {
 				console.error('Facebook login error:', error);
 				toast.error('Facebook login failed. Please try again.');
+			} finally {
+				setLoading(false);
 			}
 		} else {
 			console.error('Facebook login failed:', response);
@@ -151,8 +169,11 @@ const SignIn = () => {
 									Forgot your password?
 								</p>
 							</Link>
-							<button className="btn bg-[#40BFFF] text-white w-full rounded-md mt-5">
-								Sign in
+							<button
+								disabled={loading}
+								className="btn bg-[#40BFFF] text-white w-full rounded-md mt-5"
+							>
+								{loading ? 'Signing in...' : 'Sign in'}
 							</button>
 							<p className="text-md text-[#B0B0B0] text-center my-10">
 								or continue with
@@ -160,14 +181,14 @@ const SignIn = () => {
 							<div className="flex justify-center items-center gap-5 mt-5">
 								<FacebookLogin
 									appId={env.FACEBOOK_APP_ID}
-									autoLoad={true}
+									autoLoad={false}
 									fields="name,email,picture"
 									callback={responseFacebook}
 									icon="fa-facebook"
 									size="small"
 									render={(renderProps) => (
 										<img
-											onClick={renderProps.onClick}
+											onClick={() => renderProps.onClick()}
 											className="w-8 cursor-pointer"
 											src="images/fb_logo.png"
 											alt=""

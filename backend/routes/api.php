@@ -2,7 +2,7 @@
 
 use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
-use App\Http\Controllers\API\Shipping\ShippingController;
+// use App\Http\Controllers\API\Shipping\ShippingController;
 use App\Http\Controllers\API\Wishlist\WishlistController;
 use App\Http\Controllers\API\Cart\CartController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +20,7 @@ use App\Http\Controllers\API\Post\PostController;
 use App\Http\Controllers\API\PostCategory\PostCategoryController;
 use App\Http\Controllers\API\Products\ProductClientController;
 use App\Http\Controllers\Api\Review\ReviewController;
+use App\Http\Controllers\API\Shipping\ShippingController;
 use App\Http\Controllers\BannerController;
 
 /*
@@ -55,6 +56,7 @@ Route::get('/products', [ProductController::class, 'index']);
 Route::post('/products', [ProductController::class, 'store']);
 
 Route::get('/product/{id}', [ProductClientController::class, 'show']);
+Route::get('/product/variant/{id}/stock', [ProductController::class, 'checkStockProductVariant']);
 
 
 // API Color
@@ -128,6 +130,7 @@ Route::group([
         Route::post('/validate', [DiscountController::class, 'validateCode']);
         Route::patch('/{id}/status', [DiscountController::class, 'updateStatus']);
         Route::get('/{id}/statistics', [DiscountController::class, 'getStatistics']);
+        Route::post('/apply', [DiscountController::class, 'applyDiscount']);
     });
 
     Route::prefix('wishlist')->group(function () {
