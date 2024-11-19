@@ -304,6 +304,78 @@ class OrderController extends Controller
             // 3. Tính tổng giá trị cuối cùng
             $finalTotal = $originalTotal - $discountAmount;
 
+            // Xử lý đặc biệt cho đơn hàng 0 đồng
+            if ($finalTotal <= 0) {
+                $finalTotal = 0; // Đảm bảo không âm
+                $order = Order::create([
+                    'user_id' => auth()->user()->id,
+                    'total' => $finalTotal,
+                    'status' => 'processing', // Chuyển thẳng sang processing vì không cần thanh toán
+                    'shipping_id' => $request->shipping_id,
+                    'sku' => $this->generateSKU(),
+                    'discount_code' => $discountCode,
+                    'discount_amount' => $discountAmount,
+                    'original_total' => $originalTotal,
+                ]);
+
+                // Tạo payment record với trạng thái completed
+                OrderPayment::create([
+                    'order_id' => $order->id,
+                    'method_id' => $request->payment_method_id,
+                    'status' => 'success', // Đổi từ 'paid' thành 'success'
+                    'url' => null,
+                    'amount' => 0
+                ]);
+
+                // Tạo order items và cập nhật tồn kho
+                foreach ($items as $item) {
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'product_id' => $item['product_id'],
+                        'variant_id' => $item['variant_id'],
+                        'quantity' => $item['quantity'],
+                        'price' => $item['price'],
+                    ]);
+
+                    // Kiểm tra lại số lượng một lần nữa trước khi cập nhật
+                    if ($item['variant_id']) {
+                        $variant = $item['variant'];
+                        // Kiểm tra lại lần cuối để đảm bảo số lượng vẫn đủ
+                        if ($variant->quantity < $item['quantity']) {
+                            throw new \Exception("Sản phẩm {$item['product']->name} đã hết hàng trong quá trình xử lý");
+                        }
+                        $variant->decrement('quantity', $item['quantity']);
+                    } else {
+                        $product = $item['product'];
+                        // Kiểm tra lại lần cuối để đảm bảo số lượng vẫn đủ
+                        if ($product->stock_quantity < $item['quantity']) {
+                            throw new \Exception("Sản phẩm {$product->name} đã hết hàng trong quá trình xử lý");
+                        }
+                        $product->decrement('stock_quantity', $item['quantity']);
+                    }
+                }
+
+                // Cập nhật số lượt sử dụng mã giảm giá
+                if ($discountCode) {
+                    Discount::where('code', $discountCode)->increment('used_count');
+                }
+
+                // Gửi email xác nhận đơn hàng
+                Mail::to(auth()->user()->email)->queue(new OrderCreated($order));
+
+                DB::commit();
+                event(new NewOrderCreated($order->id));
+
+                return response()->json([
+                    'order' => $order->load(['items.product', 'items.variant.size', 'items.variant.color', 'shipping']),
+                    'payment_url' => null,
+                    'original_total' => $originalTotal,
+                    'discount_amount' => $discountAmount,
+                    'final_total' => $finalTotal,
+                    'message' => 'Đơn hàng đã được tạo thành công'
+                ], 201);
+            }
+
             // Kiểm tra phương thức thanh toán
             $paymentMethod = PaymentMethod::findOrFail($request->payment_method_id);
             $isCOD = $paymentMethod->id === 2;
@@ -462,8 +534,8 @@ class OrderController extends Controller
     // Helper methods để xác định trạng thái
     private function determineOrderStatus($finalTotal, $isCOD)
     {
-        if ($finalTotal == 0) {
-            return 'completed';
+        if ($finalTotal <= 0) {
+            return 'processing'; // Đơn 0 đồng chuyển thẳng sang processing
         }
         // Đơn hàng COD luôn bắt đầu với trạng thái processing
         if ($isCOD) {
@@ -497,8 +569,8 @@ class OrderController extends Controller
 
     private function determinePaymentStatus($finalTotal, $isCOD)
     {
-        if ($finalTotal == 0) {
-            return 'paid';
+        if ($finalTotal <= 0) {
+            return 'success'; // Đơn 0 đồng đánh dấu đã thanh toán
         }
         // Thanh toán COD luôn bắt đầu với trạng thái pending
         if ($isCOD) {
