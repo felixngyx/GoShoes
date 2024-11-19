@@ -31,7 +31,7 @@ interface OrderData {
         email: string;
     };
     shipping: {
-        shipping_detail: {
+        shipping_detail: string | {
             name: string;
             phone_number: string;
             address: string;
@@ -85,6 +85,31 @@ api.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+
+const LoadingAnimation = () => {
+  return (
+    <div className="w-full h-64 flex items-center justify-center">
+      <div className="space-y-4 text-center">
+        {/* Logo animation */}
+        <div className="relative w-16 h-16 mx-auto">
+          <div className="absolute inset-0 border-4 border-purple-200 dark:border-purple-900/50 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-purple-600 dark:border-purple-400 rounded-full 
+                        border-t-transparent animate-spin"></div>
+        </div>
+        
+        {/* Text animation */}
+        <div className="text-lg font-medium text-gray-700 dark:text-gray-200">
+          <div className="inline-block">
+            Loading Orders
+            <span className="animate-bounce inline-block">.</span>
+            <span className="animate-bounce inline-block" style={{ animationDelay: '0.2s' }}>.</span>
+            <span className="animate-bounce inline-block" style={{ animationDelay: '0.4s' }}>.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function OrderDashboard() {
     const navigate = useNavigate();
@@ -159,14 +184,20 @@ export default function OrderDashboard() {
         // Lọc theo search term
         let filtered = orders.filter(order => {
             const searchString = search.toLowerCase();
+            const orderDate = new Date(order.created_at).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+            });
+            
             return (
                 order.sku.toLowerCase().includes(searchString) ||
                 order.customer.name.toLowerCase().includes(searchString) ||
                 order.customer.email.toLowerCase().includes(searchString) ||
-                order.shipping.city.toLowerCase().includes(searchString) ||
                 order.status.toLowerCase().includes(searchString) ||
                 order.items.some(item => item.product.name.toLowerCase().includes(searchString)) ||
-                order.created_at.toLowerCase().includes(searchString)
+                orderDate.includes(searchString) ||  // Tìm theo định dạng dd/mm/yyyy
+                order.created_at.split('T')[0].includes(searchString)  // Tìm theo định dạng yyyy-mm-dd
             );
         });
 
@@ -225,64 +256,142 @@ export default function OrderDashboard() {
     };
 
     // Export to CSV với tất cả dữ liệu đã được filter
-    const handleExportToCSV = () => {
-        // Áp dụng filter nhưng không áp dụng phân trang
+    const handleExportToCSV = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        
         const filteredOrders = allOrders.filter(order => {
             const searchString = searchTerm.toLowerCase();
+            const orderDate = new Date(order.created_at).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+            });
+            
             return (
                 order.sku.toLowerCase().includes(searchString) ||
                 order.customer.name.toLowerCase().includes(searchString) ||
                 order.customer.email.toLowerCase().includes(searchString) ||
-                order.shipping.city.toLowerCase().includes(searchString) ||
                 order.status.toLowerCase().includes(searchString) ||
                 order.items.some(item => item.product.name.toLowerCase().includes(searchString)) ||
-                order.created_at.toLowerCase().includes(searchString)
+                orderDate.includes(searchString) ||  // Tìm theo định dạng dd/mm/yyyy
+                order.created_at.split('T')[0].includes(searchString)  // Tìm theo định dạng yyyy-mm-dd
             );
         });
 
-        // Áp dụng sort nếu có
-        if (sortConfig) {
-            filteredOrders.sort((a, b) => {
-                let valA = sortConfig.key === 'customer.name' ? a.customer.name : a[sortConfig.key as keyof OrderData];
-                let valB = sortConfig.key === 'customer.name' ? b.customer.name : b[sortConfig.key as keyof OrderData];
+        // Tạo dữ liệu thống kê
+        const statistics = {
+            totalOrders: filteredOrders.length,
+            totalRevenue: filteredOrders.reduce((sum, order) => sum + Number(order.total), 0),
+            ordersByStatus: filteredOrders.reduce((acc, order) => {
+                acc[order.status] = (acc[order.status] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>),
+            averageOrderValue: filteredOrders.reduce((sum, order) => sum + Number(order.total), 0) / filteredOrders.length,
+        };
 
-                if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
-                if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
-                return 0;
-            });
-        }
+        // Sheet đơn hàng chi tiết
+        const ordersData = filteredOrders.map((order) => ({
+            'Order ID': order.id,
+            'SKU': order.sku,
+            'Order Date': new Date(order.created_at).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }),
+            'Status': order.status.toUpperCase(),
+            'Customer Name': order.customer.name,
+            'Customer Email': order.customer.email,
+            'Shipping Address': order.shipping?.shipping_detail ? 
+                (() => {
+                    try {
+                        const shippingDetail = JSON.parse(order.shipping.shipping_detail);
+                        return `${shippingDetail.address}, ${shippingDetail.address_detail}`;
+                    } catch (e) {
+                        return 'N/A';
+                    }
+                })() : 
+                'N/A',
+            'Phone Number': order.shipping?.shipping_detail ? 
+                (() => {
+                    try {
+                        const shippingDetail = JSON.parse(order.shipping.shipping_detail);
+                        return shippingDetail.phone_number;
+                    } catch (e) {
+                        return 'N/A';
+                    }
+                })() : 
+                'N/A',
+            'Total Amount': new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(Number(order.total)),
+            'Products': order.items.map(item => 
+                `${item.quantity}x ${item.product.name} (${item.variant?.size || 'N/A'}, ${item.variant?.color || 'N/A'})`
+            ).join(' | '),
+            'Payment Method': order.payment?.method || 'N/A',
+            'Payment Status': order.payment?.status || 'N/A'
+        }));
 
-        const csvData = unparse(
-            filteredOrders.map((order) => ({
-                id: order.id,
-                sku: order.sku,
-                'customer.name': order.customer.name,
-                'customer.email': order.customer.email,
-                status: order.status,
-                total: order.total,
-                created_at: order.created_at,
-            })),
+        // Sheet thống kê
+        const statisticsData = [
             {
+                'Metric': 'Total Orders',
+                'Value': statistics.totalOrders
+            },
+            {
+                'Metric': 'Total Revenue',
+                'Value': new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND'
+                }).format(statistics.totalRevenue)
+            },
+            {
+                'Metric': 'Average Order Value',
+                'Value': new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND'
+                }).format(statistics.averageOrderValue)
+            },
+            { 'Metric': '', 'Value': '' }, // Dòng trống
+            { 'Metric': 'Orders by Status', 'Value': '' },
+            ...Object.entries(statistics.ordersByStatus).map(([status, count]) => ({
+                'Metric': status.charAt(0).toUpperCase() + status.slice(1),
+                'Value': count
+            }))
+        ];
+
+        // Tạo workbook với nhiều sheet
+        const workbook = {
+            Orders: ordersData,
+            Statistics: statisticsData
+        };
+
+        // Xuất file với nhiều sheet
+        const csvString = Object.entries(workbook).map(([sheetName, data]) => (
+            `${sheetName}\n${unparse(data, {
                 header: true,
-            }
-        );
+                quotes: true,
+                delimiter: ',',
+            })}\n\n`
+        )).join('');
 
-        const currentDate = new Date();
-        const formattedDate = currentDate.toISOString().split('T')[0]; // Chỉ lấy phần ngày (yyyy-MM-dd)
+        // Thêm BOM để Excel hiển thị đúng tiếng Việt
+        const BOM = '\uFEFF';
+        const csvWithBOM = BOM + csvString;
 
-        // Tạo đối tượng Blob với dữ liệu CSV
-        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        const currentDate = new Date().toLocaleDateString('en-GB').split('/').join('-');
+        
+        const blob = new Blob([csvWithBOM], { 
+            type: 'text/csv;charset=utf-8;' 
+        });
 
-        // Tạo liên kết tải xuống
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-
-        // Thiết lập tên tệp động với ngày hiện tại
-        link.setAttribute('download', `orders_download${formattedDate}.csv`);
-
-        // Kích hoạt tải xuống
+        link.setAttribute('download', `Orders_Report_${currentDate}.csv`);
         link.click();
-
     };
 
     const getStatusColor = (status: OrderData['status']) => {
@@ -305,8 +414,8 @@ export default function OrderDashboard() {
 
     if (loading) {
         return (
-            <div className="w-full h-64 flex items-center justify-center">
-                <div className="animate-pulse text-gray-600 dark:text-gray-300">Loading orders...</div>
+            <div className="w-full max-w-10xl mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+                <LoadingAnimation />
             </div>
         );
     }
@@ -326,7 +435,19 @@ export default function OrderDashboard() {
         <div className="w-full max-w-10xl mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
             <div className="p-6 bg-white/60 dark:bg-gray-800/60">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex">Customer's Orders <Download className='ml-4 mt-1 cursor-pointer hover:text-purple-600' size={25} onClick={handleExportToCSV}></Download></h1>
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex">Customer's Orders 
+                        <Download 
+                            className='ml-4 mt-1 cursor-pointer hover:text-purple-600' 
+                            size={25} 
+                            onClick={handleExportToCSV}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleExportToCSV(e);
+                                }
+                            }}
+                            tabIndex={0}
+                        />
+                    </h1>
                     <div className="relative w-72">
                         <input
                             type="search"

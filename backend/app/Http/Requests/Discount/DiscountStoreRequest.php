@@ -22,8 +22,8 @@ class DiscountStoreRequest extends FormRequest
             'usage_limit' => 'required|integer|min:1',
             'percent' => 'required|numeric|min:0|max:100',
             'used_count' => 'nullable|integer|min:0',
-            'product_ids' => 'required|array',
-            'product_ids.*' => 'required|exists:products,id'
+            'product_ids' => 'nullable|array',
+            'product_ids.*' => 'exists:products,id'
         ];
     }
 

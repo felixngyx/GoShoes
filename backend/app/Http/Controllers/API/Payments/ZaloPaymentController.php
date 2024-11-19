@@ -5,6 +5,9 @@ namespace App\Http\Controllers\API\Payments;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderPayment;
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\Discount;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -122,14 +125,14 @@ class ZaloPaymentController extends Controller
             return redirect()->away(env('FRONTEND_URL') . '/payment-fail?message=Invalid SKU');
         }
 
-        $order = Order::where("sku", $sku)->first();
+        $order = Order::with(['items'])->where("sku", $sku)->first();
 
         if (!$order) {
             return redirect()->away(env('FRONTEND_URL') . '/payment-fail?message=Order not found');
         }
-        $order->update(['status' => 'processing']);
+
         $payment = OrderPayment::where('order_id', $order->id)->first();
-        //if return_code = 1 thì redirect về frontend với message "transaction successful"
+
         if (!$payment) {
             return redirect()->away(env('FRONTEND_URL') . '/payment-fail?message=Payment information not found');
         }
@@ -137,12 +140,31 @@ class ZaloPaymentController extends Controller
         // Xử lý kết quả thanh toán
         switch ($result["return_code"]) {
             case 1:
-                $order->update(["status" => "shipping"]);
+                $order->update(["status" => "processing"]);
                 $payment->update(['status' => 'success']);
                 return redirect()->away(env('FRONTEND_URL') . '/payment-success?message=Transaction successful');
 
             case 0:
             case -1:
+                // Hoàn trả số lượng sản phẩm khi thanh toán thất bại
+                foreach ($order->items as $item) {
+                    if ($item->variant_id) {
+                        // Hoàn trả số lượng cho variant
+                        ProductVariant::where('id', $item->variant_id)
+                            ->increment('quantity', $item->quantity);
+                    } else {
+                        // Hoàn trả số lượng cho sản phẩm
+                        Product::where('id', $item->product_id)
+                            ->increment('stock_quantity', $item->quantity);
+                    }
+                }
+
+                // Hoàn trả lượt sử dụng mã giảm giá nếu có
+                if ($order->discount_code) {
+                    Discount::where('code', $order->discount_code)
+                        ->decrement('used_count');
+                }
+
                 $order->update(["status" => "cancelled"]);
                 $payment->update(['status' => 'failed']);
                 $message = ($result["return_code"] == 0) ? 'Transaction failed' : 'Checksum verification failed';

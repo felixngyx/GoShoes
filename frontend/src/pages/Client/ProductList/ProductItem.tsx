@@ -5,6 +5,7 @@ import { IProduct } from "../../../types/client/products/products";
 import useCart from "../../../hooks/client/useCart";
 import Cookies from "js-cookie";
 import { useState } from "react";
+import { formatVNCurrency } from "../../../common/formatVNCurrency";
 
 const ProductItemSkeleton = () => {
   return (
@@ -49,14 +50,6 @@ const ProductItems = ({ product, isLoading }: { product: any, isLoading: boolean
   if (isLoading) {
     return <ProductItemSkeleton />;
   }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-  };
-
   const addCart = (product: IProduct) => {
     const productVariantId = product.variants[0].id;
     const quantity = 1;
@@ -135,10 +128,10 @@ const ProductItems = ({ product, isLoading }: { product: any, isLoading: boolean
         </div>
         <div className="flex items-center justify-center gap-2 mt-1 mb-3">
           <p className="text-primary text-lg font-semibold">
-            {formatCurrency(product.promotional_price)}
+            {formatVNCurrency(product.promotional_price)}
           </p>
           <p className="text-[#9098B1] text-sm font-medium line-through">
-            {formatCurrency(product.price)}
+            {formatVNCurrency(product.price)}
           </p>
           <p className="text-[#E71D36] text-sm font-semibold">-10%</p>
         </div>

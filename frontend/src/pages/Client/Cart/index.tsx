@@ -114,24 +114,23 @@ const Cart = () => {
 	);
 
 	const handleCheckout = () => {
-		if (!isAnyItemSelected) {
-			return;
-		}
+		if (!isAnyItemSelected) return;
 
 		const selectedItems = cartItemsWithSelected
 			.filter((item: any) => item.selected)
 			.map((item: any) => ({
 				id: item.product_variant.product_id,
 				name: item.product_variant.product.name,
-				price:
-					parseFloat(item.product_variant.product.promotional_price) ||
-					parseFloat(item.product_variant.product.price),
+				price: parseFloat(item.product_variant.product.promotional_price) || 
+					   parseFloat(item.product_variant.product.price),
 				quantity: item.quantity,
 				thumbnail: item.product_variant.image_variant,
-				variant: {
+				
+				product_variant: {
 					id: item.product_variant.id,
-					size: item.product_variant.size.size,
-					color: item.product_variant.color.color,
+					size: item.product_variant.size,
+					color: item.product_variant.color,
+					image_variant: item.product_variant.image_variant
 				},
 				total: item.totalPrice,
 			}));

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
 import axios, { AxiosInstance } from 'axios';
 import Cookies from 'js-cookie';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Order, OrderStatus, Tab } from '../../../types/client/order';
 import { Search } from 'lucide-react';
 import { 
@@ -18,9 +18,18 @@ import {
   Chip,
   Skeleton,
   Box,
-  Pagination
+  Pagination,
+  Select,
+  MenuItem,
+  InputAdornment,
+  Modal,
+  Typography,
+  IconButton
 } from '@mui/material';
 import { Tab as MuiTab, Tabs } from '@mui/material';
+import { toast } from 'react-hot-toast';
+import { format } from 'date-fns';
+import { Upload, X } from 'lucide-react';
 
 const tabs: Tab[] = [
   { id: 'all', label: 'ALL', color: 'text-red-500' },
@@ -65,29 +74,61 @@ api.interceptors.request.use(
   }
 );
 
-export default function OrderList(): JSX.Element {
-  const [activeTab, setActiveTab] = useState<'all' | OrderStatus>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [page, setPage] = useState(1);
-  const [openDialog, setOpenDialog] = useState<{ type: string; orderId: string | null }>({ type: '', orderId: null });
+interface SortOption {
+  value: string;
+  label: string;
+}
 
-  const { data: ordersData, isLoading } = useQuery<ApiResponse>({
-    queryKey: ['orders', activeTab, searchTerm, page],
+interface FilterState {
+  search: string;
+  status: OrderStatus | 'all';
+  sort: string;
+}
+
+interface RefundFormData {
+  reason: string;
+  images: File[];
+}
+
+export default function OrderList(): JSX.Element {
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    status: 'all',
+    sort: 'newest'
+  });
+  const [debouncedFilters] = useDebounce(filters, 500);
+  const [page, setPage] = useState(1);
+  const [openDialog, setOpenDialog] = useState<{ 
+    type: string; 
+    orderId: string | null;
+    paymentUrl?: string;
+  }>({ 
+    type: '', 
+    orderId: null 
+  });
+  const [isRenewing, setIsRenewing] = useState<string | null>(null);
+  const [refundForm, setRefundForm] = useState<RefundFormData>({
+    reason: '',
+    images: []
+  });
+
+  const { data: ordersData, isLoading, refetch } = useQuery<ApiResponse>({
+    queryKey: ['orders', debouncedFilters, page],
     queryFn: async () => {
-      let url = '/orders?';
       const params = new URLSearchParams({
-        page: page.toString()
+        page: page.toString(),
+        sort: debouncedFilters.sort
       });
 
-      if (activeTab !== 'all') {
-        params.append('status', activeTab);
+      if (debouncedFilters.status !== 'all') {
+        params.append('status', debouncedFilters.status);
       }
 
-      if (searchTerm) {
-        params.append('search', searchTerm);
+      if (debouncedFilters.search) {
+        params.append('search', debouncedFilters.search);
       }
 
-      const response = await api.get<ApiResponse>(`${url}${params.toString()}`);
+      const response = await api.get<ApiResponse>(`/orders?${params.toString()}`);
       
       if (!response.data.success) {
         throw new Error('Failed to fetch orders');
@@ -101,34 +142,212 @@ export default function OrderList(): JSX.Element {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const searchValue = formData.get('search') as string;
-    setSearchTerm(searchValue);
+    
+    setFilters(prev => ({
+      ...prev,
+      search: searchValue
+    }));
+    setPage(1);
+  };
+
+  const handleStatusChange = (newStatus: OrderStatus | 'all') => {
+    setFilters(prev => ({
+      ...prev,
+      status: newStatus
+    }));
+    setPage(1);
+  };
+
+  const handleSortChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFilters(prev => ({
+      ...prev,
+      sort: event.target.value
+    }));
     setPage(1);
   };
 
   const handleCancelOrder = async (orderId: string): Promise<void> => {
     try {
-      await api.post(`/orders/${orderId}/cancel`);
+      await api.put(`/orders/${orderId}/update`, {
+        status: 'cancelled'
+      });
+      
       setOpenDialog({ type: '', orderId: null });
-    } catch (error) {
-      console.error('Error cancelling order:', error);
+      // Refresh data
+      refetch();
+      toast.success('Order cancelled successfully');
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to cancel order');
+      }
     }
   };
 
   const handleRefundRequest = async (orderId: string): Promise<void> => {
     try {
-      await api.post(`/orders/${orderId}/refund-request`);
+      const formData = new FormData();
+      formData.append('reason', refundForm.reason);
+      refundForm.images.forEach((image, index) => {
+        formData.append(`images[${index}]`, image);
+      });
+
+      await api.post(`/orders/${orderId}/refund-request`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
       setOpenDialog({ type: '', orderId: null });
-    } catch (error) {
-      console.error('Error requesting refund:', error);
+      setRefundForm({ reason: '', images: [] });
+      refetch();
+      toast.success('Return & refund request submitted successfully');
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to submit return & refund request');
+      }
     }
   };
 
   const handleConfirmReceived = async (orderId: string): Promise<void> => {
     try {
-      await api.post(`/orders/${orderId}/confirm-received`);
+      await api.put(`/orders/${orderId}/update`, {
+        status: 'completed'
+      });
+      
       setOpenDialog({ type: '', orderId: null });
-    } catch (error) {
-      console.error('Error confirming order received:', error);
+      // Refresh data
+      refetch();
+      toast.success('Order confirmed as received');
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to confirm order');
+      }
+    }
+  };
+
+  const navigate = useNavigate();
+
+  const handleBuyAgain = async (order: Order) => {
+    try {
+      if (!order.items || order.items.length === 0) {
+        throw new Error('No items in order');
+      }
+
+      // Lấy thông tin giá hiện tại cho tất cả sản phẩm
+      const itemsWithCurrentPrice = await Promise.all(order.items.map(async item => {
+        try {
+          const response = await axios.get(
+            `${import.meta.env.VITE_API_URL}/products/${item.product.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${Cookies.get('access_token')}`
+              }
+            }
+          );
+
+          const currentProduct = response.data.Data.product;
+          
+          // Kiểm tra sản phẩm có tồn tại
+          if (!currentProduct) {
+            throw new Error(`Product ${item.product.name} is no longer available`);
+          }
+
+          // Kiểm tra trạng thái sản phẩm
+          if (currentProduct.status !== 'public') {
+            throw new Error(`Product ${item.product.name} is currently unavailable`);
+          }
+
+          let currentPrice = currentProduct.promotional_price || currentProduct.price;
+          let variantQuantity = currentProduct.stock_quantity;
+
+          // Xử lý variant nếu có
+          if (item.variant) {
+            // Kiểm tra sản phẩm có variants không
+            if (!currentProduct.variants || currentProduct.variants.length === 0) {
+              throw new Error(`Product ${item.product.name} no longer has variants available`);
+            }
+
+            // Tìm variant tương ứng
+            const currentVariant = currentProduct.variants.find(
+              (v: any) => 
+                Number(v.size) === Number(item.variant.size) && 
+                v.color.toLowerCase() === item.variant.color.toLowerCase()
+            );
+            
+            if (!currentVariant) {
+              throw new Error(`Variant (${item.variant.color}/${item.variant.size}) of ${item.product.name} is no longer available`);
+            }
+
+            // Kiểm tra số lượng variant
+            if (currentVariant.quantity === 0) {
+              throw new Error(`Variant (${item.variant.color}/${item.variant.size}) of ${item.product.name} is out of stock`);
+            }
+
+            if (currentVariant.quantity < item.quantity) {
+              throw new Error(`Only ${currentVariant.quantity} items available for variant (${item.variant.color}/${item.variant.size}) of ${item.product.name}`);
+            }
+
+            variantQuantity = currentVariant.quantity;
+          } else {
+            // Kiểm tra số lượng sản phẩm không variant
+            if (currentProduct.stock_quantity === 0) {
+              throw new Error(`Product ${item.product.name} is out of stock`);
+            }
+
+            if (currentProduct.stock_quantity < item.quantity) {
+              throw new Error(`Only ${currentProduct.stock_quantity} items available for ${item.product.name}`);
+            }
+          }
+
+          return {
+            id: item.product.id,
+            name: item.product.name,
+            quantity: item.quantity,
+            thumbnail: currentProduct.thumbnail,
+            price: Number(currentPrice),
+            total: Number(currentPrice) * item.quantity,
+            stock_quantity: variantQuantity,
+            product_variant: item.variant && {
+              id: item.variant.id,
+              size: {
+                size: item.variant.size
+              },
+              color: {
+                color: item.variant.color
+              },
+              image_variant: currentProduct.thumbnail,
+              price: Number(currentPrice)
+            }
+          };
+        } catch (error: any) {
+          throw new Error(error.message || `Failed to get information for product ${item.product.name}`);
+        }
+      }));
+
+      // Tính toán tổng giá mới
+      const newTotal = itemsWithCurrentPrice.reduce((sum, item) => sum + item.total, 0);
+
+      const orderSummary = {
+        subtotal: newTotal,
+        total: newTotal,
+        original_total: newTotal
+      };
+
+      navigate('/checkout', {
+        state: {
+          cartItems: itemsWithCurrentPrice,
+          orderSummary: orderSummary
+        }
+      });
+    } catch (error: any) {
+      console.error('Error handling buy again:', error);
+      toast.error(error.message || 'Unable to process buy again request. Please try again later.');
     }
   };
 
@@ -150,21 +369,96 @@ export default function OrderList(): JSX.Element {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
+  const renewPaymentLink = async (orderId: string): Promise<void> => {
+    try {
+      setIsRenewing(orderId);
+      
+      const token = Cookies.get('access_token');
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/orders/${orderId}/renew-payment`,
+        {}, 
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success && response.data.payment_url) {
+        setOpenDialog({
+          type: 'confirm-payment',
+          orderId,
+          paymentUrl: response.data.payment_url
+        });
+      } else {
+        throw new Error('Payment URL not found');
+      }
+    } catch (error: any) {
+      console.error('Error renewing payment:', error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to renew payment link');
+      }
+    } finally {
+      setIsRenewing(null);
+    }
+  };
+
   const renderActionButtons = (order: Order) => {
+    const viewDetailsButton = (
+      <Button
+        component={Link}
+        to={`/account/my-order/${order.id}`}
+        variant="outlined"
+        size="small"
+      >
+        View Details
+      </Button>
+    );
+
     switch (order.status.toLowerCase()) {
       case 'pending':
         return (
           <div className="space-x-2">
+            {viewDetailsButton}
             <Button
-              component={Link}
-              to={`/checkout?order_id=${order.id}`}
               variant="contained"
               size="small"
+              onClick={() => setOpenDialog({ 
+                type: 'confirm-payment', 
+                orderId: order.id,
+                paymentUrl: order.payment?.payment_url 
+              })}
               color="primary"
-              className="bg-blue-500 hover:bg-blue-600"
             >
               Pay Now
             </Button>
+          </div>
+        );
+
+      case 'expired':
+        return (
+          <div className="space-x-2">
+            {viewDetailsButton}
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => renewPaymentLink(order.id)}
+              color="primary"
+              disabled={isRenewing === order.id}
+            >
+              {isRenewing === order.id ? 'Renewing...' : 'Renew Link'}
+            </Button>
+          </div>
+        );
+
+      case 'processing':
+        return (
+          <div className="space-x-2">
+            {viewDetailsButton}
             <Button
               variant="outlined"
               size="small"
@@ -175,187 +469,254 @@ export default function OrderList(): JSX.Element {
             </Button>
           </div>
         );
-      case 'shipping':
-        return (
-          <Button
-            variant="contained"
-            size="small"
-            color="success"
-            onClick={() => setOpenDialog({ type: 'confirm-received', orderId: order.id })}
-          >
-            Confirm Received
-          </Button>
-        );
+
       case 'completed':
         return (
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => setOpenDialog({ type: 'refund', orderId: order.id })}
-          >
-            Request Refund
-          </Button>
+          <div className="space-x-2">
+            {viewDetailsButton}
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setOpenDialog({ type: 'refund', orderId: order.id })}
+            >
+              Return & Refund
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => handleBuyAgain(order)}
+              color="primary"
+            >
+              Buy Again
+            </Button>
+          </div>
         );
-      case 'processing':
+
+      case 'shipping':
         return (
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => setOpenDialog({ type: 'cancel', orderId: order.id })}
-          >
-            Cancel Order
-          </Button>
+          <div className="space-x-2">
+            {viewDetailsButton}
+            <Button
+              variant="contained"
+              size="small"
+              color="success"
+              onClick={() => setOpenDialog({ type: 'confirm-received', orderId: order.id })}
+            >
+              Confirm Received
+            </Button>
+          </div>
         );
-      case 'expired':
-        return (
-          <Button
-            variant="contained"
-            size="small"
-            component={Link}
-            to={`/products/${order.items[0]?.product.id}`}
-            color="primary"
-          >
-            Buy Again
-          </Button>
-        );
+
       default:
-        return null;
+        return viewDetailsButton;
     }
   };
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: 'all' | OrderStatus) => {
-    setActiveTab(newValue);
-    setPage(1);
+  const sortOptions: SortOption[] = [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' }
+  ];
+
+  const handleClosePaymentDialog = () => {
+    setOpenDialog({ type: '', orderId: null });
+    // Refresh data after closing dialog
+    refetch();
+  };
+
+  const handleConfirmPayment = () => {
+    if (openDialog.paymentUrl) {
+      window.location.href = openDialog.paymentUrl;
+    }
+    setOpenDialog({ type: '', orderId: null });
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      // Convert FileList to Array and append to existing images
+      const newImages = Array.from(files);
+      setRefundForm(prev => ({
+        ...prev,
+        images: [...prev.images, ...newImages].slice(0, 5) // Limit to 5 images
+      }));
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setRefundForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
   };
 
   return (
     <div className="max-w-7xl mx-auto p-4">
+      <div className="mb-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <form onSubmit={handleSearch} className="w-full sm:w-auto">
+          <TextField
+            name="search"
+            placeholder="Search by Order ID, SKU..."
+            variant="outlined"
+            size="small"
+            defaultValue={filters.search}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search className="w-5 h-5 text-gray-500" />
+                </InputAdornment>
+              ),
+            }}
+            className="w-full sm:w-80"
+          />
+        </form>
+
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Select
+            value={filters.sort}
+            onChange={handleSortChange}
+            size="small"
+            className="w-full sm:w-48"
+          >
+            {sortOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </div>
+      </div>
+
       <Paper className="mb-4">
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
+            value={filters.status}
+            onChange={(_, newValue) => handleStatusChange(newValue)}
             variant="scrollable"
             scrollButtons="auto"
           >
-            {tabs.map(tab => (
-              <MuiTab
-                key={tab.id}
-                label={tab.label}
-                value={tab.id}
-                className={activeTab === tab.id ? 'text-red-500' : tab.color}
+            {tabs.map((tab) => (
+              <MuiTab 
+                key={tab.id} 
+                label={
+                  <div className="flex items-center gap-2">
+                    {tab.label}
+                    {ordersData?.filters?.counts?.[tab.id] && (
+                      <span className="text-xs bg-gray-200 px-2 py-0.5 rounded-full">
+                        {ordersData.filters.counts[tab.id]}
+                      </span>
+                    )}
+                  </div>
+                } 
+                value={tab.id} 
               />
             ))}
           </Tabs>
         </Box>
       </Paper>
 
-      <div className="mb-6">
-        <form onSubmit={handleSearch}>
-          <TextField
-            fullWidth
-            name="search"
-            placeholder="You can search by shop name, order ID or product name"
-            defaultValue={searchTerm}
-            InputProps={{
-              startAdornment: <Search className="mr-2 h-4 w-4 text-gray-400" />,
-            }}
-          />
-        </form>
-      </div>
+      {(filters.search || filters.status !== 'all') && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {filters.search && (
+            <Chip
+              label={`Search: ${filters.search}`}
+              onDelete={() => setFilters(prev => ({ ...prev, search: '' }))}
+              size="small"
+            />
+          )}
+          {filters.status !== 'all' && (
+            <Chip
+              label={`Status: ${filters.status}`}
+              onDelete={() => setFilters(prev => ({ ...prev, status: 'all' }))}
+              size="small"
+            />
+          )}
+        </div>
+      )}
 
-      <div className="space-y-4">
-        {isLoading ? (
-          <Box className="max-w-7xl mx-auto space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Paper key={i} className="p-6">
-                <div className="flex items-center space-x-4">
-                  <Skeleton variant="rectangular" width={80} height={80} />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton variant="text" width="60%" />
-                    <Skeleton variant="text" width="40%" />
-                  </div>
+      {isLoading ? (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, index) => (
+            <Paper key={index} className="p-4">
+              <Skeleton variant="rectangular" height={100} />
+            </Paper>
+          ))}
+        </div>
+      ) : (
+        <>
+          {ordersData?.data.map((order) => (
+            <Paper key={order.id} className="mb-4 p-4">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <p className="font-medium">Order #{order.sku}</p>
+                  <p className="text-sm text-gray-500">
+                    {format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}
+                  </p>
                 </div>
-              </Paper>
-            ))}
-          </Box>
-        ) : (
-          <>
-            {ordersData?.data.map((order) => (
-              <Paper key={order.id} className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={order.items[0]?.product.thumbnail}
-                      alt={order.items[0]?.product.name}
-                      className="w-20 h-20 rounded-lg object-cover"
-                    />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">
-                          {order.items[0]?.product.name}
-                          {order.items.length > 1 && (
-                            <span className="text-sm text-gray-500 ml-2">
-                              +{order.items.length - 1} orther products
-                            </span>
-                          )}
-                        </h3>
-                        <Chip
-                          label={tabs.find(tab => tab.id === order.status)?.label || order.status}
-                          {...getStatusColor(order.status)}
-                          size="small"
-                        />
-                      </div>
-                      <p className="text-sm text-gray-500">SKU: {order.sku}</p>
-                      <p className="text-sm text-gray-500">
-                        Order Date: {new Date(order.created_at).toLocaleDateString('vi-VN')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">
-                      {formatCurrency(order.total)}
-                    </p>
-                    {Number(order.original_total) - Number(order.total) > 0 && (
-                      <p className="text-sm text-green-600">
-                        Saving: {formatCurrency(Number(order.original_total) - Number(order.total))}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex justify-end items-center pt-4 space-x-2">
-                  <Button
-                    component={Link}
-                    to={`/account/my-order/${order.id}`}
-                    variant="contained"
-                    size="small"
-                  >
-                    View Details
-                  </Button>
-                  {renderActionButtons(order)}
-                </div>
-              </Paper>
-            ))}
-
-            {(!ordersData?.data || ordersData.data.length === 0) && (
-              <Paper className="p-12 text-center text-gray-500">
-                No orders found
-              </Paper>
-            )}
-
-            {ordersData?.pagination && (
-              <Box display="flex" justifyContent="center" mt={4}>
-                <Pagination
-                  count={ordersData.pagination.last_page}
-                  page={page}
-                  onChange={(_, newPage) => setPage(newPage)}
-                  color="primary"
+                <Chip
+                  label={order.status}
+                  color={getStatusColor(order.status).color}
+                  size="small"
                 />
-              </Box>
-            )}
-          </>
-        )}
-      </div>
+              </div>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-4">
+                  <img
+                    src={order.items[0]?.product.thumbnail}
+                    alt={order.items[0]?.product.name}
+                    className="w-20 h-20 rounded-lg object-cover"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium">
+                        {order.items[0]?.product.name}
+                        {order.items.length > 1 && (
+                          <span className="text-sm text-gray-500 ml-2">
+                            +{order.items.length - 1} orther products
+                          </span>
+                        )}
+                      </h3>
+                      
+                    </div>
+                    <p className="text-sm text-gray-500">SKU: {order.sku}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">
+                    {formatCurrency(order.total)}
+                  </p>
+                  {Number(order.original_total) - Number(order.total) > 0 && (
+                    <p className="text-sm text-green-600">
+                      Saving: {formatCurrency(Number(order.original_total) - Number(order.total))}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end items-center pt-4 space-x-2">
+                {renderActionButtons(order)}
+              </div>
+            </Paper>
+          ))}
+
+          {(!ordersData?.data || ordersData.data.length === 0) && (
+            <Paper className="p-12 text-center text-gray-500">
+              {filters.search 
+                ? "No orders found matching your search criteria"
+                : "No orders found"}
+            </Paper>
+          )}
+
+          {ordersData?.pagination && ordersData.data.length > 0 && (
+            <Box display="flex" justifyContent="center" mt={4}>
+              <Pagination
+                count={ordersData.pagination.last_page}
+                page={page}
+                onChange={(_, newPage) => setPage(newPage)}
+                color="primary"
+              />
+            </Box>
+          )}
+        </>
+      )}
 
       <Dialog
         open={openDialog.type === 'cancel'}
@@ -379,27 +740,126 @@ export default function OrderList(): JSX.Element {
         </DialogActions>
       </Dialog>
 
-      <Dialog
+      <Modal
         open={openDialog.type === 'refund'}
-        onClose={() => setOpenDialog({ type: '', orderId: null })}
+        onClose={() => {
+          setOpenDialog({ type: '', orderId: null });
+          setRefundForm({ reason: '', images: [] });
+        }}
       >
-        <DialogTitle>Confirm Refund Request</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to request a refund for this order?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog({ type: '', orderId: null })}>Cancel</Button>
-          <Button 
-            onClick={() => openDialog.orderId && handleRefundRequest(openDialog.orderId)}
-            variant="contained"
-            color="primary"
-          >
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: { xs: '90%', sm: 600 },
+          bgcolor: 'background.paper',
+          borderRadius: 1,
+          boxShadow: 24,
+          p: 4,
+          maxHeight: '90vh',
+          overflowY: 'auto'
+        }}>
+          <Typography variant="h6" component="h2" mb={2}>
+            Return & Refund Request
+          </Typography>
+
+          <Typography variant="body2" color="text.secondary" mb={3}>
+            Please provide details about your return request. Note that items must be in their original condition.
+          </Typography>
+
+          <TextField
+            fullWidth
+            label="Reason for Return"
+            multiline
+            rows={4}
+            value={refundForm.reason}
+            onChange={(e) => setRefundForm(prev => ({ ...prev, reason: e.target.value }))}
+            placeholder="Please explain why you want to return this item..."
+            required
+            margin="normal"
+          />
+
+          <Box mt={3}>
+            <Typography variant="subtitle2" mb={1}>
+              Upload Images (Max 5)
+            </Typography>
+            
+            <Box sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap',
+              gap: 1,
+              mb: 2 
+            }}>
+              {refundForm.images.map((image, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    position: 'relative',
+                    width: 100,
+                    height: 100,
+                  }}
+                >
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt={`Preview ${index}`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '4px'
+                    }}
+                  />
+                  <IconButton
+                    size="small"
+                    sx={{
+                      position: 'absolute',
+                      top: -8,
+                      right: -8,
+                    }}
+                    onClick={() => removeImage(index)}
+                  >
+                    <X className="w-4 h-4 text-gray-500" />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+            />
+
+            <Button
+              variant="contained"
+              component="label"
+              startIcon={<Upload className="w-4 h-4 text-gray-500" />}
+              sx={{ mt: 2 }}
+            >
+              Upload Images
+            </Button>
+          </Box>
+
+          <DialogActions>
+            <Button onClick={() => {
+              setOpenDialog({ type: '', orderId: null });
+              setRefundForm({ reason: '', images: [] });
+            }}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => openDialog.orderId && handleRefundRequest(openDialog.orderId)}
+              variant="contained"
+              color="primary"
+            >
+              Confirm Return & Refund
+            </Button>
+          </DialogActions>
+        </Box>
+      </Modal>
 
       <Dialog
         open={openDialog.type === 'confirm-received'}
@@ -420,7 +880,31 @@ export default function OrderList(): JSX.Element {
             variant="contained"
             color="success"
           >
-            Confirm
+            Yes, I've Received It
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openDialog.type === 'confirm-payment'}
+        onClose={handleClosePaymentDialog}
+      >
+        <DialogTitle>Confirm Payment Navigation</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Would you like to proceed to the payment page now?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePaymentDialog}>
+            Later
+          </Button>
+          <Button 
+            onClick={handleConfirmPayment}
+            variant="contained"
+            color="primary"
+          >
+            Pay Now
           </Button>
         </DialogActions>
       </Dialog>
