@@ -29,10 +29,10 @@ class ProductService
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'price' => $validated['price'],
-                'status' => $validated['status'],
                 'stock_quantity' => $validated['stock_quantity'],
                 'promotional_price' => $validated['promotional_price'] ?? null, // Thêm null nếu không có
                 'sku' =>  $validated['sku'],
+                'status' => $validated['status'],
                 'thumbnail' => $validated['thumbnail'],
                 'hagtag' => $validated['hagtag'] ?? null,
                 'brand_id' => $validated['brand_id'],
@@ -105,16 +105,6 @@ class ProductService
     public function deleteProduct(Product $product)
     {
         try {
-            // foreach ($product->variants as $variant) {
-            //     if ($variant->color_id) {
-            //         VariantColor::destroy($variant->color_id);
-            //     }
-            // }
-            // // Xóa các biến thể và ảnh trong database
-            // $product->variants()->delete();
-            // $product->images()->delete();
-
-            // Xóa sản phẩm
             $this->productRepository->softDeleteProduct($product);
 
             return response()->json([
@@ -189,44 +179,25 @@ class ProductService
                     });
 
                 // Tạo danh sách variant mới từ dữ liệu đầu vào
-                // $newVariantKeys = collect($validated['variants'])->map(function ($variant) {
-                //     return $variant['color_id'] . '-' . $variant['size_id'];
-                // })->toArray();
                 $newVariantKeys = collect($validated['variants'])->map(function ($variant) {
-                    return ($variant['color'] ?? '') . '-' . $variant['size_id']; // Sử dụng tên màu
+                    return $variant['color_id'] . '-' . $variant['size_id'];
                 })->toArray();
 
                 // Xóa các variant không còn trong danh sách mới
-                // foreach ($existingVariants as $key => $variant) {
-                //     if (!in_array($key, $newVariantKeys)) {
-                //         $variant->delete();
-                //         Log::info('Đã xóa variant cũ', ['variant_id' => $variant->id]);
-                //     }
-                // }
-
-                
                 foreach ($existingVariants as $key => $variant) {
                     if (!in_array($key, $newVariantKeys)) {
                         $variant->delete();
                         Log::info('Đã xóa variant cũ', ['variant_id' => $variant->id]);
                     }
                 }
+
                 // Cập nhật hoặc tạo mới variants
                 foreach ($validated['variants'] as $variantData) {
-                    // Xử lý màu (nếu có)
-                    $color = null;
-                    if (isset($variantData['color'])) {
-                        // Tìm hoặc tạo màu mới
-                        $color = VariantColor::firstOrCreate(['color' => $variantData['color']]);
-                        $variantData['color_id'] = $color->id; // Lấy `color_id` từ tên màu
-                    }
-            
-                    // Tìm variant hiện có
                     $variant = $product->variants()
                         ->where('color_id', $variantData['color_id'])
                         ->where('size_id', $variantData['size_id'])
                         ->first();
-            
+
                     if ($variant) {
                         // Cập nhật variant hiện có
                         $variant->update([
@@ -319,25 +290,3 @@ class ProductService
         ];
     }
 }
-
-
-
-    // protected function updateImages($product, $images)
-    // {
-    //     // Kiểm tra nếu có ảnh mới được cung cấp
-    //     if ($images && is_array($images)) {
-    //         // Xóa ảnh cũ nếu có
-    //         $product->images()->each(function ($image) {
-    //             Storage::disk('public')->delete($image->image_path);
-    //             $image->delete();
-    //         });
-
-    //         // Lưu ảnh mới
-    //         foreach ($images as $image) {
-    //             if ($image) {
-    //                 $imagePath = $image->store('product_images', 'public');
-    //                 $product->images()->create(['image_path' => $imagePath]);
-    //             }
-    //         }
-    //     }
-    // }
