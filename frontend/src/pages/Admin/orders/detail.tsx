@@ -19,6 +19,7 @@ import { toast } from 'react-hot-toast';
 import Cookies from 'js-cookie';
 import { useState } from "react";
 import PrintInvoice from "./PrintInvoice";
+import OrderDetailsSkeleton from "./SkeletonLoading";
 
 interface Product {
   name: string;
@@ -441,9 +442,7 @@ const OrderDetails = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4 flex justify-center items-center min-h-[200px]">
-        <CircularProgress />
-      </div>
+      <OrderDetailsSkeleton />
     );
   }
 
@@ -590,11 +589,13 @@ const OrderDetails = () => {
           },
           {
             title: "ADDRESS SHIPPING",
-            content: [
+            content: order.shipping?.shipping_detail ? [
               { label: "Recipient", value: order.shipping.shipping_detail.name },
               { label: "Phone", value: order.shipping.shipping_detail.phone_number },
               { label: "Address", value: order.shipping.shipping_detail.address_detail },
               { label: "City/Province", value: order.shipping.shipping_detail.address },
+            ] : [
+              { label: "No shipping details available", value: "N/A" }
             ]
           }
         ].map((card, index) => (
