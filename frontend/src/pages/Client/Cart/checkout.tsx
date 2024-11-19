@@ -479,15 +479,21 @@ const CheckoutPage = () => {
                     onClick={async () => {
                       try {
                         // Sửa lại API endpoint
-                        await axios.get(
+                        await axios.put(
                           `${import.meta.env.VITE_API_URL}/shipping/${item.id}`,
+                          {
+                            name: item.shipping_detail.name,
+                            phone_number: item.shipping_detail.phone_number,
+                            address: item.shipping_detail.address,
+                            address_detail: item.shipping_detail.address_detail,
+                            is_default: true
+                          },
                           {
                             headers: {
                               Authorization: `Bearer ${Cookies.get('access_token')}`
                             }
                           }
                         );
-                        
                         toast.success('Default address updated successfully');
                         setShowAddressSelection(false);
                         window.location.reload(); // Reload để cập nhật địa chỉ mới
