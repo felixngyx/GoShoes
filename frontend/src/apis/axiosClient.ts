@@ -40,7 +40,7 @@ axiosClient.interceptors.response.use(
 			if (!refreshToken) {
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');
-				window.location.href = '/sign-in';
+				window.location.href = '/signin';
 				return Promise.reject(error);
 			}
 
@@ -53,7 +53,7 @@ axiosClient.interceptors.response.use(
 			} catch (error) {
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');
-				window.location.href = '/sign-in';
+				window.location.href = '/signin';
 				return Promise.reject(error);
 			}
 		}

@@ -109,7 +109,7 @@ const Profile = () => {
 					</div>
 					<input
 						type="file"
-						className="file-input file-input-bordered file-input-xs w-fit"
+						className="file-input file-input-bordered file-input-xs"
 					/>
 					<button className="btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] w-[50%]">
 						Update
