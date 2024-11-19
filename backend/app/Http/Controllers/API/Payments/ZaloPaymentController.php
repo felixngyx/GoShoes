@@ -140,7 +140,7 @@ class ZaloPaymentController extends Controller
         // Xử lý kết quả thanh toán
         switch ($result["return_code"]) {
             case 1:
-                $order->update(["status" => "shipping"]);
+                $order->update(["status" => "processing"]);
                 $payment->update(['status' => 'success']);
                 return redirect()->away(env('FRONTEND_URL') . '/payment-success?message=Transaction successful');
 

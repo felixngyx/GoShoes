@@ -23,6 +23,7 @@ const CheckoutPage = () => {
   const [discountInfo, setDiscountInfo] = useState<any>(null);
   const [isCheckingDiscount, setIsCheckingDiscount] = useState(false);
   const [hasOrdered, setHasOrdered] = useState(false);
+  const [showAddressSelection, setShowAddressSelection] = useState(false);
 
   const buyNowProduct = location.state?.productInfo;
   const cartItems = location.state?.cartItems;
@@ -249,10 +250,14 @@ const CheckoutPage = () => {
 
       // Xử lý response thành công
       if (paymentMethod === 1) {
-        if (response.data.payment_url) {
+        const finalAmount = orderState.subtotal - calculateDiscount();
+        if (finalAmount > 0) {
           window.location.href = response.data.payment_url;
         } else {
-          throw new Error("Payment URL not found");
+          navigate("/account/orders", {
+            replace: true,
+            state: { message: "Order placed successfully!" },
+          });
         }
       } else {
         navigate("/account/orders", {
@@ -405,6 +410,114 @@ const CheckoutPage = () => {
     setDiscountInfo(null);
   };
 
+  // Sửa lại phần hiển thị discount
+  const calculateDiscount = () => {
+    if (discountInfo?.discount_info) {
+      const percent = parseFloat(discountInfo.discount_info.percent);
+      const subtotal = orderState.subtotal;
+      // Tính toán số tiền giảm dựa trên phần trăm và tổng tiền hiện tại
+      const discountAmount = (subtotal * percent) / 100;
+      return discountAmount;
+    }
+    return 0;
+  };
+
+  // Kiểm tra địa chỉ mặc định khi component mount
+  useEffect(() => {
+    if (!isLoadingAddress) {
+      if (!Array.isArray(address) || address.length === 0) {
+        // Nếu không có địa chỉ nào
+        setShowAddressForm(true);
+        toast('Please add a shipping address to continue', {
+          duration: 5000,
+          position: 'top-right',
+          icon: '⚠️',
+          style: {
+            background: '#FEF3C7',
+            color: '#92400E',
+            border: '1px solid #F59E0B'
+          },
+        });
+      } else if (!address.some((item: any) => item.is_default)) {
+        // Nếu có địa chỉ nhưng không có địa chỉ mặc định
+        setShowAddressSelection(true);
+        toast('Please select a default shipping address to continue', {
+          duration: 5000,
+          position: 'top-right',
+          icon: '⚠️',
+          style: {
+            background: '#FEF3C7',
+            color: '#92400E',
+            border: '1px solid #F59E0B'
+          },
+        });
+      }
+    }
+  }, [address, isLoadingAddress]);
+
+  // Thêm component hiển thị chọn địa chỉ mặc định
+  const AddressSelectionModal = () => {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+          <h2 className="text-xl font-semibold mb-4">Select Default Address</h2>
+          <p className="text-gray-600 mb-4">
+            Please select a default shipping address to continue with your order.
+          </p>
+          
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            {address.map((item: any, index: number) => (
+              <div key={index} className="border rounded-lg p-4 hover:border-blue-500 cursor-pointer">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold">{item.shipping_detail.name}</p>
+                    <p className="text-gray-600">(+84) {item.shipping_detail.phone_number}</p>
+                    <p className="text-gray-600">{item.shipping_detail.address_detail}</p>
+                    <p className="text-gray-600">{item.shipping_detail.address}</p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        // Sửa lại API endpoint
+                        await axios.get(
+                          `${import.meta.env.VITE_API_URL}/shipping/${item.id}`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${Cookies.get('access_token')}`
+                            }
+                          }
+                        );
+                        
+                        toast.success('Default address updated successfully');
+                        setShowAddressSelection(false);
+                        window.location.reload(); // Reload để cập nhật địa chỉ mới
+                      } catch (error) {
+                        toast.error('Failed to update default address');
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  >
+                    Set as Default
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Thêm nút để thêm địa chỉ mới */}
+          <div className="mt-4 flex justify-end gap-4">
+            <button
+              onClick={() => setShowAddressForm(true)}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            >
+              Add New Address
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Thêm loading state
   if (isLoadingAddress) {
     return (
@@ -420,8 +533,41 @@ const CheckoutPage = () => {
     window.location.reload(); // Refresh lại trang để lấy địa chỉ mới
   };
 
+  // Component hiển thị form thêm địa chỉ
+  const AddressFormModal = () => {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+          <h2 className="text-xl font-semibold mb-4">Add New Address</h2>
+          <p className="text-gray-600 mb-4">
+            Please add a shipping address to continue with your order.
+          </p>
+          
+          {/* Thêm component AddressForm của bạn vào đây */}
+          <AddressComponent onSuccess={handleAddressAdded} />
+
+          {/* Nút đóng form nếu có địa chỉ khác */}
+          {address && address.length > 0 && (
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowAddressForm(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
+      {/* Chỉ hiện modal khi không đang loading và thỏa điều kiện */}
+      {!isLoadingAddress && showAddressForm && <AddressFormModal />}
+      {!isLoadingAddress && showAddressSelection && !showAddressForm && <AddressSelectionModal />}
+
       <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
         {/* Left Section - Order Details */}
         <div className="md:col-span-7">
@@ -544,19 +690,15 @@ const CheckoutPage = () => {
 
                 {discountInfo && (
                   <div className="flex justify-between text-green-600">
-                    <span>Discount</span>
-                    <span>-{formatVND(discountInfo.discount_amount)}</span>
+                    <span>Discount ({discountInfo.discount_info.percent}%)</span>
+                    <span>-{formatVND(calculateDiscount())}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between font-semibold text-lg border-t pt-2">
                   <span>Total</span>
                   <span>
-                    {formatVND(
-                      discountInfo
-                        ? discountInfo.final_amount
-                        : orderState.total
-                    )}
+                    {formatVND(orderState.subtotal - calculateDiscount())}
                   </span>
                 </div>
               </div>
@@ -729,18 +871,14 @@ const CheckoutPage = () => {
                     <span>
                       Discount ({discountInfo.discount_info.percent}%)
                     </span>
-                    <span>-{formatVND(discountInfo.discount_amount)}</span>
+                    <span>-{formatVND(calculateDiscount())}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between font-semibold text-lg pt-2">
                   <span>Total</span>
                   <span>
-                    {formatVND(
-                      discountInfo
-                        ? discountInfo.final_amount
-                        : orderState.total
-                    )}
+                    {formatVND(orderState.subtotal - calculateDiscount())}
                   </span>
                 </div>
               </div>
