@@ -387,9 +387,22 @@ const CreateDiscount = () => {
               
               <div className="flex flex-wrap gap-2 mb-2">
                 {selectedProducts.map(product => (
-                  <div key={product.id} 
-                       className="flex items-center gap-1 bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
-                    {product.name}
+                  <div 
+                    key={product.id} 
+                    className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm"
+                  >
+                    <span>{product.name}</span>
+                    <button
+                      onClick={() => {
+                        const updatedProducts = selectedProducts.filter(p => p.id !== product.id);
+                        setSelectedProducts(updatedProducts);
+                        setValue('product_ids', updatedProducts.map(p => p.id));
+                      }}
+                      className="hover:text-red-300 transition-colors"
+                      type="button"
+                    >
+                      <FiX size={16} />
+                    </button>
                   </div>
                 ))}
               </div>
