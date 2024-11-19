@@ -47,19 +47,22 @@ class ProductRepository implements ProductRepositoryInterface
         $transformedProduct = [
             'id' => $product->id,
             'name' => $product->name,
+            'description' => $product->description,
             'price' => (float) $product->price,
             'promotional_price' => (float) $product->promotional_price,
             'stock_quantity' => $product->stock_quantity,
             'sku' => $product->sku,
+            'hagtag' => $product->hagtag,
+            'brand' => $product->brand->name,
             'rating_count' => $product->rating_count,
-            'categories' => $product->categories->pluck('name')->toArray(),
             'status' => $product->status,
             'thumbnail' => $product->thumbnail,
             'images' => $product->images->pluck('id','image_path')->toArray(),
+            'categories' => $product->categories->pluck('name')->toArray(),
             'variants' => $product->variants->map(function ($variant) {
                 return [
-                    'color' => $variant->color->color,
                     'size' => (int) $variant->size->size,
+                    'color' => $variant->color->color,
                     'quantity' => $variant->quantity,
                     'image_variant' => $variant->image_variant
                 ];
@@ -88,8 +91,8 @@ class ProductRepository implements ProductRepositoryInterface
                     'images' => $relatedProduct->images->pluck('image_path')->toArray(),
                     'variants' => $relatedProduct->variants->map(function ($variant) {
                         return [
-                            'color' => $variant->color->color,
                             'size' => (int) $variant->size->size,
+                            'color' => $variant->color->color,
                             'quantity' => $variant->quantity,
                             'image_variant' => $variant->image_variant
                         ];
@@ -137,7 +140,7 @@ class ProductRepository implements ProductRepositoryInterface
     }
 
     public function find($id)
-    {
+    { 
         return Product::where('is_deleted', false)->findOrFail($id);
     }
     public function checkStockProductVariant($id)

@@ -158,6 +158,8 @@ class ProductService
             $productData = [
                 'name' => $validated['name'],
                 'description' => $validated['description'],
+                'sku' => $validated['sku'],
+                'status' => $validated['status'],
                 'price' => $validated['price'],
                 'stock_quantity' => $validated['stock_quantity'],
                 'promotional_price' => $validated['promotional_price'] ?? null,

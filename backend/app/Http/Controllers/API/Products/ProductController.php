@@ -101,8 +101,8 @@ class ProductController extends Controller
                     'variants' => $product->variants->map(function ($variant) {
                         return [
                             'id' => $variant->id,
-                            'color' => $variant->color->color,
                             'size' => (int) $variant->size->size,
+                            'color' => $variant->color->color,
                             'quantity' => $variant->quantity,
                             'image_variant' => $variant->image_variant
                         ];
