@@ -90,3 +90,10 @@ body {
     padding-right: 0.75rem;
   }
 }
+
+.btn {
+  @apply px-4 py-2 rounded-md text-center transition-all;
+}
+.btn-sm {
+  @apply text-sm;
+}
