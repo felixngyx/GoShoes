@@ -29,6 +29,7 @@ class ProductService
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'price' => $validated['price'],
+                'status' => $validated['status'],
                 'stock_quantity' => $validated['stock_quantity'],
                 'promotional_price' => $validated['promotional_price'] ?? null, // Thêm null nếu không có
                 'sku' =>  $validated['sku'],
@@ -188,25 +189,44 @@ class ProductService
                     });
 
                 // Tạo danh sách variant mới từ dữ liệu đầu vào
+                // $newVariantKeys = collect($validated['variants'])->map(function ($variant) {
+                //     return $variant['color_id'] . '-' . $variant['size_id'];
+                // })->toArray();
                 $newVariantKeys = collect($validated['variants'])->map(function ($variant) {
-                    return $variant['color_id'] . '-' . $variant['size_id'];
+                    return ($variant['color'] ?? '') . '-' . $variant['size_id']; // Sử dụng tên màu
                 })->toArray();
 
                 // Xóa các variant không còn trong danh sách mới
+                // foreach ($existingVariants as $key => $variant) {
+                //     if (!in_array($key, $newVariantKeys)) {
+                //         $variant->delete();
+                //         Log::info('Đã xóa variant cũ', ['variant_id' => $variant->id]);
+                //     }
+                // }
+
+                
                 foreach ($existingVariants as $key => $variant) {
                     if (!in_array($key, $newVariantKeys)) {
                         $variant->delete();
                         Log::info('Đã xóa variant cũ', ['variant_id' => $variant->id]);
                     }
                 }
-
                 // Cập nhật hoặc tạo mới variants
                 foreach ($validated['variants'] as $variantData) {
+                    // Xử lý màu (nếu có)
+                    $color = null;
+                    if (isset($variantData['color'])) {
+                        // Tìm hoặc tạo màu mới
+                        $color = VariantColor::firstOrCreate(['color' => $variantData['color']]);
+                        $variantData['color_id'] = $color->id; // Lấy `color_id` từ tên màu
+                    }
+            
+                    // Tìm variant hiện có
                     $variant = $product->variants()
                         ->where('color_id', $variantData['color_id'])
                         ->where('size_id', $variantData['size_id'])
                         ->first();
-
+            
                     if ($variant) {
                         // Cập nhật variant hiện có
                         $variant->update([
