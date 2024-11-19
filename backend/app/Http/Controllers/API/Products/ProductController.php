@@ -310,4 +310,18 @@ class ProductController extends Controller
     {
         return $this->productService->checkStockProductVariant($id);
     }
+    public function getDetailProduct(string $id)
+    {
+       
+        $product = $this->productService->findProductWithRelations($id);
+
+        if (!$product) {
+            return response()->json(['message' => 'Sản phẩm không tồn tại!'], 404);
+        }
+
+        return response()->json([
+            'Data' => $product
+        ]);
+    }
+
 }

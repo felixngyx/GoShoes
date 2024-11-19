@@ -107,7 +107,7 @@ class ProductRepository implements ProductRepositoryInterface
     }
     public function findProductWithRelationsClient(string $id){
         $product = Product::where('is_deleted', false)
-            ->with(['variants.color', 'variants.size', 'images', 'categories', 'brand'])
+            ->with(['variants.color', 'variants.size', 'images', 'categories:id,name', 'brand'])
             ->find($id);
 
         if (!$product) {

@@ -53,6 +53,7 @@ Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::put('/products/{id}', [ProductController::class, 'update']);
 Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 Route::get('/products', [ProductController::class, 'index']);
+Route::get('/productDetail/{id}', [ProductController::class, 'getDetailProduct']);
 Route::post('/products', [ProductController::class, 'store']);
 
 Route::get('/product/{id}', [ProductClientController::class, 'show']);
