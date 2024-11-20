@@ -13,6 +13,17 @@ export const submitReview = async (
     });
     return response.data;
   } catch (error) {
+    console.error("Error submit review:", error);
     throw new Error("Failed to submit review");
+  }
+};
+
+export const gellReviewByProductId = async (productId: number) => {
+  try {
+    const response = await axiosClient.get(`/products/${productId}/reviews`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error get reviews by product ID:", error);
+    throw new Error("Failed to get reviews by product ID");
   }
 };

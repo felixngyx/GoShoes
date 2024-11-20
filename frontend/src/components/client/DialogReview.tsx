@@ -106,7 +106,6 @@ const DialogReview: React.FC<DialogReviewProps> = ({
       onClose();
     },
     onError: (error) => {
-      console.error("Error submitting review:", error);
       toast.error("Failed to submit review. Please try again.");
     },
   });
@@ -126,7 +125,7 @@ const DialogReview: React.FC<DialogReviewProps> = ({
     }
 
     // Log thông tin form ra console
-    console.log({
+    mutateAsync({
       productId: productId,
       rating: rating,
       comment: comment,

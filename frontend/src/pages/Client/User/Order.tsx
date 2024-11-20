@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 import axios, { AxiosInstance } from "axios";
@@ -112,8 +112,8 @@ export default function OrderList(): JSX.Element {
     reason: string;
     images: File[];
   }>({
-    reason: '',
-    images: []
+    reason: "",
+    images: [],
   });
 
   const {
@@ -201,9 +201,9 @@ export default function OrderList(): JSX.Element {
       const uploadedImages = await Promise.all(
         refundForm.images.map(async (image) => {
           const imageFormData = new FormData();
-          imageFormData.append('file', image);
-          imageFormData.append('upload_preset', 'go_shoes');
-          imageFormData.append('cloud_name', 'drxguvfuq');
+          imageFormData.append("file", image);
+          imageFormData.append("upload_preset", "go_shoes");
+          imageFormData.append("cloud_name", "drxguvfuq");
 
           const response = await axios.post(
             `https://api.cloudinary.com/v1_1/drxguvfuq/image/upload`,
@@ -215,7 +215,7 @@ export default function OrderList(): JSX.Element {
       );
 
       // Gửi request với cookie trong header
-      const token = Cookies.get('access_token');
+      const token = Cookies.get("access_token");
       await axios.post(
         `${import.meta.env.VITE_API_URL}/refunds`,
         {
@@ -225,20 +225,19 @@ export default function OrderList(): JSX.Element {
         },
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
         }
       );
-     
 
-      setOpenDialog({ type: '', orderId: null });
-      setRefundForm({ reason: '', images: [] });
+      setOpenDialog({ type: "", orderId: null });
+      setRefundForm({ reason: "", images: [] });
       refetch();
       toast.success("Return & refund request submitted successfully");
     } catch (error: any) {
-      console.error('Refund request error:', error);
+      console.error("Refund request error:", error);
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
@@ -660,15 +659,15 @@ export default function OrderList(): JSX.Element {
     if (!files) return;
 
     const fileArray = Array.from(files);
-    
+
     // Kiểm tra số lượng ảnh tối đa
     if (refundForm.images.length + fileArray.length > 5) {
-      toast.error('Maximum 5 images allowed');
+      toast.error("Maximum 5 images allowed");
       return;
     }
 
     // Validate files
-    const validFiles = fileArray.filter(file => {
+    const validFiles = fileArray.filter((file) => {
       // Check file size (5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`File ${file.name} is too large. Max size is 5MB`);
@@ -684,13 +683,13 @@ export default function OrderList(): JSX.Element {
       return true;
     });
 
-    setRefundForm(prev => ({
+    setRefundForm((prev) => ({
       ...prev,
-      images: [...prev.images, ...validFiles]
+      images: [...prev.images, ...validFiles],
     }));
 
     // Reset input
-    event.target.value = '';
+    event.target.value = "";
   };
 
   const removeImage = (index: number) => {
@@ -980,10 +979,10 @@ export default function OrderList(): JSX.Element {
                       position: "absolute",
                       top: -8,
                       right: -8,
-                      bgcolor: 'background.paper',
-                      '&:hover': {
-                        bgcolor: 'background.paper',
-                      }
+                      bgcolor: "background.paper",
+                      "&:hover": {
+                        bgcolor: "background.paper",
+                      },
                     }}
                     onClick={() => removeImage(index)}
                   >
@@ -1012,7 +1011,7 @@ export default function OrderList(): JSX.Element {
             </Button>
           </Box>
 
-          <DialogActions>
+          <DialogActions sx={{ mt: 3 }}>
             <Button
               onClick={() => {
                 setOpenDialog({ type: "", orderId: null });
@@ -1027,7 +1026,9 @@ export default function OrderList(): JSX.Element {
               }
               variant="contained"
               color="primary"
-              disabled={!refundForm.reason.trim() || refundForm.images.length === 0}
+              disabled={
+                !refundForm.reason.trim() || refundForm.images.length === 0
+              }
             >
               Submit Request
             </Button>
