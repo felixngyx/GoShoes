@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
 import axios, { AxiosInstance } from 'axios';
@@ -107,7 +107,10 @@ export default function OrderList(): JSX.Element {
     orderId: null 
   });
   const [isRenewing, setIsRenewing] = useState<string | null>(null);
-  const [refundForm, setRefundForm] = useState<RefundFormData>({
+  const [refundForm, setRefundForm] = useState<{
+    reason: string;
+    images: File[];
+  }>({
     reason: '',
     images: []
   });
@@ -187,23 +190,48 @@ export default function OrderList(): JSX.Element {
 
   const handleRefundRequest = async (orderId: string): Promise<void> => {
     try {
-      const formData = new FormData();
-      formData.append('reason', refundForm.reason);
-      refundForm.images.forEach((image, index) => {
-        formData.append(`images[${index}]`, image);
-      });
+      // Upload ảnh lên Cloudinary trước
+      const uploadedImages = await Promise.all(
+        refundForm.images.map(async (image) => {
+          const imageFormData = new FormData();
+          imageFormData.append('file', image);
+          imageFormData.append('upload_preset', 'go_shoes');
+          imageFormData.append('cloud_name', 'drxguvfuq');
 
-      await api.post(`/orders/${orderId}/refund-request`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
+          const response = await axios.post(
+            `https://api.cloudinary.com/v1_1/drxguvfuq/image/upload`,
+            imageFormData
+          );
+
+          return response.data.url;
+        })
+      );
+
+      // Gửi request với cookie trong header
+      const token = Cookies.get('access_token');
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/refunds`,
+        {
+          order_id: orderId,
+          reason: refundForm.reason,
+          images: uploadedImages,
         },
-      });
-      
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+     
+
       setOpenDialog({ type: '', orderId: null });
       setRefundForm({ reason: '', images: [] });
       refetch();
       toast.success('Return & refund request submitted successfully');
     } catch (error: any) {
+      console.error('Refund request error:', error);
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
@@ -530,16 +558,48 @@ export default function OrderList(): JSX.Element {
     setOpenDialog({ type: '', orderId: null });
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
-      // Convert FileList to Array and append to existing images
-      const newImages = Array.from(files);
-      setRefundForm(prev => ({
-        ...prev,
-        images: [...prev.images, ...newImages].slice(0, 5) // Limit to 5 images
-      }));
+    if (!files) return;
+
+    const fileArray = Array.from(files);
+    
+    // Kiểm tra số lượng ảnh tối đa
+    if (refundForm.images.length + fileArray.length > 5) {
+      toast.error('Maximum 5 images allowed');
+      return;
     }
+
+    // Validate files
+    const validFiles = fileArray.filter(file => {
+      // Check file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`File ${file.name} is too large. Max size is 5MB`);
+        return false;
+      }
+
+      // Check file type
+      if (!file.type.match(/^image\/(jpeg|png|jpg)$/)) {
+        toast.error(`File ${file.name} is not a valid image format (JPG, PNG)`);
+        return false;
+      }
+
+      return true;
+    });
+
+    setRefundForm(prev => ({
+      ...prev,
+      images: [...prev.images, ...validFiles]
+    }));
+
+    // Reset input
+    event.target.value = '';
   };
 
   const removeImage = (index: number) => {
@@ -802,7 +862,7 @@ export default function OrderList(): JSX.Element {
                 >
                   <img
                     src={URL.createObjectURL(image)}
-                    alt={`Preview ${index}`}
+                    alt={`Preview ${index + 1}`}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -816,34 +876,39 @@ export default function OrderList(): JSX.Element {
                       position: 'absolute',
                       top: -8,
                       right: -8,
+                      bgcolor: 'background.paper',
+                      '&:hover': {
+                        bgcolor: 'background.paper',
+                      }
                     }}
                     onClick={() => removeImage(index)}
                   >
-                    <X className="w-4 h-4 text-gray-500" />
+                    <X className="w-4 h-4" />
                   </IconButton>
                 </Box>
               ))}
             </Box>
 
             <input
+              ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*"
+              accept="image/jpeg,image/png,image/jpg"
               onChange={handleFileChange}
               style={{ display: 'none' }}
             />
 
             <Button
-              variant="contained"
-              component="label"
-              startIcon={<Upload className="w-4 h-4 text-gray-500" />}
-              sx={{ mt: 2 }}
+              variant="outlined"
+              onClick={handleUploadClick}
+              startIcon={<Upload className="w-4 h-4" />}
+              disabled={refundForm.images.length >= 5}
             >
-              Upload Images
+              Upload Images ({refundForm.images.length}/5)
             </Button>
           </Box>
 
-          <DialogActions>
+          <DialogActions sx={{ mt: 3 }}>
             <Button onClick={() => {
               setOpenDialog({ type: '', orderId: null });
               setRefundForm({ reason: '', images: [] });
@@ -854,8 +919,9 @@ export default function OrderList(): JSX.Element {
               onClick={() => openDialog.orderId && handleRefundRequest(openDialog.orderId)}
               variant="contained"
               color="primary"
+              disabled={!refundForm.reason.trim() || refundForm.images.length === 0}
             >
-              Confirm Return & Refund
+              Submit Request
             </Button>
           </DialogActions>
         </Box>

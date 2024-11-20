@@ -22,6 +22,8 @@ use App\Http\Controllers\API\Products\ProductClientController;
 use App\Http\Controllers\Api\Review\ReviewController;
 use App\Http\Controllers\API\Shipping\ShippingController;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\API\NotificationController;
+use App\Http\Controllers\API\Order\RefundController;
 
 /*
 |--------------------------------------------------------------------------
@@ -175,7 +177,21 @@ Route::group([
         Route::put('/{id}', [PostController::class, 'update']);
         Route::delete('/{id}', [PostController::class, 'destroy']);
         Route::delete('/', [PostController::class, 'destroyMultiple']);
+    });
 
+
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::get('/unread-count', [NotificationController::class, 'getUnreadCount']);
+        Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
+        Route::delete('/{id}', [NotificationController::class, 'destroy']);
+    });
+
+    Route::prefix('refunds')->group(function () {
+        Route::get('/', [RefundController::class, 'index']);
+        Route::post('/', [RefundController::class, 'store']);
+        Route::post('/aprrove/{id}', [RefundController::class,'approve']);
     });
 });
 

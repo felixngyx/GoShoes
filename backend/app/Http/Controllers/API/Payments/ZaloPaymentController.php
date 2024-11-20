@@ -55,7 +55,8 @@ class ZaloPaymentController extends Controller
             if ($response->successful()) {
                 $result = $response->json();
                 if ($result['return_code'] == 1) {
-                    return response()->json($result); // Đảm bảo trả về đối tượng JSON
+                    $result['app_trans_id'] = $order_data['app_trans_id'];
+                    return response()->json($result);
                 } else {
                     throw new Exception('ZaloPay returned error: ' . $result['return_message']);
                 }
@@ -218,18 +219,18 @@ class ZaloPaymentController extends Controller
         return response()->json($results);
     }
 
-    public function refund(Request $request)
+    public function refund($order_id,$apptransid,$amount)
     {
         try {
-            $order = Order::where('sku', $request->order_id)->firstOrFail();
+            $order = Order::where('sku', $order_id)->firstOrFail();
             $timestamp = round(microtime(true) * 1000);
 
             $params = [
                 "app_id" => $this->config["app_id"],
                 "m_refund_id" => date("ymd") . "_" . $this->config["app_id"] . "_" . $timestamp . rand(111,999),
                 "timestamp" => $timestamp,
-                "zp_trans_id" => $request->zp_trans_id,
-                "amount" => $request->amount,
+                "zp_trans_id" => $apptransid,
+                "amount" => $amount,
                 "description" => "Hoàn tiền đơn hàng #" . $order->sku
             ];
 
