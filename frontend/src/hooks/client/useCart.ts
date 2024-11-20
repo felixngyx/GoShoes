@@ -13,6 +13,7 @@ import {
 import { CartItem } from "../../types/client/cart";
 import { removeFromCart } from "./cartSlice";
 import Cookies from "js-cookie";
+import { checkStock } from "../../services/client/product";
 
 const useCart = () => {
   const dispatch = useDispatch();
@@ -122,27 +123,49 @@ const useCart = () => {
     });
   };
 
-  const handleQuantityChange = (
+  // Kiểm tra xem tất cả các mục đã được chọn hay chưa
+  const allSelected = cartItemsWithSelected.every((item: any) => item.selected);
+
+  const handleQuantityChange = async (
     productVariantId: number,
     newQuantity: string
   ) => {
     const quantity = parseInt(newQuantity, 10);
+
     if (quantity > 0) {
+      // Kiểm tra số lượng sản phẩm trong kho
+      const stockQuantity = await checkStock(productVariantId);
+
+      // Nếu số lượng sản phẩm trong giỏ hàng vượt quá số lượng trong kho, hiện thông báo
+      if (quantity > stockQuantity) {
+        toast.error(
+          `The maximum quantity for this product is ${stockQuantity}.`,
+          {}
+        );
+      }
+
+      // Đảm bảo số lượng cập nhật không vượt quá số lượng trong kho
+      const updatedQuantity =
+        quantity > stockQuantity ? stockQuantity : quantity;
+
+      // Cập nhật giỏ hàng
       setCartItemsWithSelected((prevCartItems) =>
         prevCartItems.map((item) =>
           item.product_variant.id === productVariantId
             ? {
                 ...item,
-                quantity,
+                quantity: updatedQuantity,
                 totalPrice:
-                  quantity *
+                  updatedQuantity *
                   (parseFloat(item.product_variant.product.promotional_price) ||
                     parseFloat(item.product_variant.product.price)),
               }
             : item
         )
       );
-      debouncedUpdateQuantity(productVariantId, quantity);
+
+      // Gửi yêu cầu cập nhật số lượng sản phẩm trong giỏ hàng
+      debouncedUpdateQuantity(productVariantId, updatedQuantity);
     }
   };
 
@@ -234,6 +257,7 @@ const useCart = () => {
     orderSummary,
     cartItems,
     totalQuantity,
+    allSelected,
     handleAddToCart,
     handleAddToCartDetail,
     setCartItemsWithSelected,
@@ -241,6 +265,7 @@ const useCart = () => {
     toggleSelectAll,
     handleQuantityChange,
     handleDeleteFromCart,
+    deleteProductFromCart,
   };
 };
 

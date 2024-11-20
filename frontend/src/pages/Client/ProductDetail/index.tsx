@@ -13,6 +13,7 @@ import { Variant } from "../../../types/client/products/variants";
 import RelatedProduct from "../ProductList/RelatedProduct";
 import { toast } from "react-hot-toast";
 import { formatVNCurrency } from "../../../common/formatVNCurrency";
+import { gellReviewByProductId } from "../../../services/client/review";
 
 const ProductDetailSkeleton = () => {
   return (
@@ -413,6 +414,11 @@ const ProductDetail = () => {
     }
   };
 
+  const { data: review } = useQuery({
+    queryKey: ["PRODUCT_REVIEWS", product?.id],
+    queryFn: () => gellReviewByProductId(product?.id),
+  });
+
   if (isLoading) {
     return <ProductDetailSkeleton />;
   }
@@ -693,88 +699,45 @@ const ProductDetail = () => {
                   <div className="max-w-6xl mx-auto">
                     <div></div>
                     <div className="flex flex-col gap-8">
-                      <div className="bg-white rounded-lg shadow-lg p-6 transition-transform hover:scale-[1.01]">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center space-x-4">
-                            <img
-                              src={`https://placehold.co/400`}
-                              className="w-12 h-12 rounded-full object-cover"
-                            />
-                            <div>
-                              <h3 className="text-xl font-semibold">
-                                John Doe
-                              </h3>
-                              <div className="flex items-center space-x-2 mt-1">
-                                <RatingStars rating={4.5} />
-                                <span className="text-gray-500">
-                                  {new Date().toLocaleDateString()}
-                                </span>
+                      {review?.data.map((item: any, index: number) => (
+                        <div
+                          key={index}
+                          className="bg-white rounded-lg shadow-lg p-6 transition-transform hover:scale-[1.01]"
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center space-x-4">
+                              <img
+                                src={item.user.avt}
+                                className="w-12 h-12 rounded-full object-cover"
+                              />
+                              <div>
+                                <h3 className="text-xl font-semibold">
+                                  {item.user.name}
+                                </h3>
+                                <div className="flex items-center space-x-2 mt-1">
+                                  <RatingStars rating={item.rating} />
+                                  <span className="text-gray-500">
+                                    {new Date(
+                                      item.created_at
+                                    ).toLocaleDateString("vi-VN", {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                    })}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                        <p className="text-gray-700 mb-4">
-                          This is a test comment
-                        </p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {/* {product.images.map((image, index) => ( */}
-                          <button
-                            // key={index}
-                            className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg overflow-hidden"
-                            //   onClick={() => setSelectedImage(index)}
-                            //   onKeyDown={(e) => {
-                            //     if (e.key === "Enter") setSelectedImage(index);
-                            //   }}
-                          >
-                            <img
-                              // src={image}
-                              className="w-full h-32 object-cover hover:opacity-90 transition-opacity"
-                            />
-                          </button>
-                          {/* ))} */}
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-lg shadow-lg p-6 transition-transform hover:scale-[1.01]">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center space-x-4">
-                            <img
-                              src={`https://placehold.co/400`}
-                              className="w-12 h-12 rounded-full object-cover"
-                            />
-                            <div>
-                              <h3 className="text-xl font-semibold">
-                                John Doe
-                              </h3>
-                              <div className="flex items-center space-x-2 mt-1">
-                                <RatingStars rating={4.5} />
-                                <span className="text-gray-500">
-                                  {new Date().toLocaleDateString()}
-                                </span>
-                              </div>
-                            </div>
+                          <p className="text-gray-700 mb-4">{item.comment}</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            <button className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg overflow-hidden">
+                              {/* <img className="w-full h-32 object-cover hover:opacity-90 transition-opacity" /> */}
+                            </button>
                           </div>
                         </div>
-                        <p className="text-gray-700 mb-4">
-                          This is a test comment
-                        </p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {/* {product.images.map((image, index) => ( */}
-                          <button
-                            // key={index}
-                            className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg overflow-hidden"
-                            //   onClick={() => setSelectedImage(index)}
-                            //   onKeyDown={(e) => {
-                            //     if (e.key === "Enter") setSelectedImage(index);
-                            //   }}
-                          >
-                            <img
-                              // src={image}
-                              className="w-full h-32 object-cover hover:opacity-90 transition-opacity"
-                            />
-                          </button>
-                          {/* ))} */}
-                        </div>
-                      </div>
+                      ))}
+
                       {/* Pagination or more reviews */}
                       <div className="join bg-[#FAFAFB] rounded-md ms-auto">
                         <button className="join-item btn btn-sm">1</button>
