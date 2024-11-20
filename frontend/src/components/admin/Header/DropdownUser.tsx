@@ -36,7 +36,15 @@ const DropdownUser = () => {
 				</span>
 
 				<span className="h-12 w-12 rounded-full">
-					<img className="rounded-full" src={user.avt} alt="User" />
+					<img
+						className="rounded-full border border-gray-200"
+						src={`${
+							user.avt
+								? user.avt
+								: 'https://avatar.iran.liara.run/public'
+						}`}
+						alt="User"
+					/>
 				</span>
 
 				<svg

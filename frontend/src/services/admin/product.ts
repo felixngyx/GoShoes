@@ -29,7 +29,7 @@ const productService = {
 		);
 	},
 	getById: (id: number) => {
-		return axiosClient.get(`/products/${id}`);
+		return axiosClient.get(`/product/${id}`);
 	},
 	create: (data: PRODUCT) => {
 		return axiosClient.post('/products', data);

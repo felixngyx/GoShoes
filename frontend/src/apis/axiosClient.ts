@@ -2,10 +2,12 @@
 
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from 'react-hot-toast';
+
+const baseURL = import.meta.env.VITE_API_URL;
 
 const axiosClient = axios.create({
-	baseURL: import.meta.env.VITE_API_URL,
-	timeout: 60000,
+	baseURL,
 	headers: {
 		'Content-Type': 'application/json',
 	},
@@ -30,9 +32,14 @@ axiosClient.interceptors.response.use(
 		return response;
 	},
 	async (error) => {
+		const pathname = window.location.pathname;
+		if (pathname.includes('/signin')) {
+			return Promise.reject(error);
+		}
+
 		const originalRequest = error.config;
 
-		if (error.response.status === 401 && !originalRequest._retry) {
+		if (error.response.status === 401) {
 			originalRequest._retry = true;
 
 			const refreshToken = Cookies.get('refresh_token');
@@ -40,7 +47,13 @@ axiosClient.interceptors.response.use(
 			if (!refreshToken) {
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');
-				window.location.href = '/signin';
+				Cookies.remove('user');
+				toast.error('Your session has expired');
+				if (pathname.includes('admin')) {
+					window.location.href = '/admin/signin';
+				} else {
+					window.location.href = '/signin';
+				}
 				return Promise.reject(error);
 			}
 
@@ -53,7 +66,13 @@ axiosClient.interceptors.response.use(
 			} catch (error) {
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');
-				window.location.href = '/signin';
+				Cookies.remove('user');
+				toast.error('Your session has expired');
+				if (!pathname.includes('admin')) {
+					window.location.href = '/signin';
+				} else {
+					window.location.href = '/admin/signin';
+				}
 				return Promise.reject(error);
 			}
 		}

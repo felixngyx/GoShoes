@@ -167,7 +167,7 @@ const SignIn = () => {
 										<LoadingIcon
 											type="spinner"
 											size="sm"
-											color="success"
+											color="ghost"
 										/>{' '}
 										Signing in
 									</>

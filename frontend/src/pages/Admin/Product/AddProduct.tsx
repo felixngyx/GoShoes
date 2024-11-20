@@ -24,10 +24,15 @@ const productSchema = Joi.object({
 		'number.base': 'Price must be a number',
 		'number.positive': 'Price must be positive',
 	}),
-	promotional_price: Joi.number().positive().required().messages({
-		'number.base': 'Promotional price must be a number',
-		'number.positive': 'Promotional price must be positive',
-	}),
+	promotional_price: Joi.number()
+		.positive()
+		.max(Joi.ref('price'))
+		.required()
+		.messages({
+			'number.base': 'Promotional price must be a number',
+			'number.positive': 'Promotional price must be positive',
+			'number.max': 'Promotional price must be less than regular price',
+		}),
 	status: Joi.string().required().messages({
 		'string.empty': 'Status is required',
 	}),
@@ -431,9 +436,7 @@ const AddProduct = () => {
 								{...register('status')}
 								className="select select-bordered w-full"
 							>
-								<option defaultValue="Select Status">
-									Select Status
-								</option>
+								<option>Select Status</option>
 								<option value={Status.PUBLIC}>Public</option>
 								<option value={Status.UNPUBLIC}>Unpublic</option>
 								<option value={Status.HIDDEN}>Hidden</option>
@@ -604,7 +607,7 @@ const AddProduct = () => {
 										className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
 									>
 										<Upload />
-										<p className="text-sm text-gray-500">
+										<p className="text-xs text-gray-500">
 											Upload Image
 										</p>
 									</div>
@@ -636,7 +639,7 @@ const AddProduct = () => {
 									className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
 								>
 									<Upload />
-									<p className="text-sm text-gray-500">Add Images</p>
+									<p className="text-xs text-gray-500">Add Images</p>
 								</div>
 								{productImageFiles.map((image, index) => (
 									<div
@@ -770,7 +773,7 @@ const AddProduct = () => {
 													className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
 												>
 													<Upload />
-													<p className="text-sm text-gray-500">
+													<p className="text-xs text-gray-500">
 														Upload Image
 													</p>
 												</label>
@@ -791,9 +794,7 @@ const AddProduct = () => {
 												className="select select-bordered w-full"
 												{...register(`variants.${index}.size_id`)}
 											>
-												<option defaultValue="Select Size">
-													Select Size
-												</option>
+												<option value="">Select Size</option>
 												{sizes.map((size) => (
 													<option key={size.id} value={size.id}>
 														{size.size}

@@ -46,7 +46,6 @@ const SignIn: React.FC = () => {
 		try {
 			setLoading(true);
 			const response = await authService.login(data);
-			console.log(response);
 
 			if (response.data.success) {
 				if (response.data.user.is_admin) {
@@ -79,7 +78,6 @@ const SignIn: React.FC = () => {
 				});
 
 				if (serverResponse.data.success) {
-					console.log(serverResponse);
 					Cookies.set('user', JSON.stringify(serverResponse.data.user));
 					Cookies.set('access_token', serverResponse.data.access_token);
 					Cookies.set('refresh_token', serverResponse.data.refresh_token);
@@ -351,7 +349,7 @@ const SignIn: React.FC = () => {
 												<LoadingIcon
 													type="spinner"
 													size="sm"
-													color="success"
+													color="ghost"
 												/>{' '}
 												Signing in
 											</>

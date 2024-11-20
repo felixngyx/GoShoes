@@ -1,16 +1,51 @@
 import { TrashIcon, Upload, Eye, X, Logs } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { Status } from '.';
 import categoryService, { CATEGORY } from '../../../services/admin/category';
 import sizeService, { SIZE } from '../../../services/admin/size';
 import brandService, { BRAND } from '../../../services/admin/brand';
-import productService, { PRODUCT } from '../../../services/admin/product';
+import productService from '../../../services/admin/product';
 import toast from 'react-hot-toast';
 import Joi from 'joi';
 import { joiResolver } from '@hookform/resolvers/joi';
 import uploadImageToCloudinary from '../../../common/uploadCloudinary';
 import { useNavigate, useParams } from 'react-router-dom';
+
+type Color = {
+	id: number;
+	color: string;
+	link_image: string;
+};
+
+type Variant = {
+	id: number;
+	product_id: number;
+	size_id: number;
+	image_variant: string;
+	color_id: number;
+	quantity: number;
+	created_at: string;
+	updated_at: string;
+	color: Color;
+};
+
+type PRODUCT = {
+	id?: number;
+	name: string;
+	description: string;
+	price: number;
+	promotional_price: number;
+	status: string;
+	sku: string;
+	hagtag: string;
+	category_ids: number[];
+	brand_id: number;
+	thumbnail: string;
+	images: string[];
+	stock_quantity: number;
+	variants: Variant[];
+};
 
 const productSchema = Joi.object({
 	name: Joi.string().required().messages({
@@ -77,6 +112,7 @@ const productSchema = Joi.object({
 });
 
 const UpdateProduct = () => {
+	const { id } = useParams();
 	const [categories, setCategories] = useState<CATEGORY[]>([]);
 	const [sizes, setSizes] = useState<SIZE[]>([]);
 	const [brands, setBrands] = useState<BRAND[]>([]);
@@ -84,18 +120,20 @@ const UpdateProduct = () => {
 	const [loading, setLoading] = useState(false);
 	const navigate = useNavigate();
 
-	useEffect(() => {
+	const fetchData = async () => {
 		try {
-			(async () => {
-				const resCategory = await categoryService.getAll();
-				setCategories(resCategory.data.category.data);
-				const resSize = await sizeService.getAll();
-				setSizes(resSize.data.sizes.data);
-				const resBrand = await brandService.getAll();
-				setBrands(resBrand.data.brands.data);
-			})();
-		} catch (error) {}
-	}, []);
+			setLoading(true);
+			const resCategory = await categoryService.getAll();
+			setCategories(resCategory.data.category.data);
+			const resSize = await sizeService.getAll();
+			setSizes(resSize.data.sizes.data);
+			const resBrand = await brandService.getAll();
+			setBrands(resBrand.data.brands.data);
+		} catch (error) {
+			console.log(error);
+			toast.error('Failed to fetch data');
+		}
+	};
 
 	const {
 		register,
@@ -214,7 +252,17 @@ const UpdateProduct = () => {
 
 	// Modify the append function to also add a null image
 	const addVariant = () => {
-		append({ color: '', size_id: 0, quantity: 0, image_variant: '' });
+		append({
+			id: 0,
+			product_id: 0,
+			size_id: 0,
+			color_id: 0,
+			quantity: 0,
+			image_variant: '',
+			created_at: '',
+			updated_at: '',
+			color: { id: 0, color: '', link_image: '' },
+		});
 		setVariantImageFiles([...variantImageFiles, null]);
 	};
 
@@ -250,26 +298,19 @@ const UpdateProduct = () => {
 		);
 	};
 
-	const { id } = useParams();
-
-	// Add state for initial data
-	const [initialData, setInitialData] = useState<PRODUCT | null>(null);
-
-	// Fetch product data on component mount
+	// // Fetch product data on component mount
 	const fetchProduct = async () => {
 		try {
 			setLoading(true);
 			const res = await productService.getById(Number(id));
-			console.log(res.data.Data.product);
-			console.log(res.data.Data.product);
-			const product = res.data.data.product;
+			const product = res.data.product.product;
 			setInitialData(product);
 
 			// Set form default values
 			setValue('name', product.name);
 			setValue('description', product.description);
-			setValue('price', product.price);
-			setValue('promotional_price', product.promotional_price);
+			setValue('price', Number(product.price));
+			setValue('promotional_price', Number(product.promotional_price));
 			setValue('status', product.status);
 			setValue('sku', product.sku);
 			setValue('hagtag', product.hagtag);
@@ -277,21 +318,19 @@ const UpdateProduct = () => {
 			setValue('brand_id', product.brand_id);
 			setValue('thumbnail', product.thumbnail);
 			setValue('images', product.images);
-			setValue('stock_quantity', product.stock_quantity);
+			setValue('stock_quantity', Number(product.stock_quantity));
 			setValue('variants', product.variants);
 
 			// Set selected categories
-			const productCategories = categories.filter((cat) =>
-				product.category_ids.includes(Number(cat.id))
-			);
-			setSelectedCategories(productCategories);
-
-			// Set images
-			setThumbnailFile(null); // Clear any existing file
-			setProductImageFiles([]); // Clear existing files
-			setVariantImageFiles(product.variants.map(() => null));
+			console.log(categories);
+			console.log(product);
+			categories.map((cat) => {
+				if (product.category_ids?.includes(Number(cat.id))) {
+					handleCategoryChange(Number(cat.id));
+				}
+			});
 		} catch (error) {
-			console.error(error);
+			console.log(error);
 			toast.error('Failed to fetch product');
 		} finally {
 			setLoading(false);
@@ -299,9 +338,13 @@ const UpdateProduct = () => {
 	};
 	useEffect(() => {
 		if (id) {
+			fetchData();
 			fetchProduct();
 		}
 	}, [id]);
+
+	// Add state for initial data
+	const [initialData, setInitialData] = useState<PRODUCT | null>(null);
 
 	const onSubmit = async (data: PRODUCT) => {
 		try {
@@ -365,7 +408,7 @@ const UpdateProduct = () => {
 	return (
 		<>
 			<div className="w-full border border-stroke p-4 shadow-lg">
-				<h3 className="font-bold text-2xl">Add Product</h3>
+				<h3 className="font-bold text-2xl">Update Product</h3>
 				<div className="w-full">
 					{loading ? (
 						<p>Loading...</p>
@@ -506,9 +549,7 @@ const UpdateProduct = () => {
 									{...register('brand_id')}
 									className="select select-bordered w-full"
 								>
-									<option defaultValue="Select Brand">
-										Select Brand
-									</option>
+									<option>Select Brand</option>
 									{brands.map((brand) => (
 										<option key={brand.id} value={brand.id}>
 											{brand.name}
@@ -659,7 +700,7 @@ const UpdateProduct = () => {
 											className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
 										>
 											<Upload />
-											<p className="text-sm text-gray-500">
+											<p className="text-xs text-gray-500">
 												Upload Image
 											</p>
 										</div>
@@ -691,7 +732,7 @@ const UpdateProduct = () => {
 										className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
 									>
 										<Upload />
-										<p className="text-sm text-gray-500">
+										<p className="text-xs text-gray-500">
 											Add Images
 										</p>
 									</div>
