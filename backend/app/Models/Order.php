@@ -14,6 +14,7 @@ class Order extends Model
         'original_total',
         'status',
         'sku',
+        'app_trans_id',
         'shipping_id'
     ];
 
@@ -35,5 +36,10 @@ class Order extends Model
     public function payment()
     {
         return $this->hasOne(OrderPayment::class);
+    }
+
+    public function refundRequest()
+    {
+        return $this->hasOne(RefundRequest::class);
     }
 }
