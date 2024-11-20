@@ -101,8 +101,8 @@ class ProductController extends Controller
                     'variants' => $product->variants->map(function ($variant) {
                         return [
                             'id' => $variant->id,
-                            'color' => $variant->color->color,
                             'size' => (int) $variant->size->size,
+                            'color' => $variant->color->color,
                             'quantity' => $variant->quantity,
                             'image_variant' => $variant->image_variant
                         ];
@@ -310,4 +310,18 @@ class ProductController extends Controller
     {
         return $this->productService->checkStockProductVariant($id);
     }
+    public function getDetailProduct(string $id)
+    {
+       
+        $product = $this->productService->findProductWithRelations($id);
+
+        if (!$product) {
+            return response()->json(['message' => 'Sản phẩm không tồn tại!'], 404);
+        }
+
+        return response()->json([
+            'Data' => $product
+        ]);
+    }
+
 }
