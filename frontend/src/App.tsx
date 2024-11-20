@@ -46,6 +46,8 @@ import AdminRoute from './components/common/AdminRoute';
 import AboutPage from './pages/Client/about';
 import CreateDiscount from './pages/Admin/discounts/create';
 import UpdateDiscount from './pages/Admin/discounts/update';
+import RefundRequest from './pages/Admin/orders/refundrequest';
+import DetailRefund from './pages/Admin/orders/detailRefund';
 
 function App() {
 	const { pathname } = useLocation();
@@ -123,6 +125,8 @@ function App() {
 					<Route path="orders">
 						<Route index element={<OrderDashboard />} />
 						<Route path="detail/:id" element={<DetailOrder />} />
+						<Route path="refund-request" element={<RefundRequest />} />
+						<Route path="refund-request/:id" element={<DetailRefund />} />
 					</Route>
 					<Route path="discounts">
 						<Route index element={<DiscountPage />}></Route>

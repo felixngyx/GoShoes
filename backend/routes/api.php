@@ -191,7 +191,8 @@ Route::group([
     Route::prefix('refunds')->group(function () {
         Route::get('/', [RefundController::class, 'index']);
         Route::post('/', [RefundController::class, 'store']);
-        Route::post('/aprrove/{id}', [RefundController::class,'approve']);
+        Route::post('/approve', [RefundController::class,'approve']);
+        Route::get('/{id}', [RefundController::class, 'viewDetailRefundRequest']);
     });
 });
 
