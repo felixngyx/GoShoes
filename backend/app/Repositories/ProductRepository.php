@@ -60,15 +60,10 @@ class ProductRepository implements ProductRepositoryInterface
             'images' => $product->images->map(function ($image) {
                 return [
                     'id' => $image->id,
-                    'image_path' => $image->image_path
+                    'image' => $image->image_path
                 ];
-            })->toArray(),
-            'categories' => $product->categories->map(function ($category) {
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name
-                ];
-            })->toArray(),
+            }),
+            'categories' => $product->categories->pluck('name')->toArray(),
             'variants' => $product->variants->map(function ($variant) {
                 return [
                     'size_id' => $variant->size_id,

@@ -35,7 +35,7 @@ class ColorController extends Controller
         return response()->json([
             'message' => 'Danh sách sizes',
             'clors' => $clors
-        ], 201);
+        ], 200);
     }
 
     /**
@@ -88,7 +88,7 @@ class ColorController extends Controller
         $color = $this->colorService->updateColor($id, $validated);
         return response()->json([
             'message' => 'Màu sắc đã được cập nhật thành công!',
-            'product' => $color
+            'color' => $color
         ], 200);
     }
 

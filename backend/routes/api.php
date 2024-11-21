@@ -45,6 +45,7 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('/reset-password', [AuthController::class, 'resetPasswordController']);
     Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
     Route::post('/refresh-token', [AuthController::class, 'refreshTokenController'])->middleware('jwt.refresh.token');
+    Route::post('/send-verify-email', [AuthController::class, 'sendEmailVerifyController'])->middleware('jwt.auth');
 });
 
 // API Product
@@ -153,7 +154,6 @@ Route::group([
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::put('/reviews/{id}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
-    Route::get('/products/{id}/reviews', [ReviewController::class, 'productReviews']);
     Route::get('/user/reviews', [ReviewController::class, 'userReviews']);
 
 
@@ -196,7 +196,6 @@ Route::group([
     });
 });
 
-
 // Routes cho Payment với ZaloPay
 Route::prefix('payment')->group(function () {
     Route::get('/callback', [ZaloPaymentController::class, 'callback'])->name('payment.callback');
@@ -210,4 +209,5 @@ Route::prefix('payment')->group(function () {
 
 Route::post('/auth/facebook-login', [FacebookAuthController::class, 'loginWithFacebook']);
 
-// API Categories
+// API review
+Route::get('/products/{id}/reviews', [ReviewController::class, 'productReviews']);

@@ -17,6 +17,10 @@ class Token extends Model
         'is_used'
     ];
 
+    protected $casts = [
+        'is_used' => 'boolean'
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
