@@ -99,27 +99,19 @@ const Navbar = () => {
 								/>
 							</Link>
 
-							{/* Navbar Links */}
-							<ul className="lex flex-row gap-8 font-semibold text-sm">
-								{[
-									'Men',
-									'Women',
-									'Kids',
-									'Sale',
-									'New Arrivals',
-									'Brands',
-								].map((item) => (
+							<ul className="flex flex-row gap-8 font-semibold text-sm">
+								{['HOME', 'BRAND', 'CATEGORY', 'ABOUT US', 'CONTACT'].map((item) => (
 									<li key={item}>
 										<Link
-											to="/products"
+											to={item === 'HOME' ? '/' : `/${item.toLowerCase().replace(' ', '-')}`}
 											className="menu-item hover:text-blue-500 transition-all duration-300"
 										>
 											{item}
-										</Link>
+										</Link> 
 									</li>
 								))}
 							</ul>
-
+							
 							{/* Navbar Icons */}
 							<div className="flex gap-4 items-center">
 								{/* Search Icon */}
