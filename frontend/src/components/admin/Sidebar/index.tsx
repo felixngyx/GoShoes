@@ -1,6 +1,6 @@
 import { FaUser } from 'react-icons/fa';
 import { Box, Boxes, TicketPercent } from 'lucide-react';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import Logo from '../../../images/logo/logo.svg';
 import { BsCart2 } from 'react-icons/bs';
@@ -55,6 +55,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 	// 		document.querySelector('body')?.classList.remove('sidebar-expanded');
 	// 	}
 	// }, [sidebarExpanded]);
+
+	const [ordersOpen, setOrdersOpen] = useState(false);
 
 	return (
 		<aside
@@ -242,16 +244,49 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 							</li>
 
 							<li>
-								<NavLink
-									to="/admin/orders"
-									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-										pathname.includes('orders') &&
-										'bg-graydark dark:bg-meta-4'
-									}`}
+								<div
+									onClick={() => setOrdersOpen(!ordersOpen)}
+									className="cursor-pointer group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4"
 								>
 									<BsCart2 size={18} />
-									Orders
-								</NavLink>
+									<span>Orders</span>
+									<svg
+										className={`ml-auto fill-current transition-transform duration-300 ${
+											ordersOpen ? 'rotate-180' : ''
+										}`}
+										width="20"
+										height="20"
+										viewBox="0 0 20 20"
+										fill="none"
+										xmlns="http://www.w3.org/2000/svg"
+									>
+										<path
+											fillRule="evenodd"
+											clipRule="evenodd"
+											d="M4.41107 6.9107C4.73651 6.58527 5.26414 6.58527 5.58958 6.9107L10.0003 11.3214L14.4111 6.91071C14.7365 6.58527 15.2641 6.58527 15.5896 6.91071C15.915 7.23614 15.915 7.76378 15.5896 8.08922L10.5896 13.0892C10.2641 13.4147 9.73651 13.4147 9.41107 13.0892L4.41107 8.08922C4.08563 7.76378 4.08563 7.23614 4.41107 6.9107Z"
+											fill=""
+										/>
+									</svg>
+								</div>
+								<ul className={`${ordersOpen ? 'block' : 'hidden'} pl-6`}>
+									<li>
+										<NavLink
+											to="/admin/orders"
+											className="block py-2 px-4 text-bodydark2 hover:text-white"
+										>
+											All Orders
+										</NavLink>
+									</li>
+									<li>
+										<NavLink
+											to="/admin/orders/refund-request"
+											className="block py-2 px-4 text-bodydark2 hover:text-white"
+										>
+											Refund Request
+										</NavLink>
+									</li>
+									
+								</ul>
 							</li>
 
 							<li>
@@ -288,7 +323,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 											fill=""
 										/>
 										<path
-											d="M10.8283 9.05627H7.17207C4.16269 9.05627 1.71582 11.5313 1.71582 14.5406V16.875C1.71582 17.2125 1.99707 17.5219 2.3627 17.5219C2.72832 17.5219 3.00957 17.2407 3.00957 16.875V14.5406C3.00957 12.2344 4.89394 10.3219 7.22832 10.3219H10.8564C13.1627 10.3219 15.0752 12.2063 15.0752 14.5406V16.875C15.0752 17.2125 15.3564 17.5219 15.7221 17.5219C16.0877 17.5219 16.3689 17.2407 16.3689 16.875V14.5406C16.2846 11.5313 13.8377 9.05627 10.8283 9.05627Z"
+											d="M10.8283 9.05627H7.17207C4.16269 9.05627 1.71582 11.5313 1.71582 14.5406V16.875C1.71582 17.2125 1.99707 17.5219 2.3627 17.5219C2.72832 17.5219 3.00957 17.2407 3.00957 16.875V14.5406C3.00957 12.2344 4.89394 10.3219 7.22832 10.3219H10.8564C13.1627 10.3219 15.0752 12.2063 15.0752 14.5406V16.875C15.0752 17.2125 15.3564 17.5219 15.7221 17.5219C16.0877 17.5219 16.3689 17.2407 16.3689 16.875V14.5406C16.2846 11.5313 13.8377 9.05627 10.8283 9.05627ZM15.9752 6.30005C15.9752 6.5813 15.7502 6.8063 15.4689 6.8063H11.8971C11.6158 6.8063 11.3908 6.5813 11.3908 6.30005V2.72817C11.3908 2.44692 11.6158 2.22192 11.8971 2.22192H15.4689C15.7502 2.22192 15.9752 2.44692 15.9752 2.72817V6.30005Z"
 											fill=""
 										/>
 									</svg>

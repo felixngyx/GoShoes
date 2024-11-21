@@ -10,7 +10,6 @@
         "guzzlehttp/guzzle": "^7.9",
         "knuckleswtf/scribe": "^4.37",
         "laravel/framework": "^10.0",
-        "laravel/sanctum": "^3.2",
         "laravel/socialite": "^5.16",
         "laravel/tinker": "^2.8",
         "predis/predis": "^2.2",

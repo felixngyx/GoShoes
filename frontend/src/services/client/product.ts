@@ -43,3 +43,15 @@ export const getProductsByName = async (name: string) => {
     throw new Error("Failed to fetch products");
   }
 };
+
+export const checkStock = async (variant_id: number): Promise<number> => {
+  try {
+    const response = await axiosClient.get(
+      `/product/variant/${variant_id}/stock`
+    );
+    return response.data.data.quantity;
+  } catch (error) {
+    console.error("Failed to check stock:", error);
+    throw error;
+  }
+};

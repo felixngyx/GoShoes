@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useDebounce } from 'use-debounce';
-import axios, { AxiosInstance } from 'axios';
-import Cookies from 'js-cookie';
-import { Link, useNavigate } from 'react-router-dom';
-import { Order, OrderStatus, Tab } from '../../../types/client/order';
-import { Search } from 'lucide-react';
-import { 
+import { useState, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useDebounce } from "use-debounce";
+import axios, { AxiosInstance } from "axios";
+import Cookies from "js-cookie";
+import { Link, useNavigate } from "react-router-dom";
+import { Order, OrderStatus, Tab } from "../../../types/client/order";
+import { Search } from "lucide-react";
+import {
   Paper,
   TextField,
   Button,
@@ -24,23 +24,24 @@ import {
   InputAdornment,
   Modal,
   Typography,
-  IconButton
-} from '@mui/material';
-import { Tab as MuiTab, Tabs } from '@mui/material';
-import { toast } from 'react-hot-toast';
-import { format } from 'date-fns';
-import { Upload, X } from 'lucide-react';
+  IconButton,
+} from "@mui/material";
+import { Tab as MuiTab, Tabs } from "@mui/material";
+import { toast } from "react-hot-toast";
+import { format } from "date-fns";
+import { Upload, X } from "lucide-react";
+import DialogReview from "../../../components/client/DialogReview";
 
 const tabs: Tab[] = [
-  { id: 'all', label: 'ALL', color: 'text-red-500' },
-  { id: 'pending', label: 'Pending', color: 'text-gray-700' },
-  { id: 'processing', label: 'Processing', color: 'text-gray-700' },
-  { id: 'shipping', label: 'Shipping', color: 'text-gray-700' },
-  { id: 'completed', label: 'Completed', color: 'text-gray-700' },
-  { id: 'cancelled', label: 'Cancelled', color: 'text-gray-700' },
-  { id: 'refunded', label: 'Refunded', color: 'text-gray-700' },
-  { id: 'expired', label: 'Expired', color: 'text-gray-700' },
-  { id: 'failed', label: 'Failed', color: 'text-gray-700' }
+  { id: "all", label: "ALL", color: "text-red-500" },
+  { id: "pending", label: "Pending", color: "text-gray-700" },
+  { id: "processing", label: "Processing", color: "text-gray-700" },
+  { id: "shipping", label: "Shipping", color: "text-gray-700" },
+  { id: "completed", label: "Completed", color: "text-gray-700" },
+  { id: "cancelled", label: "Cancelled", color: "text-gray-700" },
+  { id: "refunded", label: "Refunded", color: "text-gray-700" },
+  { id: "expired", label: "Expired", color: "text-gray-700" },
+  { id: "failed", label: "Failed", color: "text-gray-700" },
 ];
 
 interface ApiResponse {
@@ -63,7 +64,7 @@ const api: AxiosInstance = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = Cookies.get('access_token');
+    const token = Cookies.get("access_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -81,7 +82,7 @@ interface SortOption {
 
 interface FilterState {
   search: string;
-  status: OrderStatus | 'all';
+  status: OrderStatus | "all";
   sort: string;
 }
 
@@ -92,46 +93,55 @@ interface RefundFormData {
 
 export default function OrderList(): JSX.Element {
   const [filters, setFilters] = useState<FilterState>({
-    search: '',
-    status: 'all',
-    sort: 'newest'
+    search: "",
+    status: "all",
+    sort: "newest",
   });
   const [debouncedFilters] = useDebounce(filters, 500);
   const [page, setPage] = useState(1);
-  const [openDialog, setOpenDialog] = useState<{ 
-    type: string; 
+  const [openDialog, setOpenDialog] = useState<{
+    type: string;
     orderId: string | null;
     paymentUrl?: string;
-  }>({ 
-    type: '', 
-    orderId: null 
+  }>({
+    type: "",
+    orderId: null,
   });
   const [isRenewing, setIsRenewing] = useState<string | null>(null);
-  const [refundForm, setRefundForm] = useState<RefundFormData>({
-    reason: '',
-    images: []
+  const [refundForm, setRefundForm] = useState<{
+    reason: string;
+    images: File[];
+  }>({
+    reason: "",
+    images: [],
   });
 
-  const { data: ordersData, isLoading, refetch } = useQuery<ApiResponse>({
-    queryKey: ['orders', debouncedFilters, page],
+  const {
+    data: ordersData,
+    isLoading,
+    refetch,
+  } = useQuery<ApiResponse>({
+    queryKey: ["orders", debouncedFilters, page],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: page.toString(),
-        sort: debouncedFilters.sort
+        sort: debouncedFilters.sort,
       });
 
-      if (debouncedFilters.status !== 'all') {
-        params.append('status', debouncedFilters.status);
+      if (debouncedFilters.status !== "all") {
+        params.append("status", debouncedFilters.status);
       }
 
       if (debouncedFilters.search) {
-        params.append('search', debouncedFilters.search);
+        params.append("search", debouncedFilters.search);
       }
 
-      const response = await api.get<ApiResponse>(`/orders?${params.toString()}`);
-      
+      const response = await api.get<ApiResponse>(
+        `/orders?${params.toString()}`
+      );
+
       if (!response.data.success) {
-        throw new Error('Failed to fetch orders');
+        throw new Error("Failed to fetch orders");
       }
 
       return response.data;
@@ -141,27 +151,27 @@ export default function OrderList(): JSX.Element {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const searchValue = formData.get('search') as string;
-    
-    setFilters(prev => ({
+    const searchValue = formData.get("search") as string;
+
+    setFilters((prev) => ({
       ...prev,
-      search: searchValue
+      search: searchValue,
     }));
     setPage(1);
   };
 
-  const handleStatusChange = (newStatus: OrderStatus | 'all') => {
-    setFilters(prev => ({
+  const handleStatusChange = (newStatus: OrderStatus | "all") => {
+    setFilters((prev) => ({
       ...prev,
-      status: newStatus
+      status: newStatus,
     }));
     setPage(1);
   };
 
   const handleSortChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      sort: event.target.value
+      sort: event.target.value,
     }));
     setPage(1);
   };
@@ -169,45 +179,69 @@ export default function OrderList(): JSX.Element {
   const handleCancelOrder = async (orderId: string): Promise<void> => {
     try {
       await api.put(`/orders/${orderId}/update`, {
-        status: 'cancelled'
+        status: "cancelled",
       });
-      
-      setOpenDialog({ type: '', orderId: null });
+
+      setOpenDialog({ type: "", orderId: null });
       // Refresh data
       refetch();
-      toast.success('Order cancelled successfully');
+      toast.success("Order cancelled successfully");
     } catch (error: any) {
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error('Failed to cancel order');
+        toast.error("Failed to cancel order");
       }
     }
   };
 
   const handleRefundRequest = async (orderId: string): Promise<void> => {
     try {
-      const formData = new FormData();
-      formData.append('reason', refundForm.reason);
-      refundForm.images.forEach((image, index) => {
-        formData.append(`images[${index}]`, image);
-      });
+      // Upload ảnh lên Cloudinary trước
+      const uploadedImages = await Promise.all(
+        refundForm.images.map(async (image) => {
+          const imageFormData = new FormData();
+          imageFormData.append("file", image);
+          imageFormData.append("upload_preset", "go_shoes");
+          imageFormData.append("cloud_name", "drxguvfuq");
 
-      await api.post(`/orders/${orderId}/refund-request`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
+          const response = await axios.post(
+            `https://api.cloudinary.com/v1_1/drxguvfuq/image/upload`,
+            imageFormData
+          );
+
+          return response.data.url;
+        })
+      );
+
+      // Gửi request với cookie trong header
+      const token = Cookies.get("access_token");
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/refunds`,
+        {
+          order_id: orderId,
+          reason: refundForm.reason,
+          images: uploadedImages,
         },
-      });
-      
-      setOpenDialog({ type: '', orderId: null });
-      setRefundForm({ reason: '', images: [] });
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      setOpenDialog({ type: "", orderId: null });
+      setRefundForm({ reason: "", images: [] });
       refetch();
-      toast.success('Return & refund request submitted successfully');
+      toast.success("Return & refund request submitted successfully");
     } catch (error: any) {
+      console.error("Refund request error:", error);
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error('Failed to submit return & refund request');
+        toast.error("Failed to submit return & refund request");
       }
     }
   };
@@ -215,18 +249,18 @@ export default function OrderList(): JSX.Element {
   const handleConfirmReceived = async (orderId: string): Promise<void> => {
     try {
       await api.put(`/orders/${orderId}/update`, {
-        status: 'completed'
+        status: "completed",
       });
-      
-      setOpenDialog({ type: '', orderId: null });
+
+      setOpenDialog({ type: "", orderId: null });
       // Refresh data
       refetch();
-      toast.success('Order confirmed as received');
+      toast.success("Order confirmed as received");
     } catch (error: any) {
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error('Failed to confirm order');
+        toast.error("Failed to confirm order");
       }
     }
   };
@@ -236,176 +270,232 @@ export default function OrderList(): JSX.Element {
   const handleBuyAgain = async (order: Order) => {
     try {
       if (!order.items || order.items.length === 0) {
-        throw new Error('No items in order');
+        throw new Error("No items in order");
       }
 
       // Lấy thông tin giá hiện tại cho tất cả sản phẩm
-      const itemsWithCurrentPrice = await Promise.all(order.items.map(async item => {
-        try {
-          const response = await axios.get(
-            `${import.meta.env.VITE_API_URL}/products/${item.product.id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${Cookies.get('access_token')}`
+      const itemsWithCurrentPrice = await Promise.all(
+        order.items.map(async (item) => {
+          try {
+            const response = await axios.get(
+              `${import.meta.env.VITE_API_URL}/products/${item.product.id}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${Cookies.get("access_token")}`,
+                },
+              }
+            );
+
+            const currentProduct = response.data.Data.product;
+
+            // Kiểm tra sản phẩm có tồn tại
+            if (!currentProduct) {
+              throw new Error(
+                `Product ${item.product.name} is no longer available`
+              );
+            }
+
+            // Kiểm tra trạng thái sản phẩm
+            if (currentProduct.status !== "public") {
+              throw new Error(
+                `Product ${item.product.name} is currently unavailable`
+              );
+            }
+
+            let currentPrice =
+              currentProduct.promotional_price || currentProduct.price;
+            let variantQuantity = currentProduct.stock_quantity;
+
+            // Xử lý variant nếu có
+            if (item.variant) {
+              // Kiểm tra sản phẩm có variants không
+              if (
+                !currentProduct.variants ||
+                currentProduct.variants.length === 0
+              ) {
+                throw new Error(
+                  `Product ${item.product.name} no longer has variants available`
+                );
+              }
+
+              // Tìm variant tương ứng
+              const currentVariant = currentProduct.variants.find(
+                (v: any) =>
+                  Number(v.size) === Number(item.variant.size) &&
+                  v.color.toLowerCase() === item.variant.color.toLowerCase()
+              );
+
+              if (!currentVariant) {
+                throw new Error(
+                  `Variant (${item.variant.color}/${item.variant.size}) of ${item.product.name} is no longer available`
+                );
+              }
+
+              // Kiểm tra số lượng variant
+              if (currentVariant.quantity === 0) {
+                throw new Error(
+                  `Variant (${item.variant.color}/${item.variant.size}) of ${item.product.name} is out of stock`
+                );
+              }
+
+              if (currentVariant.quantity < item.quantity) {
+                throw new Error(
+                  `Only ${currentVariant.quantity} items available for variant (${item.variant.color}/${item.variant.size}) of ${item.product.name}`
+                );
+              }
+
+              variantQuantity = currentVariant.quantity;
+            } else {
+              // Kiểm tra số lượng sản phẩm không variant
+              if (currentProduct.stock_quantity === 0) {
+                throw new Error(`Product ${item.product.name} is out of stock`);
+              }
+
+              if (currentProduct.stock_quantity < item.quantity) {
+                throw new Error(
+                  `Only ${currentProduct.stock_quantity} items available for ${item.product.name}`
+                );
               }
             }
-          );
 
-          const currentProduct = response.data.Data.product;
-          
-          // Kiểm tra sản phẩm có tồn tại
-          if (!currentProduct) {
-            throw new Error(`Product ${item.product.name} is no longer available`);
-          }
-
-          // Kiểm tra trạng thái sản phẩm
-          if (currentProduct.status !== 'public') {
-            throw new Error(`Product ${item.product.name} is currently unavailable`);
-          }
-
-          let currentPrice = currentProduct.promotional_price || currentProduct.price;
-          let variantQuantity = currentProduct.stock_quantity;
-
-          // Xử lý variant nếu có
-          if (item.variant) {
-            // Kiểm tra sản phẩm có variants không
-            if (!currentProduct.variants || currentProduct.variants.length === 0) {
-              throw new Error(`Product ${item.product.name} no longer has variants available`);
-            }
-
-            // Tìm variant tương ứng
-            const currentVariant = currentProduct.variants.find(
-              (v: any) => 
-                Number(v.size) === Number(item.variant.size) && 
-                v.color.toLowerCase() === item.variant.color.toLowerCase()
+            return {
+              id: item.product.id,
+              name: item.product.name,
+              quantity: item.quantity,
+              thumbnail: currentProduct.thumbnail,
+              price: Number(currentPrice),
+              total: Number(currentPrice) * item.quantity,
+              stock_quantity: variantQuantity,
+              product_variant: item.variant && {
+                id: item.variant.id,
+                size: {
+                  size: item.variant.size,
+                },
+                color: {
+                  color: item.variant.color,
+                },
+                image_variant: currentProduct.thumbnail,
+                price: Number(currentPrice),
+              },
+            };
+          } catch (error: any) {
+            throw new Error(
+              error.message ||
+                `Failed to get information for product ${item.product.name}`
             );
-            
-            if (!currentVariant) {
-              throw new Error(`Variant (${item.variant.color}/${item.variant.size}) of ${item.product.name} is no longer available`);
-            }
-
-            // Kiểm tra số lượng variant
-            if (currentVariant.quantity === 0) {
-              throw new Error(`Variant (${item.variant.color}/${item.variant.size}) of ${item.product.name} is out of stock`);
-            }
-
-            if (currentVariant.quantity < item.quantity) {
-              throw new Error(`Only ${currentVariant.quantity} items available for variant (${item.variant.color}/${item.variant.size}) of ${item.product.name}`);
-            }
-
-            variantQuantity = currentVariant.quantity;
-          } else {
-            // Kiểm tra số lượng sản phẩm không variant
-            if (currentProduct.stock_quantity === 0) {
-              throw new Error(`Product ${item.product.name} is out of stock`);
-            }
-
-            if (currentProduct.stock_quantity < item.quantity) {
-              throw new Error(`Only ${currentProduct.stock_quantity} items available for ${item.product.name}`);
-            }
           }
-
-          return {
-            id: item.product.id,
-            name: item.product.name,
-            quantity: item.quantity,
-            thumbnail: currentProduct.thumbnail,
-            price: Number(currentPrice),
-            total: Number(currentPrice) * item.quantity,
-            stock_quantity: variantQuantity,
-            product_variant: item.variant && {
-              id: item.variant.id,
-              size: {
-                size: item.variant.size
-              },
-              color: {
-                color: item.variant.color
-              },
-              image_variant: currentProduct.thumbnail,
-              price: Number(currentPrice)
-            }
-          };
-        } catch (error: any) {
-          throw new Error(error.message || `Failed to get information for product ${item.product.name}`);
-        }
-      }));
+        })
+      );
 
       // Tính toán tổng giá mới
-      const newTotal = itemsWithCurrentPrice.reduce((sum, item) => sum + item.total, 0);
+      const newTotal = itemsWithCurrentPrice.reduce(
+        (sum, item) => sum + item.total,
+        0
+      );
 
       const orderSummary = {
         subtotal: newTotal,
         total: newTotal,
-        original_total: newTotal
+        original_total: newTotal,
       };
 
-      navigate('/checkout', {
+      navigate("/checkout", {
         state: {
           cartItems: itemsWithCurrentPrice,
-          orderSummary: orderSummary
-        }
+          orderSummary: orderSummary,
+        },
       });
     } catch (error: any) {
-      console.error('Error handling buy again:', error);
-      toast.error(error.message || 'Unable to process buy again request. Please try again later.');
+      console.error("Error handling buy again:", error);
+      toast.error(
+        error.message ||
+          "Unable to process buy again request. Please try again later."
+      );
     }
   };
 
-  const getStatusColor = (status: OrderStatus): { color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" } => {
-    const statusColors: Record<OrderStatus, { color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" }> = {
-      pending: { color: 'warning' },
-      processing: { color: 'info' },
-      completed: { color: 'success' },
-      cancelled: { color: 'error' },
-      refunded: { color: 'secondary' },
-      expired: { color: 'default' },
-      shipping: { color: 'primary' },
-      failed: { color: 'error' }
+  const getStatusColor = (
+    status: OrderStatus
+  ): {
+    color:
+      | "default"
+      | "primary"
+      | "secondary"
+      | "error"
+      | "info"
+      | "success"
+      | "warning";
+  } => {
+    const statusColors: Record<
+      OrderStatus,
+      {
+        color:
+          | "default"
+          | "primary"
+          | "secondary"
+          | "error"
+          | "info"
+          | "success"
+          | "warning";
+      }
+    > = {
+      pending: { color: "warning" },
+      processing: { color: "info" },
+      completed: { color: "success" },
+      cancelled: { color: "error" },
+      refunded: { color: "secondary" },
+      expired: { color: "default" },
+      shipping: { color: "primary" },
+      failed: { color: "error" },
     };
     return statusColors[status];
   };
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount);
   };
 
   const renewPaymentLink = async (orderId: string): Promise<void> => {
     try {
       setIsRenewing(orderId);
-      
-      const token = Cookies.get('access_token');
+
+      const token = Cookies.get("access_token");
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/orders/${orderId}/renew-payment`,
-        {}, 
+        {},
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
         }
       );
 
       if (response.data.success && response.data.payment_url) {
         setOpenDialog({
-          type: 'confirm-payment',
+          type: "confirm-payment",
           orderId,
-          paymentUrl: response.data.payment_url
+          paymentUrl: response.data.payment_url,
         });
       } else {
-        throw new Error('Payment URL not found');
+        throw new Error("Payment URL not found");
       }
     } catch (error: any) {
-      console.error('Error renewing payment:', error);
+      console.error("Error renewing payment:", error);
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error('Failed to renew payment link');
+        toast.error("Failed to renew payment link");
       }
     } finally {
       setIsRenewing(null);
     }
   };
+  const [openReviewDialog, setOpenReviewDialog] = useState(false);
 
   const renderActionButtons = (order: Order) => {
     const viewDetailsButton = (
@@ -420,18 +510,20 @@ export default function OrderList(): JSX.Element {
     );
 
     switch (order.status.toLowerCase()) {
-      case 'pending':
+      case "pending":
         return (
           <div className="space-x-2">
             {viewDetailsButton}
             <Button
               variant="contained"
               size="small"
-              onClick={() => setOpenDialog({ 
-                type: 'confirm-payment', 
-                orderId: order.id,
-                paymentUrl: order.payment?.payment_url 
-              })}
+              onClick={() =>
+                setOpenDialog({
+                  type: "confirm-payment",
+                  orderId: order.id,
+                  paymentUrl: order.payment?.payment_url,
+                })
+              }
               color="primary"
             >
               Pay Now
@@ -439,7 +531,7 @@ export default function OrderList(): JSX.Element {
           </div>
         );
 
-      case 'expired':
+      case "expired":
         return (
           <div className="space-x-2">
             {viewDetailsButton}
@@ -450,12 +542,12 @@ export default function OrderList(): JSX.Element {
               color="primary"
               disabled={isRenewing === order.id}
             >
-              {isRenewing === order.id ? 'Renewing...' : 'Renew Link'}
+              {isRenewing === order.id ? "Renewing..." : "Renew Link"}
             </Button>
           </div>
         );
 
-      case 'processing':
+      case "processing":
         return (
           <div className="space-x-2">
             {viewDetailsButton}
@@ -463,23 +555,39 @@ export default function OrderList(): JSX.Element {
               variant="outlined"
               size="small"
               color="error"
-              onClick={() => setOpenDialog({ type: 'cancel', orderId: order.id })}
+              onClick={() =>
+                setOpenDialog({ type: "cancel", orderId: order.id })
+              }
             >
               Cancel Order
             </Button>
           </div>
         );
 
-      case 'completed':
+      case "completed":
         return (
           <div className="space-x-2">
             {viewDetailsButton}
+
             <Button
               variant="outlined"
               size="small"
-              onClick={() => setOpenDialog({ type: 'refund', orderId: order.id })}
+              onClick={() =>
+                setOpenDialog({ type: "refund", orderId: order.id })
+              }
             >
               Return & Refund
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => {
+                setOpenReviewDialog(true);
+                setSelectedOrderId(order.id);
+              }}
+              color="primary"
+            >
+              Review
             </Button>
             <Button
               variant="contained"
@@ -489,10 +597,16 @@ export default function OrderList(): JSX.Element {
             >
               Buy Again
             </Button>
+
+            <DialogReview
+              open={openReviewDialog}
+              onClose={() => setOpenReviewDialog(false)}
+              orderId={selectedOrderId}
+            />
           </div>
         );
 
-      case 'shipping':
+      case "shipping":
         return (
           <div className="space-x-2">
             {viewDetailsButton}
@@ -500,7 +614,9 @@ export default function OrderList(): JSX.Element {
               variant="contained"
               size="small"
               color="success"
-              onClick={() => setOpenDialog({ type: 'confirm-received', orderId: order.id })}
+              onClick={() =>
+                setOpenDialog({ type: "confirm-received", orderId: order.id })
+              }
             >
               Confirm Received
             </Button>
@@ -512,13 +628,15 @@ export default function OrderList(): JSX.Element {
     }
   };
 
+  const [selectedOrderId, setSelectedOrderId] = useState<string>("");
+
   const sortOptions: SortOption[] = [
-    { value: 'newest', label: 'Newest First' },
-    { value: 'oldest', label: 'Oldest First' }
+    { value: "newest", label: "Newest First" },
+    { value: "oldest", label: "Oldest First" },
   ];
 
   const handleClosePaymentDialog = () => {
-    setOpenDialog({ type: '', orderId: null });
+    setOpenDialog({ type: "", orderId: null });
     // Refresh data after closing dialog
     refetch();
   };
@@ -527,25 +645,57 @@ export default function OrderList(): JSX.Element {
     if (openDialog.paymentUrl) {
       window.location.href = openDialog.paymentUrl;
     }
-    setOpenDialog({ type: '', orderId: null });
+    setOpenDialog({ type: "", orderId: null });
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
-      // Convert FileList to Array and append to existing images
-      const newImages = Array.from(files);
-      setRefundForm(prev => ({
-        ...prev,
-        images: [...prev.images, ...newImages].slice(0, 5) // Limit to 5 images
-      }));
+    if (!files) return;
+
+    const fileArray = Array.from(files);
+
+    // Kiểm tra số lượng ảnh tối đa
+    if (refundForm.images.length + fileArray.length > 5) {
+      toast.error("Maximum 5 images allowed");
+      return;
     }
+
+    // Validate files
+    const validFiles = fileArray.filter((file) => {
+      // Check file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`File ${file.name} is too large. Max size is 5MB`);
+        return false;
+      }
+
+      // Check file type
+      if (!file.type.match(/^image\/(jpeg|png|jpg)$/)) {
+        toast.error(`File ${file.name} is not a valid image format (JPG, PNG)`);
+        return false;
+      }
+
+      return true;
+    });
+
+    setRefundForm((prev) => ({
+      ...prev,
+      images: [...prev.images, ...validFiles],
+    }));
+
+    // Reset input
+    event.target.value = "";
   };
 
   const removeImage = (index: number) => {
-    setRefundForm(prev => ({
+    setRefundForm((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, i) => i !== index),
     }));
   };
 
@@ -587,7 +737,7 @@ export default function OrderList(): JSX.Element {
       </div>
 
       <Paper className="mb-4">
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
             value={filters.status}
             onChange={(_, newValue) => handleStatusChange(newValue)}
@@ -595,8 +745,8 @@ export default function OrderList(): JSX.Element {
             scrollButtons="auto"
           >
             {tabs.map((tab) => (
-              <MuiTab 
-                key={tab.id} 
+              <MuiTab
+                key={tab.id}
                 label={
                   <div className="flex items-center gap-2">
                     {tab.label}
@@ -606,27 +756,29 @@ export default function OrderList(): JSX.Element {
                       </span>
                     )}
                   </div>
-                } 
-                value={tab.id} 
+                }
+                value={tab.id}
               />
             ))}
           </Tabs>
         </Box>
       </Paper>
 
-      {(filters.search || filters.status !== 'all') && (
+      {(filters.search || filters.status !== "all") && (
         <div className="mb-4 flex flex-wrap gap-2">
           {filters.search && (
             <Chip
               label={`Search: ${filters.search}`}
-              onDelete={() => setFilters(prev => ({ ...prev, search: '' }))}
+              onDelete={() => setFilters((prev) => ({ ...prev, search: "" }))}
               size="small"
             />
           )}
-          {filters.status !== 'all' && (
+          {filters.status !== "all" && (
             <Chip
               label={`Status: ${filters.status}`}
-              onDelete={() => setFilters(prev => ({ ...prev, status: 'all' }))}
+              onDelete={() =>
+                setFilters((prev) => ({ ...prev, status: "all" }))
+              }
               size="small"
             />
           )}
@@ -649,7 +801,7 @@ export default function OrderList(): JSX.Element {
                 <div>
                   <p className="font-medium">Order #{order.sku}</p>
                   <p className="text-sm text-gray-500">
-                    {format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}
+                    {format(new Date(order.created_at), "dd/MM/yyyy HH:mm")}
                   </p>
                 </div>
                 <Chip
@@ -675,18 +827,18 @@ export default function OrderList(): JSX.Element {
                           </span>
                         )}
                       </h3>
-                      
                     </div>
                     <p className="text-sm text-gray-500">SKU: {order.sku}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">
-                    {formatCurrency(order.total)}
-                  </p>
+                  <p className="font-medium">{formatCurrency(order.total)}</p>
                   {Number(order.original_total) - Number(order.total) > 0 && (
                     <p className="text-sm text-green-600">
-                      Saving: {formatCurrency(Number(order.original_total) - Number(order.total))}
+                      Saving:{" "}
+                      {formatCurrency(
+                        Number(order.original_total) - Number(order.total)
+                      )}
                     </p>
                   )}
                 </div>
@@ -699,7 +851,7 @@ export default function OrderList(): JSX.Element {
 
           {(!ordersData?.data || ordersData.data.length === 0) && (
             <Paper className="p-12 text-center text-gray-500">
-              {filters.search 
+              {filters.search
                 ? "No orders found matching your search criteria"
                 : "No orders found"}
             </Paper>
@@ -719,8 +871,8 @@ export default function OrderList(): JSX.Element {
       )}
 
       <Dialog
-        open={openDialog.type === 'cancel'}
-        onClose={() => setOpenDialog({ type: '', orderId: null })}
+        open={openDialog.type === "cancel"}
+        onClose={() => setOpenDialog({ type: "", orderId: null })}
       >
         <DialogTitle>Confirm Cancel Order</DialogTitle>
         <DialogContent>
@@ -729,9 +881,13 @@ export default function OrderList(): JSX.Element {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog({ type: '', orderId: null })}>No</Button>
-          <Button 
-            onClick={() => openDialog.orderId && handleCancelOrder(openDialog.orderId)} 
+          <Button onClick={() => setOpenDialog({ type: "", orderId: null })}>
+            No
+          </Button>
+          <Button
+            onClick={() =>
+              openDialog.orderId && handleCancelOrder(openDialog.orderId)
+            }
             variant="contained"
             color="error"
           >
@@ -741,31 +897,34 @@ export default function OrderList(): JSX.Element {
       </Dialog>
 
       <Modal
-        open={openDialog.type === 'refund'}
+        open={openDialog.type === "refund"}
         onClose={() => {
-          setOpenDialog({ type: '', orderId: null });
-          setRefundForm({ reason: '', images: [] });
+          setOpenDialog({ type: "", orderId: null });
+          setRefundForm({ reason: "", images: [] });
         }}
       >
-        <Box sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: { xs: '90%', sm: 600 },
-          bgcolor: 'background.paper',
-          borderRadius: 1,
-          boxShadow: 24,
-          p: 4,
-          maxHeight: '90vh',
-          overflowY: 'auto'
-        }}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: { xs: "90%", sm: 600 },
+            bgcolor: "background.paper",
+            borderRadius: 1,
+            boxShadow: 24,
+            p: 4,
+            maxHeight: "90vh",
+            overflowY: "auto",
+          }}
+        >
           <Typography variant="h6" component="h2" mb={2}>
             Return & Refund Request
           </Typography>
 
           <Typography variant="body2" color="text.secondary" mb={3}>
-            Please provide details about your return request. Note that items must be in their original condition.
+            Please provide details about your return request. Note that items
+            must be in their original condition.
           </Typography>
 
           <TextField
@@ -774,7 +933,9 @@ export default function OrderList(): JSX.Element {
             multiline
             rows={4}
             value={refundForm.reason}
-            onChange={(e) => setRefundForm(prev => ({ ...prev, reason: e.target.value }))}
+            onChange={(e) =>
+              setRefundForm((prev) => ({ ...prev, reason: e.target.value }))
+            }
             placeholder="Please explain why you want to return this item..."
             required
             margin="normal"
@@ -784,86 +945,100 @@ export default function OrderList(): JSX.Element {
             <Typography variant="subtitle2" mb={1}>
               Upload Images (Max 5)
             </Typography>
-            
-            <Box sx={{ 
-              display: 'flex', 
-              flexWrap: 'wrap',
-              gap: 1,
-              mb: 2 
-            }}>
+
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1,
+                mb: 2,
+              }}
+            >
               {refundForm.images.map((image, index) => (
                 <Box
                   key={index}
                   sx={{
-                    position: 'relative',
+                    position: "relative",
                     width: 100,
                     height: 100,
                   }}
                 >
                   <img
                     src={URL.createObjectURL(image)}
-                    alt={`Preview ${index}`}
+                    alt={`Preview ${index + 1}`}
                     style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      borderRadius: '4px'
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: "4px",
                     }}
                   />
                   <IconButton
                     size="small"
                     sx={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: -8,
                       right: -8,
+                      bgcolor: "background.paper",
+                      "&:hover": {
+                        bgcolor: "background.paper",
+                      },
                     }}
                     onClick={() => removeImage(index)}
                   >
-                    <X className="w-4 h-4 text-gray-500" />
+                    <X className="w-4 h-4" />
                   </IconButton>
                 </Box>
               ))}
             </Box>
 
             <input
+              ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*"
+              accept="image/jpeg,image/png,image/jpg"
               onChange={handleFileChange}
-              style={{ display: 'none' }}
+              style={{ display: "none" }}
             />
 
             <Button
-              variant="contained"
-              component="label"
-              startIcon={<Upload className="w-4 h-4 text-gray-500" />}
-              sx={{ mt: 2 }}
+              variant="outlined"
+              onClick={handleUploadClick}
+              startIcon={<Upload className="w-4 h-4" />}
+              disabled={refundForm.images.length >= 5}
             >
-              Upload Images
+              Upload Images ({refundForm.images.length}/5)
             </Button>
           </Box>
 
-          <DialogActions>
-            <Button onClick={() => {
-              setOpenDialog({ type: '', orderId: null });
-              setRefundForm({ reason: '', images: [] });
-            }}>
+          <DialogActions sx={{ mt: 3 }}>
+            <Button
+              onClick={() => {
+                setOpenDialog({ type: "", orderId: null });
+                setRefundForm({ reason: "", images: [] });
+              }}
+            >
               Cancel
             </Button>
-            <Button 
-              onClick={() => openDialog.orderId && handleRefundRequest(openDialog.orderId)}
+            <Button
+              onClick={() =>
+                openDialog.orderId && handleRefundRequest(openDialog.orderId)
+              }
               variant="contained"
               color="primary"
+              disabled={
+                !refundForm.reason.trim() || refundForm.images.length === 0
+              }
             >
-              Confirm Return & Refund
+              Submit Request
             </Button>
           </DialogActions>
         </Box>
       </Modal>
 
       <Dialog
-        open={openDialog.type === 'confirm-received'}
-        onClose={() => setOpenDialog({ type: '', orderId: null })}
+        open={openDialog.type === "confirm-received"}
+        onClose={() => setOpenDialog({ type: "", orderId: null })}
       >
         <DialogTitle>Confirm Order Received</DialogTitle>
         <DialogContent>
@@ -872,11 +1047,13 @@ export default function OrderList(): JSX.Element {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog({ type: '', orderId: null })}>
+          <Button onClick={() => setOpenDialog({ type: "", orderId: null })}>
             Cancel
           </Button>
-          <Button 
-            onClick={() => openDialog.orderId && handleConfirmReceived(openDialog.orderId)}
+          <Button
+            onClick={() =>
+              openDialog.orderId && handleConfirmReceived(openDialog.orderId)
+            }
             variant="contained"
             color="success"
           >
@@ -886,7 +1063,7 @@ export default function OrderList(): JSX.Element {
       </Dialog>
 
       <Dialog
-        open={openDialog.type === 'confirm-payment'}
+        open={openDialog.type === "confirm-payment"}
         onClose={handleClosePaymentDialog}
       >
         <DialogTitle>Confirm Payment Navigation</DialogTitle>
@@ -896,10 +1073,8 @@ export default function OrderList(): JSX.Element {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClosePaymentDialog}>
-            Later
-          </Button>
-          <Button 
+          <Button onClick={handleClosePaymentDialog}>Later</Button>
+          <Button
             onClick={handleConfirmPayment}
             variant="contained"
             color="primary"
