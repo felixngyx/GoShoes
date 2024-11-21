@@ -45,6 +45,7 @@ import PrivateRoute from './components/common/PrivateRoute';
 import AdminRoute from './components/common/AdminRoute';
 import AboutPage from './pages/Client/about';
 import CreateDiscount from './pages/Admin/discounts/create';
+import Wishlist from './pages/Client/User/WhishList';
 import UpdateDiscount from './pages/Admin/discounts/update';
 import RefundRequest from './pages/Admin/orders/refundrequest';
 import DetailRefund from './pages/Admin/orders/detailRefund';
@@ -92,6 +93,7 @@ function App() {
 						<Route path="my-order" element={<Order />} />
 						<Route path="my-order/:id" element={<OrderDetail />} />
 						<Route path="my-address" element={<Address />} />
+						<Route path="whish-list" element={<Wishlist />} />
 					</Route>
 					<Route path="/about" element={<AboutPage />} />
 					<Route path="/contact-us" element={<ContactUs />} />
