@@ -124,8 +124,8 @@ class AuthService implements AuthServiceInterface
         DB::beginTransaction();
         try {
             $user =  $this->userService->create($request);
-            DB::commit();
             $verificationLink = (self::getVerifyService()->generateLinkVerification($user, 'register'));
+            DB::commit();
             Mail::to($user->email)->send(new \App\Mail\RegisterMail($verificationLink));
             return response()->json([
                 'success' => true,
