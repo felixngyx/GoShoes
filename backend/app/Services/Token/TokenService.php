@@ -5,10 +5,11 @@ namespace App\Services\Token;
 use App\Repositories\RepositoryInterfaces\TokenRepositoryInterface as PasswordChangeHistoryRepository;
 use App\Services\ServiceAbstracts\Token\TokenAbstract;
 use App\Services\ServiceInterfaces\Token\TokenServiceInterface;
+use Illuminate\Support\Facades\DB;
 
 class TokenService extends TokenAbstract implements TokenServiceInterface
 {
-    private $passwordChangeHistoryRepository;
+    private PasswordChangeHistoryRepository $passwordChangeHistoryRepository;
     public function __construct(
         PasswordChangeHistoryRepository $passwordChangeHistoryRepository
     )
@@ -17,9 +18,13 @@ class TokenService extends TokenAbstract implements TokenServiceInterface
     }
 
 
-    public function findByTokenAndUserIdIsUsedService(string $token, int $userId)
+    public function findByTokenAndUserIdIsUsedService($token, $userId)
     {
-        return $this->passwordChangeHistoryRepository->findByTokenAndUserIdIsUsed($token, $userId);
+        return DB::table('token')
+            ->where('token', $token)
+            ->where('user_id', $userId)
+            ->where('is_used', 0)
+            ->first();
     }
 
     public function create(array $data) : object

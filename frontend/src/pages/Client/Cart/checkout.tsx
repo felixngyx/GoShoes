@@ -260,7 +260,7 @@ const CheckoutPage = () => {
           });
         }
       } else {
-        navigate("/account/orders", {
+        navigate("/account/my-order", {
           replace: true,
           state: { message: "Order placed successfully!" },
         });

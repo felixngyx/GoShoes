@@ -19,6 +19,7 @@ class JwtMiddleware
     public function handle($request, Closure $next)
     {
         try {
+            JWTAuth::parseToken()->authenticate();
             $token = $request->bearerToken();
             $decoded = JWTAuth::setToken($token)->getPayload();
             if ($decoded['token_type'] !== 'access') {
