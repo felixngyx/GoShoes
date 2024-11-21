@@ -99,7 +99,6 @@ function App() {
 					<Route path="/contact-us" element={<ContactUs />} />
 					<Route path="/reset-password" element={<ResetPassword />} />
 					<Route path="/forget-password" element={<ForgetPassword />} />
-					<Route path="*" element={<NotfoundPage />} />
 				</Route>
 				<Route path="/signin" element={<SignIn />} />
 				<Route path="/signup" element={<SignUp />} />
@@ -124,6 +123,10 @@ function App() {
 					<Route path="product" element={<Product />} />
 					<Route path="attribute" element={<Attribute />} />
 					<Route path="product/create" element={<AddProduct />} />
+					<Route
+						path="product/update/:id"
+						element={<UpdateProduct />}
+					></Route>
 					<Route path="orders">
 						<Route index element={<OrderDashboard />} />
 						<Route path="detail/:id" element={<DetailOrder />} />
@@ -229,6 +232,7 @@ function App() {
 					/>
 				</Route>
 				<Route path="admin/signin" element={<SignInAdmin />} />
+				<Route path="*" element={<NotfoundPage />} />
 			</Routes>
 			<Toaster position="top-right" reverseOrder={false} />
 			{!isAdminPage && <ChatUI />}

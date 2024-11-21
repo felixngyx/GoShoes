@@ -24,7 +24,14 @@ class RefreshTokenMiddleware
                     return response()->json(['error' => 'Invalid token type'], 403);
                 }
             } catch (\Exception $e) {
-                return response()->json(['error' => 'Token error'], 403);
+                 if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException) {
+                    return response()->json(['status' => 'Token is Invalid'], 401);
+                } elseif ($e instanceof \Tymon\JWTAuth\Exceptions\TokenExpiredException) {
+                    return response()->json(['status' => 'Token is Expired'], 401);
+                } else {
+                    return response()->json(['status' => 'Authorization Refresh Token not found'], 401);
+                }
+
             }
         }
 
