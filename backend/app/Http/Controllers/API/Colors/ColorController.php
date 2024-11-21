@@ -88,7 +88,7 @@ class ColorController extends Controller
         $color = $this->colorService->updateColor($id, $validated);
         return response()->json([
             'message' => 'Màu sắc đã được cập nhật thành công!',
-            'product' => $color
+            'color' => $color
         ], 200);
     }
 
