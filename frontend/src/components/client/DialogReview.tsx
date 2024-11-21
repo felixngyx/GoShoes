@@ -6,12 +6,10 @@ import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Rating from "@mui/material/Rating";
-import { useQuery } from "@tanstack/react-query";
-import { useMutation } from "@tanstack/react-query"; // Thêm useMutation
+import { useQuery, useMutation } from "@tanstack/react-query";
 import axiosClient from "../../apis/axiosClient";
 import { submitReview } from "../../services/client/review";
 import toast from "react-hot-toast";
-// Đảm bảo đã import đúng dịch vụ
 
 interface DialogReviewProps {
   open: boolean;
@@ -36,30 +34,6 @@ interface OrderItem {
 
 interface OrderData {
   id: number;
-  sku: string;
-  status: string;
-  total: string;
-  created_at: string;
-  customer: {
-    name: string;
-    email: string;
-    phone: string | null;
-  };
-  shipping: {
-    id: number;
-    shipping_detail: {
-      name: string;
-      address: string;
-      phone_number: string;
-      address_detail: string;
-    };
-    is_default: boolean;
-  };
-  payment: {
-    method: string;
-    status: string;
-    url: string;
-  };
   items: OrderItem[];
 }
 
@@ -70,30 +44,20 @@ const DialogReview: React.FC<DialogReviewProps> = ({
 }) => {
   const [rating, setRating] = useState<number | null>(null);
   const [comment, setComment] = useState<string>("");
-  const [productId, setProductId] = useState<number | null>(null);
+  const [currentReviewIndex, setCurrentReviewIndex] = useState<number>(0);
 
   const { data: order } = useQuery<{ data: OrderData }>({
     queryKey: ["order", orderId],
     queryFn: async () => {
-      try {
-        const response = await axiosClient(`/orders/${orderId}`);
-        return response.data;
-      } catch (error) {
-        console.error(error);
-        throw error;
-      }
+      const response = await axiosClient(`/orders/${orderId}`);
+      return response.data;
     },
   });
 
   const orderData = order?.data;
-  const product = orderData?.items?.[0]?.product;
-  const variant = orderData?.items?.[0]?.variant;
-
-  useEffect(() => {
-    if (product) {
-      setProductId(product.id);
-    }
-  }, [product]);
+  const items = orderData?.items || [];
+  const currentProduct = items[currentReviewIndex]?.product;
+  const currentVariant = items[currentReviewIndex]?.variant;
 
   const { mutateAsync, isLoading } = useMutation({
     mutationFn: (data: {
@@ -103,30 +67,35 @@ const DialogReview: React.FC<DialogReviewProps> = ({
     }) => submitReview(data.productId, data.rating, data.comment),
     onSuccess: () => {
       toast.success("Review submitted successfully!");
-      onClose();
+      if (currentReviewIndex < items.length - 1) {
+        // Chuyển sang sản phẩm tiếp theo
+        setRating(null); // Reset rating
+        setComment(""); // Reset comment
+        setCurrentReviewIndex((prevIndex) => prevIndex + 1);
+      } else {
+        // Đã đánh giá hết
+        toast.success("You have reviewed all products!");
+        onClose();
+      }
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to submit review. Please try again.");
     },
   });
 
   const handleSubmit = () => {
-    // Kiểm tra xem đã có đánh giá (rating) và bình luận chưa
     if (!rating || !comment.trim()) {
       toast("Please provide both a rating and a comment.");
       return;
     }
 
-    // Kiểm tra xem có productId không
-    if (!productId) {
-      toast("Product ID is missing. Please try again.");
-      console.error("Product ID is missing");
+    if (!currentProduct) {
+      toast("No product to review. Please try again.");
       return;
     }
 
-    // Log thông tin form ra console
     mutateAsync({
-      productId: productId,
+      productId: currentProduct.id,
       rating: rating,
       comment: comment,
     });
@@ -136,31 +105,35 @@ const DialogReview: React.FC<DialogReviewProps> = ({
     <Dialog fullWidth open={open} onClose={onClose}>
       <div className="p-6">
         <DialogTitle className="text-lg font-semibold text-center">
-          Review Product
+          Review Product {currentReviewIndex + 1}/{items.length}
         </DialogTitle>
 
         <DialogContent>
           {/* Product Information */}
-          {product ? (
+          {currentProduct ? (
             <div className="flex items-center space-x-4 mb-4">
               <img
-                src={product.thumbnail}
-                alt={product.name}
+                src={currentProduct.thumbnail}
+                alt={currentProduct.name}
                 className="w-20 h-20 object-cover rounded-lg border"
               />
               <div>
-                <h3 className="font-medium text-gray-800">{product.name}</h3>
-                {variant && (
+                <h3 className="font-medium text-gray-800">
+                  {currentProduct.name}
+                </h3>
+                {currentVariant && (
                   <>
                     <p className="text-sm text-gray-600">
                       Size:{" "}
-                      <span className="font-semibold">{variant.size}</span>
+                      <span className="font-semibold">
+                        {currentVariant.size}
+                      </span>
                     </p>
                     <p className="text-sm text-gray-600 flex items-center">
                       <span className="font-semibold mr-1">Color:</span>
                       <span
-                        className="inline-block w-4 h-4 rounded-full"
-                        style={{ backgroundColor: variant.color }}
+                        className="inline-block w-4 h-4 rounded-full border-2"
+                        style={{ backgroundColor: currentVariant.color }}
                       ></span>
                     </p>
                   </>

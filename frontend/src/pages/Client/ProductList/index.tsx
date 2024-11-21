@@ -1,6 +1,6 @@
 import Slider from "@mui/material/Slider";
 import { useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { BsGrid3X3GapFill } from "react-icons/bs";
 import { FaListUl } from "react-icons/fa";
 import Banner from "../../../components/client/Banner";
@@ -14,14 +14,70 @@ const ProductList = () => {
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [showCount, setShowCount] = useState(9);
+  const [sortByName, setSortByName] = useState<"asc" | "desc" | undefined>();
+  const [sortByPrice, setSortByPrice] = useState<"asc" | "desc" | undefined>();
+  const [sortByRating, setSortByRating] = useState<
+    "asc" | "desc" | undefined
+  >();
 
   const { data: products, refetch } = useQuery<IProduct[]>({
-    queryKey: ["PRODUCT_KEY", priceRange, showCount],
+    queryKey: [
+      "PRODUCT_KEY",
+      priceRange,
+      showCount,
+      sortByName,
+      sortByPrice,
+      sortByRating,
+    ],
     queryFn: () => filterProduct(priceRange[0], priceRange[1], showCount),
     staleTime: 2,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
   });
+
+  const filteredProducts = useMemo(() => {
+    let filteredData = [...(products || [])];
+
+    // Lọc theo giá
+    filteredData = filteredData.filter(
+      (product) =>
+        product.promotional_price >= priceRange[0] &&
+        product.promotional_price <= priceRange[1]
+    );
+
+    // Sắp xếp theo tên
+    if (sortByName) {
+      filteredData.sort((a, b) =>
+        sortByName === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name)
+      );
+    }
+
+    // Sắp xếp theo giá
+    if (sortByPrice) {
+      filteredData.sort((a, b) =>
+        sortByPrice === "asc"
+          ? a.promotional_price - b.promotional_price
+          : b.promotional_price - a.promotional_price
+      );
+    }
+
+    // Sắp xếp theo rating
+    if (sortByRating) {
+      filteredData.sort((a, b) =>
+        sortByRating === "asc"
+          ? b.rating_count - a.rating_count
+          : a.rating_count - b.rating_count
+      );
+    }
+
+    return filteredData;
+  }, [products, priceRange, sortByName, sortByPrice, sortByRating]);
+
+  useEffect(() => {
+    refetch();
+  }, [sortByName, sortByPrice, sortByRating]);
 
   const formatPrice = (price: number) => {
     if (price < 1000000) return (price / 1000).toFixed(0) + " K";
@@ -152,40 +208,67 @@ const ProductList = () => {
           <Banner />
 
           {/* Filter */}
-          <div className="flex flex-row gap-5 bg-[#F6F7F8] px-5 py-2 items-center">
-            <p className="text-lg">Sort by</p>
-            <select className="select select-sm select-bordered w-fit">
-              <option defaultValue="Name">Name</option>
-              <option>Price</option>
-              <option>Rating</option>
-            </select>
-            <p className="text-lg">Show</p>
-            <select
-              className="select select-sm select-bordered w-fit"
-              onChange={handleShowCountChange}
-            >
-              <option defaultValue={9}>9</option>
-              <option>12</option>
-              <option>15</option>
-            </select>
-            <button
-              className="ms-auto btn btn-sm bg-inherit hover:bg-inherit"
-              onClick={() => setLayout("grid")}
-            >
-              <BsGrid3X3GapFill
-                size={20}
-                color={layout === "grid" ? "#40BFFF" : "#C1C8CE"}
-              />
-            </button>
-            <button
-              className="btn btn-sm bg-inherit hover:bg-inherit"
-              onClick={() => setLayout("list")}
-            >
-              <FaListUl
-                size={20}
-                color={layout === "list" ? "#40BFFF" : "#C1C8CE"}
-              />
-            </button>
+          <div className="flex flex-wrap gap-5 bg-[#F6F7F8] px-5 py-2 items-center justify-start">
+            <div className="flex items-center gap-2">
+              <p className="text-lg">Sort By</p>
+
+              <select
+                className="select select-bordered select-sm w-fit"
+                onChange={(e) => {
+                  const [type, order] = e.target.value.split("-");
+                  if (type === "name") {
+                    setSortByName(order as "asc" | "desc");
+                  } else if (type === "price") {
+                    setSortByPrice(order as "asc" | "desc");
+                  } else if (type === "rating") {
+                    setSortByRating(order as "asc" | "desc");
+                  }
+                }}
+              >
+                <option value="">Sort By</option>
+                <option value="name-asc">Name A-Z</option>
+                <option value="name-desc">Name Z-A</option>
+                <option value="price-asc">Price Low to High</option>
+                <option value="price-desc">Price High to Low</option>
+                <option value="rating-asc">Rating Highest to Lowest</option>
+                <option value="rating-desc">Rating Lowest to Highest</option>
+              </select>
+            </div>
+
+            {/* Show Select */}
+            <div className="flex items-center gap-2">
+              <p className="text-lg">Show</p>
+              <select
+                className="select select-bordered select-sm w-fit"
+                onChange={handleShowCountChange}
+              >
+                <option defaultValue={9}>9</option>
+                <option>12</option>
+                <option>15</option>
+              </select>
+            </div>
+
+            {/* Layout Buttons */}
+            <div className="ml-auto flex gap-3">
+              <button
+                className="btn btn-sm btn-outline flex justify-center content-center"
+                onClick={() => setLayout("grid")}
+              >
+                <BsGrid3X3GapFill
+                  size={20}
+                  color={layout === "grid" ? "#40BFFF" : "#C1C8CE"}
+                />
+              </button>
+              <button
+                className="btn btn-sm btn-outline flex justify-center content-center"
+                onClick={() => setLayout("list")}
+              >
+                <FaListUl
+                  size={20}
+                  color={layout === "list" ? "#40BFFF" : "#C1C8CE"}
+                />
+              </button>
+            </div>
           </div>
 
           {/* Product List */}
@@ -197,21 +280,39 @@ const ProductList = () => {
             {products === undefined ? (
               // Hiển thị skeleton loading khi đang tải dữ liệu
               <>
-                {Array(9).fill(null).map((_, index) => (
-                  layout === "grid" ? (
-                    <ProductItems key={index} product={null} isLoading={true} />
-                  ) : (
-                    <ProductCardList key={index} product={null} isLoading={true} />
-                  )
-                ))}
+                {Array(9)
+                  .fill(null)
+                  .map((_, index) =>
+                    layout === "grid" ? (
+                      <ProductItems
+                        key={index}
+                        product={null}
+                        isLoading={true}
+                      />
+                    ) : (
+                      <ProductCardList
+                        key={index}
+                        product={null}
+                        isLoading={true}
+                      />
+                    )
+                  )}
               </>
             ) : products.length > 0 ? (
               // Hiển thị danh sách sản phẩm nếu có
-              products.map((product) =>
+              filteredProducts.map((product) =>
                 layout === "grid" ? (
-                  <ProductItems key={product.id} product={product} isLoading={false} />
+                  <ProductItems
+                    key={product.id}
+                    product={product}
+                    isLoading={false}
+                  />
                 ) : (
-                  <ProductCardList key={product.id} product={product} isLoading={false} />
+                  <ProductCardList
+                    key={product.id}
+                    product={product}
+                    isLoading={false}
+                  />
                 )
               )
             ) : (

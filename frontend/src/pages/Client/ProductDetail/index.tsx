@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { FaShoppingCart } from "react-icons/fa";
 import { IoMdAdd, IoMdRemove } from "react-icons/io";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useNavigation } from "react-router-dom";
 import useCart from "../../../hooks/client/useCart";
 import { getProductById } from "../../../services/client/product";
 import { Category } from "../../../types/client/category";
@@ -14,7 +14,7 @@ import RelatedProduct from "../ProductList/RelatedProduct";
 import { toast } from "react-hot-toast";
 import { formatVNCurrency } from "../../../common/formatVNCurrency";
 import { gellReviewByProductId } from "../../../services/client/review";
-
+import Cookies from "js-cookie";
 const ProductDetailSkeleton = () => {
   return (
     <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
@@ -193,47 +193,53 @@ const ProductDetail = () => {
   }, [product, selectedColor]);
 
   const handleAdd = () => {
-    if (!selectedSize || !selectedColor) {
-      toast.custom((t) => (
-        <div
-          className={`${
-            t.visible ? "animate-enter" : "animate-leave"
-          } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
-        >
-          <div className="flex-1 w-0 p-4">
-            <div className="flex items-start">
-              <div className="ml-3 flex-1">
-                <p className="text-sm font-medium text-red-500">
-                  Select a Size and Color to add to cart.
-                </p>
+    if (!accessToken) {
+      toast.error("Please login to add to cart");
+      navigate("/signin");
+    } else {
+      if (!selectedSize || !selectedColor) {
+        toast.custom((t) => (
+          <div
+            className={`${
+              t.visible ? "animate-enter" : "animate-leave"
+            } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+          >
+            <div className="flex-1 w-0 p-4">
+              <div className="flex items-start">
+                <div className="ml-3 flex-1">
+                  <p className="text-sm font-medium text-red-500">
+                    Select a Size and Color to add to cart.
+                  </p>
+                </div>
               </div>
             </div>
+            <div className="flex border-l border-gray-200">
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Close
+              </button>
+            </div>
           </div>
-          <div className="flex border-l border-gray-200">
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      ));
-      return;
-    }
+        ));
+        return;
+      }
 
-    const selectedVariant = product?.variants.find(
-      (variant: any) =>
-        variant.size.size === selectedSize && variant.color.id === selectedColor
-    );
-
-    if (selectedVariant) {
-      handleAddToCartDetail(
-        selectedVariant.id,
-        selectedSize,
-        selectedColor,
-        quantity
+      const selectedVariant = product?.variants.find(
+        (variant: any) =>
+          variant.size.size === selectedSize &&
+          variant.color.id === selectedColor
       );
+
+      if (selectedVariant) {
+        handleAddToCartDetail(
+          selectedVariant.id,
+          selectedSize,
+          selectedColor,
+          quantity
+        );
+      }
     }
   };
 
@@ -414,11 +420,18 @@ const ProductDetail = () => {
     }
   };
 
+  const accessToken = Cookies.get("access_token");
+
   const { data: review } = useQuery({
     queryKey: ["PRODUCT_REVIEWS", product?.id],
-    queryFn: () => gellReviewByProductId(product?.id),
+    queryFn: () => {
+      if (accessToken) {
+        return gellReviewByProductId(product?.id);
+      }
+      return Promise.reject(new Error("No access token available"));
+    },
+    enabled: !!accessToken, // Không gọi query nếu không có access_token
   });
-
   if (isLoading) {
     return <ProductDetailSkeleton />;
   }
@@ -531,7 +544,7 @@ const ProductDetail = () => {
                 {uniqueSizes.map((sizeInfo: any) => {
                   // Tìm variant theo size và màu hiện tại
                   const sizeVariant = product?.variants.find(
-                    (variant: Variant) =>
+                    (variant: any) =>
                       variant.size?.size === sizeInfo.size &&
                       variant.color?.id === selectedColor
                   );
@@ -696,58 +709,81 @@ const ProductDetail = () => {
               {activeTab === "reviews" && (
                 <div>
                   {/* Reviews List */}
-                  <div className="max-w-6xl mx-auto">
-                    <div></div>
-                    <div className="flex flex-col gap-8">
-                      {review?.data.map((item: any, index: number) => (
-                        <div
-                          key={index}
-                          className="bg-white rounded-lg shadow-lg p-6 transition-transform hover:scale-[1.01]"
-                        >
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center space-x-4">
-                              <img
-                                src={item.user.avt}
-                                className="w-12 h-12 rounded-full object-cover"
-                              />
-                              <div>
-                                <h3 className="text-xl font-semibold">
-                                  {item.user.name}
-                                </h3>
-                                <div className="flex items-center space-x-2 mt-1">
-                                  <RatingStars rating={item.rating} />
-                                  <span className="text-gray-500">
-                                    {new Date(
-                                      item.created_at
-                                    ).toLocaleDateString("vi-VN", {
-                                      day: "2-digit",
-                                      month: "2-digit",
-                                      year: "numeric",
-                                    })}
+                  <div className="max-w-5xl mx-auto px-6 py-8 space-y-10">
+                    {review?.data.map((item: any, index: number) => (
+                      <div
+                        key={index}
+                        className="relative bg-gradient-to-r from-white via-gray-50 to-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all transform hover:scale-[1.02]"
+                      >
+                        {/* Header */}
+                        <div className="flex items-center gap-6">
+                          <img
+                            src={item.user.avt}
+                            alt="Avatar"
+                            className="w-16 h-16 rounded-full object-cover border-2 border-gray-100 shadow-sm"
+                          />
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-800">
+                              {item.user.name}
+                            </h3>
+                            <div className="flex items-center text-sm text-gray-500 mt-1 space-x-3">
+                              <RatingStars rating={item.rating} />
+                              <span>
+                                {new Date(item.created_at).toLocaleDateString(
+                                  "vi-VN"
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Comment */}
+                        <p className="mt-6 text-gray-700 leading-relaxed italic border-l-4 border-blue-500 pl-4">
+                          "{item.comment}"
+                        </p>
+
+                        {/* Review Images */}
+                        {item.images?.length > 0 && (
+                          <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            {item.images.map((image: string, idx: number) => (
+                              <div
+                                key={idx}
+                                className="relative group overflow-hidden rounded-lg border border-gray-200 shadow-sm"
+                              >
+                                <img
+                                  src={image}
+                                  alt="Review Image"
+                                  className="w-full h-32 object-cover transition-transform group-hover:scale-110"
+                                />
+                                <div className="absolute inset-0 bg-black bg-opacity-25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <span className="text-white text-sm font-medium">
+                                    Xem chi tiết
                                   </span>
                                 </div>
                               </div>
-                            </div>
+                            ))}
                           </div>
-                          <p className="text-gray-700 mb-4">{item.comment}</p>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                            <button className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg overflow-hidden">
-                              {/* <img className="w-full h-32 object-cover hover:opacity-90 transition-opacity" /> */}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Pagination or more reviews */}
-                      <div className="join bg-[#FAFAFB] rounded-md ms-auto">
-                        <button className="join-item btn btn-sm">1</button>
-                        <button className="join-item btn btn-sm">2</button>
-                        <button className="join-item btn btn-sm btn-disabled">
-                          ...
-                        </button>
-                        <button className="join-item btn btn-sm">99</button>
-                        <button className="join-item btn btn-sm">100</button>
+                        )}
                       </div>
+                    ))}
+
+                    {/* Pagination */}
+                    <div className="flex justify-center space-x-2">
+                      <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                        1
+                      </button>
+                      <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                        2
+                      </button>
+                      <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg cursor-not-allowed">
+                        ...
+                      </button>
+                      <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                        99
+                      </button>
+                      <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                        100
+                      </button>
                     </div>
                   </div>
                 </div>

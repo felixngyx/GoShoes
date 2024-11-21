@@ -46,26 +46,48 @@ const ProductCard = () => {
   const accessToken = Cookies.get("access_token");
   const navigate = useNavigate();
   const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null); // Store size separately
-  const [selectedColor, setSelectedColor] = useState<string | null>(null); // Store color separately
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const { handleAddToCart } = useCart();
   const [showModal, setShowModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const [productsList, setProductsList] = useState<IProduct[]>([]);
 
+  const PAGE_LIMIT = 8;
   const {
     data: products,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["PRODUCT_KEY"],
-    queryFn: () => getAllProducts(1, 8),
+    queryKey: ["PRODUCT_KEY", page],
+    queryFn: () => getAllProducts(page, PAGE_LIMIT),
   });
+
+  useEffect(() => {
+    if (products && products.length > 0) {
+      setProductsList((prevProducts) => {
+        const newProducts = products.filter(
+          (newProduct: any) =>
+            !prevProducts.some(
+              (existingProduct) => existingProduct.id === newProduct.id
+            )
+        );
+
+        return [...prevProducts, ...newProducts];
+      });
+    }
+  }, [products]);
+
+  const loadMore = () => {
+    setPage((prevPage) => prevPage + 1);
+  };
 
   const handleCheckAdd = (product: IProduct) => {
     if (!accessToken) {
       setShowModal(true);
       return;
     }
-    setSelectedProduct(product); // Show the popup
+    setSelectedProduct(product);
   };
 
   const addCart = () => {
@@ -77,7 +99,7 @@ const ProductCard = () => {
         const productVariantId = variant.id;
         const quantity = 1;
         handleAddToCart(productVariantId, quantity);
-        setSelectedProduct(null); // Close the popup
+        setSelectedProduct(null);
       }
     }
   };
@@ -85,7 +107,7 @@ const ProductCard = () => {
   const uniqueSizes = products?.flatMap((product: any) =>
     product.variants
       ? product.variants
-          .filter((variant: any) => variant.size && variant.color) // Lọc các variant có size và color
+          .filter((variant: any) => variant.size && variant.color)
           .map((variant: any) => ({
             size: variant.size,
             color: variant.color,
@@ -94,25 +116,23 @@ const ProductCard = () => {
       : []
   );
 
-  // Lọc các size duy nhất nếu uniqueSizes không phải undefined
   const uniqueSizesWithoutDuplicates = uniqueSizes?.length
     ? [...new Map(uniqueSizes.map((item: any) => [item.size, item])).values()]
     : [];
-
-  //   console.log("Unique Sizes:", uniqueSizes);
 
   const handleSizeChange = (size: string) => {
     setSelectedSize(size);
   };
 
   const handleColorSelect = (color: string) => {
-    setSelectedColor(color); // Update color independently
+    setSelectedColor(color);
   };
 
   const closeModal = () => {
     setSelectedProduct(null);
     setSelectedSize(null);
     setSelectedColor(null);
+    setShowModal(false);
   };
 
   const handleLoginNow = () => {
@@ -146,7 +166,7 @@ const ProductCard = () => {
 
   return (
     <>
-      {products.map((product: IProduct) => (
+      {productsList?.map((product: IProduct) => (
         <div
           key={product.id}
           className="col-span-1 border border-[#F6F7F8] rounded-lg group overflow-hidden shadow-sm transition-shadow duration-300 hover:shadow-lg"
@@ -194,6 +214,15 @@ const ProductCard = () => {
         </div>
       ))}
 
+      <div className="col-span-4 flex justify-center mt-4">
+        <button
+          onClick={loadMore}
+          className="btn bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Load More
+        </button>
+      </div>
+
       {selectedProduct && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
           <div className="modal modal-open">
@@ -208,7 +237,6 @@ const ProductCard = () => {
                   <h4 className="text-lg font-semibold mb-2">Size:</h4>
                   <div className="flex flex-wrap gap-2">
                     {uniqueSizesWithoutDuplicates?.map((sizeInfo: any) => {
-                      // Kiểm tra sự tồn tại của variants và đảm bảo rằng variants là một mảng hợp lệ
                       const sizeVariant = products
                         ?.find((product: any) =>
                           product.variants?.some(
@@ -256,12 +284,12 @@ const ProductCard = () => {
                   <h4 className="text-lg font-semibold mb-2">Color:</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedProduct?.variants
-                      .map((variant) => variant.color) // Get all colors
+                      .map((variant) => variant.color)
                       .filter(
                         (value, index, self) => self.indexOf(value) === index
                       ) // Get unique colors
                       .map((color) => {
-                        const isSelected = selectedColor === color; // Check if color is selected
+                        const isSelected = selectedColor === color;
                         return (
                           <button
                             key={color}
@@ -270,7 +298,7 @@ const ProductCard = () => {
                                 ? "bg-theme-color-primary outline-none ring-2"
                                 : ""
                             }`}
-                            onClick={() => handleColorSelect(color)} // Select color
+                            onClick={() => handleColorSelect(color)}
                           >
                             {color}
                           </button>
@@ -290,7 +318,7 @@ const ProductCard = () => {
                 <button
                   className="btn bg-blue-500 text-white"
                   onClick={addCart}
-                  disabled={!selectedSize || !selectedColor} // Disable button if size or color is not selected
+                  disabled={!selectedSize || !selectedColor}
                 >
                   Add to Cart
                 </button>
