@@ -212,16 +212,9 @@ class AuthService implements AuthServiceInterface
         }
         DB::beginTransaction();
         try {
-            $verificationLink = (self::getVerifyService()->generateLinkVerification($user, 'register'));
-            return response()->json([
-                'success' => true,
-                'message' => 'Verification link sent to your email',
-                'data' => [
-                    'email' => $user->email,
-                    'verification_link' => $verificationLink
-                ]
-            ], 200);
+            $verificationLink = self::getVerifyService()->generateLinkVerification($user, 'register');
             Mail::to($user->email)->send(new \App\Mail\RegisterMail($verificationLink));
+            DB::commit();
             return response()->json([
                 'success' => true,
                 'message' => 'Verification link sent to your email',
@@ -253,6 +246,13 @@ class AuthService implements AuthServiceInterface
                 ], 400);
             }
 
+            if ($decrypted->type !== 'reset-password') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid token'
+                ], 400);
+            }
+
             // Check if email exists
             $user = $this->userService->findById($decrypted->user_id);
 
@@ -273,8 +273,16 @@ class AuthService implements AuthServiceInterface
                 ], 403);
             }
 
-            $changePasswordHistoryIsUsed = self::getTokenService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted['user_id']);
-            if ($changePasswordHistoryIsUsed){
+            $tokenIsUsed = self::getTokenService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted['user_id']);
+
+            if (!$tokenIsUsed) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token not found'
+                ], 404);
+            }
+
+            if ($tokenIsUsed->is_used){
                 return response()->json([
                     'success'=> false,
                     'message'=>'Token is already used'
@@ -340,19 +348,21 @@ class AuthService implements AuthServiceInterface
             }
 
             $tokenIsUsed = self::getTokenService()->findDetailToken($request['token'], $decrypted->user_id);
-            if ($tokenIsUsed){
+
+            if (!$tokenIsUsed) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token not found'
+                ], 404);
+            }
+
+            if ($tokenIsUsed->is_used){
                 return response()->json([
                     'success'=> false,
                     'message'=>'Token is already used'
                 ], 403);
             }
-            return response()->json([
-                'success' => true,
-                'message' => 'Token is passed',
-                'data' => [
-                    'type' => $tokenIsUsed,
-                ]
-            ], 200);
+
             // Update token is_used
             self::getTokenService()->update(['is_used' => true], $tokenIsUsed->id);
             // Update email_verified_at

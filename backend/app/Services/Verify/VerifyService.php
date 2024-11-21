@@ -49,7 +49,7 @@ class VerifyService extends VerifyAbstract implements VerifyServiceInterface
     // please check the token data after decrypting it
     // admin can not be verified
     // token will expire in 5 minutes
-    public static function generateLinkVerification(object $user, string $type) : string
+    public static final function generateLinkVerification(object $user, string $type) : string
     {
         DB::beginTransaction();
         try {
@@ -63,7 +63,7 @@ class VerifyService extends VerifyAbstract implements VerifyServiceInterface
 
             DB::commit();
             // return link for verification
-            return env('FRONTEND_URL') . '/verify-email?token=' . $token;
+            return env('FRONTEND_URL') . '/verify-email?token=' . $token . '&type=' . $type;
         }catch (\Error $e){
             DB::rollBack();
             return $e->getMessage();

@@ -8,37 +8,52 @@ use App\Services\ServiceInterfaces\Token\TokenServiceInterface;
 
 class TokenService extends TokenAbstract implements TokenServiceInterface
 {
-    private $tokenRepository;
-    public function __construct(
-        TokenRepository $tokenRepository
-    )
+    private static $tokenRepository;
+    public function __construct()
     {
-        $this->tokenRepository = $tokenRepository;
+        self::setTokenRepository(app(TokenRepository::class));
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function getTokenRepository(): TokenRepository
+    {
+        return self::$tokenRepository;
+    }
+
+    /**
+     * @param mixed $tokenRepository
+     */
+    public static function setTokenRepository($tokenRepository): void
+    {
+        self::$tokenRepository = $tokenRepository;
     }
 
 
     public function findByTokenAndUserIdIsUsedService(string $token, int $userId)
     {
-        return $this->tokenRepository->findByTokenAndUserIdIsUsed($token, $userId);
+        return self::getTokenRepository()->findByTokenAndUserIdIsUsed($token, $userId);
     }
 
     public function findDetailToken(string $token, int $userId)
     {
-        return $this->tokenRepository->findDetailToken($token, $userId);
+        return self::getTokenRepository()->findDetailToken($token, $userId);
     }
 
-    public function create(array $data) : object
+    public function create(array $data)
     {
-        return $this->tokenRepository->create($data);
+        return self::getTokenRepository()->create($data);
+
     }
 
-    public function update(array $data, int $id) : object
+    public function update(array $data, int $id)
     {
-        return $this->tokenRepository->update($data, $id);
+        return self::getTokenRepository()->update($data, $id);
     }
 
     public function delete(int $id) : int
     {
-        return $this->tokenRepository->delete($id);
+        return self::getTokenRepository()->delete($id);
     }
 }
