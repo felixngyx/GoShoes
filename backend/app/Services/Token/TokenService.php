@@ -2,7 +2,7 @@
 
 namespace App\Services\Token;
 
-use App\Repositories\RepositoryInterfaces\TokenRepositoryInterface as PasswordChangeHistoryRepository;
+use App\Repositories\RepositoryInterfaces\TokenRepositoryInterface as TokenRepository;
 use App\Services\ServiceAbstracts\Token\TokenAbstract;
 use App\Services\ServiceInterfaces\Token\TokenServiceInterface;
 use Illuminate\Support\Facades\DB;
@@ -11,10 +11,10 @@ class TokenService extends TokenAbstract implements TokenServiceInterface
 {
     private PasswordChangeHistoryRepository $passwordChangeHistoryRepository;
     public function __construct(
-        PasswordChangeHistoryRepository $passwordChangeHistoryRepository
+        TokenRepository $tokenRepository
     )
     {
-        $this->passwordChangeHistoryRepository = $passwordChangeHistoryRepository;
+        $this->tokenRepository = $tokenRepository;
     }
 
 
@@ -27,18 +27,24 @@ class TokenService extends TokenAbstract implements TokenServiceInterface
             ->first();
     }
 
-    public function create(array $data) : object
+    public function findDetailToken(string $token, int $userId)
     {
-        return $this->passwordChangeHistoryRepository->create($data);
+        return $this->tokenRepository->findDetailToken($token, $userId);
     }
 
-    public function update(array $data, int $id) : object
+    public function create(array $data)
     {
-        return $this->passwordChangeHistoryRepository->update($data, $id);
+        return $this->tokenRepository->create($data);
     }
 
-    public function delete(int $id) : int
+    public function update(array $data, int $id)
     {
-        return $this->passwordChangeHistoryRepository->delete($id);
+        return $this->tokenRepository->update($data, $id);
     }
+
+    public function delete(int $id)
+    {
+        return $this->tokenRepository->delete($id);
+    }
+
 }
