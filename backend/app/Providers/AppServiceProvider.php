@@ -16,6 +16,8 @@ use App\Repositories\RepositoryInterfaces\PostRepositoryInterface;
 use App\Repositories\RepositoryInterfaces\ProductRepositoryInterface;
 use App\Repositories\RepositoryInterfaces\SizeRepositoryInterface;
 use App\Repositories\SizeRepository;
+use App\Repositories\PasswordChangeHistoryRepository;
+use App\Repositories\RepositoryInterfaces\PasswordChangeHistoryRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -58,6 +60,10 @@ class AppServiceProvider extends ServiceProvider
                 ],
             ]);
         });
+        $this->app->bind(
+            'App\Repositories\RepositoryInterfaces\PasswordChangeHistoryRepositoryInterface',
+            'App\Repositories\PasswordChangeHistoryRepository'
+        );
     }
 
     /**
