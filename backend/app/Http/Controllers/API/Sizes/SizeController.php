@@ -34,7 +34,7 @@ class SizeController extends Controller
         return response()->json([
             'message' => 'Danh sách sizes',
             'sizes' => $sizes
-        ], 201);
+        ], 200);
     }
 
     /**

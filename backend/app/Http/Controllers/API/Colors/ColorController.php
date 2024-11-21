@@ -35,7 +35,7 @@ class ColorController extends Controller
         return response()->json([
             'message' => 'Danh sách sizes',
             'clors' => $clors
-        ], 201);
+        ], 200);
     }
 
     /**
