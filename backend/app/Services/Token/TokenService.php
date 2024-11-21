@@ -5,26 +5,35 @@ namespace App\Services\Token;
 use App\Repositories\RepositoryInterfaces\TokenRepositoryInterface as TokenRepository;
 use App\Services\ServiceAbstracts\Token\TokenAbstract;
 use App\Services\ServiceInterfaces\Token\TokenServiceInterface;
-use Illuminate\Support\Facades\DB;
 
 class TokenService extends TokenAbstract implements TokenServiceInterface
 {
-    private PasswordChangeHistoryRepository $passwordChangeHistoryRepository;
-    public function __construct(
-        TokenRepository $tokenRepository
-    )
+    private static $tokenRepository;
+    public function __construct()
     {
-        $this->tokenRepository = $tokenRepository;
+        self::setTokenRepository(app(TokenRepository::class));
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function getTokenRepository(): TokenRepository
+    {
+        return self::$tokenRepository;
+    }
+
+    /**
+     * @param mixed $tokenRepository
+     */
+    public static function setTokenRepository($tokenRepository): void
+    {
+        self::$tokenRepository = $tokenRepository;
     }
 
 
-    public function findByTokenAndUserIdIsUsedService($token, $userId)
+    public function findByTokenAndUserIdIsUsedService(string $token, int $userId)
     {
-        return DB::table('token')
-            ->where('token', $token)
-            ->where('user_id', $userId)
-            ->where('is_used', 0)
-            ->first();
+        return self::getTokenRepository()->findByTokenAndUserIdIsUsed($token, $userId);
     }
 
     public function findDetailToken(string $token, int $userId)
