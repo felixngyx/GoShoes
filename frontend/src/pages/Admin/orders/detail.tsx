@@ -680,19 +680,6 @@ const OrderDetails = () => {
           </div>
         </div>
       </div>
-
-      <Tooltip title={order.status === 'completed' ? "Cannot renew link while pending" : ""}>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<CheckCheck className="h-4 w-4" />}
-          sx={
-            { float: 'right', backgroundColor: 'red', color: 'white' }
-          }
-        >
-          Refund Order
-        </Button>
-      </Tooltip>
     </div>
 
   );

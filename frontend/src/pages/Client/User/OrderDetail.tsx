@@ -1,9 +1,9 @@
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import Cookies from 'js-cookie';
-import OrderTracking from './Ordertracking';
-import { CircularProgress, Alert } from '@mui/material';
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import Cookies from "js-cookie";
+import OrderTracking from "./Ordertracking";
+import { CircularProgress, Alert } from "@mui/material";
 
 interface OrderItem {
   quantity: number;
@@ -50,17 +50,24 @@ interface OrderData {
 
 const OrderDetail = () => {
   const { id } = useParams();
-  
-  const { data: order, isLoading, error } = useQuery<{ success: boolean; data: OrderData }>({
-    queryKey: ['order', id],
+
+  const {
+    data: order,
+    isLoading,
+    error,
+  } = useQuery<{ success: boolean; data: OrderData }>({
+    queryKey: ["order", id],
     queryFn: async () => {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/orders/${id}`, {
-        headers: {
-          Authorization: `Bearer ${Cookies.get('access_token')}`
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/orders/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${Cookies.get("access_token")}`,
+          },
         }
-      });
+      );
       return response.data;
-    }
+    },
   });
 
   if (isLoading) {
@@ -72,11 +79,7 @@ const OrderDetail = () => {
   }
 
   if (error || !order?.success) {
-    return (
-      <Alert severity="error">
-        Failed to load order details
-      </Alert>
-    );
+    return <Alert severity="error">Failed to load order details</Alert>;
   }
 
   const orderData = order.data;
@@ -89,12 +92,12 @@ const OrderDetail = () => {
             Order #{orderData.sku}
           </h1>
           <p className="text-base dark:text-gray-300 font-medium leading-6 text-gray-600">
-            {new Date(orderData.created_at).toLocaleDateString('vi-VN')}
+            {new Date(orderData.created_at).toLocaleDateString("vi-VN")}
           </p>
         </div>
 
-        <OrderTracking 
-          status={orderData.status} 
+        <OrderTracking
+          status={orderData.status}
           paymentStatus={orderData.payment.status}
           paymentMethod={orderData.payment.method}
         />
@@ -107,7 +110,10 @@ const OrderDetail = () => {
                 Order Items
               </p>
               {orderData.items.map((item, index) => (
-                <div key={index} className="mt-4 md:mt-6 flex flex-col md:flex-row justify-start items-start md:items-center md:space-x-6 xl:space-x-8 w-full">
+                <div
+                  key={index}
+                  className="mt-4 md:mt-6 flex flex-col md:flex-row justify-start items-start md:items-center md:space-x-6 xl:space-x-8 w-full"
+                >
                   <div className="pb-4 md:pb-8 w-full md:w-40">
                     <img
                       className="w-full hidden md:block"
@@ -123,21 +129,31 @@ const OrderDetail = () => {
                       {item.variant && (
                         <div className="flex justify-start items-start flex-col space-y-2">
                           <p className="text-sm leading-none text-gray-800">
-                            <span className="text-gray-300">Size: </span> {item.variant.size}
+                            <span className="text-gray-300">Size: </span>{" "}
+                            {item.variant.size}
                           </p>
                           <p className="text-sm leading-none text-gray-800">
-                            <span className="text-gray-300">Color: </span> {item.variant.color}
+                            <span className="text-gray-300">Color: </span>{" "}
+                            {item.variant.color}
                           </p>
                         </div>
                       )}
                     </div>
                     <div className="flex justify-between space-x-8 items-start w-full">
                       <p className="text-base xl:text-lg leading-6">
-                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(item.price))}
+                        {new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(Number(item.price))}
                       </p>
-                      <p className="text-base xl:text-lg leading-6 text-gray-800">x{item.quantity}</p>
+                      <p className="text-base xl:text-lg leading-6 text-gray-800">
+                        x{item.quantity}
+                      </p>
                       <p className="text-base xl:text-lg font-semibold leading-6 text-gray-800">
-                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.subtotal)}
+                        {new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(item.subtotal)}
                       </p>
                     </div>
                   </div>
@@ -147,11 +163,18 @@ const OrderDetail = () => {
             {/* Tổng tiền */}
             <div className="flex justify-center flex-col md:flex-row items-stretch w-full space-y-4 md:space-y-0 md:space-x-6 xl:space-x-8">
               <div className="flex flex-col px-4 py-6 md:p-6 xl:p-8 w-full bg-gray-50 space-y-6">
-                <h3 className="text-xl font-semibold leading-5 text-gray-800">Summary</h3>
+                <h3 className="text-xl font-semibold leading-5 text-gray-800">
+                  Summary
+                </h3>
                 <div className="flex justify-between items-center w-full">
-                  <p className="text-base font-semibold leading-4 text-gray-800">Total</p>
+                  <p className="text-base font-semibold leading-4 text-gray-800">
+                    Total
+                  </p>
                   <p className="text-base font-semibold leading-4 text-gray-600">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(orderData.total))}
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(Number(orderData.total))}
                   </p>
                 </div>
               </div>
@@ -159,7 +182,9 @@ const OrderDetail = () => {
           </div>
           {/* Thông tin khách hàng */}
           <div className="bg-gray-50 w-full xl:w-96 flex justify-between items-center md:items-start px-4 py-6 md:p-6 xl:p-8 flex-col">
-            <h3 className="text-xl font-semibold leading-5 text-gray-800">Customer</h3>
+            <h3 className="text-xl font-semibold leading-5 text-gray-800">
+              Customer
+            </h3>
             <div className="flex flex-col md:flex-row xl:flex-col justify-start items-stretch h-full w-full md:space-x-6 lg:space-x-8 xl:space-x-0">
               <div className="flex flex-col justify-start items-start flex-shrink-0">
                 <div className="flex justify-center w-full md:justify-start items-center space-x-4 py-8 border-b border-gray-200">
@@ -186,7 +211,8 @@ const OrderDetail = () => {
                       Shipping Address
                     </p>
                     <p className="w-48 lg:w-full xl:w-48 text-center md:text-left text-sm leading-5 text-gray-600">
-                      {orderData.shipping.shipping_detail.address_detail}, {orderData.shipping.shipping_detail.address}
+                      {orderData.shipping.shipping_detail.address_detail},{" "}
+                      {orderData.shipping.shipping_detail.address}
                     </p>
                   </div>
                 </div>

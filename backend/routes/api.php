@@ -22,6 +22,8 @@ use App\Http\Controllers\API\Products\ProductClientController;
 use App\Http\Controllers\Api\Review\ReviewController;
 use App\Http\Controllers\API\Shipping\ShippingController;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\API\NotificationController;
+use App\Http\Controllers\API\Order\RefundController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +56,7 @@ Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::put('/products/{id}', [ProductController::class, 'update']);
 Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 Route::get('/products', [ProductController::class, 'index']);
+Route::get('/productDetail/{id}', [ProductController::class, 'getDetailProduct']);
 Route::post('/products', [ProductController::class, 'store']);
 
 Route::get('/product/{id}', [ProductClientController::class, 'show']);
@@ -151,7 +154,6 @@ Route::group([
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::put('/reviews/{id}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
-    Route::get('/products/{id}/reviews', [ReviewController::class, 'productReviews']);
     Route::get('/user/reviews', [ReviewController::class, 'userReviews']);
 
 
@@ -175,10 +177,24 @@ Route::group([
         Route::put('/{id}', [PostController::class, 'update']);
         Route::delete('/{id}', [PostController::class, 'destroy']);
         Route::delete('/', [PostController::class, 'destroyMultiple']);
+    });
 
+
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::get('/unread-count', [NotificationController::class, 'getUnreadCount']);
+        Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
+        Route::delete('/{id}', [NotificationController::class, 'destroy']);
+    });
+
+    Route::prefix('refunds')->group(function () {
+        Route::get('/', [RefundController::class, 'index']);
+        Route::post('/', [RefundController::class, 'store']);
+        Route::post('/approve', [RefundController::class,'approve']);
+        Route::get('/{id}', [RefundController::class, 'viewDetailRefundRequest']);
     });
 });
-
 
 // Routes cho Payment với ZaloPay
 Route::prefix('payment')->group(function () {
@@ -193,4 +209,5 @@ Route::prefix('payment')->group(function () {
 
 Route::post('/auth/facebook-login', [FacebookAuthController::class, 'loginWithFacebook']);
 
-// API Categories
+// API review
+Route::get('/products/{id}/reviews', [ReviewController::class, 'productReviews']);
