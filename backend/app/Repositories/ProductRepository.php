@@ -57,7 +57,7 @@ class ProductRepository implements ProductRepositoryInterface
             'rating_count' => $product->rating_count,
             'status' => $product->status,
             'thumbnail' => $product->thumbnail,
-            'images' => $product->images->pluck('id','image_path')->toArray(),
+            'images' => $product->images->pluck('image_path')->toArray(),
             'categories' => $product->categories->pluck('name')->toArray(),
             'variants' => $product->variants->map(function ($variant) {
                 return [
