@@ -11,6 +11,8 @@ import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { env } from '../../../environment/env';
+import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
+import LoadingIcon from '../../../components/common/LoadingIcon';
 
 // Define the schema for form validation
 const schema = Joi.object({
@@ -76,6 +78,37 @@ const SignUp = () => {
 		}
 	};
 
+	const responseFacebook = async (response: any) => {
+		if (response.accessToken) {
+			try {
+				setLoading(true);
+				const serverResponse = await authService.loginWithFacebook({
+					access_token: response.accessToken,
+				});
+
+				if (serverResponse.data.success) {
+					console.log(serverResponse);
+					Cookies.set('user', JSON.stringify(serverResponse.data.user));
+					Cookies.set('access_token', serverResponse.data.access_token);
+					Cookies.set('refresh_token', serverResponse.data.refresh_token);
+					dispatch(login(serverResponse.data.user));
+					toast.success(serverResponse.data.message);
+					navigate('/');
+				} else {
+					toast.error(serverResponse.data.message);
+				}
+			} catch (error) {
+				console.error('Facebook login error:', error);
+				toast.error('Facebook login failed. Please try again.');
+			} finally {
+				setLoading(false);
+			}
+		} else {
+			console.error('Facebook login failed:', response);
+			toast.error('Facebook login failed.');
+		}
+	};
+
 	return (
 		<>
 			<div className="h-screen">
@@ -102,17 +135,6 @@ const SignUp = () => {
 							<p className="text-2xl font-bold">Sign up</p>
 							<input
 								type="text"
-								placeholder="Enter email"
-								className="input input-bordered w-full rounded-md bg-[#f0efff] mt-5 placeholder:text-[#494949]"
-								{...register('email')}
-							/>
-							{errors.email && (
-								<p className="text-red-500 text-sm">
-									{errors.email.message}
-								</p>
-							)}
-							<input
-								type="text"
 								placeholder="Enter username"
 								className="input input-bordered w-full rounded-md bg-[#f0efff] mt-5 placeholder:text-[#494949]"
 								{...register('name')}
@@ -120,6 +142,17 @@ const SignUp = () => {
 							{errors.name && (
 								<p className="text-red-500 text-sm">
 									{errors.name.message}
+								</p>
+							)}
+							<input
+								type="text"
+								placeholder="Enter email"
+								className="input input-bordered w-full rounded-md bg-[#f0efff] mt-5 placeholder:text-[#494949]"
+								{...register('email')}
+							/>
+							{errors.email && (
+								<p className="text-red-500 text-sm">
+									{errors.email.message}
 								</p>
 							)}
 							<label className="input input-bordered flex items-center bg-[#f0efff] mt-5 gap-2">
@@ -160,19 +193,41 @@ const SignUp = () => {
 							<button
 								disabled={loading}
 								type="submit"
-								className="btn bg-[#40BFFF] text-white w-full rounded-md mt-5"
+								className="btn bg-[#40BFFF] text-white w-full rounded-md mt-5 flex items-center justify-center gap-2"
 							>
-								{loading ? 'Loading...' : 'Sign up'}
+								{loading ? (
+									<>
+										<LoadingIcon
+											type="spinner"
+											size="sm"
+											color="success"
+										/>
+										Signing up
+									</>
+								) : (
+									'Sign up'
+								)}
 							</button>
 
 							<p className="text-md text-[#B0B0B0] text-center my-10">
 								or continue with
 							</p>
 							<div className="flex justify-center items-center gap-5 mt-5">
-								<img
-									className="w-8 cursor-pointer"
-									src="images/fb_logo.png"
-									alt=""
+								<FacebookLogin
+									appId={env.FACEBOOK_APP_ID}
+									autoLoad={false}
+									fields="name,email,picture"
+									callback={responseFacebook}
+									icon="fa-facebook"
+									size="small"
+									render={(renderProps) => (
+										<img
+											onClick={() => renderProps.onClick()}
+											className="w-8 cursor-pointer"
+											src="images/fb_logo.png"
+											alt=""
+										/>
+									)}
 								/>
 								<img
 									className="w-8 cursor-pointer"

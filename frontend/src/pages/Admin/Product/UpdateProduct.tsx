@@ -1,11 +1,16 @@
 import { TrashIcon, Upload, Eye, X, Logs } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { Status } from '.';
 import categoryService, { CATEGORY } from '../../../services/admin/category';
 import sizeService, { SIZE } from '../../../services/admin/size';
 import brandService, { BRAND } from '../../../services/admin/brand';
-import productService, { PRODUCT } from '../../../services/admin/product';
+import productService, {
+	PRODUCT,
+	PRODUCT_DETAIL,
+	PRODUCT_UPDATE,
+	Variant,
+} from '../../../services/admin/product';
 import toast from 'react-hot-toast';
 import Joi from 'joi';
 import { joiResolver } from '@hookform/resolvers/joi';
@@ -57,11 +62,13 @@ const productSchema = Joi.object({
 	variants: Joi.array()
 		.items(
 			Joi.object({
-				color: Joi.string().required().messages({
-					'string.empty': 'Color is required',
+				color_id: Joi.number().required().messages({
+					'number.base': 'Color is required',
+					'any.required': 'Color is required',
 				}),
 				size_id: Joi.number().required().messages({
 					'number.base': 'Size is required',
+					'any.required': 'Size is required',
 				}),
 				quantity: Joi.number().min(0).required().messages({
 					'number.min': 'Quantity must be at least 0',
@@ -77,25 +84,28 @@ const productSchema = Joi.object({
 });
 
 const UpdateProduct = () => {
+	const { id } = useParams();
 	const [categories, setCategories] = useState<CATEGORY[]>([]);
 	const [sizes, setSizes] = useState<SIZE[]>([]);
 	const [brands, setBrands] = useState<BRAND[]>([]);
 	const [selectedCategories, setSelectedCategories] = useState<CATEGORY[]>([]);
+	const [initialData, setInitialData] = useState<PRODUCT_DETAIL | null>(null);
 	const [loading, setLoading] = useState(false);
 	const navigate = useNavigate();
 
-	useEffect(() => {
+	const fetchData = async () => {
 		try {
-			(async () => {
-				const resCategory = await categoryService.getAll();
-				setCategories(resCategory.data.category.data);
-				const resSize = await sizeService.getAll();
-				setSizes(resSize.data.sizes.data);
-				const resBrand = await brandService.getAll();
-				setBrands(resBrand.data.brands.data);
-			})();
-		} catch (error) {}
-	}, []);
+			const resCategory = await categoryService.getAll();
+			setCategories(resCategory.data.category.data);
+			const resSize = await sizeService.getAll();
+			setSizes(resSize.data.sizes.data);
+			const resBrand = await brandService.getAll();
+			setBrands(resBrand.data.brands.data);
+		} catch (error) {
+			console.log(error);
+			toast.error('Failed to fetch data');
+		}
+	};
 
 	const {
 		register,
@@ -104,7 +114,7 @@ const UpdateProduct = () => {
 		clearErrors,
 		setValue,
 		formState: { errors },
-	} = useForm<PRODUCT>({
+	} = useForm<PRODUCT_UPDATE>({
 		resolver: joiResolver(productSchema),
 		defaultValues: {
 			variants: [],
@@ -116,26 +126,29 @@ const UpdateProduct = () => {
 		name: 'variants',
 	});
 
-	const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+	const [thumbnailFile, setThumbnailFile] = useState<File | string | null>(
+		null
+	);
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const productImagesInputRef = useRef<HTMLInputElement>(null);
 
-	const [variantImageFiles, setVariantImageFiles] = useState<(File | null)[]>(
-		[]
-	);
+	const [variantImageFiles, setVariantImageFiles] = useState<
+		(File | string | null)[]
+	>([]);
 
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-	const [productImageFiles, setProductImageFiles] = useState<File[]>([]);
+	const [productImageFiles, setProductImageFiles] = useState<
+		(File | string)[]
+	>([]);
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		event.preventDefault();
 		const file = event.target.files?.[0];
 		if (file) {
 			setThumbnailFile(file);
-			// Set the value for the thumbnail field
 			setValue('thumbnail', file.name);
 			clearErrors('thumbnail');
 		}
@@ -170,7 +183,9 @@ const UpdateProduct = () => {
 			setProductImageFiles((prev) => [...prev, ...filesArray]);
 			setValue(
 				'images',
-				[...productImageFiles, ...filesArray].map((file) => file.name)
+				[...productImageFiles, ...filesArray].map((file) => ({
+					image_path: file instanceof File ? file.name : file,
+				}))
 			);
 			clearErrors('images');
 		}
@@ -181,7 +196,9 @@ const UpdateProduct = () => {
 			const newFiles = prev.filter((_, i) => i !== index);
 			setValue(
 				'images',
-				newFiles.map((file) => file.name)
+				newFiles.map((file) => ({
+					image_path: file instanceof File ? file.name : file,
+				}))
 			);
 			return newFiles;
 		});
@@ -214,7 +231,12 @@ const UpdateProduct = () => {
 
 	// Modify the append function to also add a null image
 	const addVariant = () => {
-		append({ color: '', size_id: 0, quantity: 0, image_variant: '' });
+		append({
+			color_id: 0,
+			size_id: 0,
+			quantity: 0,
+			image_variant: '',
+		});
 		setVariantImageFiles([...variantImageFiles, null]);
 	};
 
@@ -250,110 +272,156 @@ const UpdateProduct = () => {
 		);
 	};
 
-	const { id } = useParams();
-
-	// Add state for initial data
-	const [initialData, setInitialData] = useState<PRODUCT | null>(null);
-
-	// Fetch product data on component mount
+	// // Fetch product data on component mount
 	const fetchProduct = async () => {
 		try {
-			setLoading(true);
 			const res = await productService.getById(Number(id));
-			console.log(res.data.Data.product);
-			console.log(res.data.Data.product);
-			const product = res.data.data.product;
+			const product = res;
+			console.log(product);
 			setInitialData(product);
-
 			// Set form default values
 			setValue('name', product.name);
 			setValue('description', product.description);
-			setValue('price', product.price);
-			setValue('promotional_price', product.promotional_price);
+			setValue('price', Number(product.price));
+			setValue('promotional_price', Number(product.promotional_price));
 			setValue('status', product.status);
 			setValue('sku', product.sku);
 			setValue('hagtag', product.hagtag);
-			setValue('category_ids', product.category_ids);
-			setValue('brand_id', product.brand_id);
+			setValue('brand_id', product.brand);
 			setValue('thumbnail', product.thumbnail);
 			setValue('images', product.images);
-			setValue('stock_quantity', product.stock_quantity);
-			setValue('variants', product.variants);
+			setValue('stock_quantity', Number(product.stock_quantity));
 
-			// Set selected categories
-			const productCategories = categories.filter((cat) =>
-				product.category_ids.includes(Number(cat.id))
+			// Xử lý categories
+			if (product.categories && Array.isArray(product.categories)) {
+				setSelectedCategories(product.categories);
+				setValue(
+					'category_ids',
+					product.categories.map((cat: CATEGORY) => Number(cat.id))
+				);
+			}
+
+			// Xử lý images
+			const productImages = product.images.map(
+				(image: { image_path: string }) => image.image_path
 			);
-			setSelectedCategories(productCategories);
+			setProductImageFiles(productImages);
 
-			// Set images
-			setThumbnailFile(null); // Clear any existing file
-			setProductImageFiles([]); // Clear existing files
-			setVariantImageFiles(product.variants.map(() => null));
+			// Xử lý variants - chỉ set một lần
+			if (product.variants && Array.isArray(product.variants)) {
+				// Set variants vào form
+				setValue('variants', product.variants);
+
+				// Set variant images
+				const variantImagesUrl = product.variants.map(
+					(variant: Variant) => variant.image_variant
+				);
+				setVariantImageFiles(variantImagesUrl);
+			}
+
+			setThumbnailFile(product.thumbnail);
 		} catch (error) {
-			console.error(error);
+			console.log(error);
 			toast.error('Failed to fetch product');
-		} finally {
-			setLoading(false);
 		}
 	};
 	useEffect(() => {
 		if (id) {
-			fetchProduct();
+			(async () => {
+				setLoading(true);
+				await fetchData();
+				await fetchProduct();
+				setLoading(false);
+			})();
 		}
 	}, [id]);
 
-	const onSubmit = async (data: PRODUCT) => {
+	// Add state for initial data
+
+	const onSubmit = async (data: PRODUCT_UPDATE) => {
 		try {
 			setLoading(true);
-			toast.loading('Updating product...', { duration: 3000 });
+
+			// Validate required fields
+			if (!data.name || !data.description || !selectedCategories.length) {
+				toast.error('Please fill in all required fields');
+				return;
+			}
+
+			// Show loading toast
+			const loadingToast = toast.loading('Updating product...');
 
 			// Handle thumbnail upload if changed
-			const thumbnailUrl = thumbnailFile
-				? await uploadImageToCloudinary(thumbnailFile)
-				: data.thumbnail;
+			let thumbnailUrl = data.thumbnail;
+			if (thumbnailFile && thumbnailFile instanceof File) {
+				thumbnailUrl = await uploadImageToCloudinary(thumbnailFile);
+			}
 
-			// Handle product images upload if changed
+			// Handle product images
 			const uploadedProductImages = await Promise.all(
-				productImageFiles.map((file) =>
-					file instanceof File ? uploadImageToCloudinary(file) : file
-				)
+				productImageFiles.map(async (file) => {
+					if (typeof file === 'string') {
+						// Return existing image URL
+						return { image_path: file };
+					}
+					if (file instanceof File) {
+						const uploadedUrl = await uploadImageToCloudinary(file);
+						return { image_path: uploadedUrl };
+					}
+					return null;
+				})
+			).then((images) =>
+				images.filter((img): img is { image_path: string } => img !== null)
 			);
 
-			// Handle variant images upload if changed
-			const uploadedVariantImages = await Promise.all(
-				variantImageFiles.map((file, index) =>
-					file instanceof File
-						? uploadImageToCloudinary(file)
-						: data.variants[index]?.image_variant
-				)
-			);
+			// Handle variant images
+			const formattedVariants = await Promise.all(
+				(data.variants || []).map(async (variant, index) => {
+					const variantImage = variantImageFiles[index];
+					let imageVariant = variant.image_variant;
 
-			// Prepare variants data
-			const formattedVariants = data.variants?.map(
-				(variant: any, index: number) => ({
-					color: variant.color,
-					size_id: variant.size_id,
-					quantity: variant.quantity,
-					image_variant: uploadedVariantImages[index],
+					if (variantImage instanceof File) {
+						imageVariant = await uploadImageToCloudinary(variantImage);
+					}
+
+					return {
+						...variant,
+						color_id: Number(variant.color_id),
+						size_id: Number(variant.size_id),
+						quantity: Number(variant.quantity),
+						image_variant: imageVariant,
+					};
 				})
 			);
 
 			// Prepare final form data
 			const formData = {
-				...data,
+				name: data.name,
+				description: data.description,
+				price: Number(data.price),
+				promotional_price: Number(data.promotional_price),
+				status: data.status,
+				sku: data.sku,
+				hagtag: data.hagtag,
+				category_ids: selectedCategories.map((cat) => Number(cat.id)),
+				brand_id: Number(data.brand_id),
 				thumbnail: thumbnailUrl,
 				images: uploadedProductImages,
+				stock_quantity: Number(data.stock_quantity),
 				variants: formattedVariants,
 			};
 
 			// Send to backend
-			await productService.update(Number(id), formData);
-			toast.success('Product updated successfully');
-			navigate('/admin/product');
+			const response = await productService.update(Number(id), formData);
+
+			if (response) {
+				toast.dismiss(loadingToast);
+				toast.success('Product updated successfully');
+				navigate('/admin/product');
+			}
 		} catch (error) {
-			toast.error('Failed to update product');
-			console.error(error);
+			console.error('Update error:', error);
+			// toast.error(error?.response?.data?.message || 'Failed to update product');
 		} finally {
 			setLoading(false);
 		}
@@ -365,7 +433,7 @@ const UpdateProduct = () => {
 	return (
 		<>
 			<div className="w-full border border-stroke p-4 shadow-lg">
-				<h3 className="font-bold text-2xl">Add Product</h3>
+				<h3 className="font-bold text-2xl">Update Product</h3>
 				<div className="w-full">
 					{loading ? (
 						<p>Loading...</p>
@@ -506,9 +574,7 @@ const UpdateProduct = () => {
 									{...register('brand_id')}
 									className="select select-bordered w-full"
 								>
-									<option defaultValue="Select Brand">
-										Select Brand
-									</option>
+									<option value="">Select Brand</option>
 									{brands.map((brand) => (
 										<option key={brand.id} value={brand.id}>
 											{brand.name}
@@ -529,27 +595,34 @@ const UpdateProduct = () => {
 								<div className="flex flex-col gap-2">
 									<div className="dropdown w-full relative">
 										<div className="w-full min-h-12 border-2 border-gray-300 rounded-md p-2 flex flex-wrap gap-1">
-											{selectedCategories.map((category) => (
-												<div
-													key={category.id}
-													className="bg-[#BCDDFE] text-primary px-2 py-1 rounded-md flex items-center gap-1 text-xs"
-												>
-													<span>{category.name}</span>
-													<button
-														type="button"
-														onClick={(e) => {
-															e.preventDefault();
-															e.stopPropagation();
-															removeCategory(
-																Number(category.id)
-															);
-														}}
-														className="hover:text-primary/80"
+											{selectedCategories &&
+											selectedCategories.length > 0 ? (
+												selectedCategories.map((category) => (
+													<div
+														key={category.id}
+														className="bg-[#BCDDFE] text-primary px-2 py-1 rounded-md flex items-center gap-1 text-xs"
 													>
-														<X size={14} />
-													</button>
-												</div>
-											))}
+														<span>{category.name}</span>
+														<button
+															type="button"
+															onClick={(e) => {
+																e.preventDefault();
+																e.stopPropagation();
+																removeCategory(
+																	Number(category.id)
+																);
+															}}
+															className="hover:text-primary/80"
+														>
+															<X size={14} />
+														</button>
+													</div>
+												))
+											) : (
+												<span className="text-gray-500 text-sm">
+													Select categories...
+												</span>
+											)}
 										</div>
 
 										<div
@@ -624,7 +697,11 @@ const UpdateProduct = () => {
 									{thumbnailFile ? (
 										<div className="relative size-[100px] group">
 											<img
-												src={URL.createObjectURL(thumbnailFile)}
+												src={
+													thumbnailFile instanceof File
+														? URL.createObjectURL(thumbnailFile)
+														: thumbnailFile
+												}
 												alt="Thumbnail"
 												className="w-full h-full object-cover rounded-md"
 											/>
@@ -634,7 +711,11 @@ const UpdateProduct = () => {
 														e.preventDefault();
 														e.stopPropagation();
 														openModal(
-															URL.createObjectURL(thumbnailFile)
+															thumbnailFile instanceof File
+																? URL.createObjectURL(
+																		thumbnailFile
+																  )
+																: thumbnailFile
 														);
 													}}
 													className="btn btn-xs btn-circle btn-ghost"
@@ -659,7 +740,7 @@ const UpdateProduct = () => {
 											className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
 										>
 											<Upload />
-											<p className="text-sm text-gray-500">
+											<p className="text-xs text-gray-500">
 												Upload Image
 											</p>
 										</div>
@@ -691,7 +772,7 @@ const UpdateProduct = () => {
 										className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
 									>
 										<Upload />
-										<p className="text-sm text-gray-500">
+										<p className="text-xs text-gray-500">
 											Add Images
 										</p>
 									</div>
@@ -701,7 +782,11 @@ const UpdateProduct = () => {
 											className="relative size-[100px] group"
 										>
 											<img
-												src={URL.createObjectURL(image)}
+												src={
+													image instanceof File
+														? URL.createObjectURL(image)
+														: image
+												}
 												alt={`Product ${index + 1}`}
 												className="w-full h-full object-cover rounded-md"
 											/>
@@ -710,7 +795,11 @@ const UpdateProduct = () => {
 													onClick={(e) => {
 														e.preventDefault();
 														e.stopPropagation();
-														openModal(URL.createObjectURL(image));
+														openModal(
+															typeof image === 'string'
+																? image
+																: URL.createObjectURL(image)
+														);
 													}}
 													className="btn btn-xs btn-circle btn-ghost"
 												>
@@ -774,9 +863,17 @@ const UpdateProduct = () => {
 													<>
 														<div className="relative size-[100px] group">
 															<img
-																src={URL.createObjectURL(
-																	variantImageFiles[index]
-																)}
+																src={
+																	variantImageFiles[
+																		index
+																	] instanceof File
+																		? URL.createObjectURL(
+																				variantImageFiles[
+																					index
+																				]
+																		  )
+																		: variantImageFiles[index]
+																}
 																alt={`Variant ${index + 1}`}
 																className="w-full h-full object-cover rounded-md"
 															/>
@@ -786,11 +883,17 @@ const UpdateProduct = () => {
 																		e.preventDefault();
 																		e.stopPropagation();
 																		openModal(
-																			URL.createObjectURL(
-																				variantImageFiles[
-																					index
-																				]!
-																			)
+																			typeof variantImageFiles[
+																				index
+																			] === 'string'
+																				? variantImageFiles[
+																						index
+																				  ]
+																				: URL.createObjectURL(
+																						variantImageFiles[
+																							index
+																						]!
+																				  )
 																		);
 																	}}
 																	className="btn btn-xs btn-circle btn-ghost"
@@ -830,7 +933,7 @@ const UpdateProduct = () => {
 														className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
 													>
 														<Upload />
-														<p className="text-sm text-gray-500">
+														<p className="text-xs text-gray-500">
 															Upload Image
 														</p>
 													</label>
@@ -853,14 +956,12 @@ const UpdateProduct = () => {
 														`variants.${index}.size_id`
 													)}
 												>
-													<option defaultValue="Select Size">
-														Select Size
-													</option>
-													{/* {sizes.map((size) => (
-													<option key={size.id} value={size.id}>
-														{size.code}
-													</option>
-												))} */}
+													<option value="">Select Size</option>
+													{sizes.map((size) => (
+														<option key={size.id} value={size.id}>
+															{size.size}
+														</option>
+													))}
 												</select>
 												{errors.variants && (
 													<p className="text-red-500 text-xs absolute -bottom-5">
@@ -877,12 +978,14 @@ const UpdateProduct = () => {
 													type="text"
 													placeholder="Color"
 													className="input input-bordered w-full"
-													{...register(`variants.${index}.color`)}
+													{...register(
+														`variants.${index}.color_id`
+													)}
 												/>
 												{errors.variants && (
 													<p className="text-red-500 text-xs absolute -bottom-5">
 														{
-															errors.variants?.[index]?.color
+															errors.variants?.[index]?.color_id
 																?.message
 														}
 													</p>
@@ -935,10 +1038,10 @@ const UpdateProduct = () => {
 								{loading ? (
 									<>
 										<span className="loading loading-spinner loading-sm text-info"></span>
-										Creating product...
+										Updating product...
 									</>
 								) : (
-									'Add product'
+									'Update product'
 								)}
 							</button>
 						</form>
