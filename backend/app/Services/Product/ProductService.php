@@ -5,6 +5,7 @@ namespace App\Services\Product;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\VariantColor;
+use App\Models\VariantSize;
 use App\Repositories\RepositoryInterfaces\ProductRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -48,14 +49,24 @@ class ProductService
             if (isset($validated['variants']) && !empty($validated['variants'])) {
                 foreach ($validated['variants'] as $variantData) {
                     // Tạo màu mới
-                    $color = VariantColor::create([
-                        'color' => $variantData['color'],
-                        'link_image' => $variantData['link_image']
-                    ]);
+                    $color = VariantColor::find($variantData['color_id']);
+                    $size = VariantSize::find($variantData['size_id']);
+
+                    if(!$size) {
+                        return response()->json([
+                            'message' => 'Không tìm thấy kích thước với ID ' . $variantData['size_id'],
+                        ]);
+                    }
+                    if (!$color) {
+                        // Nếu không tìm thấy color, trả về lỗi
+                        return response()->json([
+                            'message' => 'Không tìm thấy màu với ID ' . $variantData['color_id'],
+                        ], 400);
+                    }
 
                     // Chuẩn bị dữ liệu variant
                     $variantToCreate = [
-                        'color_id' => $color->id,
+                        'color_id' => $variantData['color_id'], // Sử dụng color_id từ JSON
                         'product_id' => $product->id,
                         'image_variant' => $variantData['image_variant'],
                         'size_id' => $variantData['size_id'],
