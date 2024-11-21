@@ -53,6 +53,13 @@ class Handler extends ExceptionHandler
     public function render($request, Throwable $e)
     {
         if ($request->expectsJson()) {
+            // Kiểm tra nếu là lỗi unauthorized
+            if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                return response()->json([
+                    'message' => 'Unauthorized',
+                ], 401);
+            }
+
             return response()->json([
                 'message' => $e->getMessage(),
             ], 422);

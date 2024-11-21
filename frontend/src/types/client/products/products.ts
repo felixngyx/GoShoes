@@ -15,12 +15,17 @@ export interface IProduct {
   thumbnail: string;
   variants: Variant[];
   categories: [];
+  brand: {
+    id: number;
+    name: string;
+    slug: string;
+  };
 }
 
 interface Variant {
   id: number;
   color: string;
-  size: 0;
+  size: number;
   image_variant: string;
   quantity: number;
 }

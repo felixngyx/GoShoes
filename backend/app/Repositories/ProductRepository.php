@@ -47,19 +47,34 @@ class ProductRepository implements ProductRepositoryInterface
         $transformedProduct = [
             'id' => $product->id,
             'name' => $product->name,
+            'description' => $product->description,
             'price' => (float) $product->price,
             'promotional_price' => (float) $product->promotional_price,
             'stock_quantity' => $product->stock_quantity,
             'sku' => $product->sku,
+            'hagtag' => $product->hagtag,
+            'brand' => $product->brand->id,
             'rating_count' => $product->rating_count,
-            'categories' => $product->categories->pluck('name')->toArray(),
             'status' => $product->status,
             'thumbnail' => $product->thumbnail,
-            'images' => $product->images->pluck('id','image_path')->toArray(),
+            'images' => $product->images->map(function ($image) {
+                return [
+                    'id' => $image->id,
+                    'image_path' => $image->image_path
+                ];
+            })->toArray(),
+            'categories' => $product->categories->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name
+                ];
+            })->toArray(),
             'variants' => $product->variants->map(function ($variant) {
                 return [
-                    'color' => $variant->color->color,
+                    'size_id' => $variant->size_id,
+                    'color_id' => $variant->color_id,
                     'size' => (int) $variant->size->size,
+                    'color' => $variant->color->color,
                     'quantity' => $variant->quantity,
                     'image_variant' => $variant->image_variant
                 ];
@@ -88,8 +103,8 @@ class ProductRepository implements ProductRepositoryInterface
                     'images' => $relatedProduct->images->pluck('image_path')->toArray(),
                     'variants' => $relatedProduct->variants->map(function ($variant) {
                         return [
-                            'color' => $variant->color->color,
                             'size' => (int) $variant->size->size,
+                            'color' => $variant->color->color,
                             'quantity' => $variant->quantity,
                             'image_variant' => $variant->image_variant
                         ];
@@ -104,7 +119,7 @@ class ProductRepository implements ProductRepositoryInterface
     }
     public function findProductWithRelationsClient(string $id){
         $product = Product::where('is_deleted', false)
-            ->with(['variants.color', 'variants.size', 'images', 'categories', 'brand'])
+            ->with(['variants.color', 'variants.size', 'images', 'categories:id,name', 'brand'])
             ->find($id);
 
         if (!$product) {
@@ -116,10 +131,10 @@ class ProductRepository implements ProductRepositoryInterface
             ->where('id', '!=', $product->id)
             ->where('is_deleted', false)
             ->limit(8)
-            
+
             ->get();
 
-        
+
         return [
             'product' => $product,
             'relatedProducts' => $relatedProducts
@@ -159,8 +174,8 @@ class ProductRepository implements ProductRepositoryInterface
         //     ];
         // });
         // $brandName = $product->brand ? $product->brand->name : null;
-        
-        // $categoryNames = $product->categories->pluck('name')->toArray(); 
+
+        // $categoryNames = $product->categories->pluck('name')->toArray();
    // 'variantDetails' => $variantDetails,
             // 'brandName' => $brandName,
             // 'categoryNames' => $categoryNames, // Lấy tên danh mục sản phẩm

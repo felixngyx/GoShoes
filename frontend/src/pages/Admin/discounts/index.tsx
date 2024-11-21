@@ -5,11 +5,15 @@ import {
 	MoreHorizontal,
 	Filter,
 	Plus,
+	Trash2,
+	Edit,
 } from 'lucide-react';
 import Cookies from 'js-cookie';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useForm } from 'react-hook-form';
+import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 // Create API instance outside component to avoid recreation on each render
 const api = axios.create({
@@ -38,7 +42,17 @@ const fetchDiscounts = async () => {
 };
 
 const DiscountList = () => {
+	const navigate = useNavigate();
 	const [isFilterOpen, setIsFilterOpen] = useState(false);
+	const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+	const queryClient = useQueryClient();
+	const [deleteModal, setDeleteModal] = useState<{
+		isOpen: boolean;
+		discountId: number | null;
+	}>({
+		isOpen: false,
+		discountId: null,
+	});
 
 	// Updated React Query implementation
 	const { data, isLoading, error } = useQuery({
@@ -97,6 +111,29 @@ const DiscountList = () => {
 		return 'Active';
 	};
 
+	const handleDelete = async (id: number) => {
+		try {
+			const response = await api.delete(`/discounts/${id}`, {
+				headers: {
+					Authorization: `Bearer ${Cookies.get('access_token')}`,
+				},
+			});
+
+			if (response.data.status) {
+				toast.success('Discount deleted successfully');
+				setDeleteModal({ isOpen: false, discountId: null });
+				queryClient.invalidateQueries({ queryKey: ['discounts'] });
+			} else {
+				toast.error(response.data.message || 'Failed to delete discount');
+			}
+		} catch (error: any) {
+			console.error('Delete error:', error);
+			toast.error(
+				error.response?.data?.message || 'Failed to delete discount'
+			);
+		}
+	};
+
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center h-64">
@@ -126,7 +163,10 @@ const DiscountList = () => {
 					/>
 				</div>
 				<div className="flex gap-2">
-					<button className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+					<button
+						onClick={() => navigate('/admin/discounts/create')}
+						className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+					>
 						<Plus className="h-4 w-4" />
 						Add Discount
 					</button>
@@ -222,10 +262,58 @@ const DiscountList = () => {
 								<td className="px-4 py-3 text-sm">
 									{discount.used_count}/{discount.usage_limit}
 								</td>
-								<td className="px-4 py-3">
-									<button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+								<td className="px-4 py-3 relative">
+									<button
+										onClick={() =>
+											setActiveDropdown(
+												activeDropdown === discount.id
+													? null
+													: discount.id
+											)
+										}
+										className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+									>
 										<MoreHorizontal className="h-4 w-4 dark:text-gray-400" />
 									</button>
+
+									{activeDropdown === discount.id && (
+										<>
+											{/* Overlay để bắt sự kiện click outside */}
+											<div
+												className="fixed inset-0 z-20"
+												onClick={() => setActiveDropdown(null)}
+											/>
+
+											{/* Dropdown menu */}
+											<div className="absolute right-0 top-full mt-1 w-48 rounded-lg shadow-lg bg-white dark:bg-gray-800 border dark:border-gray-700 py-1 z-30">
+												<button
+													onClick={() => {
+														navigate(
+															`/admin/discounts/update/${discount.id}`
+														);
+														setActiveDropdown(null);
+													}}
+													className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+												>
+													<Edit className="h-4 w-4" />
+													Update
+												</button>
+												<button
+													onClick={() => {
+														setDeleteModal({
+															isOpen: true,
+															discountId: discount.id,
+														});
+														setActiveDropdown(null);
+													}}
+													className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+												>
+													<Trash2 className="h-4 w-4" />
+													Delete
+												</button>
+											</div>
+										</>
+									)}
 								</td>
 							</tr>
 						))}
@@ -287,6 +375,51 @@ const DiscountList = () => {
 						</label>
 					</div>
 				</div>
+			)}
+
+			{deleteModal.isOpen && (
+				<>
+					<div className="fixed inset-0 bg-black/50 z-40" />
+					<div className="fixed inset-0 flex items-center justify-center z-50">
+						<div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+							<div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-4">
+								<Trash2 className="h-6 w-6 text-red-600" />
+							</div>
+
+							<h3 className="text-lg font-medium text-center mb-2 dark:text-gray-200">
+								Delete Discount
+							</h3>
+
+							<p className="text-gray-500 dark:text-gray-400 text-center mb-6">
+								Are you sure you want to delete this discount? This
+								action cannot be undone.
+							</p>
+
+							<div className="flex gap-3 justify-end">
+								<button
+									onClick={() =>
+										setDeleteModal({
+											isOpen: false,
+											discountId: null,
+										})
+									}
+									className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+								>
+									Cancel
+								</button>
+								<button
+									onClick={() =>
+										deleteModal.discountId &&
+										handleDelete(deleteModal.discountId)
+									}
+									className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
+								>
+									Delete
+								</button>
+							</div>
+						</div>
+					</div>
+				</>
 			)}
 		</div>
 	);

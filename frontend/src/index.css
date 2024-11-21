@@ -90,3 +90,23 @@ body {
     padding-right: 0.75rem;
   }
 }
+
+.btn {
+  @apply px-4 py-2 rounded-md text-center transition-all;
+}
+.btn-sm {
+  @apply text-sm;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

@@ -10,6 +10,10 @@ const axiosClient = axios.create({
 	baseURL,
 	headers: {
 		'Content-Type': 'application/json',
+		'Access-Control-Allow-Origin': '*',
+		'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+		'Access-Control-Allow-Headers':
+			'Origin, Content-Type, Accept, Authorization',
 	},
 });
 
@@ -39,7 +43,7 @@ axiosClient.interceptors.response.use(
 
 		const originalRequest = error.config;
 
-		if (error.response.status === 401) {
+		if (error.response.status === 422) {
 			originalRequest._retry = true;
 
 			const refreshToken = Cookies.get('refresh_token');

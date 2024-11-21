@@ -46,7 +46,6 @@ const Product = () => {
 		try {
 			setLoading(true);
 			const res = await productService.getAll(page, limit);
-			console.log(res.data.data.products);
 			setProductData(res.data.data.products);
 			setTotalPages(res.data.data.pagination.last_page);
 		} catch (error) {

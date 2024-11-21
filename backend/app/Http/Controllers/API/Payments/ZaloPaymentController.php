@@ -37,7 +37,7 @@ class ZaloPaymentController extends Controller
                 "app_id" => $this->config["app_id"],
                 "app_time" => round(microtime(true) * 1000),
                 "app_trans_id" => date("ymd") . "_" . $order->sku,
-                "app_user" => "user" . $order->user_id,
+                "app_user" => "Goshoes2421",
                 "item" => $items,
                 "embed_data" => json_encode($embeddata),
                 "amount" => $request->amount,
@@ -55,7 +55,8 @@ class ZaloPaymentController extends Controller
             if ($response->successful()) {
                 $result = $response->json();
                 if ($result['return_code'] == 1) {
-                    return response()->json($result); // Đảm bảo trả về đối tượng JSON
+                    $result['app_trans_id'] = $order_data['app_trans_id'];
+                    return response()->json($result);
                 } else {
                     throw new Exception('ZaloPay returned error: ' . $result['return_message']);
                 }
@@ -118,9 +119,9 @@ class ZaloPaymentController extends Controller
             $result["return_message"] = $e->getMessage();
             error_log("ZaloPay Callback Error: " . $e->getMessage());
         }
-        $apptrans = strstr($data["apptransid"],'_');
+        $apptrans = strstr($data["apptransid"], '_');
 
-        $sku = ltrim($apptrans,'_');
+        $sku = ltrim($apptrans, '_');
         if (empty($sku)) {
             return redirect()->away(env('FRONTEND_URL') . '/payment-fail?message=Invalid SKU');
         }
@@ -140,8 +141,10 @@ class ZaloPaymentController extends Controller
         // Xử lý kết quả thanh toán
         switch ($result["return_code"]) {
             case 1:
-                $order->update(["status" => "shipping"]);
-                $payment->update(['status' => 'success']);
+                $order->update(["status" => "processing"]);
+                $payment->update([
+                    'status' => 'success'
+                ]);
                 return redirect()->away(env('FRONTEND_URL') . '/payment-success?message=Transaction successful');
 
             case 0:
@@ -218,31 +221,55 @@ class ZaloPaymentController extends Controller
         return response()->json($results);
     }
 
-    public function refund(Request $request)
+    public function refund($order_id, $apptransid, $amount)
     {
         try {
-            $order = Order::where('sku', $request->order_id)->firstOrFail();
-            $timestamp = round(microtime(true) * 1000);
+            $order = Order::where('sku', $order_id)->firstOrFail();
+            $order_sku = $order->sku;
+            date_default_timezone_set('Asia/Ho_Chi_Minh');
+            $timestamp = (int)(microtime(true) * 1000);
+
+            // Log thông tin đầu vào
+            Log::info('ZaloPay Refund Input:', [
+                'order_id' => $order_id,
+                'apptransid' => $apptransid,
+                'amount' => $amount
+            ]);
+            Log::info('Timestamp converted:', [
+                'datetime' => date('Y-m-d H:i:s', $timestamp/1000)
+            ]);
+            $uid = "$timestamp" . rand(111, 999);
 
             $params = [
                 "app_id" => $this->config["app_id"],
-                "m_refund_id" => date("ymd") . "_" . $this->config["app_id"] . "_" . $timestamp . rand(111,999),
+                "m_refund_id" => date("ymd") . "_" . $this->config["app_id"] . "_" . 123,
                 "timestamp" => $timestamp,
-                "zp_trans_id" => $request->zp_trans_id,
-                "amount" => $request->amount,
+                "zp_trans_id" => $apptransid,
+                "amount" => $amount,
                 "description" => "Hoàn tiền đơn hàng #" . $order->sku
             ];
+
+            // Log params trước khi tạo MAC
+            Log::info('ZaloPay Refund Params (before MAC):', $params);
 
             // Tạo chuỗi data để tạo chữ ký
             $data = $params["app_id"] . "|" . $params["zp_trans_id"] . "|" . $params["amount"]
                 . "|" . $params["description"] . "|" . $params["timestamp"];
             $params["mac"] = hash_hmac("sha256", $data, $this->config["key1"]);
 
+            // Log params sau khi tạo MAC
+            Log::info('ZaloPay Refund Request:', [
+                'endpoint' => "https://sb-openapi.zalopay.vn/v2/refund",
+                'params' => $params,
+                'mac_data' => $data
+            ]);
+
             $response = Http::withOptions(['verify' => false])
                 ->post("https://sb-openapi.zalopay.vn/v2/refund", $params);
 
+            $result = $response->json();
+
             if ($response->successful()) {
-                $result = $response->json();
                 if ($result['return_code'] == 1) {
                     // Cập nhật trạng thái đơn hàng thành cancelled
                     $order->status = 'refunded';
@@ -251,20 +278,15 @@ class ZaloPaymentController extends Controller
                     // Cập nhật trạng thái thanh toán
                     $order->payment->status = 'refunded';
                     $order->payment->save();
-                    return response()->json($result);
-                } else {
-                    throw new Exception('ZaloPay refund error: ' . $result['return_message']);
                 }
+                return $result; // Trả về array thay vì JsonResponse
             } else {
                 Log::error('ZaloPay refund response: ' . $response->body());
                 throw new Exception('Failed to connect to ZaloPay refund API');
             }
         } catch (Exception $e) {
             Log::error('ZaloPay refund failed: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Refund failed',
-                'message' => $e->getMessage()
-            ], 500);
+            throw $e; // Ném lại exception để controller xử lý
         }
     }
 }

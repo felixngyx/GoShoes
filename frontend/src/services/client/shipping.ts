@@ -5,9 +5,10 @@ export const getAllShipping = async () => {
     const response = await axiosClient.get(`/shipping`);
     const shippingData = response.data.data.flat().map((item: any) => ({
       ...item,
-      shipping_detail: typeof item.shipping_detail === 'string' 
-        ? JSON.parse(item.shipping_detail)
-        : item.shipping_detail
+      shipping_detail:
+        typeof item.shipping_detail === "string"
+          ? JSON.parse(item.shipping_detail)
+          : item.shipping_detail,
     }));
 
     return shippingData;

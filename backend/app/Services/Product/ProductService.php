@@ -32,6 +32,7 @@ class ProductService
                 'stock_quantity' => $validated['stock_quantity'],
                 'promotional_price' => $validated['promotional_price'] ?? null, // Thêm null nếu không có
                 'sku' =>  $validated['sku'],
+                'status' => $validated['status'],
                 'thumbnail' => $validated['thumbnail'],
                 'hagtag' => $validated['hagtag'] ?? null,
                 'brand_id' => $validated['brand_id'],
@@ -104,16 +105,6 @@ class ProductService
     public function deleteProduct(Product $product)
     {
         try {
-            // foreach ($product->variants as $variant) {
-            //     if ($variant->color_id) {
-            //         VariantColor::destroy($variant->color_id);
-            //     }
-            // }
-            // // Xóa các biến thể và ảnh trong database
-            // $product->variants()->delete();
-            // $product->images()->delete();
-
-            // Xóa sản phẩm
             $this->productRepository->softDeleteProduct($product);
 
             return response()->json([
@@ -158,6 +149,8 @@ class ProductService
             $productData = [
                 'name' => $validated['name'],
                 'description' => $validated['description'],
+                'sku' => $validated['sku'],
+                'status' => $validated['status'],
                 'price' => $validated['price'],
                 'stock_quantity' => $validated['stock_quantity'],
                 'promotional_price' => $validated['promotional_price'] ?? null,
@@ -297,25 +290,3 @@ class ProductService
         ];
     }
 }
-
-
-
-    // protected function updateImages($product, $images)
-    // {
-    //     // Kiểm tra nếu có ảnh mới được cung cấp
-    //     if ($images && is_array($images)) {
-    //         // Xóa ảnh cũ nếu có
-    //         $product->images()->each(function ($image) {
-    //             Storage::disk('public')->delete($image->image_path);
-    //             $image->delete();
-    //         });
-
-    //         // Lưu ảnh mới
-    //         foreach ($images as $image) {
-    //             if ($image) {
-    //                 $imagePath = $image->store('product_images', 'public');
-    //                 $product->images()->create(['image_path' => $imagePath]);
-    //             }
-    //         }
-    //     }
-    // }
