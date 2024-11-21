@@ -7,6 +7,7 @@ import {
   FaUser,
 } from "react-icons/fa";
 import { FaShoppingCart } from "react-icons/fa";
+import { FaHeart } from "react-icons/fa";  // Import icon cho wishlist
 import { Link, useLocation } from "react-router-dom";
 
 const Sidebar = () => {
@@ -63,6 +64,12 @@ const Sidebar = () => {
           className={`flex items-center gap-4 ${isActive("delete")}`}
         >
           <FaTrash /> Delete account
+        </Link>
+        <Link
+          to="/account/whish-list"  
+          className={`flex items-center gap-4 ${isActive("wishlist")}`}
+        >
+          <FaHeart /> Wishlist 
         </Link>
       </ul>
     </div>

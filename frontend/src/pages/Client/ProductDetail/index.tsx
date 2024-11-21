@@ -13,6 +13,7 @@ import { Variant } from '../../../types/client/products/variants';
 import RelatedProduct from '../ProductList/RelatedProduct';
 import { toast } from 'react-hot-toast';
 import { formatVNCurrency } from '../../../common/formatVNCurrency';
+import { addProductToWishlist } from '../../../services/client/whishlist';
 
 const ProductDetailSkeleton = () => {
 	return (
@@ -178,6 +179,26 @@ const ProductDetail = () => {
 		}
 	}, [product]);
 
+	const handleAddToWishlist = () => {
+		if (product?.id) {
+		  const productToAdd = {
+			product_id: product.id, // Truyền product_id của sản phẩm
+		  };
+	  
+		  // Gọi hàm thêm sản phẩm vào wishlist
+		  addProductToWishlist(productToAdd)
+			.then(() => {
+			  toast.success('The product has been added to your wishlist!');
+			})
+			.catch(() => {
+			  toast.error('Failed to add the product to your wishlist. Please try again.');
+			});
+		} else {
+		  toast.error('Invalid product information.');
+		}
+	  };
+	  
+
 	const handleAdd = () => {
 		if (selectedSize && selectedColor && quantity > 0) {
 			const selectedVariant = product?.variants.find(
@@ -241,12 +262,12 @@ const ProductDetail = () => {
 
 	const uniqueSizes = product?.variants
 		? Array.from(
-				new Set(
-					product.variants
-						.map((variant: Variant) => variant.size?.size)
-						.filter((size: any) => size !== null) // Lọc bỏ các giá trị null
-				)
-		  )
+			new Set(
+				product.variants
+					.map((variant: Variant) => variant.size?.size)
+					.filter((size: any) => size !== null) // Lọc bỏ các giá trị null
+			)
+		)
 		: [];
 
 	const uniqueColors = Array.from(
@@ -388,20 +409,18 @@ const ProductDetail = () => {
 														.image_path
 												)
 											}
-											className={`relative overflow-hidden rounded-md ${
-												selectedThumbnail ===
+											className={`relative overflow-hidden rounded-md ${selectedThumbnail ===
 												product.images[currentSlide + index]
 													.image_path
-													? 'ring-2 ring-theme-color-primary'
-													: ''
-											}`}
+												? 'ring-2 ring-theme-color-primary'
+												: ''
+												}`}
 										>
 											<img
 												key={image.id}
 												src={image.image_path}
-												alt={`${product.name} Thumbnail ${
-													index + 1
-												}`}
+												alt={`${product.name} Thumbnail ${index + 1
+													}`}
 												className="w-full object-cover"
 												onClick={() => handleImageClick(image)}
 											/>
@@ -500,11 +519,10 @@ const ProductDetail = () => {
 										onClick={() =>
 											handleColorChange(variant.color.id)
 										}
-										className={`px-2 py-2 border rounded-md hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary flex items-center gap-2 ${
-											selectedColor === variant.color.id
-												? 'bg-theme-color-primary outline-none ring-2'
-												: ''
-										}`}
+										className={`px-2 py-2 border rounded-md hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary flex items-center gap-2 ${selectedColor === variant.color.id
+											? 'bg-theme-color-primary outline-none ring-2'
+											: ''
+											}`}
 									>
 										<img
 											className="w-6 h-6 border border-x"
@@ -536,7 +554,10 @@ const ProductDetail = () => {
 									<IoMdAdd />
 								</button>
 							</div>
-							<button className="btn ms-auto bg-[#ebf6ff] hover:bg-[#ebf6ff]/80 hover:border-[#40BFFF]">
+							<button
+								onClick={handleAddToWishlist} // Gọi hàm khi người dùng nhấn vào
+								className="btn ms-auto bg-[#ebf6ff] hover:bg-[#ebf6ff]/80 hover:border-[#40BFFF]"
+							>
 								<Heart size={16} color="#40BFFF" />
 							</button>
 						</div>
@@ -587,31 +608,28 @@ const ProductDetail = () => {
 					<div className="mt-8 col-span-1 md:col-span-10 bg-[#FAFAFB] p-5 rounded-lg shadow-md">
 						<div className="flex gap-4 md:gap-28 border-b">
 							<button
-								className={`px-4 py-2 ${
-									activeTab === 'description'
-										? 'border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]'
-										: ''
-								}`}
+								className={`px-4 py-2 ${activeTab === 'description'
+									? 'border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]'
+									: ''
+									}`}
 								onClick={() => setActiveTab('description')}
 							>
 								Description
 							</button>
 							<button
-								className={`px-4 py-2 ${
-									activeTab === 'reviews'
-										? 'border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]'
-										: ''
-								}`}
+								className={`px-4 py-2 ${activeTab === 'reviews'
+									? 'border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]'
+									: ''
+									}`}
 								onClick={() => setActiveTab('reviews')}
 							>
 								Reviews
 							</button>
 							<button
-								className={`px-4 py-2 ${
-									activeTab === 'writeComment'
-										? 'border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]'
-										: ''
-								}`}
+								className={`px-4 py-2 ${activeTab === 'writeComment'
+									? 'border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]'
+									: ''
+									}`}
 								onClick={() => setActiveTab('writeComment')}
 							>
 								Write Comment
@@ -665,10 +683,10 @@ const ProductDetail = () => {
 													<button
 														// key={index}
 														className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg overflow-hidden"
-														//   onClick={() => setSelectedImage(index)}
-														//   onKeyDown={(e) => {
-														//     if (e.key === "Enter") setSelectedImage(index);
-														//   }}
+													//   onClick={() => setSelectedImage(index)}
+													//   onKeyDown={(e) => {
+													//     if (e.key === "Enter") setSelectedImage(index);
+													//   }}
 													>
 														<img
 															// src={image}
@@ -706,10 +724,10 @@ const ProductDetail = () => {
 													<button
 														// key={index}
 														className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg overflow-hidden"
-														//   onClick={() => setSelectedImage(index)}
-														//   onKeyDown={(e) => {
-														//     if (e.key === "Enter") setSelectedImage(index);
-														//   }}
+													//   onClick={() => setSelectedImage(index)}
+													//   onKeyDown={(e) => {
+													//     if (e.key === "Enter") setSelectedImage(index);
+													//   }}
 													>
 														<img
 															// src={image}
