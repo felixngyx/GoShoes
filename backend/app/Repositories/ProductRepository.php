@@ -63,7 +63,12 @@ class ProductRepository implements ProductRepositoryInterface
                     'image' => $image->image_path
                 ];
             }),
-            'categories' => $product->categories->pluck('name')->toArray(),
+            'categories' => $product->categories->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name
+                ];
+            }),
             'variants' => $product->variants->map(function ($variant) {
                 return [
                     'size_id' => $variant->size_id,
