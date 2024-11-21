@@ -2,43 +2,58 @@
 
 namespace App\Services\Token;
 
-use App\Repositories\RepositoryInterfaces\TokenRepositoryInterface as PasswordChangeHistoryRepository;
+use App\Repositories\RepositoryInterfaces\TokenRepositoryInterface as TokenRepository;
 use App\Services\ServiceAbstracts\Token\TokenAbstract;
 use App\Services\ServiceInterfaces\Token\TokenServiceInterface;
-use Illuminate\Support\Facades\DB;
 
 class TokenService extends TokenAbstract implements TokenServiceInterface
 {
-    private PasswordChangeHistoryRepository $passwordChangeHistoryRepository;
-    public function __construct(
-        PasswordChangeHistoryRepository $passwordChangeHistoryRepository
-    )
+    private static $tokenRepository;
+    public function __construct()
     {
-        $this->passwordChangeHistoryRepository = $passwordChangeHistoryRepository;
+        self::setTokenRepository(app(TokenRepository::class));
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function getTokenRepository(): TokenRepository
+    {
+        return self::$tokenRepository;
+    }
+
+    /**
+     * @param mixed $tokenRepository
+     */
+    public static function setTokenRepository($tokenRepository): void
+    {
+        self::$tokenRepository = $tokenRepository;
     }
 
 
-    public function findByTokenAndUserIdIsUsedService($token, $userId)
+    public function findByTokenAndUserIdIsUsedService(string $token, int $userId)
     {
-        return DB::table('token')
-            ->where('token', $token)
-            ->where('user_id', $userId)
-            ->where('is_used', 0)
-            ->first();
+        return self::getTokenRepository()->findByTokenAndUserIdIsUsed($token, $userId);
     }
 
-    public function create(array $data) : object
+    public function findDetailToken(string $token, int $userId)
     {
-        return $this->passwordChangeHistoryRepository->create($data);
+        return self::getTokenRepository()->findDetailToken($token, $userId);
     }
 
-    public function update(array $data, int $id) : object
+    public function create(array $data)
     {
-        return $this->passwordChangeHistoryRepository->update($data, $id);
+        return self::getTokenRepository()->create($data);
+
+    }
+
+    public function update(array $data, int $id)
+    {
+        return self::getTokenRepository()->update($data, $id);
     }
 
     public function delete(int $id) : int
     {
-        return $this->passwordChangeHistoryRepository->delete($id);
+        return self::getTokenRepository()->delete($id);
     }
 }

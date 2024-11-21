@@ -10,23 +10,21 @@ use Illuminate\Support\Facades\DB;
 
 class VerifyService extends VerifyAbstract implements VerifyServiceInterface
 {
-    private static $passwordChangeHistoryService;
+    private static $tokenService;
 
-    public function __construct(
-        TokenService $passwordChangeHistoryService
-    )
+    public function __construct()
     {
-        self::setTokenService($passwordChangeHistoryService);
+        self::setTokenService(app(TokenService::class));
     }
 
     public static function getTokenService(): TokenService
     {
-        return self::$passwordChangeHistoryService;
+        return self::$tokenService;
     }
 
-    public static function setTokenService(TokenService $passwordChangeHistoryService): void
+    public static function setTokenService(TokenService $tokenService): void
     {
-        self::$passwordChangeHistoryService = $passwordChangeHistoryService;
+        self::$tokenService = $tokenService;
     }
 
 
@@ -51,31 +49,21 @@ class VerifyService extends VerifyAbstract implements VerifyServiceInterface
     // please check the token data after decrypting it
     // admin can not be verified
     // token will expire in 5 minutes
-    public static function generateLinkVerification(object $user, string $type) : string
+    public static final function generateLinkVerification(object $user, string $type) : string
     {
         DB::beginTransaction();
         try {
-            // get frontend url from .env
-            $FE_URL = env('FRONTEND_URL');
             // generate token
-            $token = VerifyService::encryptToken($user, $type);
-            $created = self::getTokenService()->create([
+            $token = self::encryptToken($user, $type);
+            self::getTokenService()->create([
                 'token' => $token,
                 'user_id' => (int) $user->id,
                 'is_used' => false
             ]);
 
-            if (!$created) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to create token'
-                ], 500);
-            }
-
             DB::commit();
             // return link for verification
-            return env('FRONTEND_URL') . '/verify-email?token=' . $token;
+            return env('FRONTEND_URL') . '/verify-email?token=' . $token . '&type=' . $type;
         }catch (\Error $e){
             DB::rollBack();
             return $e->getMessage();
@@ -88,7 +76,7 @@ class VerifyService extends VerifyAbstract implements VerifyServiceInterface
     {
         try {
             // decrypt token
-           $decrypted = VerifyService::decryptToken($request['token']);
+           $decrypted = self::decryptToken($request['token']);
 
            $checkTokenIsUsed = self::getTokenService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
 
@@ -122,7 +110,7 @@ class VerifyService extends VerifyAbstract implements VerifyServiceInterface
                 'data' => [
                     'type' => $decrypted->type,
                 ]
-                ], 200);
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
