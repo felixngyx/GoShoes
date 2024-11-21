@@ -3,6 +3,7 @@
 use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
 // use App\Http\Controllers\API\Shipping\ShippingController;
+use App\Http\Controllers\API\Profile\ProfileController;
 use App\Http\Controllers\API\Wishlist\WishlistController;
 use App\Http\Controllers\API\Cart\CartController;
 use Illuminate\Support\Facades\Route;
@@ -112,6 +113,12 @@ Route::delete('/banners', [BannerController::class, 'destroyMultiple']);
 Route::group([
     'middleware' => 'jwt.auth',
 ], function () {
+
+    Route::group(['prefix' => 'profile'], function () {
+        Route::get('/', [ProfileController::class, 'index']);
+        Route::put('/update', [ProfileController::class, 'update']);
+    });
+
     Route::post('/logout', [AuthController::class, 'logoutController']);
 
     Route::prefix('orders')->group(function () {
