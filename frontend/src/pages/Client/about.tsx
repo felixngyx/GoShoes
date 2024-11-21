@@ -73,12 +73,12 @@ const AboutPage = () => {
             },
             {
               title: 'Multi White Casual Sneakers',
-              image: '/shoe2.jpg',
+              image: '/src/images/about/goshoes_giay2.png',
               color: 'bg-lime-400'
             },
             {
               title: 'Desert Blue Casual Walking',
-              image: '/shoe3.jpg',
+              image: '/src/images/about/goshoes_nike.png',
               color: 'bg-yellow-400'
             }
           ].map((item, index) => (

@@ -104,7 +104,7 @@ class ProductController extends Controller
                             'size' => (int) $variant->size->size,
                             'color' => $variant->color->color,
                             'quantity' => $variant->quantity,
-                            'image_variant' => $variant->image_variant
+                            // 'image_variant' => $variant->image_variant
                         ];
                     })->toArray()
                 ];
