@@ -27,8 +27,6 @@ class ProductSeeder extends Seeder
                 'slug' => Str::slug('Sample Product ' . $i, '-'), // Slug dựa trên tên sản phẩm
                 'thumbnail' => 'https://placehold.co/600x400', // Hình ảnh sản phẩm khác nhau
                 'hagtag' => '#sample #product' . $i,
-                'scheduled_at' => Carbon::now()->addDays(rand(1, 10)), // Ngày lên lịch ngẫu nhiên
-                'published_at' => Carbon::now(),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);

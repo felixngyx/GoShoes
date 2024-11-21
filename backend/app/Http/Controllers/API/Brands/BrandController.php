@@ -34,7 +34,7 @@ class BrandController extends Controller
         return response()->json([
             'message' => 'Danh sách sizes',
             'brands' => $brand
-        ], 201);
+        ], 200);
     }
 
     /**
