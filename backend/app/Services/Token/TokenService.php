@@ -29,22 +29,23 @@ class TokenService extends TokenAbstract implements TokenServiceInterface
 
     public function findDetailToken(string $token, int $userId)
     {
-        return $this->tokenRepository->findDetailToken($token, $userId);
+        return self::getTokenRepository()->findDetailToken($token, $userId);
     }
 
     public function create(array $data)
     {
-        return $this->tokenRepository->create($data);
+        return self::getTokenRepository()->create($data);
+
     }
 
     public function update(array $data, int $id)
     {
-        return $this->tokenRepository->update($data, $id);
+        return self::getTokenRepository()->update($data, $id);
     }
 
     public function delete(int $id)
     {
-        return $this->tokenRepository->delete($id);
+        return self::getTokenRepository()->delete($id);
     }
 
 }
