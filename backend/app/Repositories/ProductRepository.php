@@ -71,6 +71,7 @@ class ProductRepository implements ProductRepositoryInterface
             }),
             'variants' => $product->variants->map(function ($variant) {
                 return [
+                    'variant_id' => $variant->id,
                     'size_id' => $variant->size_id,
                     'color_id' => $variant->color_id,
                     'size' => (int) $variant->size->size,

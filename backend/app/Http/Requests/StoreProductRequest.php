@@ -27,7 +27,7 @@ class StoreProductRequest extends FormRequest
             'category_ids.*' => 'exists:categories,id',
             'variants' => 'nullable|array', // Thay đổi thành nullable
             'variants.*.color_id' => 'required_with:variants|exists:variant_colors,id',
-            'variants.*.link_image' => 'required_with:variants|string|max:255',
+            // 'variants.*.link_image' => 'required_with:variants|string|max:255',
             'variants.*.size_id' => 'required_with:variants|exists:variant_sizes,id',
             'variants.*.quantity' => 'required_with:variants|integer|min:1',
             // 'variants.*.image_variant' => 'required_with:variants|string|max:255',

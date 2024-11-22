@@ -27,7 +27,7 @@ class CategoryController extends Controller
         $limit = $request->input('limit', 9);
         $orderBy = $request->input('orderBy', 'id');
         $order = $request->input('order', 'asc');
-        $query = Category::select('id', 'name'); // Chỉ lấy trường id và name
+        $query = Category::select('id', 'name', 'product_count'); // Lấy thêm trường product_count
         $category = $query->orderBy($orderBy, $order)
                           ->paginate($limit, ['*'], 'page', $page);
         return response()->json([
