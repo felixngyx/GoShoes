@@ -51,6 +51,8 @@ import RefundRequest from './pages/Admin/orders/refundrequest';
 import DetailRefund from './pages/Admin/orders/detailRefund';
 import BrandPage from './pages/Client/Brand';
 import CategoryPage from './pages/Client/Category';
+import Post from './pages/Admin/Post';
+import CreatePost from './pages/Admin/Post/create';
 
 function App() {
 	const { pathname } = useLocation();
@@ -141,6 +143,10 @@ function App() {
 						<Route index element={<DiscountPage />}></Route>
 						<Route path="create" element={<CreateDiscount />}></Route>
 						<Route path="update/:id" element={<UpdateDiscount />}></Route>
+					</Route>
+					<Route path='post'>
+						<Route index element={<Post />}></Route>
+						<Route path='create' element={<CreatePost />}></Route>
 					</Route>
 
 					<Route
