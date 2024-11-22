@@ -43,6 +43,7 @@ class BrandController extends Controller
                     'id' => $brand->id,
                     'name' => $brand->name,
                     'slug' => $brand->slug,
+                    'logo_url' => $brand->logo_url,
                     'created_at' => $brand->created_at,
                     'updated_at' => $brand->updated_at,
                     'products_count' => $brand->products_count,

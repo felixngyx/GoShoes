@@ -108,7 +108,6 @@ Route::put('/banners/{id}', [BannerController::class, 'update']);
 Route::delete('/banners/{id}', [BannerController::class, 'destroy']);
 Route::delete('/banners', [BannerController::class, 'destroyMultiple']);
 
-
 Route::get('categories', [CategoryController::class, 'index']);
 
 // This route is Authenticated
