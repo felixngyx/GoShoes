@@ -67,7 +67,7 @@ const ProductItems = ({
     }
   };
 
-  const handleCheckAdd = (product: IProduct) => {
+  const handleCheckAdd = () => {
     if (!accessToken) {
       setModalCheckLogin(true);
       setShowModal(false);
@@ -128,7 +128,7 @@ const ProductItems = ({
               color="#40BFFF"
             />
             <IoCart
-              onClick={() => handleCheckAdd(product)}
+              onClick={() => handleCheckAdd()}
               className="cursor-pointer p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
               size={52}
               color="#40BFFF"
@@ -148,10 +148,10 @@ const ProductItems = ({
         </div>
         <div className="flex items-center justify-center gap-2 mt-1 mb-3">
           <p className="text-primary text-lg font-semibold">
-            {formatVNCurrency(product.promotional_price)}
+            {formatVNCurrency(product.promotional_price)} ₫
           </p>
           <p className="text-[#9098B1] text-sm font-medium line-through">
-            {formatVNCurrency(product.price)}
+            {formatVNCurrency(product.price)} ₫
           </p>
           <p className="text-[#E71D36] text-sm font-semibold">-10%</p>
         </div>

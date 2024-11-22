@@ -6,7 +6,54 @@ import useWishlist from "../../../hooks/client/useWhishList";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-const ProductCardList = ({ product }: any) => {
+import { formatVNCurrency } from "../../../common/formatVNCurrency";
+
+const ProductCardListSkeleton = () => {
+  return (
+    <div className="flex flex-row gap-5 animate-pulse">
+      {/* Skeleton cho hình ảnh */}
+      <div className="w-1/3">
+        <div className="w-[350px] h-[300px] bg-gray-200 rounded-md"></div>
+      </div>
+
+      {/* Skeleton cho thông tin sản phẩm */}
+      <div className="w-1/3 ml-9">
+        <div className="flex flex-col justify-between items-start h-full gap-2 p-2">
+          {/* Skeleton cho tiêu đề */}
+          <div className="w-1/3 h-6 bg-gray-200 rounded-md"></div>
+          <div className="w-2/3 h-1 bg-gray-200 rounded-md"></div>
+
+          {/* Skeleton cho rating */}
+          <div className="flex flex-row gap-2 items-center">
+            <div className="w-16 h-4 bg-gray-200 rounded-md"></div>
+            <div className="w-12 h-4 bg-gray-200 rounded-md"></div>
+          </div>
+
+          {/* Skeleton cho giá */}
+          <div className="flex flex-row gap-2 items-center">
+            <div className="w-20 h-6 bg-gray-200 rounded-md"></div>
+            <div className="w-16 h-4 bg-gray-200 rounded-md"></div>
+            <div className="w-12 h-4 bg-gray-200 rounded-md"></div>
+          </div>
+
+          {/* Skeleton cho các nút */}
+          <div className="flex flex-row gap-2 ">
+            <div className="w-32 h-13 bg-gray-200 rounded-md"></div>
+            <div className="w-32 h-13 bg-gray-200 rounded-md"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProductCardList = ({
+  product,
+  isLoading,
+}: {
+  product: any;
+  isLoading: boolean;
+}) => {
   const { handleAddToCart } = useCart();
   const accessToken = Cookies.get("access_token");
   const navigate = useNavigate();
@@ -14,7 +61,6 @@ const ProductCardList = ({ product }: any) => {
   const [modalCheckLogin, setModalCheckLogin] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-
   const { handleAddToWishlist } = useWishlist();
 
   // Thêm sản phẩm vào giỏ hàng
@@ -30,19 +76,27 @@ const ProductCardList = ({ product }: any) => {
     }
   };
 
-  const handleCheckAdd = (product: IProduct) => {
+  const handleCheckAdd = () => {
     if (!accessToken) {
       setModalCheckLogin(true);
-      setShowModal(false);
       return;
     }
+    setModalCheckLogin(true);
     setShowModal(true);
   };
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <ProductCardListSkeleton />;
+      </div>
+    );
+  }
+
   const uniqueSize = Array.from(
-    new Set(product.variants.map((v: any) => v.size))
+    new Set(product?.variants?.map((v: any) => v.size) || [])
   );
   const uniqueColor = Array.from(
-    new Set(product.variants.map((v: any) => v.color))
+    new Set(product?.variants?.map((v: any) => v.color) || [])
   );
 
   const closeModal = () => {
@@ -72,55 +126,54 @@ const ProductCardList = ({ product }: any) => {
   };
 
   return (
-    <>
-      <div className="flex flex-row gap-5">
-        <div key={product.id} className="w-1/3">
-          <img
-            className="w-[650px] h-[300px] object-cover"
-            src={product.thumbnail}
-            alt={product.name}
-          />
-        </div>
-        <div className="w-2/3">
-          <div className="flex flex-col justify-between items-start h-full gap-2 p-2">
-            <h3 className="text-2xl font-semibold">{product.name}</h3>
-            <div className="flex flex-row gap-2 items-center">
-              <div className="rating flex flex-row items-center gap-1">
-                <RatingStars rating={product.rating_count} />
-              </div>
-              <p className="text-sm text-[#C1C8CE]">12 reviews</p>
+    <div className="flex flex-row gap-5">
+      <div key={product.id} className="w-1/3">
+        <img
+          className="w-[650px] h-[300px] object-cover"
+          src={product.thumbnail}
+          alt={product.name}
+        />
+      </div>
+      <div className="w-2/3">
+        <div className="flex flex-col justify-between items-start h-full gap-2 p-2">
+          <h3 className="text-2xl font-semibold">{product.name}</h3>
+          <div className="flex flex-row gap-2 items-center">
+            <div className="rating flex flex-row items-center gap-1">
+              <RatingStars rating={product.rating_count} />
             </div>
-            <hr className="w-2/3" />
-            <div className="flex flex-row gap-2 items-center">
-              <p className="text-xl font-semibold text-[#40BFFF]">
-                ${product.promotional_price}
-              </p>
-              <p className="text-sm line-through text-[#C1C8CE]">
-                ${product.price}
-              </p>
-              <p className="text-sm text-[#FF4242] font-semibold">-6% Off</p>
-            </div>
-            <p>{product.description}</p>
-            <div className="flex flex-row gap-2">
-              {/* Nút thêm sản phẩm vào giỏ hàng */}
-              <button
-                onClick={() => addCart(product)}
-                className="btn bg-[#ebf6ff] rounded-sm text-[#40BFFF] hover:bg-[#40BFFF] hover:text-[#fff] px-10 flex flex-row gap-2 items-center"
-              >
-                <ShoppingCart /> Add to cart
-              </button>
+            <p className="text-sm text-[#C1C8CE]">12 reviews</p>
+          </div>
+          <hr className="w-2/3" />
+          <div className="flex flex-row gap-2 items-center">
+            <p className="text-xl font-semibold text-[#40BFFF]">
+              {formatVNCurrency(product.promotional_price)} ₫
+            </p>
+            <p className="text-sm line-through text-[#C1C8CE]">
+              {formatVNCurrency(product.price)} ₫
+            </p>
+            <p className="text-sm text-[#FF4242] font-semibold">-6% Off</p>
+          </div>
+          <p>{product.description}</p>
+          <div className="flex flex-row gap-2">
+            {/* Nút thêm sản phẩm vào giỏ hàng */}
+            <button
+              onClick={() => handleCheckAdd()}
+              className="btn bg-[#ebf6ff] rounded-sm text-[#40BFFF] hover:bg-[#40BFFF] hover:text-[#fff] px-10 flex flex-row gap-2 items-center"
+            >
+              <ShoppingCart /> Add to cart
+            </button>
 
-              {/* Nút thêm vào wishlist */}
-              <button
-                onClick={() => handleAddToWishlist(product.id)}
-                className="btn bg-[#ebf6ff] rounded-sm text-[#40BFFF] hover:bg-[#40BFFF] hover:text-[#fff] flex flex-row gap-2 items-center"
-              >
-                <Heart /> Add to wishlist
-              </button>
-            </div>
+            {/* Nút thêm vào wishlist */}
+            <button
+              onClick={() => handleAddToWishlist(product.id)}
+              className="btn bg-[#ebf6ff] rounded-sm text-[#40BFFF] hover:bg-[#40BFFF] hover:text-[#fff] flex flex-row gap-2 items-center"
+            >
+              <Heart /> Add to wishlist
+            </button>
           </div>
         </div>
       </div>
+
       {showModal && (
         <div className="fixed inset-0 z-50 bg-gray-800 bg-opacity-50 flex items-center justify-center">
           <div className="modal modal-open">
@@ -193,7 +246,7 @@ const ProductCardList = ({ product }: any) => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleCheckAdd(product)}
+                  onClick={() => addCart(product)}
                   className="btn bg-blue-500 text-white hover:bg-blue-600"
                   disabled={!selectedSize || !selectedColor}
                 >
@@ -237,7 +290,7 @@ const ProductCardList = ({ product }: any) => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

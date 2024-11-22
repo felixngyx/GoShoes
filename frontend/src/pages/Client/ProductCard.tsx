@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import useCart from "../../hooks/client/useCart";
 import { getAllProducts } from "../../services/client/product";
 import { IProduct } from "../../types/client/products/products";
+import { formatVNCurrency } from "../../common/formatVNCurrency";
 
 const ProductCardSkeleton = () => {
   return (
@@ -50,37 +51,15 @@ const ProductCard = () => {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const { handleAddToCart } = useCart();
   const [showModal, setShowModal] = useState(false);
-  const [page, setPage] = useState(1);
-  const [productsList, setProductsList] = useState<IProduct[]>([]);
 
-  const PAGE_LIMIT = 8;
   const {
     data: products,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["PRODUCT_KEY", page],
-    queryFn: () => getAllProducts(page, PAGE_LIMIT),
+    queryKey: ["PRODUCT_KEY"],
+    queryFn: () => getAllProducts(1, 8),
   });
-
-  useEffect(() => {
-    if (products && products.length > 0) {
-      setProductsList((prevProducts) => {
-        const newProducts = products.filter(
-          (newProduct: any) =>
-            !prevProducts.some(
-              (existingProduct) => existingProduct.id === newProduct.id
-            )
-        );
-
-        return [...prevProducts, ...newProducts];
-      });
-    }
-  }, [products]);
-
-  const loadMore = () => {
-    setPage((prevPage) => prevPage + 1);
-  };
 
   const handleCheckAdd = (product: IProduct) => {
     if (!accessToken) {
@@ -166,7 +145,7 @@ const ProductCard = () => {
 
   return (
     <>
-      {productsList?.map((product: IProduct) => (
+      {products?.map((product: IProduct) => (
         <div
           key={product.id}
           className="col-span-1 border border-[#F6F7F8] rounded-lg group overflow-hidden shadow-sm transition-shadow duration-300 hover:shadow-lg"
@@ -213,15 +192,6 @@ const ProductCard = () => {
           </div>
         </div>
       ))}
-
-      <div className="col-span-4 flex justify-center mt-4">
-        <button
-          onClick={loadMore}
-          className="btn bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Load More
-        </button>
-      </div>
 
       {selectedProduct && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
