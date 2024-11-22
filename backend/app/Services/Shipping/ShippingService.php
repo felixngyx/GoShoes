@@ -87,6 +87,10 @@ class ShippingService implements ShippingServiceInterface
                         ]);
                     }
                 }
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This shipping is in order but you want to set default',
+                ], 200);
             }
 
             $result = self::getShippingRepository()->create($data);
@@ -120,6 +124,7 @@ class ShippingService implements ShippingServiceInterface
             'is_default' => $request['is_default'] ?? false,
         ];
 
+        $shipping = self::getShippingRepository()->getRecordByUserIdAndId($user->id, $request['shipping']);
         DB::beginTransaction();
         try {
 
@@ -131,6 +136,22 @@ class ShippingService implements ShippingServiceInterface
             }
 
             if (self::getShippingRepository()->checkShippingInOrder($request['shipping'])) {
+                if ($data['is_default']) {
+                    $checkDefault = self::checkDefaultExits();
+                    if ($checkDefault->count() > 0) {
+                        foreach ($checkDefault as $item) {
+                            $item->update([
+                                'is_default' => false,
+                            ]);
+                        }
+                        self::getShippingRepository()->update($data, $request['shipping']);
+                        DB::commit();
+                    }
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This shipping is in order',
+                    ], 200);
+                }
                 return response()->json([
                     'success' => false,
                     'message' => 'This shipping is in order',
