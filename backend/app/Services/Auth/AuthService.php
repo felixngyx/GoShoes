@@ -72,6 +72,20 @@ class AuthService implements AuthServiceInterface
                 ], 404);
             }
 
+            if ($user->is_deleted) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User is deleted'
+                ], 403);
+            }
+
+            if (!$user->email_verified_at) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email not verified'
+                ], 403);
+            }
+
             // Set access token TTL to 30 minutes
             config(['jwt.ttl' => 30]);
             // Add token type "access" to the access token
