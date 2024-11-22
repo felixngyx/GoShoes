@@ -124,7 +124,7 @@ class AuthService implements AuthServiceInterface
         DB::beginTransaction();
         try {
             $user =  $this->userService->create($request);
-            $verificationLink = (self::getVerifyService()->generateLinkVerification($user, 'register'));
+            $verificationLink = self::getVerifyService()->generateLinkVerification($user, 'register');
             DB::commit();
             Mail::to($user->email)->send(new \App\Mail\RegisterMail($verificationLink));
             return response()->json([
@@ -134,8 +134,7 @@ class AuthService implements AuthServiceInterface
                     'user' => $user->name,
                     'email' => $user->email,
                     'email_is_verified' => (bool)$user->email_verified_at,
-                    'is_admin' => $user->is_admin,
-                    'verification_link' => $verificationLink
+                    'is_admin' => $user->is_admin
                 ]
             ], 201);
         } catch (\Exception $e) {
@@ -182,8 +181,7 @@ class AuthService implements AuthServiceInterface
                 'success' => true,
                 'message' => 'Reset password link sent to your email',
                 'data' => [
-                    'email' => $user->email,
-                    'verification_link' => $verificationLink
+                    'email' => $user->email
                 ]
             ], 200);
         } catch (\Exception $e) {
@@ -219,8 +217,7 @@ class AuthService implements AuthServiceInterface
                 'success' => true,
                 'message' => 'Verification link sent to your email',
                 'data' => [
-                    'email' => $user->email,
-                    'verification_link' => $verificationLink
+                    'email' => $user->email
                 ]
             ], 200);
         }catch (\Exception $e){

@@ -105,7 +105,7 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
                 'email' => $request['email'],
                 'password' => bcrypt($request['password'])
             ];
-            return $this->userRepository->create($data);
+            return self::getUserRepository()->create($data);
         } catch (\Exception $e) {
             return $e->getMessage();
         }
@@ -114,7 +114,7 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
     public function update(array $data, int $id)
     {
         try {
-            return $this->userRepository->update($data, $id);
+            return self::getUserRepository()->update($data, $id);
         } catch (\Exception $e) {
             return $e->getMessage();
         }
