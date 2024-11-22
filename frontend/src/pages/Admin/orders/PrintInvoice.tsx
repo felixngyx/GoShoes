@@ -24,13 +24,8 @@ interface Customer {
 }
 
 interface Shipping {
-  shipping_detail: {
-    name: string;
-    phone_number: string;
-    address: string;
-    address_detail: string;
-    is_default: boolean;
-  };
+  shipping_detail: string;
+  is_default: boolean;
 }
 
 interface OrderData {
@@ -52,6 +47,11 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
   const formatPrice = (price: number | string): string => {
     return new Intl.NumberFormat('de-DE', { style: 'decimal' }).format(Number(price));
   };
+
+  // Parse shipping_detail từ string sang object
+  const shippingDetail = order.shipping?.shipping_detail 
+    ? JSON.parse(order.shipping.shipping_detail)
+    : null;
 
   return (
     <div className="w-full max-w-4xl mx-auto p-8 bg-white print:p-6">
@@ -122,10 +122,10 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
         <div>
           <h3 className="font-medium mb-2">Customer:</h3>
           <p className="text-sm text-gray-600">
-            Name: {order.shipping.shipping_detail.name}<br />
-            Phone: {order.shipping.shipping_detail.phone_number}<br />
-            Address: {order.shipping.shipping_detail.address_detail}<br />
-            City/Province: {order.shipping.shipping_detail.address}<br />
+            Name: {order.customer.name}<br />
+            Phone: {order.customer.phone}<br />
+            Address: {shippingDetail?.address_detail || 'N/A'}<br />
+            City/Province: {shippingDetail?.address || 'N/A'}<br />
             Email: {order.customer.email}
           </p>
         </div>

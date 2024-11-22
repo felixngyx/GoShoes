@@ -320,6 +320,24 @@ const updateOrderStatus = async (
 	}
 };
 
+// Thêm interface cho shipping detail
+interface ShippingDetail {
+	name: string;
+	phone_number: string;
+	address: string;
+	address_detail: string;
+}
+
+// Trong component, thêm hàm parse shipping detail
+const parseShippingDetail = (shippingDetailString: string): ShippingDetail | null => {
+	try {
+		return JSON.parse(shippingDetailString);
+	} catch (error) {
+		console.error('Error parsing shipping detail:', error);
+		return null;
+	}
+};
+
 const OrderDetails = () => {
 	const { id } = useParams<{ id: string }>();
 	const queryClient = useQueryClient();
@@ -343,6 +361,11 @@ const OrderDetails = () => {
 
 	const handlePrint = () => {
 		if (!order) return;
+
+		console.log('Order data for printing:', {
+			shipping: order.shipping,
+			shippingDetail: order.shipping?.shipping_detail
+		});
 
 		const printWindow = window.open('', '_blank');
 		if (!printWindow) {
@@ -682,37 +705,63 @@ const OrderDetails = () => {
 			<div className="grid md:grid-cols-3 gap-6">
 				{[
 					{
-						title: 'CUSTOMMER & PAYMENT',
+						title: 'CUSTOMER INFORMATION',
 						content: [
 							{ label: 'Name', value: order.customer.name },
 							{ label: 'Email', value: order.customer.email },
-							{ label: 'Payment Method', value: order.payment.method },
-							{ label: 'Status Payment', value: order.payment.status },
+							{ label: 'Phone', value: order.customer.phone || 'N/A' },
 						],
 					},
 					{
-						title: 'ADDRESS SHIPPING',
+						title: 'PAYMENT INFORMATION',
+						content: [
+							{ label: 'Payment Method', value: order.payment.method },
+							{ label: 'Status Payment', value: order.payment.status },
+							{ label: 'Total Amount', value: `${new Intl.NumberFormat('de-DE', {
+								style: 'decimal',
+							}).format(Number(order.total))}đ` },
+							{ label: 'Created At', value: new Date(order.created_at).toLocaleString() },
+							order.payment.url && {
+								label: 'Payment URL',
+								value: <a href={order.payment.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">View Payment Link</a>
+							},
+						].filter(Boolean),
+					},
+					{
+						title: 'SHIPPING INFORMATION',
 						content: order.shipping?.shipping_detail
-							? [
-									{
-										label: 'Recipient',
-										value: order.shipping.shipping_detail.name,
-									},
-									{
-										label: 'Phone',
-										value: order.shipping.shipping_detail
-											.phone_number,
-									},
-									{
-										label: 'Address',
-										value: order.shipping.shipping_detail
-											.address_detail,
-									},
-									{
-										label: 'City/Province',
-										value: order.shipping.shipping_detail.address,
-									},
-							  ]
+							? (() => {
+									const shippingDetail = parseShippingDetail(order.shipping.shipping_detail);
+									return shippingDetail
+										? [
+												{
+													label: 'Recipient',
+													value: shippingDetail.name,
+												},
+												{
+													label: 'Phone',
+													value: shippingDetail.phone_number,
+												},
+												{
+													label: 'Address',
+													value: shippingDetail.address_detail,
+												},
+												{
+													label: 'City/Province',
+													value: shippingDetail.address.split('|').map(part => part.trim()).join(' | '),
+												},
+												{
+													label: 'Default Address',
+													value: order.shipping.is_default ? 'Yes' : 'No',
+												},
+										  ]
+										: [
+												{
+													label: 'Error loading shipping details',
+													value: 'N/A',
+												},
+										  ];
+								})()
 							: [
 									{
 										label: 'No shipping details available',

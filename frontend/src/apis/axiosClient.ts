@@ -31,12 +31,14 @@ axiosClient.interceptors.response.use(
 	},
 	async (error) => {
 		const pathname = window.location.pathname;
-		if (pathname.includes('/signin')) {
+		
+		// Bỏ qua kiểm tra cho các trang public
+		const publicPaths = ['/', '/signin', '/signup', '/products', '/product'];
+		if (publicPaths.some(path => pathname.startsWith(path))) {
 			return Promise.reject(error);
 		}
 
 		const originalRequest = error.config;
-		console.log('originalRequest', originalRequest);
 		if (error.response.status === 401 && !originalRequest._retry) {
 			originalRequest._retry = true;
 			const refreshToken = Cookies.get('refresh_token');
@@ -45,10 +47,12 @@ axiosClient.interceptors.response.use(
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');
 				Cookies.remove('user');
-				toast.error('Your session has expired');
-				if (pathname.includes('admin')) {
+				toast.error('Phiên đăng nhập đã hết hạn');
+				
+				// Chỉ chuyển hướng cho các trang admin và trang yêu cầu xác thực
+				if (pathname.includes('/admin')) {
 					window.location.href = '/admin/signin';
-				} else {
+				} else if (!publicPaths.some(path => pathname.startsWith(path))) {
 					window.location.href = '/signin';
 				}
 				return Promise.reject(error);
@@ -68,11 +72,13 @@ axiosClient.interceptors.response.use(
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');
 				Cookies.remove('user');
-				toast.error('Your session has expired');
-				if (!pathname.includes('admin')) {
-					window.location.href = '/signin';
-				} else {
+				toast.error('Phiên đăng nhập đã hết hạn');
+				
+				// Chỉ chuyển hướng cho các trang admin và trang yêu cầu xác thực
+				if (pathname.includes('/admin')) {
 					window.location.href = '/admin/signin';
+				} else if (!publicPaths.some(path => pathname.startsWith(path))) {
+					window.location.href = '/signin';
 				}
 				return Promise.reject(error);
 			}
