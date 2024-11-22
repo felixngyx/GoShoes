@@ -254,9 +254,10 @@ const AddProduct = () => {
 			console.log(res);
 			toast.success('Product created successfully');
 			navigate('/admin/product');
-		} catch (error) {
-			toast.error('Failed to create product');
-			console.error(error);
+		} catch (error: any) {
+			toast.error(
+				error?.response?.data?.message || 'Error creating product'
+			);
 		} finally {
 			setLoading(false);
 		}
