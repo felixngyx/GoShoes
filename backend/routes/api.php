@@ -108,6 +108,9 @@ Route::put('/banners/{id}', [BannerController::class, 'update']);
 Route::delete('/banners/{id}', [BannerController::class, 'destroy']);
 Route::delete('/banners', [BannerController::class, 'destroyMultiple']);
 
+
+Route::get('categories', [CategoryController::class, 'index']);
+
 // This route is Authenticated
 Route::group([
     'middleware' => 'jwt.auth',
@@ -157,7 +160,7 @@ Route::group([
     Route::get('/user/reviews', [ReviewController::class, 'userReviews']);
 
 
-    Route::get('categories', [CategoryController::class, 'index']);
+    
     Route::post('categories', [CategoryController::class, 'store']);
     Route::get('categories/{id}', [CategoryController::class, 'show']);
     Route::put('categories/{id}', [CategoryController::class, 'update']);
