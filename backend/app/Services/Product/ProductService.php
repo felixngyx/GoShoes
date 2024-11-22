@@ -68,7 +68,7 @@ class ProductService
                     $variantToCreate = [
                         'color_id' => $variantData['color_id'], // Sử dụng color_id từ JSON
                         'product_id' => $product->id,
-                        'image_variant' => $variantData['image_variant'],
+                        // 'image_variant' => $variantData['image_variant'],
                         'size_id' => $variantData['size_id'],
                         'quantity' => $variantData['quantity']
                     ];
@@ -213,7 +213,7 @@ class ProductService
                         // Cập nhật variant hiện có
                         $variant->update([
                             'quantity' => $variantData['quantity'],
-                            'image_variant' => $variantData['image_variant'] ?? $variant->image_variant,
+                            // 'image_variant' => $variantData['image_variant'] ?? $variant->image_variant,
                         ]);
                         Log::info('Đã cập nhật variant', ['variant_id' => $variant->id]);
                     } else {
@@ -223,7 +223,7 @@ class ProductService
                             'color_id' => $variantData['color_id'],
                             'size_id' => $variantData['size_id'],
                             'quantity' => $variantData['quantity'],
-                            'image_variant' => $variantData['image_variant'] ?? null,
+                            // 'image_variant' => $variantData['image_variant'] ?? null,
                         ]);
                         Log::info('Đã tạo variant mới');
                     }
