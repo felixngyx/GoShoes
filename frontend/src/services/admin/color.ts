@@ -9,7 +9,7 @@ export type COLOR = {
 };
 
 const colorService = {
-	getAll({ page = 1, limit = 5 }: { page?: number; limit?: number }) {
+	getAll: (page: number = 1, limit: number = 5) => {
 		return axiosClient.get(`/colors?page=${page}&limit=${limit}`);
 	},
 
