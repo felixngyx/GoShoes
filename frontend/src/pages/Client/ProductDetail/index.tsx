@@ -15,137 +15,138 @@ import { toast } from "react-hot-toast";
 import { formatVNCurrency } from "../../../common/formatVNCurrency";
 import { gellReviewByProductId } from "../../../services/client/review";
 import { addProductToWishlist } from '../../../services/client/whishlist';
+
 const ProductDetailSkeleton = () => {
-  return (
-    <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
-        {/* Left Section - Product Images Skeleton */}
-        <div className="md:col-span-5">
-          <div className="relative overflow-hidden rounded-lg bg-gray-200 animate-pulse mb-2 h-[571px]" />
-          <div className="grid grid-cols-4 gap-2">
-            {[1, 2, 3, 4].map((index) => (
-              <div
-                key={index}
-                className="h-24 bg-gray-200 animate-pulse rounded-md"
-              />
-            ))}
-          </div>
-        </div>
+	return (
+		<div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
+			<div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+				{/* Left Section - Product Images Skeleton */}
+				<div className="md:col-span-5">
+					<div className="relative overflow-hidden rounded-lg bg-gray-200 animate-pulse mb-2 h-[571px]" />
+					<div className="grid grid-cols-4 gap-2">
+						{[1, 2, 3, 4].map((index) => (
+							<div
+								key={index}
+								className="h-24 bg-gray-200 animate-pulse rounded-md"
+							/>
+						))}
+					</div>
+				</div>
 
-        {/* Right Section - Product Information Skeleton */}
-        <div className="md:col-span-5 space-y-4">
-          {/* Product Name */}
-          <div className="h-8 bg-gray-200 animate-pulse rounded w-3/4" />
+				{/* Right Section - Product Information Skeleton */}
+				<div className="md:col-span-5 space-y-4">
+					{/* Product Name */}
+					<div className="h-8 bg-gray-200 animate-pulse rounded w-3/4" />
 
-          {/* Rating & Reviews */}
-          <div className="flex items-center gap-4">
-            <div className="h-4 bg-gray-200 animate-pulse rounded w-32" />
-            <div className="h-4 bg-gray-200 animate-pulse rounded w-24" />
-          </div>
+					{/* Rating & Reviews */}
+					<div className="flex items-center gap-4">
+						<div className="h-4 bg-gray-200 animate-pulse rounded w-32" />
+						<div className="h-4 bg-gray-200 animate-pulse rounded w-24" />
+					</div>
 
-          {/* Price */}
-          <div className="flex items-center gap-3">
-            <div className="h-8 bg-gray-200 animate-pulse rounded w-24" />
-            <div className="h-6 bg-gray-200 animate-pulse rounded w-20" />
-            <div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
-          </div>
+					{/* Price */}
+					<div className="flex items-center gap-3">
+						<div className="h-8 bg-gray-200 animate-pulse rounded w-24" />
+						<div className="h-6 bg-gray-200 animate-pulse rounded w-20" />
+						<div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
+					</div>
 
-          <hr />
+					<hr />
 
-          {/* Product Details */}
-          <div className="space-y-4">
-            {[1, 2, 3].map((index) => (
-              <div key={index} className="grid grid-cols-2 max-w-xs">
-                <div className="h-6 bg-gray-200 animate-pulse rounded w-20" />
-                <div className="h-6 bg-gray-200 animate-pulse rounded w-32" />
-              </div>
-            ))}
-          </div>
+					{/* Product Details */}
+					<div className="space-y-4">
+						{[1, 2, 3].map((index) => (
+							<div key={index} className="grid grid-cols-2 max-w-xs">
+								<div className="h-6 bg-gray-200 animate-pulse rounded w-20" />
+								<div className="h-6 bg-gray-200 animate-pulse rounded w-32" />
+							</div>
+						))}
+					</div>
 
-          {/* Size Selection */}
-          <div className="grid grid-cols-2 max-w-xs">
-            <div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
-            <div className="h-8 bg-gray-200 animate-pulse rounded w-24" />
-          </div>
+					{/* Size Selection */}
+					<div className="grid grid-cols-2 max-w-xs">
+						<div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
+						<div className="h-8 bg-gray-200 animate-pulse rounded w-24" />
+					</div>
 
-          {/* Color Selection */}
-          <div className="space-y-2">
-            <div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
-            <div className="flex flex-wrap gap-2">
-              {[1, 2, 3, 4].map((index) => (
-                <div
-                  key={index}
-                  className="h-10 bg-gray-200 animate-pulse rounded w-24"
-                />
-              ))}
-            </div>
-          </div>
+					{/* Color Selection */}
+					<div className="space-y-2">
+						<div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
+						<div className="flex flex-wrap gap-2">
+							{[1, 2, 3, 4].map((index) => (
+								<div
+									key={index}
+									className="h-10 bg-gray-200 animate-pulse rounded w-24"
+								/>
+							))}
+						</div>
+					</div>
 
-          {/* Quantity */}
-          <div className="flex items-center gap-4">
-            <div className="h-6 bg-gray-200 animate-pulse rounded w-20" />
-            <div className="h-10 bg-gray-200 animate-pulse rounded w-32" />
-            <div className="h-10 bg-gray-200 animate-pulse rounded w-10" />
-          </div>
+					{/* Quantity */}
+					<div className="flex items-center gap-4">
+						<div className="h-6 bg-gray-200 animate-pulse rounded w-20" />
+						<div className="h-10 bg-gray-200 animate-pulse rounded w-32" />
+						<div className="h-10 bg-gray-200 animate-pulse rounded w-10" />
+					</div>
 
-          {/* Buttons */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="h-12 bg-gray-200 animate-pulse rounded" />
-            <div className="h-12 bg-gray-200 animate-pulse rounded" />
-          </div>
-        </div>
+					{/* Buttons */}
+					<div className="grid grid-cols-2 gap-4">
+						<div className="h-12 bg-gray-200 animate-pulse rounded" />
+						<div className="h-12 bg-gray-200 animate-pulse rounded" />
+					</div>
+				</div>
 
-        {/* Best Sellers Skeleton */}
-        <div className="md:col-span-2">
-          <div className="h-6 bg-gray-200 animate-pulse rounded w-24 mb-2" />
-          <div className="space-y-4 border rounded-sm p-4">
-            <div className="h-40 bg-gray-200 animate-pulse rounded" />
-            <div className="flex justify-center">
-              <div className="h-4 bg-gray-200 animate-pulse rounded w-24" />
-            </div>
-            <div className="flex justify-center gap-2">
-              <div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
-              <div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
-            </div>
-          </div>
-        </div>
+				{/* Best Sellers Skeleton */}
+				<div className="md:col-span-2">
+					<div className="h-6 bg-gray-200 animate-pulse rounded w-24 mb-2" />
+					<div className="space-y-4 border rounded-sm p-4">
+						<div className="h-40 bg-gray-200 animate-pulse rounded" />
+						<div className="flex justify-center">
+							<div className="h-4 bg-gray-200 animate-pulse rounded w-24" />
+						</div>
+						<div className="flex justify-center gap-2">
+							<div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
+							<div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
+						</div>
+					</div>
+				</div>
 
-        {/* Description Tab Skeleton */}
-        <div className="mt-8 col-span-1 md:col-span-10 bg-[#FAFAFB] p-5 rounded-lg shadow-md">
-          <div className="flex gap-4 md:gap-28 border-b mb-4">
-            {["Description", "Reviews", "Write Comment"].map((tab) => (
-              <div
-                key={tab}
-                className="h-8 bg-gray-200 animate-pulse rounded w-24"
-              />
-            ))}
-          </div>
-          <div className="space-y-4">
-            {[1, 2, 3].map((index) => (
-              <div
-                key={index}
-                className="h-4 bg-gray-200 animate-pulse rounded w-full"
-              />
-            ))}
-          </div>
-        </div>
+				{/* Description Tab Skeleton */}
+				<div className="mt-8 col-span-1 md:col-span-10 bg-[#FAFAFB] p-5 rounded-lg shadow-md">
+					<div className="flex gap-4 md:gap-28 border-b mb-4">
+						{["Description", "Reviews", "Write Comment"].map((tab) => (
+							<div
+								key={tab}
+								className="h-8 bg-gray-200 animate-pulse rounded w-24"
+							/>
+						))}
+					</div>
+					<div className="space-y-4">
+						{[1, 2, 3].map((index) => (
+							<div
+								key={index}
+								className="h-4 bg-gray-200 animate-pulse rounded w-full"
+							/>
+						))}
+					</div>
+				</div>
 
-        {/* Related Products Skeleton */}
-        <div className="col-span-1 md:col-span-10">
-          <div className="h-6 bg-gray-200 animate-pulse rounded w-32 mb-4" />
-          <div className="grid grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((index) => (
-              <div key={index} className="border rounded-lg p-4">
-                <div className="h-40 bg-gray-200 animate-pulse rounded mb-2" />
-                <div className="h-6 bg-gray-200 animate-pulse rounded w-3/4 mb-2" />
-                <div className="h-4 bg-gray-200 animate-pulse rounded w-1/2" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+				{/* Related Products Skeleton */}
+				<div className="col-span-1 md:col-span-10">
+					<div className="h-6 bg-gray-200 animate-pulse rounded w-32 mb-4" />
+					<div className="grid grid-cols-4 gap-4">
+						{[1, 2, 3, 4].map((index) => (
+							<div key={index} className="border rounded-lg p-4">
+								<div className="h-40 bg-gray-200 animate-pulse rounded mb-2" />
+								<div className="h-6 bg-gray-200 animate-pulse rounded w-3/4 mb-2" />
+								<div className="h-4 bg-gray-200 animate-pulse rounded w-1/2" />
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 };
 
 const ProductDetail = () => {
@@ -170,6 +171,7 @@ const ProductDetail = () => {
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [availableQuantity, setAvailableQuantity] = useState(0);
 	const { handleAddToCartDetail } = useCart();
+
 	useEffect(() => {
 		if (product) {
 			setSelectedThumbnail(product.thumbnail);
