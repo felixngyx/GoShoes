@@ -135,8 +135,7 @@ class BrandController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:brands,name,' . $id,
-            'description' => 'nullable|string|max:255',
-            'logo_url' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'logo_url' => 'required|string|max:255'
         ]);
         $brand = $this->brandService->updateBrand($id, $validated);
 
