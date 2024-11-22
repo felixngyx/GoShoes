@@ -270,10 +270,9 @@ export default function OrderList(): JSX.Element {
   const handleBuyAgain = async (order: Order) => {
     try {
       if (!order.items || order.items.length === 0) {
-        throw new Error("No items in order");
+        throw new Error("Không có sản phẩm trong đơn hàng");
       }
 
-      // Lấy thông tin giá hiện tại cho tất cả sản phẩm
       const itemsWithCurrentPrice = await Promise.all(
         order.items.map(async (item) => {
           try {
@@ -288,106 +287,90 @@ export default function OrderList(): JSX.Element {
 
             const currentProduct = response.data.Data.product;
 
-            // Kiểm tra sản phẩm có tồn tại
             if (!currentProduct) {
-              throw new Error(
-                `Product ${item.product.name} is no longer available`
-              );
+              throw new Error(`Sản phẩm ${item.product.name} không còn tồn tại`);
             }
 
-            // Kiểm tra trạng thái sản phẩm
             if (currentProduct.status !== "public") {
-              throw new Error(
-                `Product ${item.product.name} is currently unavailable`
-              );
+              throw new Error(`Sản phẩm ${item.product.name} hiện không khả dụng`);
             }
 
-            let currentPrice =
-              currentProduct.promotional_price || currentProduct.price;
-            let variantQuantity = currentProduct.stock_quantity;
+            let currentPrice = currentProduct.promotional_price || currentProduct.price;
 
-            // Xử lý variant nếu có
             if (item.variant) {
-              // Kiểm tra sản phẩm có variants không
-              if (
-                !currentProduct.variants ||
-                currentProduct.variants.length === 0
-              ) {
+              if (!currentProduct.variants || currentProduct.variants.length === 0) {
                 throw new Error(
-                  `Product ${item.product.name} no longer has variants available`
+                  `Sản phẩm ${item.product.name} không còn biến thể`
                 );
               }
 
-              // Tìm variant tương ứng
+              // Tìm variant dựa trên size_id và color_id
               const currentVariant = currentProduct.variants.find(
-                (v: any) =>
-                  Number(v.size) === Number(item.variant.size) &&
-                  v.color.toLowerCase() === item.variant.color.toLowerCase()
+                (v) => 
+                  v.variant_id === item.variant.id
               );
 
               if (!currentVariant) {
                 throw new Error(
-                  `Variant (${item.variant.color}/${item.variant.size}) of ${item.product.name} is no longer available`
+                  `Biến thể của sản phẩm ${item.product.name} không còn tồn tại`
                 );
               }
 
-              // Kiểm tra số lượng variant
               if (currentVariant.quantity === 0) {
                 throw new Error(
-                  `Variant (${item.variant.color}/${item.variant.size}) of ${item.product.name} is out of stock`
+                  `Biến thể của sản phẩm ${item.product.name} đã hết hàng`
                 );
               }
 
               if (currentVariant.quantity < item.quantity) {
                 throw new Error(
-                  `Only ${currentVariant.quantity} items available for variant (${item.variant.color}/${item.variant.size}) of ${item.product.name}`
+                  `Chỉ còn ${currentVariant.quantity} sản phẩm cho biến thể của ${item.product.name}`
                 );
               }
 
-              variantQuantity = currentVariant.quantity;
+              return {
+                id: item.product.id,
+                name: item.product.name,
+                quantity: item.quantity,
+                thumbnail: currentProduct.thumbnail,
+                price: Number(currentPrice),
+                total: Number(currentPrice) * item.quantity,
+                stock_quantity: currentVariant.quantity,
+                product_variant: {
+                  variant_id: currentVariant.variant_id,
+                  size_id: currentVariant.size_id,
+                  color_id: currentVariant.color_id,
+                },
+              };
             } else {
-              // Kiểm tra số lượng sản phẩm không variant
               if (currentProduct.stock_quantity === 0) {
-                throw new Error(`Product ${item.product.name} is out of stock`);
+                throw new Error(`Sản phẩm ${item.product.name} đã hết hàng`);
               }
 
               if (currentProduct.stock_quantity < item.quantity) {
                 throw new Error(
-                  `Only ${currentProduct.stock_quantity} items available for ${item.product.name}`
+                  `Chỉ còn ${currentProduct.stock_quantity} sản phẩm ${item.product.name}`
                 );
               }
-            }
 
-            return {
-              id: item.product.id,
-              name: item.product.name,
-              quantity: item.quantity,
-              thumbnail: currentProduct.thumbnail,
-              price: Number(currentPrice),
-              total: Number(currentPrice) * item.quantity,
-              stock_quantity: variantQuantity,
-              product_variant: item.variant && {
-                id: item.variant.id,
-                size: {
-                  size: item.variant.size,
-                },
-                color: {
-                  color: item.variant.color,
-                },
-                image_variant: currentProduct.thumbnail,
+              return {
+                id: item.product.id,
+                name: item.product.name,
+                quantity: item.quantity,
+                thumbnail: currentProduct.thumbnail,
                 price: Number(currentPrice),
-              },
-            };
+                total: Number(currentPrice) * item.quantity,
+                stock_quantity: currentProduct.stock_quantity,
+              };
+            }
           } catch (error: any) {
             throw new Error(
-              error.message ||
-                `Failed to get information for product ${item.product.name}`
+              error.message || `Không thể lấy thông tin sản phẩm ${item.product.name}`
             );
           }
         })
       );
 
-      // Tính toán tổng giá mới
       const newTotal = itemsWithCurrentPrice.reduce(
         (sum, item) => sum + item.total,
         0
@@ -407,10 +390,7 @@ export default function OrderList(): JSX.Element {
       });
     } catch (error: any) {
       console.error("Error handling buy again:", error);
-      toast.error(
-        error.message ||
-          "Unable to process buy again request. Please try again later."
-      );
+      toast.error(error.message || "Không thể xử lý yêu cầu mua lại. Vui lòng thử lại sau.");
     }
   };
 
