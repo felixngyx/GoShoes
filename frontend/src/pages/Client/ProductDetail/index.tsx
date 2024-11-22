@@ -264,24 +264,6 @@ const ProductDetail = () => {
     }
   };
 
-  const handleAdd = () => {
-    if (selectedSize && selectedColor && quantity > 0) {
-      const selectedVariant = product?.variants.find(
-        (variant: any) =>
-          variant.size.size === selectedSize &&
-          variant.color.id === selectedColor
-      );
-      if (selectedVariant) {
-        handleAddToCartDetail(
-          selectedVariant.id,
-          selectedSize,
-          selectedColor,
-          quantity
-        );
-      }
-    }
-  };
-
   const handleImageClick = (image: IImages) => {
     setSelectedThumbnail(image.image_path);
 
@@ -458,6 +440,8 @@ const ProductDetail = () => {
       toast.error("Vui lòng chọn size và màu sắc trước khi mua hàng");
     }
   };
+
+  const accessToken = Cookies.get("access_token");
 
   const { data: review } = useQuery({
     queryKey: ["PRODUCT_REVIEWS", product?.id],
@@ -741,81 +725,59 @@ const ProductDetail = () => {
             {activeTab === "reviews" && (
               <div>
                 {/* Reviews List */}
-                <div className="max-w-5xl mx-auto px-6 py-8 space-y-10">
-                  {review?.data.map((item: any, index: number) => (
-                    <div
-                      key={index}
-                      className="relative bg-gradient-to-r from-white via-gray-50 to-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all transform hover:scale-[1.02]"
-                    >
-                      {/* Header */}
-                      <div className="flex items-center gap-6">
-                        <img
-                          src={item.user.avt}
-                          alt="Avatar"
-                          className="w-16 h-16 rounded-full object-cover border-2 border-gray-100 shadow-sm"
-                        />
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-800">
-                            {item.user.name}
-                          </h3>
-                          <div className="flex items-center text-sm text-gray-500 mt-1 space-x-3">
-                            <RatingStars rating={item.rating} />
-                            <span>
-                              {new Date(item.created_at).toLocaleDateString(
-                                "vi-VN"
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Comment */}
-                      <p className="mt-6 text-gray-700 leading-relaxed italic border-l-4 border-blue-500 pl-4">
-                        "{item.comment}"
-                      </p>
-
-                      {/* Review Images */}
-                      {item.images?.length > 0 && (
-                        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {item.images.map((image: string, idx: number) => (
-                            <div
-                              key={idx}
-                              className="relative group overflow-hidden rounded-lg border border-gray-200 shadow-sm"
-                            >
-                              <img
-                                src={image}
-                                alt="Review Image"
-                                className="w-full h-32 object-cover transition-transform group-hover:scale-110"
-                              />
-                              <div className="absolute inset-0 bg-black bg-opacity-25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <span className="text-white text-sm font-medium">
-                                  Xem chi tiết
+                <div className="max-w-6xl mx-auto">
+                  <div></div>
+                  <div className="flex flex-col gap-8">
+                    {review?.data.map((item: any, index: number) => (
+                      <div
+                        key={index}
+                        className="bg-white rounded-lg shadow-lg p-6 transition-transform hover:scale-[1.01]"
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center space-x-4">
+                            <img
+                              src={item.user.avt}
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                            <div>
+                              <h3 className="text-xl font-semibold">
+                                {item.user.name}
+                              </h3>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <RatingStars rating={item.rating} />
+                                <span className="text-gray-500">
+                                  {new Date(item.created_at).toLocaleDateString(
+                                    "vi-VN",
+                                    {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                    }
+                                  )}
                                 </span>
                               </div>
                             </div>
-                          ))}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        <p className="text-gray-700 mb-4">{item.comment}</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                          <button className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg overflow-hidden">
+                            {/* <img className="w-full h-32 object-cover hover:opacity-90 transition-opacity" /> */}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
 
-                  {/* Pagination */}
-                  <div className="flex justify-center space-x-2">
-                    <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
-                      1
-                    </button>
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
-                      2
-                    </button>
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg cursor-not-allowed">
-                      ...
-                    </button>
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
-                      99
-                    </button>
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
-                      100
-                    </button>
+                    {/* Pagination or more reviews */}
+                    <div className="join bg-[#FAFAFB] rounded-md ms-auto">
+                      <button className="join-item btn btn-sm">1</button>
+                      <button className="join-item btn btn-sm">2</button>
+                      <button className="join-item btn btn-sm btn-disabled">
+                        ...
+                      </button>
+                      <button className="join-item btn btn-sm">99</button>
+                      <button className="join-item btn btn-sm">100</button>
+                    </div>
                   </div>
                 </div>
               </div>
