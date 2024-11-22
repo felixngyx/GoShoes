@@ -1,35 +1,60 @@
+import { useEffect, useState } from 'react';
 import { FaSort } from 'react-icons/fa';
+import userService from '../../../services/admin/user';
+import { User as UserType } from '../../../services/admin/user';
+import { Link } from 'react-router-dom';
+import { TrashIcon } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const User = () => {
-	const generateRandomUser = (index: number) => ({
-		name: `User ${index + 1}`,
-		email: `user${index + 1}@example.com`,
-		phone: `08${Math.floor(Math.random() * 1000000000)}`,
-		is_admin: Math.random() < 0.5,
-		status:
-			Math.random() < 0.5
-				? 'active'
-				: Math.random() < 0.5
-				? 'verifing'
-				: 'inactive',
-		created_at: new Date().toLocaleDateString(),
-		updated_at: new Date().toLocaleDateString(),
-	});
+	const [users, setUsers] = useState<UserType[]>([]);
+	const [loading, setLoading] = useState(false);
 
-	const userData = Array.from({ length: 5 }, (_, index) =>
-		generateRandomUser(index)
-	);
+	const fetchUsers = async () => {
+		try {
+			const response = await userService.getAll();
+			console.log(response);
+			setUsers(response);
+		} catch (error) {
+			console.error('Error fetching users:', error);
+		}
+	};
+	useEffect(() => {
+		setLoading(true);
+		fetchUsers();
+		setLoading(false);
+	}, []);
 
-	const statusColor = (status: string) => {
-		switch (status) {
-			case 'active':
-				return 'badge-success';
-			case 'verifing':
-				return 'badge-warning';
-			case 'inactive':
-				return 'badge-error';
-			default:
-				return '';
+	const handleDelete = async (id: number) => {
+		if (confirm('Are you sure you want to delete this user?')) {
+			try {
+				setLoading(true);
+				await userService.delete(id);
+				fetchUsers();
+				toast.success('Delete user success');
+			} catch (error) {
+				console.error('Error deleting user:', error);
+			} finally {
+				setLoading(false);
+			}
+		}
+	};
+
+	const updateRole = async (id: number, is_admin: boolean) => {
+		try {
+			const toastId = toast.loading('Updating role...');
+			const response = await userService.update(id, { is_admin });
+			if (response.status === 200) {
+				setUsers(
+					users.map((user) =>
+						user.id === id ? { ...user, is_admin } : user
+					)
+				);
+				toast.success('Update role success');
+				toast.dismiss(toastId);
+			}
+		} catch (error) {
+			console.error('Error updating user:', error);
 		}
 	};
 
@@ -63,8 +88,11 @@ const User = () => {
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
+								Is verified
+							</th>
+							<th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
-									Created At
+									Admin
 									<a>
 										<FaSort />
 									</a>
@@ -73,42 +101,86 @@ const User = () => {
 							<th scope="col" className="px-6 py-3">
 								<div className="flex items-center">Status</div>
 							</th>
+							<th scope="col" className="px-6 py-3">
+								Created At
+							</th>
+							<th scope="col" className="px-6 py-3">
+								Action
+							</th>
 						</tr>
 					</thead>
 					<tbody>
-						{userData.map((user, key) => (
-							<tr
-								className={`bg-white dark:bg-slate-800 ${
-									key !== userData.length - 1
-										? 'border-b border-stroke'
-										: ''
-								}`}
-								key={key}
-							>
-								<td className="px-6 py-3">
-									<div className="flex items-center gap-2">
+						{loading ? (
+							<tr>
+								<td colSpan={5} className="text-center py-4">
+									Đang tải...
+								</td>
+							</tr>
+						) : (
+							users.map((user) => (
+								<tr
+									key={user.id}
+									className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+								>
+									<td className="px-6 py-4 font-medium text-gray-900 dark:text-white flex items-center gap-2">
 										<img
-											src="https://avatar.iran.liara.run/public"
+											src={`https://ui-avatars.com/api/?name=${user.name}&background=random`}
 											alt=""
 											className="w-10 h-10 rounded-full"
 										/>
 										{user.name}
-									</div>
-								</td>
-								<td className="px-6 py-3">{user.email}</td>
-								<td className="px-6 py-3">{user.phone}</td>
-								<td className="px-6 py-3">{user.created_at}</td>
-								<td className="px-6 py-3">
-									<div
-										className={`badge badge-sm text-white font-semibold ${statusColor(
-											user.status
-										)}`}
-									>
-										{user.status}
-									</div>
-								</td>
-							</tr>
-						))}
+									</td>
+									<td className="px-6 py-4">{user.email}</td>
+									<td className="px-6 py-4">{user.phone}</td>
+									<td className="px-6 py-4">
+										{user.email_verified_at
+											? new Date(
+													user.email_verified_at
+											  ).toLocaleDateString()
+											: ''}
+									</td>
+									<td className="px-6 py-4">
+										<input
+											type="checkbox"
+											className="toggle toggle-info"
+											checked={user.is_admin}
+											onChange={(e) => {
+												e.preventDefault();
+												updateRole(user.id!, !user.is_admin);
+											}}
+											disabled={loading}
+										/>
+									</td>
+									<td className="px-6 py-4">
+										<span
+											className={`px-2 py-1 rounded-full text-xs ${
+												user.is_deleted
+													? 'bg-danger/10 text-danger'
+													: 'bg-success/10 text-success'
+											}`}
+										>
+											{user.is_deleted ? 'Inactive' : 'Active'}
+										</span>
+									</td>
+									<td className="px-6 py-4">
+										{user.created_at
+											? new Date(
+													user.created_at
+											  ).toLocaleDateString()
+											: ''}
+									</td>
+									<td className="px-6 py-4">
+										{!user.is_admin && (
+											<TrashIcon
+												color="red"
+												className="w-5 h-5 cursor-pointer"
+												onClick={() => handleDelete(user.id!)}
+											/>
+										)}
+									</td>
+								</tr>
+							))
+						)}
 					</tbody>
 				</table>
 			</div>

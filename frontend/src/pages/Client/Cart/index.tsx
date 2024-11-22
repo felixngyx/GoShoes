@@ -295,7 +295,7 @@ const Cart = () => {
                       />
                       <Link to={`/products/${item.product_variant.product_id}`}>
                         <img
-                          src={item.product_variant.image_variant}
+                          src={item.product_variant.product.thumbnail}
                           className="w-32 h-32 object-cover rounded"
                         />
                       </Link>

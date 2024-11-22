@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import Cookies from "js-cookie";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { IoCart, IoHeartOutline } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
 import useCart from "../../hooks/client/useCart";
 import { getAllProducts } from "../../services/client/product";
 import { IProduct } from "../../types/client/products/products";
-import { formatVNCurrency } from "../../common/formatVNCurrency";
+import useWishlist from "../../hooks/client/useWhishList";
 
 const ProductCardSkeleton = () => {
   return (
@@ -51,6 +51,7 @@ const ProductCard = () => {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const { handleAddToCart } = useCart();
   const [showModal, setShowModal] = useState(false);
+  const { handleAddToWishlist } = useWishlist();
 
   const {
     data: products,
@@ -158,6 +159,7 @@ const ProductCard = () => {
             />
             <div className="absolute hidden group-hover:flex w-full h-full top-0 left-0 bg-opacity-70 bg-gray-50 justify-center items-center gap-8 z-10">
               <IoHeartOutline
+                onClick={() => handleAddToWishlist(product.id)}
                 className="cursor-pointer p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
                 size={52}
                 color="#40BFFF"

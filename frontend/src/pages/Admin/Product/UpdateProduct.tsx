@@ -107,13 +107,14 @@ const UpdateProduct = () => {
 	const fetchProduct = async () => {
 		try {
 			setLoading(true);
-			const [resCategory, resSize, resBrand, resColor, productRes] = await Promise.all([
-				categoryService.getAll(),
-				sizeService.getAll(),
-				brandService.getAll(),
-				colorService.getAll(),
-				productService.getById(Number(id)),
-			]);
+			const [resCategory, resSize, resBrand, resColor, productRes] =
+				await Promise.all([
+					categoryService.getAll(),
+					sizeService.getAll(),
+					brandService.getAll(),
+					colorService.getAll(),
+					productService.getById(Number(id)),
+				]);
 
 			if (!productRes) {
 				toast.error('Không tìm thấy sản phẩm');
@@ -141,22 +142,24 @@ const UpdateProduct = () => {
 					productRes.category_ids.includes(Number(cat.id))
 				);
 				setSelectedCategories(selectedCats);
-				
+
 				// Quan trọng: Set giá trị cho category_ids ngay lập tức
-				setValue('category_ids', selectedCats.map(cat => Number(cat.id)));
+				setValue(
+					'category_ids',
+					selectedCats.map((cat) => Number(cat.id))
+				);
 			}
 
 			// Reset form với dữ liệu đầy đủ
 			reset({
 				...productRes,
 				category_ids: productRes.category_ids, // Đảm bảo category_ids được set
-				variants: productRes.variants || []
+				variants: productRes.variants || [],
 			});
 
 			// Set các state khác
 			setThumbnailFile(productRes.thumbnail);
-			setProductImageFiles(productRes.images.map(img => img.image_path));
-
+			setProductImageFiles(productRes.images.map((img) => img.image_path));
 		} catch (error: any) {
 			console.error('Fetch error:', error);
 			toast.error(error?.response?.data?.message || 'Lỗi khi tải dữ liệu');
@@ -276,7 +279,6 @@ const UpdateProduct = () => {
 			color_id: 0,
 			size_id: 0,
 			quantity: 0,
-			variant_id: undefined
 		});
 		setVariantImageFiles([...variantImageFiles, null]);
 	};
@@ -294,12 +296,14 @@ const UpdateProduct = () => {
 		if (category) {
 			const newSelectedCategories = [...selectedCategories, category];
 			setSelectedCategories(newSelectedCategories);
-			
+
 			// Set giá trị mới cho category_ids
-			const newCategoryIds = newSelectedCategories.map(cat => Number(cat.id));
-			setValue('category_ids', newCategoryIds, { 
+			const newCategoryIds = newSelectedCategories.map((cat) =>
+				Number(cat.id)
+			);
+			setValue('category_ids', newCategoryIds, {
 				shouldValidate: true,
-				shouldDirty: true 
+				shouldDirty: true,
 			});
 		}
 	};
@@ -309,12 +313,12 @@ const UpdateProduct = () => {
 			(cat) => Number(cat.id) !== categoryId
 		);
 		setSelectedCategories(newSelectedCategories);
-		
+
 		// Cập nhật category_ids khi xóa category
-		const newCategoryIds = newSelectedCategories.map(cat => Number(cat.id));
-		setValue('category_ids', newCategoryIds, { 
+		const newCategoryIds = newSelectedCategories.map((cat) => Number(cat.id));
+		setValue('category_ids', newCategoryIds, {
 			shouldValidate: true,
-			shouldDirty: true 
+			shouldDirty: true,
 		});
 	};
 
@@ -396,9 +400,7 @@ const UpdateProduct = () => {
 			// Send to backend
 			const response = await productService.update(Number(id), formData);
 
-			console.log(response);
-
-			if (response) {
+			if (response.status === 200) {
 				toast.dismiss(loadingToast);
 				toast.success('Product updated successfully');
 				navigate('/admin/product');
@@ -826,118 +828,134 @@ const UpdateProduct = () => {
 							<h3 className="text-lg font-bold col-span-3">Variant</h3>
 
 							{fields.map((field, index) => (
-								<div key={field.id} className="col-span-3 flex items-center justify-between gap-3">
+								<div
+									key={field.id}
+									className="col-span-3 flex items-center justify-between gap-3"
+								>
 									<div className="flex gap-3 w-full items-center">
 										<div className="grid grid-cols-3 gap-3 w-full items-center">
 											<div className="form-control relative">
 												<select
 													className="select select-bordered w-full"
-													{...register(`variants.${index}.size_id`)}
+													{...register(
+														`variants.${index}.size_id`
+													)}
 												>
 													<option value="">Select Size</option>
 													{sizes
 														// Lọc ra các size chưa được chọn hoặc đang được chọn ở variant hiện tại
-														.filter(size => {
+														.filter((size) => {
 															const sizeId = Number(size.id);
-															const currentSizeId = field.size_id;
-															return !fields.some((f, i) => 
-																i !== index && // Không phải variant hiện tại
-																Number(f.size_id) === sizeId && // Size đã được chọn
-																Number(f.color_id) === Number(field.color_id) // Cùng màu
-															) || sizeId === currentSizeId;
+															const currentSizeId =
+																field.size_id;
+															return (
+																!fields.some(
+																	(f, i) =>
+																		i !== index && // Không phải variant hiện tại
+																		Number(f.size_id) ===
+																			sizeId && // Size đã được chọn
+																		Number(f.color_id) ===
+																			Number(field.color_id) // Cùng màu
+																) || sizeId === currentSizeId
+															);
 														})
 														.map((size) => (
-															<option key={size.id} value={size.id}>
+															<option
+																key={size.id}
+																value={size.id}
+															>
 																{size.size}
 															</option>
-														))
-													}
+														))}
 												</select>
 												{errors.variants && (
 													<p className="text-red-500 text-xs absolute -bottom-5">
-														{errors.variants?.[index]?.size_id?.message}
+														{
+															errors.variants?.[index]?.size_id
+																?.message
+														}
 													</p>
 												)}
 											</div>
 
 											<div className="form-control relative">
 												<select
-														className="select select-bordered w-full"
-														{...register(
-															`variants.${index}.color_id`
-														)}
+													className="select select-bordered w-full"
+													{...register(
+														`variants.${index}.color_id`
+													)}
 												>
-														<option value="">Select Color</option>
-														{colors.map((color) => (
-																<option
-																		key={color.id}
-																		value={color.id}
-																>
-																		{color.color}
-																</option>
-														))}
+													<option value="">Select Color</option>
+													{colors.map((color) => (
+														<option
+															key={color.id}
+															value={color.id}
+														>
+															{color.color}
+														</option>
+													))}
 												</select>
 												{errors.variants && (
-														<p className="text-red-500 text-xs absolute -bottom-5">
-																{
-																		errors.variants?.[index]?.color_id
-																			?.message
-																}
-														</p>
+													<p className="text-red-500 text-xs absolute -bottom-5">
+														{
+															errors.variants?.[index]?.color_id
+																?.message
+														}
+													</p>
 												)}
 											</div>
 
 											<div className="form-control relative">
 												<input
-														type="number"
-														placeholder="Quantity"
-														className="input input-bordered w-full"
-														{...register(
-															`variants.${index}.quantity`
-														)}
+													type="number"
+													placeholder="Quantity"
+													className="input input-bordered w-full"
+													{...register(
+														`variants.${index}.quantity`
+													)}
 												/>
 												{errors.variants && (
-														<p className="text-red-500 text-xs absolute -bottom-5">
-																{
-																		errors.variants?.[index]?.quantity
-																			?.message
-																}
-														</p>
+													<p className="text-red-500 text-xs absolute -bottom-5">
+														{
+															errors.variants?.[index]?.quantity
+																?.message
+														}
+													</p>
 												)}
 											</div>
 										</div>
 									</div>
 									<button
-											type="button"
-											onClick={() => removeVariant(index)}
-											className="btn btn-sm btn-error"
+										type="button"
+										onClick={() => removeVariant(index)}
+										className="btn btn-sm btn-error"
 									>
-											<TrashIcon className="w-5 h-5 text-white" />
+										<TrashIcon className="w-5 h-5 text-white" />
 									</button>
 								</div>
 							))}
 
 							<button
-									type="button"
-									onClick={addVariant}
-									className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit"
+								type="button"
+								onClick={addVariant}
+								className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit"
 							>
-									Add Variant
+								Add Variant
 							</button>
 
 							<button
-									disabled={loading}
-									type="submit"
-									className="btn mt-4 col-span-3 bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+								disabled={loading}
+								type="submit"
+								className="btn mt-4 col-span-3 bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 							>
-									{loading ? (
-											<>
-													<span className="loading loading-spinner loading-sm text-info"></span>
-													Updating product...
-											</>
-									) : (
-											'Update product'
-									)}
+								{loading ? (
+									<>
+										<span className="loading loading-spinner loading-sm text-info"></span>
+										Updating product...
+									</>
+								) : (
+									'Update product'
+								)}
 							</button>
 						</form>
 					)}
@@ -946,17 +964,17 @@ const UpdateProduct = () => {
 
 			{/* Add this dialog for image preview */}
 			<dialog ref={modalRef} className="modal">
-					{previewImage && (
-							<div className="modal-box">
-									<img src={previewImage} alt="Preview" className="w-full" />
-									<button
-											onClick={closeModal}
-											className="btn btn-sm btn-circle absolute right-2 top-2"
-									>
-											<X />
-									</button>
-							</div>
-					)}
+				{previewImage && (
+					<div className="modal-box">
+						<img src={previewImage} alt="Preview" className="w-full" />
+						<button
+							onClick={closeModal}
+							className="btn btn-sm btn-circle absolute right-2 top-2"
+						>
+							<X />
+						</button>
+					</div>
+				)}
 			</dialog>
 		</>
 	);
