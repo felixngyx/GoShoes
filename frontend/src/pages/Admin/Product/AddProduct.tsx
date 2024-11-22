@@ -1,4 +1,3 @@
-import { TrashIcon, Upload, Eye, X, Logs } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { Status } from '.';
@@ -11,6 +10,9 @@ import Joi from 'joi';
 import { joiResolver } from '@hookform/resolvers/joi';
 import uploadImageToCloudinary from '../../../common/uploadCloudinary';
 import { useNavigate } from 'react-router-dom';
+import { COLOR } from '../../../services/admin/color';
+import colorService from '../../../services/admin/color';
+import { Eye, TrashIcon, Logs, Upload, X } from 'lucide-react';
 
 // Add form validation schema
 const productSchema = Joi.object({
@@ -63,19 +65,15 @@ const productSchema = Joi.object({
 	variants: Joi.array()
 		.items(
 			Joi.object({
-				color: Joi.string().required().messages({
-					'string.empty': 'Color is required',
+				color_id: Joi.number().required().messages({
+					'number.base': 'Color is required',
 				}),
 				size_id: Joi.number().required().messages({
 					'number.base': 'Size is required',
 				}),
-				quantity: Joi.number().min(0).required().messages({
-					'number.min': 'Quantity must be at least 0',
+				quantity: Joi.number().min(1).required().messages({
+					'number.min': 'Quantity must be at least 1',
 					'number.base': 'Quantity must be a number',
-				}),
-				image_variant: Joi.any().required().messages({
-					'any.required': 'Image variant is required',
-					'any.empty': 'Image variant is required',
 				}),
 			})
 		)
@@ -86,21 +84,29 @@ const AddProduct = () => {
 	const [categories, setCategories] = useState<CATEGORY[]>([]);
 	const [sizes, setSizes] = useState<SIZE[]>([]);
 	const [brands, setBrands] = useState<BRAND[]>([]);
+	const [colors, setColors] = useState<COLOR[]>([]);
 	const [selectedCategories, setSelectedCategories] = useState<CATEGORY[]>([]);
 	const [loading, setLoading] = useState(false);
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		try {
-			(async () => {
+		(async () => {
+			try {
+				setLoading(true);
 				const resCategory = await categoryService.getAll();
 				setCategories(resCategory.data.category.data);
 				const resSize = await sizeService.getAll();
 				setSizes(resSize.data.sizes.data);
 				const resBrand = await brandService.getAll();
 				setBrands(resBrand.data.brands.data);
-			})();
-		} catch (error) {}
+				const resColor = await colorService.getAll();
+				setColors(resColor.data.clors.data);
+			} catch (error) {
+				console.error(error);
+			} finally {
+				setLoading(false);
+			}
+		})();
 	}, []);
 
 	const {
@@ -112,9 +118,6 @@ const AddProduct = () => {
 		formState: { errors },
 	} = useForm<PRODUCT>({
 		resolver: joiResolver(productSchema),
-		defaultValues: {
-			variants: [],
-		},
 	});
 
 	const { fields, append, remove } = useFieldArray({
@@ -127,10 +130,6 @@ const AddProduct = () => {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const productImagesInputRef = useRef<HTMLInputElement>(null);
-
-	const [variantImageFiles, setVariantImageFiles] = useState<(File | null)[]>(
-		[]
-	);
 
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -199,37 +198,18 @@ const AddProduct = () => {
 		productImagesInputRef.current?.click();
 	};
 
-	const handleVariantImageChange = (
-		index: number,
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
-		event.preventDefault(); // Add this line
-		const file = event.target.files?.[0];
-		if (file) {
-			const newFiles = [...variantImageFiles];
-			newFiles[index] = file;
-			setVariantImageFiles(newFiles);
-		}
-	};
-
-	const removeVariantImage = (index: number) => {
-		const newFiles = [...variantImageFiles];
-		newFiles[index] = null;
-		setVariantImageFiles(newFiles);
-	};
-
 	// Modify the append function to also add a null image
 	const addVariant = () => {
-		append({ color: '', size_id: 0, quantity: 0, image_variant: '' });
-		setVariantImageFiles([...variantImageFiles, null]);
+		append({
+			color_id: 0,
+			size_id: 0,
+			quantity: 0,
+		});
 	};
 
 	// Modify the remove function to also remove the corresponding image
 	const removeVariant = (index: number) => {
 		remove(index);
-		const newFiles = [...variantImageFiles];
-		newFiles.splice(index, 1);
-		setVariantImageFiles(newFiles);
 	};
 
 	const onSubmit = async (data: PRODUCT) => {
@@ -245,23 +225,12 @@ const AddProduct = () => {
 				productImageFiles.map((file) => uploadImageToCloudinary(file))
 			);
 
-			// Upload variant images
-			const uploadedVariantImages = await Promise.all(
-				variantImageFiles.map((file) =>
-					file ? uploadImageToCloudinary(file) : null
-				)
-			);
-
 			// Prepare variants data
-			const formattedVariants = data.variants?.map(
-				(variant: any, index: number) => ({
-					color: variant.color,
-					link_image: uploadedVariantImages[index],
-					size_id: variant.size_id,
-					quantity: variant.quantity,
-					image_variant: uploadedVariantImages[index],
-				})
-			);
+			const formattedVariants = data.variants?.map((variant: any) => ({
+				color_id: variant.color_id,
+				size_id: variant.size_id,
+				quantity: variant.quantity,
+			}));
 
 			// Prepare final form data
 			const formData = {
@@ -285,9 +254,10 @@ const AddProduct = () => {
 			console.log(res);
 			toast.success('Product created successfully');
 			navigate('/admin/product');
-		} catch (error) {
-			toast.error('Failed to create product');
-			console.error(error);
+		} catch (error: any) {
+			toast.error(
+				error?.response?.data?.message || 'Error creating product'
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -544,9 +514,9 @@ const AddProduct = () => {
 									</ul>
 								</div>
 							</div>
-							{selectedCategories.length === 0 && (
+							{errors.category_ids && (
 								<span className="text-red-500 text-xs">
-									Please select at least one category
+									{errors.category_ids.message}
 								</span>
 							)}
 						</label>
@@ -702,92 +672,6 @@ const AddProduct = () => {
 								className="col-span-3 flex items-center justify-between gap-3"
 							>
 								<div className="flex gap-3 w-full items-center">
-									<div className="form-control">
-										<input
-											type="file"
-											className="hidden"
-											accept="image/*"
-											id={`variant-image-${index}`}
-											onChange={(e) => {
-												register(
-													`variants.${index}.image_variant`
-												).onChange(e);
-												handleVariantImageChange(index, e);
-											}}
-										/>
-										<div className="flex gap-2 relative">
-											{variantImageFiles[index] ? (
-												<>
-													<div className="relative size-[100px] group">
-														<img
-															src={URL.createObjectURL(
-																variantImageFiles[index]
-															)}
-															alt={`Variant ${index + 1}`}
-															className="w-full h-full object-cover rounded-md"
-														/>
-														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
-															<button
-																onClick={(e) => {
-																	e.preventDefault();
-																	e.stopPropagation();
-																	openModal(
-																		URL.createObjectURL(
-																			variantImageFiles[
-																				index
-																			]!
-																		)
-																	);
-																}}
-																className="btn btn-xs btn-circle btn-ghost"
-															>
-																<Eye color="white" size={16} />
-															</button>
-															<button
-																onClick={(e) => {
-																	e.preventDefault();
-																	e.stopPropagation();
-																	removeVariantImage(index);
-																}}
-																className="btn btn-xs btn-circle btn-ghost"
-															>
-																<TrashIcon
-																	color="white"
-																	size={16}
-																/>
-															</button>
-														</div>
-													</div>
-													{errors.variants && (
-														<p className="text-red-500 text-xs absolute -bottom-5">
-															{
-																errors.variants?.[index]
-																	?.image_variant?.message
-															}
-														</p>
-													)}
-												</>
-											) : (
-												<label
-													htmlFor={`variant-image-${index}`}
-													className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
-												>
-													<Upload />
-													<p className="text-xs text-gray-500">
-														Upload Image
-													</p>
-												</label>
-											)}
-										</div>
-										{errors.variants && (
-											<p className="text-red-500 text-xs absolute -bottom-5">
-												{
-													errors.variants?.[index]?.image_variant
-														?.message
-												}
-											</p>
-										)}
-									</div>
 									<div className="grid grid-cols-3 gap-3 w-full items-center">
 										<div className="form-control relative">
 											<select
@@ -812,16 +696,21 @@ const AddProduct = () => {
 										</div>
 
 										<div className="form-control relative">
-											<input
-												type="text"
-												placeholder="Color"
-												className="input input-bordered w-full"
-												{...register(`variants.${index}.color`)}
-											/>
+											<select
+												className="select select-bordered w-full"
+												{...register(`variants.${index}.color_id`)}
+											>
+												<option value="">Select Color</option>
+												{colors.map((color) => (
+													<option key={color.id} value={color.id}>
+														{color.color}
+													</option>
+												))}
+											</select>
 											{errors.variants && (
 												<p className="text-red-500 text-xs absolute -bottom-5">
 													{
-														errors.variants?.[index]?.color
+														errors.variants?.[index]?.color_id
 															?.message
 													}
 												</p>

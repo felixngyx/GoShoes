@@ -70,7 +70,7 @@ class StoreProductRequest extends FormRequest
             'category_ids.array' => 'Danh mục sản phẩm phải là một mảng',
             'category_ids.*.exists' => 'Danh mục đã chọn không hợp lệ',
             'variants.array' => 'Biến thể sản phẩm phải là một mảng',
-            
+
             'variants.*.color_id.required_with' => 'Màu sắc sản phẩm không được bỏ trống khi có biến thể',
             'variants.*.color_id.exists' => 'Màu sắc sản phẩm phải là một không ID  hợp lệ',
 

@@ -182,7 +182,7 @@ class RefundController extends Controller
                 return response()->json([
                     'status' => true,
                     'message' => 'Đã phê duyệt và hoàn tiền thành công'
-                ], 200, [], JSON_UNESCAPED_UNICODE);
+                ], 200);
             } else {
                 throw new \Exception('Hoàn tiền thất bại: ' . ($refundResult['return_message'] ?? 'Unknown error'));
             }

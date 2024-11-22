@@ -224,69 +224,103 @@ class ZaloPaymentController extends Controller
     public function refund($order_id, $apptransid, $amount)
     {
         try {
+            // Tìm đơn hàng
             $order = Order::where('sku', $order_id)->firstOrFail();
-            $order_sku = $order->sku;
+            
+            // Thiết lập múi giờ và timestamp
             date_default_timezone_set('Asia/Ho_Chi_Minh');
             $timestamp = (int)(microtime(true) * 1000);
-
-            // Log thông tin đầu vào
+    
             Log::info('ZaloPay Refund Input:', [
                 'order_id' => $order_id,
                 'apptransid' => $apptransid,
-                'amount' => $amount
+                'amount' => $amount,
+                'timestamp' => $timestamp
             ]);
-            Log::info('Timestamp converted:', [
-                'datetime' => date('Y-m-d H:i:s', $timestamp/1000)
-            ]);
-            $uid = "$timestamp" . rand(111, 999);
-
+    
             $params = [
                 "app_id" => $this->config["app_id"],
-                "m_refund_id" => date("ymd") . "_" . $this->config["app_id"] . "_" . 123,
-                "timestamp" => $timestamp,
-                "zp_trans_id" => $apptransid,
-                "amount" => $amount,
-                "description" => "Hoàn tiền đơn hàng #" . $order->sku
+                "m_refund_id" => date("ymd") . "_" . $this->config["app_id"] . "_" . $order->id, 
+                "zp_trans_id" => $apptransid,                
+                "amount" => (int)$amount,                    
+                "timestamp" => $timestamp,                   
+                "description" => "Refund for order #" . $order->sku, 
+                "refund_fee_amount" => 0                   
             ];
-
-            // Log params trước khi tạo MAC
-            Log::info('ZaloPay Refund Params (before MAC):', $params);
-
-            // Tạo chuỗi data để tạo chữ ký
-            $data = $params["app_id"] . "|" . $params["zp_trans_id"] . "|" . $params["amount"]
-                . "|" . $params["description"] . "|" . $params["timestamp"];
+    
+            // Tạo chuỗi data để tạo chữ ký MAC
+            $data = $params["app_id"] . "|" . 
+                    $params["zp_trans_id"] . "|" . 
+                    $params["amount"] . "|" . 
+                    $params["description"] . "|" . 
+                    $params["timestamp"];
+            
             $params["mac"] = hash_hmac("sha256", $data, $this->config["key1"]);
-
-            // Log params sau khi tạo MAC
+    
+            // Log request details
             Log::info('ZaloPay Refund Request:', [
                 'endpoint' => "https://sb-openapi.zalopay.vn/v2/refund",
                 'params' => $params,
                 'mac_data' => $data
             ]);
-
-            $response = Http::withOptions(['verify' => false])
-                ->post("https://sb-openapi.zalopay.vn/v2/refund", $params);
-
+    
+            // Gửi request đến ZaloPay
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json'
+            ])->withOptions([
+                'verify' => false
+            ])->post("https://sb-openapi.zalopay.vn/v2/refund", $params);
+    
+            // Xử lý response
             $result = $response->json();
-
+            Log::info('ZaloPay Refund Response:', $result);
+    
             if ($response->successful()) {
-                if ($result['return_code'] == 1) {
-                    // Cập nhật trạng thái đơn hàng thành cancelled
-                    $order->status = 'refunded';
-                    $order->save();
-
-                    // Cập nhật trạng thái thanh toán
-                    $order->payment->status = 'refunded';
-                    $order->payment->save();
+                // Kiểm tra mã trả về
+                switch ($result['return_code']) {
+                    case 1: // Thành công
+                        DB::transaction(function () use ($order, $result) {
+                            // Cập nhật trạng thái đơn hàng
+                            $order->status = 'refunded';
+                            $order->save();
+    
+                            // Cập nhật trạng thái thanh toán
+                            $order->payment()->update([
+                                'status' => 'refunded',
+                                'refund_transaction_id' => $result['zp_trans_id'] ?? null
+                            ]);
+                        });
+    
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Hoàn tiền thành công',
+                            'data' => $result
+                        ]);
+    
+                    case 2: // Đang xử lý
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Yêu cầu hoàn tiền đang được xử lý',
+                            'data' => $result
+                        ]);
+    
+                    default: // Thất bại
+                        throw new Exception($result['return_message'] ?? 'Hoàn tiền thất bại');
                 }
-                return $result; // Trả về array thay vì JsonResponse
             } else {
-                Log::error('ZaloPay refund response: ' . $response->body());
-                throw new Exception('Failed to connect to ZaloPay refund API');
+                throw new Exception('Không thể kết nối đến ZaloPay API');
             }
         } catch (Exception $e) {
-            Log::error('ZaloPay refund failed: ' . $e->getMessage());
-            throw $e; // Ném lại exception để controller xử lý
+            Log::error('ZaloPay refund failed:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+    
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi hoàn tiền: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

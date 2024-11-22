@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
 
 import { COLOR } from '../../../services/admin/color';
-import {
-	PencilLine,
-	Plus,
-	Trash2,
-	Eye,
-	Upload,
-	X,
-	TrashIcon,
-} from 'lucide-react';
+import { PencilLine, Plus, Trash2, Eye, Upload, X } from 'lucide-react';
 import { useRef, useEffect } from 'react';
 import colorService from '../../../services/admin/color';
 import { useForm } from 'react-hook-form';
@@ -70,11 +62,10 @@ const Color = () => {
 	const fetchColor = async () => {
 		setLoading(true);
 		try {
-			const res = await colorService.getAll({
-				page: pagination.page,
-				limit: pagination.limit,
-			});
-			console.log(res);
+			const res = await colorService.getAll(
+				pagination.page,
+				pagination.limit
+			);
 			setColorData(res.data.clors.data);
 			setPagination({
 				page: Number(res.data.clors.current_page),
@@ -329,7 +320,7 @@ const Color = () => {
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5 col-span-1">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
-					Category List
+					Color List
 				</h4>
 				<div className="flex items-center gap-2">
 					<button

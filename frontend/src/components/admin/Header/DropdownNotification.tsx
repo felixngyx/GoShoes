@@ -178,7 +178,7 @@ const DropdownNotification = () => {
 											}`}
 											to={
 												notification.type === 'order'
-													? `/orders/${notification.order_id}`
+													? `orders/detail/${notification.order_id}`
 													: '#'
 											}
 											onClick={() => markAsRead(notification.id)}

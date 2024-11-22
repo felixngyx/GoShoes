@@ -6,16 +6,16 @@ import categoryService, { CATEGORY } from '../../../services/admin/category';
 import sizeService, { SIZE } from '../../../services/admin/size';
 import brandService, { BRAND } from '../../../services/admin/brand';
 import productService, {
-	PRODUCT,
 	PRODUCT_DETAIL,
-	PRODUCT_UPDATE,
-	Variant,
 } from '../../../services/admin/product';
 import toast from 'react-hot-toast';
 import Joi from 'joi';
 import { joiResolver } from '@hookform/resolvers/joi';
 import uploadImageToCloudinary from '../../../common/uploadCloudinary';
 import { useNavigate, useParams } from 'react-router-dom';
+import colorService from '../../../services/admin/color';
+import { COLOR } from '../../../services/admin/color';
+import LoadingIcon from '../../../components/common/LoadingIcon';
 
 const productSchema = Joi.object({
 	name: Joi.string().required().messages({
@@ -28,10 +28,15 @@ const productSchema = Joi.object({
 		'number.base': 'Price must be a number',
 		'number.positive': 'Price must be positive',
 	}),
-	promotional_price: Joi.number().positive().required().messages({
-		'number.base': 'Promotional price must be a number',
-		'number.positive': 'Promotional price must be positive',
-	}),
+	promotional_price: Joi.number()
+		.positive()
+		.max(Joi.ref('price'))
+		.required()
+		.messages({
+			'number.base': 'Promotional price must be a number',
+			'number.positive': 'Promotional price must be positive',
+			'number.max': 'Promotional price must be less than regular price',
+		}),
 	status: Joi.string().required().messages({
 		'string.empty': 'Status is required',
 	}),
@@ -51,10 +56,18 @@ const productSchema = Joi.object({
 	thumbnail: Joi.string().required().messages({
 		'string.empty': 'Thumbnail is required',
 	}),
-	images: Joi.array().items(Joi.string()).required().messages({
-		'array.base': 'Images must be an array',
-		'array.min': 'At least one image is required',
-	}),
+	images: Joi.array()
+		.items(
+			Joi.object({
+				id: Joi.number().optional(),
+				image_path: Joi.string().required(),
+			})
+		)
+		.required()
+		.messages({
+			'array.base': 'Images must be an array',
+			'array.min': 'At least one image is required',
+		}),
 	stock_quantity: Joi.number().min(1).required().messages({
 		'number.min': 'Stock quantity must be at least 1',
 		'number.base': 'Stock quantity must be a number',
@@ -64,46 +77,90 @@ const productSchema = Joi.object({
 			Joi.object({
 				color_id: Joi.number().required().messages({
 					'number.base': 'Color is required',
-					'any.required': 'Color is required',
 				}),
 				size_id: Joi.number().required().messages({
 					'number.base': 'Size is required',
-					'any.required': 'Size is required',
 				}),
-				quantity: Joi.number().min(0).required().messages({
-					'number.min': 'Quantity must be at least 0',
+				quantity: Joi.number().min(1).required().messages({
+					'number.min': 'Quantity must be at least 1',
 					'number.base': 'Quantity must be a number',
-				}),
-				image_variant: Joi.any().required().messages({
-					'any.required': 'Image variant is required',
-					'any.empty': 'Image variant is required',
 				}),
 			})
 		)
 		.allow(''),
 });
-
 const UpdateProduct = () => {
 	const { id } = useParams();
 	const [categories, setCategories] = useState<CATEGORY[]>([]);
 	const [sizes, setSizes] = useState<SIZE[]>([]);
 	const [brands, setBrands] = useState<BRAND[]>([]);
+	const [colors, setColors] = useState<COLOR[]>([]);
 	const [selectedCategories, setSelectedCategories] = useState<CATEGORY[]>([]);
 	const [initialData, setInitialData] = useState<PRODUCT_DETAIL | null>(null);
 	const [loading, setLoading] = useState(false);
 	const navigate = useNavigate();
 
-	const fetchData = async () => {
+	const fetchProduct = async () => {
 		try {
-			const resCategory = await categoryService.getAll();
-			setCategories(resCategory.data.category.data);
-			const resSize = await sizeService.getAll();
+			// Fetch all necessary data first
+			const [resCategory, resSize, resBrand, resColor, productRes] =
+				await Promise.all([
+					categoryService.getAll(),
+					sizeService.getAll(),
+					brandService.getAll(),
+					colorService.getAll(),
+					productService.getById(Number(id)),
+				]);
+
+			// Set all the data
+			const categories = resCategory.data.category.data;
+			setCategories(categories);
 			setSizes(resSize.data.sizes.data);
-			const resBrand = await brandService.getAll();
 			setBrands(resBrand.data.brands.data);
-		} catch (error) {
-			console.log(error);
-			toast.error('Failed to fetch data');
+			setColors(resColor.data.clors.data);
+
+			const product = productRes;
+			setInitialData(product);
+
+			// Set form values
+			setValue('name', product.name);
+			setValue('description', product.description);
+			setValue('price', Number(product.price));
+			setValue('promotional_price', Number(product.promotional_price));
+			setValue('status', product.status);
+			setValue('sku', product.sku);
+			setValue('hagtag', product.hagtag);
+			setValue('brand_id', product.brand_id);
+			setValue('thumbnail', product.thumbnail);
+			setValue('images', product.images);
+			setValue('stock_quantity', Number(product.stock_quantity));
+
+			// Now we can safely handle categories since we have both product and categories data
+			if (product.category_ids && Array.isArray(product.category_ids)) {
+				const selectedCategories = categories.filter((cat: CATEGORY) =>
+					product.category_ids.includes(Number(cat.id))
+				);
+				setSelectedCategories(selectedCategories);
+				setValue(
+					'category_ids',
+					product.category_ids.map((id) => Number(id))
+				);
+			}
+
+			const productImages = product.images.map(
+				(image: { image_path: string }) => image.image_path
+			);
+			setProductImageFiles(productImages);
+
+			if (product.variants && Array.isArray(product.variants)) {
+				setValue('variants', product.variants);
+			}
+
+			setThumbnailFile(product.thumbnail);
+		} catch (error: any) {
+			toast.error(
+				error?.response?.data?.message || 'Error fetching product data'
+			);
 		}
 	};
 
@@ -114,7 +171,7 @@ const UpdateProduct = () => {
 		clearErrors,
 		setValue,
 		formState: { errors },
-	} = useForm<PRODUCT_UPDATE>({
+	} = useForm<PRODUCT_DETAIL>({
 		resolver: joiResolver(productSchema),
 		defaultValues: {
 			variants: [],
@@ -210,32 +267,12 @@ const UpdateProduct = () => {
 		productImagesInputRef.current?.click();
 	};
 
-	const handleVariantImageChange = (
-		index: number,
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
-		event.preventDefault(); // Add this line
-		const file = event.target.files?.[0];
-		if (file) {
-			const newFiles = [...variantImageFiles];
-			newFiles[index] = file;
-			setVariantImageFiles(newFiles);
-		}
-	};
-
-	const removeVariantImage = (index: number) => {
-		const newFiles = [...variantImageFiles];
-		newFiles[index] = null;
-		setVariantImageFiles(newFiles);
-	};
-
 	// Modify the append function to also add a null image
 	const addVariant = () => {
 		append({
 			color_id: 0,
 			size_id: 0,
 			quantity: 0,
-			image_variant: '',
 		});
 		setVariantImageFiles([...variantImageFiles, null]);
 	};
@@ -272,84 +309,44 @@ const UpdateProduct = () => {
 		);
 	};
 
-	// // Fetch product data on component mount
-	const fetchProduct = async () => {
-		try {
-			const res = await productService.getById(Number(id));
-			const product = res;
-			console.log(product);
-			setInitialData(product);
-			// Set form default values
-			setValue('name', product.name);
-			setValue('description', product.description);
-			setValue('price', Number(product.price));
-			setValue('promotional_price', Number(product.promotional_price));
-			setValue('status', product.status);
-			setValue('sku', product.sku);
-			setValue('hagtag', product.hagtag);
-			setValue('brand_id', product.brand);
-			setValue('thumbnail', product.thumbnail);
-			setValue('images', product.images);
-			setValue('stock_quantity', Number(product.stock_quantity));
-
-			// Xử lý categories
-			if (product.categories && Array.isArray(product.categories)) {
-				setSelectedCategories(product.categories);
-				setValue(
-					'category_ids',
-					product.categories.map((cat: CATEGORY) => Number(cat.id))
-				);
-			}
-
-			// Xử lý images
-			const productImages = product.images.map(
-				(image: { image_path: string }) => image.image_path
-			);
-			setProductImageFiles(productImages);
-
-			// Xử lý variants - chỉ set một lần
-			if (product.variants && Array.isArray(product.variants)) {
-				// Set variants vào form
-				setValue('variants', product.variants);
-
-				// Set variant images
-				const variantImagesUrl = product.variants.map(
-					(variant: Variant) => variant.image_variant
-				);
-				setVariantImageFiles(variantImagesUrl);
-			}
-
-			setThumbnailFile(product.thumbnail);
-		} catch (error) {
-			console.log(error);
-			toast.error('Failed to fetch product');
-		}
-	};
 	useEffect(() => {
 		if (id) {
 			(async () => {
 				setLoading(true);
-				await fetchData();
-				await fetchProduct();
-				setLoading(false);
+				try {
+					await fetchProduct();
+				} finally {
+					setLoading(false);
+				}
 			})();
 		}
 	}, [id]);
 
 	// Add state for initial data
 
-	const onSubmit = async (data: PRODUCT_UPDATE) => {
+	const onSubmit = async (data: PRODUCT_DETAIL) => {
 		try {
 			setLoading(true);
-
-			// Validate required fields
-			if (!data.name || !data.description || !selectedCategories.length) {
-				toast.error('Please fill in all required fields');
-				return;
-			}
-
 			// Show loading toast
 			const loadingToast = toast.loading('Updating product...');
+
+			// Log data before sending to backend
+			console.log('Final Form Data:', {
+				name: data.name,
+				description: data.description,
+				price: Number(data.price),
+				promotional_price: Number(data.promotional_price),
+				status: data.status,
+				sku: data.sku,
+				hagtag: data.hagtag,
+				category_ids: selectedCategories.map((cat) => Number(cat.id)),
+				brand_id: Number(data.brand_id),
+				thumbnail: data.thumbnail,
+				images: data.images,
+				stock_quantity: Number(data.stock_quantity),
+				variants: data.variants,
+				rating_count: Number(initialData?.rating_count),
+			});
 
 			// Handle thumbnail upload if changed
 			let thumbnailUrl = data.thumbnail;
@@ -374,26 +371,6 @@ const UpdateProduct = () => {
 				images.filter((img): img is { image_path: string } => img !== null)
 			);
 
-			// Handle variant images
-			const formattedVariants = await Promise.all(
-				(data.variants || []).map(async (variant, index) => {
-					const variantImage = variantImageFiles[index];
-					let imageVariant = variant.image_variant;
-
-					if (variantImage instanceof File) {
-						imageVariant = await uploadImageToCloudinary(variantImage);
-					}
-
-					return {
-						...variant,
-						color_id: Number(variant.color_id),
-						size_id: Number(variant.size_id),
-						quantity: Number(variant.quantity),
-						image_variant: imageVariant,
-					};
-				})
-			);
-
 			// Prepare final form data
 			const formData = {
 				name: data.name,
@@ -408,11 +385,14 @@ const UpdateProduct = () => {
 				thumbnail: thumbnailUrl,
 				images: uploadedProductImages,
 				stock_quantity: Number(data.stock_quantity),
-				variants: formattedVariants,
+				variants: data.variants,
+				rating_count: Number(initialData?.rating_count),
 			};
 
 			// Send to backend
 			const response = await productService.update(Number(id), formData);
+
+			console.log(response);
 
 			if (response) {
 				toast.dismiss(loadingToast);
@@ -421,14 +401,11 @@ const UpdateProduct = () => {
 			}
 		} catch (error) {
 			console.error('Update error:', error);
-			// toast.error(error?.response?.data?.message || 'Failed to update product');
+			toast.error('Failed to update product. Check console for details.');
 		} finally {
 			setLoading(false);
 		}
 	};
-
-	// Rest of the component remains similar to AddProduct
-	// Just change the button text and loading state text to "Update" instead of "Add"
 
 	return (
 		<>
@@ -436,10 +413,15 @@ const UpdateProduct = () => {
 				<h3 className="font-bold text-2xl">Update Product</h3>
 				<div className="w-full">
 					{loading ? (
-						<p>Loading...</p>
+						<div className="w-full h-full flex items-center justify-center">
+							<LoadingIcon size="lg" type="spinner" color="info" />
+						</div>
 					) : (
 						<form
-							onSubmit={handleSubmit(onSubmit)}
+							onSubmit={handleSubmit(onSubmit, (errors) => {
+								console.log('Form Validation Errors:', errors);
+								toast.error('Please check all required fields');
+							})}
 							className="grid grid-cols-3 gap-x-4 gap-y-5 w-full"
 						>
 							<label className="form-control col-span-1">
@@ -845,109 +827,6 @@ const UpdateProduct = () => {
 									className="col-span-3 flex items-center justify-between gap-3"
 								>
 									<div className="flex gap-3 w-full items-center">
-										<div className="form-control">
-											<input
-												type="file"
-												className="hidden"
-												accept="image/*"
-												id={`variant-image-${index}`}
-												onChange={(e) => {
-													register(
-														`variants.${index}.image_variant`
-													).onChange(e);
-													handleVariantImageChange(index, e);
-												}}
-											/>
-											<div className="flex gap-2 relative">
-												{variantImageFiles[index] ? (
-													<>
-														<div className="relative size-[100px] group">
-															<img
-																src={
-																	variantImageFiles[
-																		index
-																	] instanceof File
-																		? URL.createObjectURL(
-																				variantImageFiles[
-																					index
-																				]
-																		  )
-																		: variantImageFiles[index]
-																}
-																alt={`Variant ${index + 1}`}
-																className="w-full h-full object-cover rounded-md"
-															/>
-															<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
-																<button
-																	onClick={(e) => {
-																		e.preventDefault();
-																		e.stopPropagation();
-																		openModal(
-																			typeof variantImageFiles[
-																				index
-																			] === 'string'
-																				? variantImageFiles[
-																						index
-																				  ]
-																				: URL.createObjectURL(
-																						variantImageFiles[
-																							index
-																						]!
-																				  )
-																		);
-																	}}
-																	className="btn btn-xs btn-circle btn-ghost"
-																>
-																	<Eye
-																		color="white"
-																		size={16}
-																	/>
-																</button>
-																<button
-																	onClick={(e) => {
-																		e.preventDefault();
-																		e.stopPropagation();
-																		removeVariantImage(index);
-																	}}
-																	className="btn btn-xs btn-circle btn-ghost"
-																>
-																	<TrashIcon
-																		color="white"
-																		size={16}
-																	/>
-																</button>
-															</div>
-														</div>
-														{errors.variants && (
-															<p className="text-red-500 text-xs absolute -bottom-5">
-																{
-																	errors.variants?.[index]
-																		?.image_variant?.message
-																}
-															</p>
-														)}
-													</>
-												) : (
-													<label
-														htmlFor={`variant-image-${index}`}
-														className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
-													>
-														<Upload />
-														<p className="text-xs text-gray-500">
-															Upload Image
-														</p>
-													</label>
-												)}
-											</div>
-											{errors.variants && (
-												<p className="text-red-500 text-xs absolute -bottom-5">
-													{
-														errors.variants?.[index]
-															?.image_variant?.message
-													}
-												</p>
-											)}
-										</div>
 										<div className="grid grid-cols-3 gap-3 w-full items-center">
 											<div className="form-control relative">
 												<select
@@ -974,14 +853,22 @@ const UpdateProduct = () => {
 											</div>
 
 											<div className="form-control relative">
-												<input
-													type="text"
-													placeholder="Color"
-													className="input input-bordered w-full"
+												<select
+													className="select select-bordered w-full"
 													{...register(
 														`variants.${index}.color_id`
 													)}
-												/>
+												>
+													<option value="">Select Color</option>
+													{colors.map((color) => (
+														<option
+															key={color.id}
+															value={color.id}
+														>
+															{color.color}
+														</option>
+													))}
+												</select>
 												{errors.variants && (
 													<p className="text-red-500 text-xs absolute -bottom-5">
 														{
