@@ -22,18 +22,21 @@ class CategoryController extends Controller
 
     public function index(Request $request)
     {
-        // return response()->json($this->categoryService->getAllCategories(), 200);
         $page = $request->input('page', 1);
-        $limit = $request->input('limit', 9);
+        $limit = $request->input('limit', null);
         $orderBy = $request->input('orderBy', 'id');
         $order = $request->input('order', 'asc');
-        $query = Category::select('id', 'name'); // Chỉ lấy trường id và name
-        $category = $query->orderBy($orderBy, $order)
-                          ->paginate($limit, ['*'], 'page', $page);
+    
+        // Sử dụng withCount để lấy số lượng sản phẩm
+        $categories = Category::select('id', 'name')
+                              ->withCount('products') // Thêm số lượng sản phẩm
+                              ->orderBy($orderBy, $order)
+                              ->paginate($limit, ['*'], 'page', $page);
+    
         return response()->json([
             'message' => 'Danh sách danh mục',
-            'category' => $category
-        ], 201);
+            'categories' => $categories
+        ], 200); // Đổi từ 201 sang 200 nếu không có tạo mới
     }
 
     public function show($id)

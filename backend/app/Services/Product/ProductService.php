@@ -22,9 +22,6 @@ class ProductService
     public function storeProduct($validated)
     {
         try {
-            // Tạo SKU
-            // $sku = 'shope-' . 'T' . date('m') . rand(10, 99);
-
             // Chuẩn bị dữ liệu sản phẩm
             $productData = [
                 'name' => $validated['name'],
@@ -48,7 +45,7 @@ class ProductService
             // Xử lý variants nếu có
             if (isset($validated['variants']) && !empty($validated['variants'])) {
                 foreach ($validated['variants'] as $variantData) {
-                    // Tạo màu mới
+    
                     $color = VariantColor::find($variantData['color_id']);
                     $size = VariantSize::find($variantData['size_id']);
 
