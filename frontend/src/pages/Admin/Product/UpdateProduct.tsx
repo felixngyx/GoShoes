@@ -102,65 +102,69 @@ const UpdateProduct = () => {
 
 	const fetchProduct = async () => {
 		try {
-			// Fetch all necessary data first
-			const [resCategory, resSize, resBrand, resColor, productRes] =
-				await Promise.all([
-					categoryService.getAll(),
-					sizeService.getAll(),
-					brandService.getAll(),
-					colorService.getAll(),
-					productService.getById(Number(id)),
-				]);
+			const [resCategory, resSize, resBrand, resColor, productRes] = await Promise.all([
+				categoryService.getAll(),
+				sizeService.getAll(),
+				brandService.getAll(),
+				colorService.getAll(),
+				productService.getById(Number(id)),
+			]);
 
-			// Set all the data
-			const categories = resCategory.data.category.data;
+			// Cập nhật cách lấy dữ liệu theo cấu trúc API mới
+			const categories = resCategory.data?.categories?.data || [];
+			const sizes = resSize.data?.sizes?.data || [];
+			const brands = resBrand.data?.data?.brands || [];
+			const colors = resColor.data?.clors?.data || [];
+
 			setCategories(categories);
-			setSizes(resSize.data.sizes.data);
-			setBrands(resBrand.data.brands.data);
-			setColors(resColor.data.clors.data);
+			setSizes(sizes);
+			setBrands(brands);
+			setColors(colors);
 
-			const product = productRes;
-			setInitialData(product);
+			if (productRes) {
+				setInitialData(productRes);
+				setValue('name', productRes.name);
+				setValue('description', productRes.description);
+				setValue('price', Number(productRes.price));
+				setValue('promotional_price', Number(productRes.promotional_price));
+				setValue('status', productRes.status);
+				setValue('sku', productRes.sku);
+				setValue('hagtag', productRes.hagtag);
+				setValue('brand_id', productRes.brand_id);
+				setValue('thumbnail', productRes.thumbnail);
+				setThumbnailFile(productRes.thumbnail);
+				setValue('images', productRes.images);
+				setProductImageFiles(productRes.images.map(img => img.image_path));
+				setValue('stock_quantity', Number(productRes.stock_quantity));
 
-			// Set form values
-			setValue('name', product.name);
-			setValue('description', product.description);
-			setValue('price', Number(product.price));
-			setValue('promotional_price', Number(product.promotional_price));
-			setValue('status', product.status);
-			setValue('sku', product.sku);
-			setValue('hagtag', product.hagtag);
-			setValue('brand_id', product.brand_id);
-			setValue('thumbnail', product.thumbnail);
-			setValue('images', product.images);
-			setValue('stock_quantity', Number(product.stock_quantity));
+				if (productRes.category_ids && Array.isArray(productRes.category_ids)) {
+					const selectedCategories = categories.filter((cat: CATEGORY) =>
+						productRes.category_ids.includes(Number(cat.id))
+					);
+					setSelectedCategories(selectedCategories);
+					setValue('category_ids', productRes.category_ids.map(id => Number(id)));
+				}
 
-			// Now we can safely handle categories since we have both product and categories data
-			if (product.category_ids && Array.isArray(product.category_ids)) {
-				const selectedCategories = categories.filter((cat: CATEGORY) =>
-					product.category_ids.includes(Number(cat.id))
-				);
-				setSelectedCategories(selectedCategories);
-				setValue(
-					'category_ids',
-					product.category_ids.map((id) => Number(id))
-				);
+				// Cập nhật variants
+				if (productRes.variants && productRes.variants.length > 0) {
+					// Xóa tất cả variants hiện tại
+					while (fields.length) {
+						remove(0);
+					}
+					
+					// Thêm từng variant từ dữ liệu API
+					productRes.variants.forEach((variant: any) => {
+						append({
+							color_id: variant.color_id,
+							size_id: variant.size_id,
+							quantity: variant.quantity
+						});
+					});
+				}
 			}
-
-			const productImages = product.images.map(
-				(image: { image_path: string }) => image.image_path
-			);
-			setProductImageFiles(productImages);
-
-			if (product.variants && Array.isArray(product.variants)) {
-				setValue('variants', product.variants);
-			}
-
-			setThumbnailFile(product.thumbnail);
 		} catch (error: any) {
-			toast.error(
-				error?.response?.data?.message || 'Error fetching product data'
-			);
+			console.error('Fetch error:', error);
+			toast.error(error?.response?.data?.message || 'Error fetching data');
 		}
 	};
 
