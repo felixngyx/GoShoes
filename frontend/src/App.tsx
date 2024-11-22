@@ -49,6 +49,8 @@ import Wishlist from './pages/Client/User/WhishList';
 import UpdateDiscount from './pages/Admin/discounts/update';
 import RefundRequest from './pages/Admin/orders/refundrequest';
 import DetailRefund from './pages/Admin/orders/detailRefund';
+import BrandPage from './pages/Client/Brand';
+import CategoryPage from './pages/Client/Category';
 
 function App() {
 	const { pathname } = useLocation();
@@ -95,8 +97,10 @@ function App() {
 						<Route path="my-address" element={<Address />} />
 						<Route path="whish-list" element={<Wishlist />} />
 					</Route>
-					<Route path="/about" element={<AboutPage />} />
-					<Route path="/contact-us" element={<ContactUs />} />
+					<Route path="/about-us" element={<AboutPage />} />
+					<Route path="/brand" element={<BrandPage />} />
+					<Route path="/category" element={<CategoryPage />} />
+					<Route path="/contact" element={<ContactUs />} />
 					<Route path="/reset-password" element={<ResetPassword />} />
 					<Route path="/forget-password" element={<ForgetPassword />} />
 				</Route>
