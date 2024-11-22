@@ -57,17 +57,19 @@ const Category = () => {
 			setLoading(true);
 			const res = await categoryService.getAll(
 				pagination.page,
-				pagination.limit
+				Number(pagination.limit)
 			);
-			setCategories(res.data.category.data);
-			setPagination({
-				page: Number(res.data.category.current_page),
-				limit: Number(res.data.category.per_page),
-				total: Number(res.data.category.total),
-			});
+			if (res?.data?.categories) {
+				setCategories(res.data.categories.data || []);
+				setPagination({
+					page: Number(res.data.categories.current_page || 1),
+					limit: Number(res.data.categories.per_page || 5),
+					total: Number(res.data.categories.total || 0),
+				});
+			}
 		} catch (error) {
-			console.log(error);
-			toast.error('Failed to fetch categories');
+			console.error('Error fetching categories:', error);
+			toast.error('Không thể tải danh sách danh mục');
 		} finally {
 			setLoading(false);
 		}
