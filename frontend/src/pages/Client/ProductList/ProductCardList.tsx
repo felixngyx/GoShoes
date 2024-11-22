@@ -2,9 +2,10 @@ import { Heart, ShoppingCart } from "lucide-react";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { IProduct } from "../../../types/client/products/products";
 import useCart from "../../../hooks/client/useCart";
-import Cookies from "js-cookie";
+import useWishlist from "../../../hooks/client/useWhishList";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 const ProductCardList = ({ product }: any) => {
   const { handleAddToCart } = useCart();
   const accessToken = Cookies.get("access_token");
@@ -14,6 +15,9 @@ const ProductCardList = ({ product }: any) => {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
+  const { handleAddToWishlist } = useWishlist();
+
+  // Thêm sản phẩm vào giỏ hàng
   const addCart = (product: IProduct) => {
     const productVariant = product.variants.find(
       (variant: any) =>
@@ -49,6 +53,8 @@ const ProductCardList = ({ product }: any) => {
     navigate("/signin");
     closeModal();
   };
+
+  // Hiển thị sao đánh giá
   const RatingStars = ({ rating }: { rating: number }) => {
     return (
       <div className="flex items-center">
@@ -96,20 +102,25 @@ const ProductCardList = ({ product }: any) => {
             </div>
             <p>{product.description}</p>
             <div className="flex flex-row gap-2">
+              {/* Nút thêm sản phẩm vào giỏ hàng */}
               <button
-                onClick={() => handleCheckAdd(product)}
+                onClick={() => addCart(product)}
                 className="btn bg-[#ebf6ff] rounded-sm text-[#40BFFF] hover:bg-[#40BFFF] hover:text-[#fff] px-10 flex flex-row gap-2 items-center"
               >
                 <ShoppingCart /> Add to cart
               </button>
-              <button className="btn bg-[#ebf6ff] rounded-sm text-[#40BFFF] hover:bg-[#40BFFF] hover:text-[#fff] flex flex-row gap-2 items-center">
-                <Heart />
+
+              {/* Nút thêm vào wishlist */}
+              <button
+                onClick={() => handleAddToWishlist(product.id)}
+                className="btn bg-[#ebf6ff] rounded-sm text-[#40BFFF] hover:bg-[#40BFFF] hover:text-[#fff] flex flex-row gap-2 items-center"
+              >
+                <Heart /> Add to wishlist
               </button>
             </div>
           </div>
         </div>
       </div>
-
       {showModal && (
         <div className="fixed inset-0 z-50 bg-gray-800 bg-opacity-50 flex items-center justify-center">
           <div className="modal modal-open">
@@ -182,7 +193,7 @@ const ProductCardList = ({ product }: any) => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => addCart(product)}
+                  onClick={() => handleCheckAdd(product)}
                   className="btn bg-blue-500 text-white hover:bg-blue-600"
                   disabled={!selectedSize || !selectedColor}
                 >

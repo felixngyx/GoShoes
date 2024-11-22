@@ -45,7 +45,12 @@ import PrivateRoute from './components/common/PrivateRoute';
 import AdminRoute from './components/common/AdminRoute';
 import AboutPage from './pages/Client/about';
 import CreateDiscount from './pages/Admin/discounts/create';
+import Wishlist from './pages/Client/User/WhishList';
 import UpdateDiscount from './pages/Admin/discounts/update';
+import RefundRequest from './pages/Admin/orders/refundrequest';
+import DetailRefund from './pages/Admin/orders/detailRefund';
+import BrandPage from './pages/Client/Brand';
+import CategoryPage from './pages/Client/Category';
 
 function App() {
 	const { pathname } = useLocation();
@@ -90,12 +95,14 @@ function App() {
 						<Route path="my-order" element={<Order />} />
 						<Route path="my-order/:id" element={<OrderDetail />} />
 						<Route path="my-address" element={<Address />} />
+						<Route path="whish-list" element={<Wishlist />} />
 					</Route>
-					<Route path="/about" element={<AboutPage />} />
-					<Route path="/contact-us" element={<ContactUs />} />
+					<Route path="/about-us" element={<AboutPage />} />
+					<Route path="/brand" element={<BrandPage />} />
+					<Route path="/category" element={<CategoryPage />} />
+					<Route path="/contact" element={<ContactUs />} />
 					<Route path="/reset-password" element={<ResetPassword />} />
 					<Route path="/forget-password" element={<ForgetPassword />} />
-					<Route path="*" element={<NotfoundPage />} />
 				</Route>
 				<Route path="/signin" element={<SignIn />} />
 				<Route path="/signup" element={<SignUp />} />
@@ -120,9 +127,15 @@ function App() {
 					<Route path="product" element={<Product />} />
 					<Route path="attribute" element={<Attribute />} />
 					<Route path="product/create" element={<AddProduct />} />
+					<Route
+						path="product/update/:id"
+						element={<UpdateProduct />}
+					></Route>
 					<Route path="orders">
 						<Route index element={<OrderDashboard />} />
 						<Route path="detail/:id" element={<DetailOrder />} />
+						<Route path="refund-request" element={<RefundRequest />} />
+						<Route path="refund-request/:id" element={<DetailRefund />} />
 					</Route>
 					<Route path="discounts">
 						<Route index element={<DiscountPage />}></Route>
@@ -223,6 +236,7 @@ function App() {
 					/>
 				</Route>
 				<Route path="admin/signin" element={<SignInAdmin />} />
+				<Route path="*" element={<NotfoundPage />} />
 			</Routes>
 			<Toaster position="top-right" reverseOrder={false} />
 			{!isAdminPage && <ChatUI />}

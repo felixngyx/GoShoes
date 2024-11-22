@@ -24,11 +24,31 @@ class RefundController extends Controller
     }
     public function index()
     {
-        $refundRequests = RefundRequest::where('user_id', auth()->id())->get();
+        $refundRequests = RefundRequest::orderBy('id', 'desc')->get();
 
         return response()->json([
             'status' => true,
             'refund_requests' => $refundRequests
+        ]);
+    }
+
+
+    public function viewDetailRefundRequest($id)
+    {
+        $refundRequest = RefundRequest::with(['order' => function ($query) {
+            $query->with(['items.product', 'items.variant', 'payment', 'user']);
+        }])->find($id);
+
+        if (!$refundRequest) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Yêu cầu hoàn tiền không tồn tại'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'refund_request' => $refundRequest
         ]);
     }
 
@@ -100,60 +120,78 @@ class RefundController extends Controller
         }
     }
 
-    public function approve($id)
+    public function approve(Request $request)
     {
         try {
-           
             DB::beginTransaction();
-            $order = Order::where('id', $id)->first();
 
-            if (!$order) {
+            // Tìm yêu cầu hoàn tiền
+            $refundRequest = RefundRequest::find($request->id);
+            if (!$refundRequest) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Order is not found'
+                    'message' => 'Không tìm thấy yêu cầu hoàn tiền'
                 ], 404);
             }
 
-            // Access the payment relationship correctly
-            $orderPayment = $order->payment;
-            $apptransid = $orderPayment->app_trans_id;
-
-            // Fix the payment method comparison
-            if ($order->payment_method != 1) {
-                $order->update([
-                    'status' => 'refunded'
-                ]);
+            // Tìm đơn hàng
+            $order = Order::find($refundRequest->order_id);
+            if (!$order) {
                 return response()->json([
-                    'status'=> true,
-                    'message'=> 'Order refunded successfully'
-                ]) ;
+                    'status' => false,
+                    'message' => 'Không tìm thấy đơn hàng'
+                ], 404);
             }
-            $refund = $this->zaloPaymentController->refund($order->id ,$apptransid, $order->total);
 
-            if( $refund->json_decode('status') == 'success'){
-                $order->update([
-                    'status' => 'refunded'
-                ]);
+            // Lấy thông tin thanh toán
+            $orderPayment = $order->payment;
+            if (!$orderPayment) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Không tìm thấy thông tin thanh toán'
+                ], 404);
+            }
+            // Nếu không phải thanh toán qua ZaloPay (giả sử payment_method_id = 1 là ZaloPay)
+            if ($order->payment->method_id != 1) {
+                $order->update(['status' => 'refunded']);
+                $refundRequest->update(['status' => 'approved']);
+
                 DB::commit();
                 return response()->json([
-                    'status'=> true,
-                    'message'=> 'Order refunded successfully'
-                ]) ;
+                    'status' => true,
+                    'message' => 'Đã phê duyệt hoàn tiền thành công'
+                ]);
             }
-            
 
-            DB::commit();
+            // Xử lý hoàn tiền qua ZaloPay
+            $refundResult = $this->zaloPaymentController->refund(
+                $order->sku,
+                $orderPayment->app_trans_id,
+                (int)$order->total
+            );
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Order refunded successfully'
-            ], 200);
+            \Log::info('ZaloPay Refund Result:', [
+                'result' => $refundResult
+            ]);
+
+            if ($refundResult['return_code'] == 1) {
+                $order->update(['status' => 'refunded']);
+                $refundRequest->update(['status' => 'approved']);
+
+                DB::commit();
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Đã phê duyệt và hoàn tiền thành công'
+                ], 200);
+            } else {
+                throw new \Exception('Hoàn tiền thất bại: ' . ($refundResult['return_message'] ?? 'Unknown error'));
+            }
 
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => false,
-                'message' => 'Error processing refund: ' . $e->getMessage()
+                'message' => 'Lỗi khi xử lý hoàn tiền: ' . $e->getMessage()
             ], 500);
         }
     }

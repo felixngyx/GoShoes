@@ -5,7 +5,6 @@ use App\Services\ServiceInterfaces\Token\TokenServiceInterface as TokenService;
 use App\Services\ServiceInterfaces\Auth\AuthServiceInterface;
 use App\Services\ServiceInterfaces\User\UserServiceInterface as UserService;
 use App\Services\ServiceInterfaces\Verify\VerifyServiceInterface as VerifyService;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -125,8 +124,8 @@ class AuthService implements AuthServiceInterface
         DB::beginTransaction();
         try {
             $user =  $this->userService->create($request);
-            DB::commit();
             $verificationLink = (self::getVerifyService()->generateLinkVerification($user, 'register'));
+            DB::commit();
             Mail::to($user->email)->send(new \App\Mail\RegisterMail($verificationLink));
             return response()->json([
                 'success' => true,
@@ -135,7 +134,8 @@ class AuthService implements AuthServiceInterface
                     'user' => $user->name,
                     'email' => $user->email,
                     'email_is_verified' => (bool)$user->email_verified_at,
-                    'is_admin' => $user->is_admin
+                    'is_admin' => $user->is_admin,
+                    'verification_link' => $verificationLink
                 ]
             ], 201);
         } catch (\Exception $e) {
@@ -194,6 +194,44 @@ class AuthService implements AuthServiceInterface
         }
     }
 
+    public function sendEmailVerifyService() : \Illuminate\Http\JsonResponse
+    {
+        $user = JWTAuth::parsetoken()->authenticate();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        if ($user->email_verified_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email already verified'
+            ], 403);
+        }
+        DB::beginTransaction();
+        try {
+            $verificationLink = self::getVerifyService()->generateLinkVerification($user, 'register');
+            Mail::to($user->email)->send(new \App\Mail\RegisterMail($verificationLink));
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => 'Verification link sent to your email',
+                'data' => [
+                    'email' => $user->email,
+                    'verification_link' => $verificationLink
+                ]
+            ], 200);
+        }catch (\Exception $e){
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
     public function resetPasswordService(array $request) : \Illuminate\Http\JsonResponse
     {
         DB::beginTransaction();
@@ -205,6 +243,13 @@ class AuthService implements AuthServiceInterface
                 return response()->json([
                     'success' => false,
                     'message' => 'Token is expired'
+                ], 400);
+            }
+
+            if ($decrypted->type !== 'reset-password') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid token'
                 ], 400);
             }
 
@@ -228,8 +273,16 @@ class AuthService implements AuthServiceInterface
                 ], 403);
             }
 
-            $changePasswordHistoryIsUsed = self::getTokenService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
-            if ($changePasswordHistoryIsUsed){
+            $tokenIsUsed = self::getTokenService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted['user_id']);
+
+            if (!$tokenIsUsed) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token not found'
+                ], 404);
+            }
+
+            if ($tokenIsUsed->is_used){
                 return response()->json([
                     'success'=> false,
                     'message'=>'Token is already used'
@@ -250,7 +303,7 @@ class AuthService implements AuthServiceInterface
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], $e->getCode());
+            ]);
         }
     }
     public function registerVerifyService(array $request) : \Illuminate\Http\JsonResponse
@@ -294,16 +347,24 @@ class AuthService implements AuthServiceInterface
                 ], 403);
             }
 
-            $changePasswordHistoryIsUsed = self::getTokenService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
-            if ($changePasswordHistoryIsUsed){
+            $tokenIsUsed = self::getTokenService()->findDetailToken($request['token'], $decrypted->user_id);
+
+            if (!$tokenIsUsed) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token not found'
+                ], 404);
+            }
+
+            if ($tokenIsUsed->is_used){
                 return response()->json([
                     'success'=> false,
                     'message'=>'Token is already used'
                 ], 403);
             }
 
-            //update token is used
-            self::getTokenService()->update(['is_used' => true], $user->id);
+            // Update token is_used
+            self::getTokenService()->update(['is_used' => true], $tokenIsUsed->id);
             // Update email_verified_at
             $this->userService->update(['email_verified_at' => now()], $user->id);
             DB::commit();
@@ -317,7 +378,7 @@ class AuthService implements AuthServiceInterface
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], $e->getCode());
+            ], 500);
         }
     }
 

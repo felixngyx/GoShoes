@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { joiResolver } from '@hookform/resolvers/joi';
 import Joi from 'joi';
 import toast from 'react-hot-toast';
+import LoadingIcon from '../../../components/common/LoadingIcon';
 
 // Update schema validation
 const schema = Joi.object({
@@ -35,8 +36,11 @@ const Brand = () => {
 		total: 0,
 	});
 
+	const [loading, setLoading] = useState<boolean>(false);
+
 	const fetchBrands = async () => {
 		try {
+			setLoading(true);
 			const res = await brandService.getAll(
 				pagination.page,
 				Number(pagination.limit) // Ensure limit is a number
@@ -49,6 +53,8 @@ const Brand = () => {
 			});
 		} catch (error) {
 			console.log(error);
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -293,7 +299,7 @@ const Brand = () => {
 				</div>
 			</div>
 
-			<div className="relative overflow-x-auto border border-stroke">
+			<div className="relative overflow-x-auto border border-stroke h-full">
 				<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 					<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
 						<tr>
@@ -322,51 +328,67 @@ const Brand = () => {
 							</th>
 						</tr>
 					</thead>
-					<tbody>
-						{brands.map((brand, key) => (
-							<tr
-								className={`bg-white dark:bg-slate-800 ${
-									key !== brands.length - 1
-										? 'border-b border-stroke'
-										: ''
-								}`}
-								key={key}
-							>
-								<td className="w-4 p-4">
-									<div className="flex items-center">
-										<input
-											id={`checkbox-table-search-${key}`}
-											type="checkbox"
-											className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-											checked={selectedItems.includes(key)}
-											onChange={() => handleSelectItem(key)}
+					{loading ? (
+						<tbody>
+							<tr>
+								<td colSpan={3} className="h-24">
+									<div className="flex items-center justify-center h-full">
+										<LoadingIcon
+											type="spinner"
+											size="lg"
+											color="info"
 										/>
-										<label
-											htmlFor={`checkbox-table-search-${key}`}
-											className="sr-only"
-										>
-											checkbox
-										</label>
 									</div>
 								</td>
-								<td className="px-6 py-3">{brand.name}</td>
-								<td className="px-6 py-3 flex items-center gap-2">
-									<button
-										className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
-										onClick={() => openEditModal(brand)}
-									>
-										<PencilLine size={16} />
-									</button>
-									<button
-										className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error"
-										onClick={() => deleteBrand(brand.id!)}
-									>
-										<Trash2 size={16} />
-									</button>
-								</td>
 							</tr>
-						))}
-					</tbody>
+						</tbody>
+					) : (
+						<tbody>
+							{brands.map((brand, key) => (
+								<tr
+									className={`bg-white dark:bg-slate-800 ${
+										key !== brands.length - 1
+											? 'border-b border-stroke'
+											: ''
+									}`}
+									key={key}
+								>
+									<td className="w-4 p-4">
+										<div className="flex items-center">
+											<input
+												id={`checkbox-table-search-${key}`}
+												type="checkbox"
+												className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+												checked={selectedItems.includes(key)}
+												onChange={() => handleSelectItem(key)}
+											/>
+											<label
+												htmlFor={`checkbox-table-search-${key}`}
+												className="sr-only"
+											>
+												checkbox
+											</label>
+										</div>
+									</td>
+									<td className="px-6 py-3">{brand.name}</td>
+									<td className="px-6 py-3 flex items-center gap-2">
+										<button
+											className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+											onClick={() => openEditModal(brand)}
+										>
+											<PencilLine size={16} />
+										</button>
+										<button
+											className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error"
+											onClick={() => deleteBrand(brand.id!)}
+										>
+											<Trash2 size={16} />
+										</button>
+									</td>
+								</tr>
+							))}
+						</tbody>
+					)}
 				</table>
 			</div>
 

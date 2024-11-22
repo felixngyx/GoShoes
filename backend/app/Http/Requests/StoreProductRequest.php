@@ -14,7 +14,7 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:products,name', // Thêm unique
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
             'stock_quantity' => 'required|integer|min:1',
@@ -26,11 +26,11 @@ class StoreProductRequest extends FormRequest
             'category_ids' => 'required|array',
             'category_ids.*' => 'exists:categories,id',
             'variants' => 'nullable|array', // Thay đổi thành nullable
-            'variants.*.color' => 'required_with:variants|string|max:255',
-            'variants.*.link_image' => 'required_with:variants|string|max:255',
+            'variants.*.color_id' => 'required_with:variants|exists:variant_colors,id',
+            // 'variants.*.link_image' => 'required_with:variants|string|max:255',
             'variants.*.size_id' => 'required_with:variants|exists:variant_sizes,id',
             'variants.*.quantity' => 'required_with:variants|integer|min:1',
-            'variants.*.image_variant' => 'required_with:variants|string|max:255',
+            // 'variants.*.image_variant' => 'required_with:variants|string|max:255',
             'images' => 'sometimes|array',
             'images.*' => 'required|string|max:255',
             'brand_id' => 'required|exists:brands,id',
@@ -41,6 +41,8 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'name.required' => 'Tên sản phẩm không được bỏ trống',
+            'name.unique' => 'Tên sản phẩm đã tồn tại',
+
             'name.string' => 'Tên sản phẩm phải là một chuỗi',
             'name.max' => 'Tên sản phẩm không được quá 255 ký tự',
             'description.required' => 'Mô tả sản phẩm không được bỏ trống',
@@ -68,16 +70,19 @@ class StoreProductRequest extends FormRequest
             'category_ids.array' => 'Danh mục sản phẩm phải là một mảng',
             'category_ids.*.exists' => 'Danh mục đã chọn không hợp lệ',
             'variants.array' => 'Biến thể sản phẩm phải là một mảng',
-            'variants.*.color.required_with' => 'Màu sản phẩm không được bỏ trống khi có biến thể',
-            'variants.*.color.string' => 'Màu sản phẩm phải là một chuỗi',
+
+            'variants.*.color_id.required_with' => 'Màu sắc sản phẩm không được bỏ trống khi có biến thể',
+            'variants.*.color_id.exists' => 'Màu sắc sản phẩm phải là một không ID  hợp lệ',
+
             'variants.*.size_id.required_with' => 'Kích thước sản phẩm không được bỏ trống khi có biến thể',
-            'variants.*.size_id.exists' => 'Kích thước sản phẩm phải là một ID hợp lệ',
+            'variants.*.size_id.exists' => 'Kích thước sản phẩm phải là một không ID hợp lệ',
+
             'variants.*.quantity.required_with' => 'Số lượng sản phẩm không được bỏ trống khi có biến thể',
             'variants.*.quantity.integer' => 'Số lượng sản phẩm phải là một số nguyên',
             'variants.*.quantity.min' => 'Số lượng sản phẩm phải lớn hơn 0',
-            'variants.*.image_variant.required_with' => 'Ảnh biến thể không được bỏ trống khi có biến thể',
-            'variants.*.image_variant.string' => 'Ảnh biến thể phải là một chuỗi',
-            'variants.*.image_variant.max' => 'Ảnh biến thể không được quá 255 ký tự',
+            // 'variants.*.image_variant.required_with' => 'Ảnh biến thể không được bỏ trống khi có biến thể',
+            // 'variants.*.image_variant.string' => 'Ảnh biến thể phải là một chuỗi',
+            // 'variants.*.image_variant.max' => 'Ảnh biến thể không được quá 255 ký tự',
             'images.array' => 'Ảnh phụ phải là một mảng',
             'images.*.required' => 'Ảnh phụ không được bỏ trống',
             'images.*.string' => 'Ảnh phụ phải là một chuỗi',

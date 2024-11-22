@@ -53,18 +53,32 @@ class ProductRepository implements ProductRepositoryInterface
             'stock_quantity' => $product->stock_quantity,
             'sku' => $product->sku,
             'hagtag' => $product->hagtag,
-            'brand' => $product->brand->name,
+            'brand_id' => $product->brand_id,
+            // 'brand' => $product->brand->name,
             'rating_count' => $product->rating_count,
             'status' => $product->status,
             'thumbnail' => $product->thumbnail,
-            'images' => $product->images->pluck('id','image_path')->toArray(),
-            'categories' => $product->categories->pluck('name')->toArray(),
+            'images' => $product->images->map(function ($image) {
+                return [
+                    'id' => $image->id,
+                    'image_path' => $image->image_path
+                ];
+            }),
+            'category_ids' => $product->categories->pluck('id')->toArray(),
+            // 'categories' => $product->categories->map(function ($category) {
+            //     return [
+            //         'id' => $category->id,
+            //         'name' => $category->name
+            //     ];
+            // }),
             'variants' => $product->variants->map(function ($variant) {
                 return [
-                    'size' => (int) $variant->size->size,
-                    'color' => $variant->color->color,
+                    'size_id' => $variant->size_id,
+                    'color_id' => $variant->color_id,
+                    // 'size' => (int) $variant->size->size,
+                    // 'color' => $variant->color->color,
                     'quantity' => $variant->quantity,
-                    'image_variant' => $variant->image_variant
+                    // 'image_variant' => $variant->image_variant
                 ];
             })->toArray()
         ];
@@ -94,7 +108,7 @@ class ProductRepository implements ProductRepositoryInterface
                             'size' => (int) $variant->size->size,
                             'color' => $variant->color->color,
                             'quantity' => $variant->quantity,
-                            'image_variant' => $variant->image_variant
+                            // 'image_variant' => $variant->image_variant
                         ];
                     })->toArray()
                 ];
@@ -119,10 +133,10 @@ class ProductRepository implements ProductRepositoryInterface
             ->where('id', '!=', $product->id)
             ->where('is_deleted', false)
             ->limit(8)
-            
+
             ->get();
 
-        
+
         return [
             'product' => $product,
             'relatedProducts' => $relatedProducts
@@ -140,7 +154,7 @@ class ProductRepository implements ProductRepositoryInterface
     }
 
     public function find($id)
-    { 
+    {
         return Product::where('is_deleted', false)->findOrFail($id);
     }
     public function checkStockProductVariant($id)
@@ -162,8 +176,8 @@ class ProductRepository implements ProductRepositoryInterface
         //     ];
         // });
         // $brandName = $product->brand ? $product->brand->name : null;
-        
-        // $categoryNames = $product->categories->pluck('name')->toArray(); 
+
+        // $categoryNames = $product->categories->pluck('name')->toArray();
    // 'variantDetails' => $variantDetails,
             // 'brandName' => $brandName,
             // 'categoryNames' => $categoryNames, // Lấy tên danh mục sản phẩm

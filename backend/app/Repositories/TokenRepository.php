@@ -16,7 +16,12 @@ class TokenRepository extends BaseRepository implements TokenRepositoryInterface
 
     public function findByTokenAndUserIdIsUsed(string $token, int $userId)
     {
-        return $this->model->where('token_reset', $token)->where('user_id', $userId)->where('is_used', true)->first();
+        return $this->model->where('token', $token)->where('user_id', $userId)->where('is_used', true)->first();
+    }
+
+    public function findDetailToken(string $token, int $userId)
+    {
+        return $this->model->where('token', $token)->where('user_id', $userId)->first();
     }
 
 }

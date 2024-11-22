@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -41,8 +42,28 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        $this->renderable(function (UnauthorizedHttpException $e, $request) {
+            if ($e->getPrevious() instanceof \Tymon\JWTAuth\Exceptions\TokenExpiredException) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Token has expired'
+                ], 401);
+            } else if ($e->getPrevious() instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Invalid token'
+                ], 401);
+            } else if ($e->getPrevious() instanceof \Tymon\JWTAuth\Exceptions\TokenBlacklistedException) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Token has been blacklisted'
+                ], 401);
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized access'
+            ], 401);
         });
     }
 
@@ -53,9 +74,28 @@ class Handler extends ExceptionHandler
     public function render($request, Throwable $e)
     {
         if ($request->expectsJson()) {
+            // Xử lý các lỗi authentication/authorization
+            if ($e instanceof \Illuminate\Auth\AuthenticationException ||
+                $e instanceof UnauthorizedHttpException) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthorized',
+                ], 401);
+            }
+
+            // Xử lý các lỗi validation
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            // Các lỗi khác
             return response()->json([
+                'status' => 'error',
                 'message' => $e->getMessage(),
-            ], 422);
+            ], 500);
         }
 
         return parent::render($request, $e);

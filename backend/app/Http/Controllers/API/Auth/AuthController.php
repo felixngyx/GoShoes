@@ -75,6 +75,11 @@ class AuthController extends Controller
         return $this->authService->registerVerifyService($request->all());
     }
 
+    public function sendEmailVerifyController()
+    {
+        return $this->authService->sendEmailVerifyService();
+    }
+
     public function refreshTokenController(Request $request): \Illuminate\Http\JsonResponse
     {
         return $this->authService->refreshTokenService($request->all());

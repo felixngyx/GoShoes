@@ -254,13 +254,13 @@ const CheckoutPage = () => {
         if (finalAmount > 0) {
           window.location.href = response.data.payment_url;
         } else {
-          navigate("/account/orders", {
+          navigate("/account/my-order", {
             replace: true,
             state: { message: "Order placed successfully!" },
           });
         }
       } else {
-        navigate("/account/orders", {
+        navigate("/account/my-order", {
           replace: true,
           state: { message: "Order placed successfully!" },
         });
