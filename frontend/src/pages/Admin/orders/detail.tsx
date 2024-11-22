@@ -727,7 +727,6 @@ const OrderDetails = () => {
 					>
 						<div className="flex justify-between items-center mb-2">
 							<h3 className="font-semibold">{card.title}</h3>
-							<Button size="small">Edit</Button>
 						</div>
 						<div className="text-sm space-y-2">
 							{Array.isArray(card.content) &&
@@ -751,7 +750,6 @@ const OrderDetails = () => {
 			<div className="bg-white p-4 rounded-lg shadow bg-white/80 dark:bg-gray-800/80">
 				<div className="flex justify-between items-center mb-4">
 					<h3 className="font-semibold">Products</h3>
-					<Button size="small">Edit</Button>
 				</div>
 				<div className="overflow-x-auto">
 					<table className="min-w-full">
