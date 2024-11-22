@@ -1,8 +1,7 @@
 import Slider from "@mui/material/Slider";
 import { useQuery } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
-import { BsGrid3X3GapFill } from "react-icons/bs";
-import { FaListUl } from "react-icons/fa";
+import { FaBars, FaTh } from "react-icons/fa";
 import Banner from "../../../components/client/Banner";
 import Breadcrumb from "../../../components/client/Breadcrumb";
 import { filterProduct } from "../../../services/client/filterPrice";
@@ -35,16 +34,18 @@ const ProductList = () => {
     refetchOnMount: true,
   });
 
+  const parsePrice = (price: string) => {
+    return parseFloat(price.replace(/\./g, "").replace(",", "."));
+  };
+
   const filteredProducts = useMemo(() => {
     let filteredData = [...(products || [])];
 
     // Lọc theo giá
-    filteredData = filteredData.filter(
-      (product) =>
-        product.promotional_price >= priceRange[0] &&
-        product.promotional_price <= priceRange[1]
-    );
-
+    filteredData = filteredData.filter((product: any) => {
+      const productPrice = parsePrice(product.promotional_price);
+      return productPrice >= priceRange[0] && productPrice <= priceRange[1];
+    });
     // Sắp xếp theo tên
     if (sortByName) {
       filteredData.sort((a, b) =>
@@ -56,11 +57,12 @@ const ProductList = () => {
 
     // Sắp xếp theo giá
     if (sortByPrice) {
-      filteredData.sort((a, b) =>
-        sortByPrice === "asc"
-          ? a.promotional_price - b.promotional_price
-          : b.promotional_price - a.promotional_price
-      );
+      filteredData.sort((a: any, b: any) => {
+        const priceA = parsePrice(a.promotional_price);
+        const priceB = parsePrice(b.promotional_price);
+
+        return sortByPrice === "asc" ? priceA - priceB : priceB - priceA;
+      });
     }
 
     // Sắp xếp theo rating
@@ -77,7 +79,7 @@ const ProductList = () => {
 
   useEffect(() => {
     refetch();
-  }, [sortByName, sortByPrice, sortByRating]);
+  }, [sortByName, priceRange, sortByPrice, sortByRating]);
 
   const formatPrice = (price: number) => {
     if (price < 1000000) return (price / 1000).toFixed(0) + " K";
@@ -89,6 +91,17 @@ const ProductList = () => {
       setPriceRange(newValue as [number, number]);
     }
   };
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      setIsLoading(false);
+    };
+
+    loadData();
+  }, [priceRange, products]);
 
   const handlePriceChangeCommitted = () => {
     refetch();
@@ -208,12 +221,11 @@ const ProductList = () => {
           <Banner />
 
           {/* Filter */}
-          <div className="flex flex-wrap gap-5 bg-[#F6F7F8] px-5 py-2 items-center justify-start">
+          <div className="flex gap-3">
             <div className="flex items-center gap-2">
-              <p className="text-lg">Sort By</p>
-
+              <span>{filteredProducts.length} Items</span>
               <select
-                className="select select-bordered select-sm w-fit"
+                className="select select-bordered bg-white text-gray-800"
                 onChange={(e) => {
                   const [type, order] = e.target.value.split("-");
                   if (type === "name") {
@@ -225,7 +237,9 @@ const ProductList = () => {
                   }
                 }}
               >
-                <option value="">Sort By</option>
+                <option disabled value="">
+                  Sort By
+                </option>
                 <option value="name-asc">Name A-Z</option>
                 <option value="name-desc">Name Z-A</option>
                 <option value="price-asc">Price Low to High</option>
@@ -236,37 +250,31 @@ const ProductList = () => {
             </div>
 
             {/* Show Select */}
-            <div className="flex items-center gap-2">
-              <p className="text-lg">Show</p>
+            <div>
               <select
-                className="select select-bordered select-sm w-fit"
+                className="select select-bordered bg-white text-gray-800"
+                value={showCount}
                 onChange={handleShowCountChange}
               >
-                <option defaultValue={9}>9</option>
-                <option>12</option>
-                <option>15</option>
+                <option value={12}>Show 12</option>
+                <option value={24}>Show 24</option>
+                <option value={36}>Show 36</option>
               </select>
             </div>
 
             {/* Layout Buttons */}
-            <div className="ml-auto flex gap-3">
+            <div className=" items-center space-x-2 ml-auto">
               <button
-                className="btn btn-sm btn-outline flex justify-center content-center"
+                className="btn btn-square bg-[#40BFFF] text-white"
                 onClick={() => setLayout("grid")}
               >
-                <BsGrid3X3GapFill
-                  size={20}
-                  color={layout === "grid" ? "#40BFFF" : "#C1C8CE"}
-                />
+                <FaTh />
               </button>
               <button
-                className="btn btn-sm btn-outline flex justify-center content-center"
+                className="btn btn-square bg-white text-gray-800 border border-gray-300"
                 onClick={() => setLayout("list")}
               >
-                <FaListUl
-                  size={20}
-                  color={layout === "list" ? "#40BFFF" : "#C1C8CE"}
-                />
+                <FaBars />
               </button>
             </div>
           </div>
@@ -277,8 +285,7 @@ const ProductList = () => {
               layout === "grid" ? "grid-cols-3" : "grid-cols-1"
             } gap-5`}
           >
-            {products === undefined ? (
-              // Hiển thị skeleton loading khi đang tải dữ liệu
+            {isLoading ? (
               <>
                 {Array(9)
                   .fill(null)
@@ -298,7 +305,7 @@ const ProductList = () => {
                     )
                   )}
               </>
-            ) : products.length > 0 ? (
+            ) : filteredProducts.length > 0 ? (
               // Hiển thị danh sách sản phẩm nếu có
               filteredProducts.map((product) =>
                 layout === "grid" ? (
@@ -317,9 +324,54 @@ const ProductList = () => {
               )
             ) : (
               // Hiển thị thông báo khi không có sản phẩm nào
-              <p className="text-center text-gray-500">
-                Không có sản phẩm nào phù hợp.
-              </p>
+              <div
+                className={`grid ${
+                  layout === "grid" ? "grid-cols-3" : "grid-cols-1"
+                } gap-5`}
+              >
+                {isLoading ? (
+                  // Hiển thị skeleton loading khi đang tải hoặc lọc
+
+                  <>
+                    {Array(9)
+                      .fill(null)
+                      .map((_, index) =>
+                        layout === "grid" ? (
+                          <ProductItems
+                            key={index}
+                            product={null}
+                            isLoading={true}
+                          />
+                        ) : (
+                          <ProductCardList
+                            key={index}
+                            product={null}
+                            isLoading={true}
+                          />
+                        )
+                      )}
+                  </>
+                ) : filteredProducts.length > 0 ? (
+                  // Hiển thị danh sách sản phẩm nếu có
+                  filteredProducts.map((product) =>
+                    layout === "grid" ? (
+                      <ProductItems
+                        key={product.id}
+                        product={product}
+                        isLoading={false}
+                      />
+                    ) : (
+                      <ProductCardList
+                        key={product.id}
+                        product={product}
+                        isLoading={false}
+                      />
+                    )
+                  )
+                ) : (
+                  <span className="loading loading-dots loading-sm"></span>
+                )}
+              </div>
             )}
           </div>
 
