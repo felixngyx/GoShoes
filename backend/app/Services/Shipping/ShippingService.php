@@ -77,7 +77,6 @@ class ShippingService implements ShippingServiceInterface
         ];
         DB::beginTransaction();
         try {
-
             if ($data['is_default']) {
                 $checkDefault = self::checkDefaultExits();
                 if ($checkDefault->count() > 0) {
@@ -87,10 +86,6 @@ class ShippingService implements ShippingServiceInterface
                         ]);
                     }
                 }
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This shipping is in order but you want to set default',
-                ], 200);
             }
 
             $result = self::getShippingRepository()->create($data);
@@ -124,7 +119,6 @@ class ShippingService implements ShippingServiceInterface
             'is_default' => $request['is_default'] ?? false,
         ];
 
-        $shipping = self::getShippingRepository()->getRecordByUserIdAndId($user->id, $request['shipping']);
         DB::beginTransaction();
         try {
 
