@@ -1,8 +1,7 @@
 import Slider from "@mui/material/Slider";
 import { useQuery } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
-import { BsGrid3X3GapFill } from "react-icons/bs";
-import { FaBars, FaListUl, FaTh } from "react-icons/fa";
+import { FaBars, FaTh } from "react-icons/fa";
 import Banner from "../../../components/client/Banner";
 import Breadcrumb from "../../../components/client/Breadcrumb";
 import { filterProduct } from "../../../services/client/filterPrice";
@@ -35,8 +34,9 @@ const ProductList = () => {
     refetchOnMount: true,
   });
 
-  const parsePrice = (price: string) =>
-    parseFloat(price.replace(/\./g, "").replace(",", "."));
+  const parsePrice = (price: string) => {
+    return parseFloat(price.replace(/\./g, "").replace(",", "."));
+  };
 
   const filteredProducts = useMemo(() => {
     let filteredData = [...(products || [])];
@@ -57,11 +57,12 @@ const ProductList = () => {
 
     // Sắp xếp theo giá
     if (sortByPrice) {
-      filteredData.sort((a, b) =>
-        sortByPrice === "asc"
-          ? a.promotional_price - b.promotional_price
-          : b.promotional_price - a.promotional_price
-      );
+      filteredData.sort((a: any, b: any) => {
+        const priceA = parsePrice(a.promotional_price);
+        const priceB = parsePrice(b.promotional_price);
+
+        return sortByPrice === "asc" ? priceA - priceB : priceB - priceA;
+      });
     }
 
     // Sắp xếp theo rating

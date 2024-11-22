@@ -124,11 +124,13 @@ const BrandPage: React.FC = () => {
               className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow"
             >
               <figure className="px-10 pt-10">
-                <img
-                  src={brand.logo_url}
-                  alt={brand.name}
-                  className="rounded-xl"
-                />
+                <div className="w-full h-32 flex justify-center items-center">
+                  <img
+                    src={brand.logo_url}
+                    alt={brand.name}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
               </figure>
               <div className="card-body items-center text-center">
                 <h2 className="card-title">{brand.name}</h2>

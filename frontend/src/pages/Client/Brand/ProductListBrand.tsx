@@ -61,13 +61,22 @@ const ProductListBrand = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Brand List - New Section */}
-      <div className="mb-10">
+      <div className="mb-10 ">
         <h2 className="text-2xl font-semibold text-gray-700 mb-5">Brand</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {brands.map((item: any) => (
             <Link to={`/brand/${item.id}`} key={item.id}>
-              <div className="card shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer bg-white rounded-lg text-center py-4">
-                <p className="text-lg font-medium text-gray-800">{item.name}</p>
+              <div className="card relative shadow-md hover:shadow-lg transition-transform duration-300 cursor-pointer bg-blue-500 rounded-lg text-center py-4 group hover:scale-105">
+                {/* Nội dung */}
+                <p className="relative z-10 text-lg font-bold text-white group-hover:text-gray-100 transition-colors duration-300">
+                  {item.name}
+                </p>
+
+                {/* Gradient nền */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-blue-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg z-0"></div>
+
+                {/* Viền hover */}
+                <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-600 rounded-lg transition-all duration-300 z-10"></div>
               </div>
             </Link>
           ))}
