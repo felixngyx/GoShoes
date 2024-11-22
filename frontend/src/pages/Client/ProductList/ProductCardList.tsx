@@ -79,9 +79,10 @@ const ProductCardList = ({
   const handleCheckAdd = () => {
     if (!accessToken) {
       setModalCheckLogin(true);
+      setShowModal(false);
+
       return;
     }
-    setModalCheckLogin(true);
     setShowModal(true);
   };
   if (isLoading) {
