@@ -6,6 +6,7 @@ import useCart from "../../../hooks/client/useCart";
 import Cookies from "js-cookie";
 import { useState } from "react";
 import { formatVNCurrency } from "../../../common/formatVNCurrency";
+import useWishlist from "../../../hooks/client/useWhishList";
 
 const ProductItemSkeleton = () => {
   return (
@@ -50,6 +51,7 @@ const ProductItems = ({
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const { handleAddToCart } = useCart();
+  const { handleAddToWishlist } = useWishlist();
 
   if (isLoading) {
     return <ProductItemSkeleton />;
@@ -123,6 +125,7 @@ const ProductItems = ({
           />
           <div className="absolute hidden group-hover:flex w-full h-full top-0 left-0 bg-opacity-70 bg-gray-50 justify-center items-center gap-8 z-10">
             <IoHeartOutline
+              onClick={() => handleAddToWishlist(product.id)}
               className="cursor-pointer p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
               size={52}
               color="#40BFFF"

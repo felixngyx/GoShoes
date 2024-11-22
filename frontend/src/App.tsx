@@ -52,6 +52,7 @@ import DetailRefund from "./pages/Admin/orders/detailRefund";
 import BrandPage from "./pages/Client/Brand";
 import CategoryPage from "./pages/Client/Category";
 import ProductListBrand from "./pages/Client/Brand/ProductListBrand";
+import ProductListCate from "./pages/Client/Category/ProductListCate";
 
 function App() {
   const { pathname } = useLocation();
@@ -102,6 +103,7 @@ function App() {
           <Route path="/brand" element={<BrandPage />} />
           <Route path="/brand/:id" element={<ProductListBrand />} />
           <Route path="/category" element={<CategoryPage />} />
+          <Route path="/category/:id" element={<ProductListCate />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/forget-password" element={<ForgetPassword />} />
