@@ -72,6 +72,20 @@ class AuthService implements AuthServiceInterface
                 ], 404);
             }
 
+            if ($user->is_deleted) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User is deleted'
+                ], 403);
+            }
+
+            if (!$user->email_verified_at) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email not verified'
+                ], 403);
+            }
+
             // Set access token TTL to 30 minutes
             config(['jwt.ttl' => 30]);
             // Add token type "access" to the access token
@@ -124,8 +138,8 @@ class AuthService implements AuthServiceInterface
         DB::beginTransaction();
         try {
             $user =  $this->userService->create($request);
+            $verificationLink = self::getVerifyService()->generateLinkVerification($user, 'register');
             DB::commit();
-            $verificationLink = (self::getVerifyService()->generateLinkVerification($user, 'register'));
             Mail::to($user->email)->send(new \App\Mail\RegisterMail($verificationLink));
             return response()->json([
                 'success' => true,
@@ -134,8 +148,7 @@ class AuthService implements AuthServiceInterface
                     'user' => $user->name,
                     'email' => $user->email,
                     'email_is_verified' => (bool)$user->email_verified_at,
-                    'is_admin' => $user->is_admin,
-                    'verification_link' => $verificationLink
+                    'is_admin' => $user->is_admin
                 ]
             ], 201);
         } catch (\Exception $e) {
@@ -182,8 +195,7 @@ class AuthService implements AuthServiceInterface
                 'success' => true,
                 'message' => 'Reset password link sent to your email',
                 'data' => [
-                    'email' => $user->email,
-                    'verification_link' => $verificationLink
+                    'email' => $user->email
                 ]
             ], 200);
         } catch (\Exception $e) {
@@ -219,8 +231,7 @@ class AuthService implements AuthServiceInterface
                 'success' => true,
                 'message' => 'Verification link sent to your email',
                 'data' => [
-                    'email' => $user->email,
-                    'verification_link' => $verificationLink
+                    'email' => $user->email
                 ]
             ], 200);
         }catch (\Exception $e){

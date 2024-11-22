@@ -22,9 +22,6 @@ class ProductService
     public function storeProduct($validated)
     {
         try {
-            // Tạo SKU
-            // $sku = 'shope-' . 'T' . date('m') . rand(10, 99);
-
             // Chuẩn bị dữ liệu sản phẩm
             $productData = [
                 'name' => $validated['name'],
@@ -48,7 +45,7 @@ class ProductService
             // Xử lý variants nếu có
             if (isset($validated['variants']) && !empty($validated['variants'])) {
                 foreach ($validated['variants'] as $variantData) {
-                    // Tạo màu mới
+    
                     $color = VariantColor::find($variantData['color_id']);
                     $size = VariantSize::find($variantData['size_id']);
 
@@ -68,7 +65,7 @@ class ProductService
                     $variantToCreate = [
                         'color_id' => $variantData['color_id'], // Sử dụng color_id từ JSON
                         'product_id' => $product->id,
-                        'image_variant' => $variantData['image_variant'],
+                        // 'image_variant' => $variantData['image_variant'],
                         'size_id' => $variantData['size_id'],
                         'quantity' => $variantData['quantity']
                     ];
@@ -213,7 +210,7 @@ class ProductService
                         // Cập nhật variant hiện có
                         $variant->update([
                             'quantity' => $variantData['quantity'],
-                            'image_variant' => $variantData['image_variant'] ?? $variant->image_variant,
+                            // 'image_variant' => $variantData['image_variant'] ?? $variant->image_variant,
                         ]);
                         Log::info('Đã cập nhật variant', ['variant_id' => $variant->id]);
                     } else {
@@ -223,7 +220,7 @@ class ProductService
                             'color_id' => $variantData['color_id'],
                             'size_id' => $variantData['size_id'],
                             'quantity' => $variantData['quantity'],
-                            'image_variant' => $variantData['image_variant'] ?? null,
+                            // 'image_variant' => $variantData['image_variant'] ?? null,
                         ]);
                         Log::info('Đã tạo variant mới');
                     }

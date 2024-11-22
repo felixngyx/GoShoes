@@ -5,9 +5,10 @@ import { joiResolver } from '@hookform/resolvers/joi';
 import Joi from 'joi';
 import toast from 'react-hot-toast';
 import categoryService from '../../../services/admin/category';
+import LoadingIcon from '../../../components/common/LoadingIcon';
 
 type CATEGORY = {
-	id?: string;
+	id?: number;
 	name: string;
 };
 
@@ -37,6 +38,8 @@ const Category = () => {
 		total: 0,
 	});
 
+	const [loading, setLoading] = useState<boolean>(false);
+
 	const {
 		register,
 		handleSubmit,
@@ -51,26 +54,31 @@ const Category = () => {
 
 	const fetchCategories = async () => {
 		try {
+			setLoading(true);
 			const res = await categoryService.getAll(
 				pagination.page,
-				pagination.limit
+				Number(pagination.limit)
 			);
-			setCategories(res.data.category.data);
-			setPagination({
-				page: Number(res.data.category.current_page),
-				limit: Number(res.data.category.per_page),
-				total: Number(res.data.category.total),
-			});
+			if (res?.data?.categories) {
+				setCategories(res.data.categories.data || []);
+				setPagination({
+					page: Number(res.data.categories.current_page || 1),
+					limit: Number(res.data.categories.per_page || 5),
+					total: Number(res.data.categories.total || 0),
+				});
+			}
 		} catch (error) {
-			console.log(error);
-			toast.error('Failed to fetch categories');
+			console.error('Error fetching categories:', error);
+			toast.error('Không thể tải danh sách danh mục');
+		} finally {
+			setLoading(false);
 		}
 	};
 
-	const deleteCategory = async (id: string) => {
+	const deleteCategory = async (id: number) => {
 		try {
 			if (window.confirm('Are you sure you want to delete this category?')) {
-				await categoryService.delete(id);
+				await categoryService.delete(Number(id));
 				toast.success('Category deleted successfully');
 				fetchCategories();
 			}
@@ -82,7 +90,7 @@ const Category = () => {
 	const onSubmit = async (data: CATEGORY) => {
 		try {
 			if (editingCategory) {
-				await categoryService.update(editingCategory.id!, data);
+				await categoryService.update(Number(editingCategory.id!), data);
 				toast.success('Category updated successfully');
 			} else {
 				await categoryService.create(data);
@@ -275,7 +283,7 @@ const Category = () => {
 				</div>
 			</div>
 
-			<div className="relative overflow-x-auto border border-stroke">
+			<div className="relative overflow-x-auto border border-stroke h-full">
 				<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 					<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
 						<tr>
@@ -304,50 +312,66 @@ const Category = () => {
 							</th>
 						</tr>
 					</thead>
-					<tbody className="z-0">
-						{categories.map((category, key) => (
-							<tr
-								className={`bg-white dark:bg-slate-800 ${
-									key !== categories.length - 1
-										? 'border-b border-stroke'
-										: ''
-								}`}
-								key={key}
-							>
-								<td className="w-4 p-4">
-									<div className="flex items-center">
-										<input
-											id={`checkbox-table-search-${key}`}
-											type="checkbox"
-											className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-											checked={selectedItems.includes(key)}
-											onChange={() => handleSelectItem(key)}
+					<tbody className="z-0 h-full">
+						{loading ? (
+							<tr>
+								<td colSpan={3} className="h-24">
+									<div className="flex items-center justify-center h-full">
+										<LoadingIcon
+											type="spinner"
+											size="lg"
+											color="info"
 										/>
-										<label
-											htmlFor={`checkbox-table-search-${key}`}
-											className="sr-only"
-										>
-											checkbox
-										</label>
 									</div>
 								</td>
-								<td className="px-6 py-3">{category.name}</td>
-								<td className="px-6 py-3 flex items-center gap-2">
-									<button
-										className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
-										onClick={() => openEditModal(category)}
-									>
-										<PencilLine size={16} />
-									</button>
-									<button
-										className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error"
-										onClick={() => deleteCategory(category.id!)}
-									>
-										<Trash2 size={16} />
-									</button>
-								</td>
 							</tr>
-						))}
+						) : (
+							categories.map((category, key) => (
+								<tr
+									className={`bg-white dark:bg-slate-800 ${
+										key !== categories.length - 1
+											? 'border-b border-stroke'
+											: ''
+									}`}
+									key={key}
+								>
+									<td className="w-4 p-4">
+										<div className="flex items-center">
+											<input
+												id={`checkbox-table-search-${key}`}
+												type="checkbox"
+												className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+												checked={selectedItems.includes(key)}
+												onChange={() => handleSelectItem(key)}
+											/>
+											<label
+												htmlFor={`checkbox-table-search-${key}`}
+												className="sr-only"
+											>
+												checkbox
+											</label>
+										</div>
+									</td>
+									<td className="px-6 py-3">{category.name}</td>
+									<td className="px-6 py-3 flex items-center gap-2">
+										<button
+											className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+											onClick={() => openEditModal(category)}
+										>
+											<PencilLine size={16} />
+										</button>
+										<button
+											className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error"
+											onClick={() =>
+												deleteCategory(Number(category.id!))
+											}
+										>
+											<Trash2 size={16} />
+										</button>
+									</td>
+								</tr>
+							))
+						)}
 					</tbody>
 				</table>
 			</div>

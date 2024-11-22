@@ -273,7 +273,6 @@ export default function OrderList(): JSX.Element {
         throw new Error("No items in order");
       }
 
-      // Lấy thông tin giá hiện tại cho tất cả sản phẩm
       const itemsWithCurrentPrice = await Promise.all(
         order.items.map(async (item) => {
           try {
@@ -288,106 +287,89 @@ export default function OrderList(): JSX.Element {
 
             const currentProduct = response.data.Data.product;
 
-            // Kiểm tra sản phẩm có tồn tại
             if (!currentProduct) {
-              throw new Error(
-                `Product ${item.product.name} is no longer available`
-              );
+              throw new Error(`Product ${item.product.name} no longer exists`);
             }
 
-            // Kiểm tra trạng thái sản phẩm
             if (currentProduct.status !== "public") {
-              throw new Error(
-                `Product ${item.product.name} is currently unavailable`
-              );
+              throw new Error(`Product ${item.product.name} is currently unavailable`);
             }
 
-            let currentPrice =
-              currentProduct.promotional_price || currentProduct.price;
-            let variantQuantity = currentProduct.stock_quantity;
+            let currentPrice = currentProduct.promotional_price || currentProduct.price;
 
-            // Xử lý variant nếu có
             if (item.variant) {
-              // Kiểm tra sản phẩm có variants không
-              if (
-                !currentProduct.variants ||
-                currentProduct.variants.length === 0
-              ) {
+              if (!currentProduct.variants || currentProduct.variants.length === 0) {
                 throw new Error(
-                  `Product ${item.product.name} no longer has variants available`
+                  `Product ${item.product.name} has no variants available`
                 );
               }
 
-              // Tìm variant tương ứng
               const currentVariant = currentProduct.variants.find(
-                (v: any) =>
-                  Number(v.size) === Number(item.variant.size) &&
-                  v.color.toLowerCase() === item.variant.color.toLowerCase()
+                (v) => 
+                  v.variant_id === item.variant.id
               );
 
               if (!currentVariant) {
                 throw new Error(
-                  `Variant (${item.variant.color}/${item.variant.size}) of ${item.product.name} is no longer available`
+                  `Variant of product ${item.product.name} no longer exists`
                 );
               }
 
-              // Kiểm tra số lượng variant
               if (currentVariant.quantity === 0) {
                 throw new Error(
-                  `Variant (${item.variant.color}/${item.variant.size}) of ${item.product.name} is out of stock`
+                  `Variant of product ${item.product.name} is out of stock`
                 );
               }
 
               if (currentVariant.quantity < item.quantity) {
                 throw new Error(
-                  `Only ${currentVariant.quantity} items available for variant (${item.variant.color}/${item.variant.size}) of ${item.product.name}`
+                  `Only ${currentVariant.quantity} items left for variant of ${item.product.name}`
                 );
               }
 
-              variantQuantity = currentVariant.quantity;
+              return {
+                id: item.product.id,
+                name: item.product.name,
+                quantity: item.quantity,
+                thumbnail: currentProduct.thumbnail,
+                price: Number(currentPrice),
+                total: Number(currentPrice) * item.quantity,
+                stock_quantity: currentVariant.quantity,
+                product_variant: {
+                  variant_id: currentVariant.variant_id,
+                  size_id: currentVariant.size_id,
+                  color_id: currentVariant.color_id,
+                },
+              };
             } else {
-              // Kiểm tra số lượng sản phẩm không variant
               if (currentProduct.stock_quantity === 0) {
                 throw new Error(`Product ${item.product.name} is out of stock`);
               }
 
               if (currentProduct.stock_quantity < item.quantity) {
                 throw new Error(
-                  `Only ${currentProduct.stock_quantity} items available for ${item.product.name}`
+                  `Only ${currentProduct.stock_quantity} items left for ${item.product.name}`
                 );
               }
-            }
 
-            return {
-              id: item.product.id,
-              name: item.product.name,
-              quantity: item.quantity,
-              thumbnail: currentProduct.thumbnail,
-              price: Number(currentPrice),
-              total: Number(currentPrice) * item.quantity,
-              stock_quantity: variantQuantity,
-              product_variant: item.variant && {
-                id: item.variant.id,
-                size: {
-                  size: item.variant.size,
-                },
-                color: {
-                  color: item.variant.color,
-                },
-                image_variant: currentProduct.thumbnail,
+              return {
+                id: item.product.id,
+                name: item.product.name,
+                quantity: item.quantity,
+                thumbnail: currentProduct.thumbnail,
                 price: Number(currentPrice),
-              },
-            };
+                total: Number(currentPrice) * item.quantity,
+                stock_quantity: currentProduct.stock_quantity,
+              };
+            }
           } catch (error: any) {
             throw new Error(
-              error.message ||
-                `Failed to get information for product ${item.product.name}`
+              error.message || `Unable to get information for product ${item.product.name}`
             );
           }
         })
       );
 
-      // Tính toán tổng giá mới
       const newTotal = itemsWithCurrentPrice.reduce(
         (sum, item) => sum + item.total,
         0
@@ -407,10 +389,7 @@ export default function OrderList(): JSX.Element {
       });
     } catch (error: any) {
       console.error("Error handling buy again:", error);
-      toast.error(
-        error.message ||
-          "Unable to process buy again request. Please try again later."
-      );
+      toast.error(error.message || "Unable to process buy again request. Please try again later.");
     }
   };
 

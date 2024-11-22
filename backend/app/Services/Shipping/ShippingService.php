@@ -77,7 +77,6 @@ class ShippingService implements ShippingServiceInterface
         ];
         DB::beginTransaction();
         try {
-
             if ($data['is_default']) {
                 $checkDefault = self::checkDefaultExits();
                 if ($checkDefault->count() > 0) {
@@ -131,6 +130,22 @@ class ShippingService implements ShippingServiceInterface
             }
 
             if (self::getShippingRepository()->checkShippingInOrder($request['shipping'])) {
+                if ($data['is_default']) {
+                    $checkDefault = self::checkDefaultExits();
+                    if ($checkDefault->count() > 0) {
+                        foreach ($checkDefault as $item) {
+                            $item->update([
+                                'is_default' => false,
+                            ]);
+                        }
+                        self::getShippingRepository()->update($data, $request['shipping']);
+                        DB::commit();
+                    }
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This shipping is in order',
+                    ], 200);
+                }
                 return response()->json([
                     'success' => false,
                     'message' => 'This shipping is in order',

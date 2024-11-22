@@ -24,7 +24,7 @@ class SizeController extends Controller
     public function index(Request $request)
     {
         $page = $request->input('page', 1);
-        $limit = $request->input('limit', 9);
+        $limit = $request->input('limit', null);
         $orderBy = $request->input('orderBy', 'id');
         $order = $request->input('order', 'asc');
 

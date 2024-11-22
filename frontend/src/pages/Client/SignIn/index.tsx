@@ -10,10 +10,10 @@ import { IUser } from '../../../types/client/user';
 import { joiResolver } from '@hookform/resolvers/joi';
 import authService from '../../../services/client/auth';
 import Cookies from 'js-cookie';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { login } from '../../../store/client/userSlice';
 import toast from 'react-hot-toast';
-import { RootState } from '../../../store';
+import LoadingIcon from '../../../components/common/LoadingIcon';
 
 const schema = Joi.object({
 	email: Joi.string()
@@ -32,9 +32,7 @@ const SignIn = () => {
 	const [showPassword, setShowPassword] = useState(false);
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
-	const user = useSelector((state: RootState) => state.client.user);
 	const [loading, setLoading] = useState(false);
-	const { loginWithFacebook } = authService;
 	const {
 		register,
 		handleSubmit,
@@ -67,25 +65,16 @@ const SignIn = () => {
 		if (response.accessToken) {
 			try {
 				setLoading(true);
-				// Gửi access token tới backend
 				const serverResponse = await authService.loginWithFacebook({
 					access_token: response.accessToken,
 				});
 
-				// Kiểm tra phản hồi từ server
 				if (serverResponse.data.success) {
-					// Lưu token vào cookie
-					const user = {
-						name: serverResponse.data.user.name,
-						email: serverResponse.data.user.email,
-						email_is_verified: true,
-						is_admin: false,
-					};
-					Cookies.set('user', JSON.stringify(user));
+					console.log(serverResponse);
+					Cookies.set('user', JSON.stringify(serverResponse.data.user));
 					Cookies.set('access_token', serverResponse.data.access_token);
 					Cookies.set('refresh_token', serverResponse.data.refresh_token);
-					await loginWithFacebook({ access_token: response.accessToken });
-					dispatch(login(user));
+					dispatch(login(serverResponse.data.user));
 					toast.success(serverResponse.data.message);
 					navigate('/');
 				} else {
@@ -171,9 +160,20 @@ const SignIn = () => {
 							</Link>
 							<button
 								disabled={loading}
-								className="btn bg-[#40BFFF] text-white w-full rounded-md mt-5"
+								className="btn bg-[#40BFFF] text-white w-full rounded-md mt-5 flex items-center justify-center gap-2"
 							>
-								{loading ? 'Signing in...' : 'Sign in'}
+								{loading ? (
+									<>
+										<LoadingIcon
+											type="spinner"
+											size="sm"
+											color="ghost"
+										/>{' '}
+										Signing in
+									</>
+								) : (
+									'Sign in'
+								)}
 							</button>
 							<p className="text-md text-[#B0B0B0] text-center my-10">
 								or continue with

@@ -23,6 +23,7 @@ class StoreBrandRequest extends FormRequest
     {
         return [
             'name' =>'required|string|max:255|unique:brands,name',
+            'logo_url' => 'required|string|max:255',
         ];
     }
 }

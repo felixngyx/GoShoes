@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('order_items', function (Blueprint $table) {
-            $table->dropColumn('variant_id');
+        Schema::table('brands', function (Blueprint $table) {
+            $table->string('logo_url')->nullable()->after('name'); // Thêm cột logo_url
+
         });
     }
 
@@ -21,9 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('order_items', function (Blueprint $table) {
-            $table->timestamp('variant_id')->nullable();
-
+        Schema::table('brands', function (Blueprint $table) {
+            $table->dropColumn('logo_url'); // Xóa cột nếu rollback
         });
     }
 };

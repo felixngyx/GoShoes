@@ -99,27 +99,19 @@ const Navbar = () => {
 								/>
 							</Link>
 
-							{/* Navbar Links */}
-							<ul className="lex flex-row gap-8 font-semibold text-sm">
-								{[
-									'Men',
-									'Women',
-									'Kids',
-									'Sale',
-									'New Arrivals',
-									'Brands',
-								].map((item) => (
+							<ul className="flex flex-row gap-8 font-semibold text-sm">
+								{['HOME', 'BRAND', 'CATEGORY', 'ABOUT US', 'CONTACT'].map((item) => (
 									<li key={item}>
 										<Link
-											to="/products"
+											to={item === 'HOME' ? '/' : `/${item.toLowerCase().replace(' ', '-')}`}
 											className="menu-item hover:text-blue-500 transition-all duration-300"
 										>
 											{item}
-										</Link>
+										</Link> 
 									</li>
 								))}
 							</ul>
-
+							
 							{/* Navbar Icons */}
 							<div className="flex gap-4 items-center">
 								{/* Search Icon */}
@@ -135,9 +127,11 @@ const Navbar = () => {
 									onClick={handleCartClick}
 									className="relative p-2 rounded-full hover:bg-gray-100"
 								>
-									<span className="badge badge-error badge-xs absolute -top-1 -right-1 text-white font-semibold">
-										{totalQuantity}
-									</span>
+									{totalQuantity > 0 && (
+										<span className="badge badge-error badge-xs absolute -top-1 -right-1 text-white font-semibold">
+											{totalQuantity}
+										</span>
+									)}
 									<MdOutlineShoppingCart size={24} />
 								</button>
 
@@ -150,7 +144,7 @@ const Navbar = () => {
 									>
 										<FaUser size={24} />
 									</div>
-									<ul className="dropdown-content bg-white shadow-lg rounded-lg p-2 w-48 mt-2 text-sm font-medium text-gray-700">
+									<ul className="dropdown-content bg-white shadow-lg rounded-lg p-2 w-48 mt-2 text-sm font-medium text-gray-700 border border-gray-200">
 										{accessToken ? (
 											<>
 												<li>

@@ -22,19 +22,58 @@ class BrandController extends Controller
      */
     public function index(Request $request)
     {
+        try{
 
         $page = $request->input('page', 1);
-        $limit = $request->input('limit', 9);
+        $limit = $request->input('limit', null);
         $orderBy = $request->input('orderBy', 'id');
         $order = $request->input('order', 'asc');
 
-        $query = Brand::query();
-        $brand = $query->orderBy($orderBy, $order)
+        $query = Brand::withCount('products')
+                         ->withAvg('products', 'rating_count')  // Tính trung bình rating_count
+                         ->with(['products' => function($query) {
+                             $query->where('is_deleted', false);  // Chỉ lấy sản phẩm chưa bị xóa
+                         }]);// Thêm tổng số lượng tồn kho nếu cần
+        $brands = $query->orderBy($orderBy, $order)
             ->paginate($limit, ['*'], 'page', $page);
-        return response()->json([
-            'message' => 'Danh sách sizes',
-            'brands' => $brand
-        ], 200);
+
+
+            $transformedBrands = $brands->through(function($brand) {
+                return [
+                    'id' => $brand->id,
+                    'name' => $brand->name,
+                    'slug' => $brand->slug,
+                    'logo_url' => $brand->logo_url,
+                    'created_at' => $brand->created_at,
+                    'updated_at' => $brand->updated_at,
+                    'products_count' => $brand->products_count,
+                    'average_rating' => number_format($brand->products_avg_rating_count, 1) // Định dạng 1 số sau dấu phẩy
+                ];
+            });
+
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Danh sách thương hiệu',
+                'data' => [
+                    'brands' => $transformedBrands->items(),
+                    'pagination' => [
+                        'total' => $brands->total(),
+                        'per_page' => $brands->perPage(),
+                        'current_page' => $brands->currentPage(),
+                        'last_page' => $brands->lastPage(),
+                        'from' => $brands->firstItem(),
+                        'to' => $brands->lastItem()
+                    ]
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Lỗi khi lấy danh sách thương hiệu: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -97,8 +136,7 @@ class BrandController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:brands,name,' . $id,
-            'description' => 'nullable|string|max:255',
-            'logo_url' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'logo_url' => 'required|string|max:255'
         ]);
         $brand = $this->brandService->updateBrand($id, $validated);
 

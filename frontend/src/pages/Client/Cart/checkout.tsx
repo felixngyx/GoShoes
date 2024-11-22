@@ -428,27 +428,27 @@ const CheckoutPage = () => {
       if (!Array.isArray(address) || address.length === 0) {
         // Nếu không có địa chỉ nào
         setShowAddressForm(true);
-        toast('Please add a shipping address to continue', {
+        toast("Please add a shipping address to continue", {
           duration: 5000,
-          position: 'top-right',
-          icon: '⚠️',
+          position: "top-right",
+          icon: "⚠️",
           style: {
-            background: '#FEF3C7',
-            color: '#92400E',
-            border: '1px solid #F59E0B'
+            background: "#FEF3C7",
+            color: "#92400E",
+            border: "1px solid #F59E0B",
           },
         });
       } else if (!address.some((item: any) => item.is_default)) {
         // Nếu có địa chỉ nhưng không có địa chỉ mặc định
         setShowAddressSelection(true);
-        toast('Please select a default shipping address to continue', {
+        toast("Please select a default shipping address to continue", {
           duration: 5000,
-          position: 'top-right',
-          icon: '⚠️',
+          position: "top-right",
+          icon: "⚠️",
           style: {
-            background: '#FEF3C7',
-            color: '#92400E',
-            border: '1px solid #F59E0B'
+            background: "#FEF3C7",
+            color: "#92400E",
+            border: "1px solid #F59E0B",
           },
         });
       }
@@ -462,18 +462,28 @@ const CheckoutPage = () => {
         <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
           <h2 className="text-xl font-semibold mb-4">Select Default Address</h2>
           <p className="text-gray-600 mb-4">
-            Please select a default shipping address to continue with your order.
+            Please select a default shipping address to continue with your
+            order.
           </p>
-          
+
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
             {address.map((item: any, index: number) => (
-              <div key={index} className="border rounded-lg p-4 hover:border-blue-500 cursor-pointer">
+              <div
+                key={index}
+                className="border rounded-lg p-4 hover:border-blue-500 cursor-pointer"
+              >
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="font-semibold">{item.shipping_detail.name}</p>
-                    <p className="text-gray-600">(+84) {item.shipping_detail.phone_number}</p>
-                    <p className="text-gray-600">{item.shipping_detail.address_detail}</p>
-                    <p className="text-gray-600">{item.shipping_detail.address}</p>
+                    <p className="text-gray-600">
+                      (+84) {item.shipping_detail.phone_number}
+                    </p>
+                    <p className="text-gray-600">
+                      {item.shipping_detail.address_detail}
+                    </p>
+                    <p className="text-gray-600">
+                      {item.shipping_detail.address}
+                    </p>
                   </div>
                   <button
                     onClick={async () => {
@@ -486,19 +496,21 @@ const CheckoutPage = () => {
                             phone_number: item.shipping_detail.phone_number,
                             address: item.shipping_detail.address,
                             address_detail: item.shipping_detail.address_detail,
-                            is_default: true
+                            is_default: true,
                           },
                           {
                             headers: {
-                              Authorization: `Bearer ${Cookies.get('access_token')}`
-                            }
+                              Authorization: `Bearer ${Cookies.get(
+                                "access_token"
+                              )}`,
+                            },
                           }
                         );
-                        toast.success('Default address updated successfully');
+                        toast.success("Default address updated successfully");
                         setShowAddressSelection(false);
                         window.location.reload(); // Reload để cập nhật địa chỉ mới
                       } catch (error) {
-                        toast.error('Failed to update default address');
+                        toast.error("Failed to update default address");
                       }
                     }}
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
@@ -548,7 +560,7 @@ const CheckoutPage = () => {
           <p className="text-gray-600 mb-4">
             Please add a shipping address to continue with your order.
           </p>
-          
+
           {/* Thêm component AddressForm của bạn vào đây */}
           <AddressComponent onSuccess={handleAddressAdded} />
 
@@ -572,7 +584,9 @@ const CheckoutPage = () => {
     <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
       {/* Chỉ hiện modal khi không đang loading và thỏa điều kiện */}
       {!isLoadingAddress && showAddressForm && <AddressFormModal />}
-      {!isLoadingAddress && showAddressSelection && !showAddressForm && <AddressSelectionModal />}
+      {!isLoadingAddress && showAddressSelection && !showAddressForm && (
+        <AddressSelectionModal />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
         {/* Left Section - Order Details */}
@@ -696,7 +710,9 @@ const CheckoutPage = () => {
 
                 {discountInfo && (
                   <div className="flex justify-between text-green-600">
-                    <span>Discount ({discountInfo.discount_info.percent}%)</span>
+                    <span>
+                      Discount ({discountInfo.discount_info.percent}%)
+                    </span>
                     <span>-{formatVND(calculateDiscount())}</span>
                   </div>
                 )}

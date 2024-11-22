@@ -1,9 +1,31 @@
 import axiosClient from '../../apis/axiosClient';
 
-export type BRAND = {
-	id?: string;
+export interface BRAND {
+	id: number;
 	name: string;
-};
+	slug: string;
+	logo_url: string;
+	created_at: string;
+	updated_at: string;
+	products_count: number;
+	average_rating: string;
+}
+
+export interface BrandResponse {
+	status: string;
+	message: string;
+	data: {
+		brands: BRAND[];
+		pagination: {
+			total: number;
+			per_page: number;
+			current_page: number;
+			last_page: number;
+			from: number;
+			to: number;
+		}
+	}
+}
 
 const brandService = {
 	getAll: (page: number = 1, limit: number = 5) => {

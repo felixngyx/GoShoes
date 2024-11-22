@@ -20,7 +20,7 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
 
     public function all()
     {
-        return $this->model->all();
+        return $this->model->all()->where('is_deleted', false);
     }
 
     public function create(array $data)

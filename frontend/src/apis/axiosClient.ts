@@ -1,11 +1,11 @@
-/// <reference types="vite/client" />
-
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from 'react-hot-toast';
+
+const baseURL = import.meta.env.VITE_API_URL;
 
 const axiosClient = axios.create({
-	baseURL: import.meta.env.VITE_API_URL,
-	timeout: 60000,
+	baseURL,
 	headers: {
 		'Content-Type': 'application/json',
 	},
@@ -30,30 +30,56 @@ axiosClient.interceptors.response.use(
 		return response;
 	},
 	async (error) => {
-		const originalRequest = error.config;
+		const pathname = window.location.pathname;
+		
+		// Bỏ qua kiểm tra cho các trang public
+		const publicPaths = ['/', '/signin', '/signup', '/products', '/product'];
+		if (publicPaths.some(path => pathname.startsWith(path))) {
+			return Promise.reject(error);
+		}
 
+		const originalRequest = error.config;
 		if (error.response.status === 401 && !originalRequest._retry) {
 			originalRequest._retry = true;
-
 			const refreshToken = Cookies.get('refresh_token');
 
 			if (!refreshToken) {
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');
-				window.location.href = '/sign-in';
+				Cookies.remove('user');
+				toast.error('Phiên đăng nhập đã hết hạn');
+				
+				// Chỉ chuyển hướng cho các trang admin và trang yêu cầu xác thực
+				if (pathname.includes('/admin')) {
+					window.location.href = '/admin/signin';
+				} else if (!publicPaths.some(path => pathname.startsWith(path))) {
+					window.location.href = '/signin';
+				}
 				return Promise.reject(error);
 			}
 
 			try {
-				const response = await axiosClient.post('/auth/refresh-token', {
-					refresh_token: refreshToken,
+				const response = await fetch(`${baseURL}/auth/refresh-token`, {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${refreshToken}`,
+					},
 				});
-				Cookies.set('access_token', response.data.access_token);
+				const data = await response.json();
+				Cookies.set('access_token', data.access_token);
 				return axiosClient(originalRequest);
 			} catch (error) {
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');
-				window.location.href = '/sign-in';
+				Cookies.remove('user');
+				toast.error('Phiên đăng nhập đã hết hạn');
+				
+				// Chỉ chuyển hướng cho các trang admin và trang yêu cầu xác thực
+				if (pathname.includes('/admin')) {
+					window.location.href = '/admin/signin';
+				} else if (!publicPaths.some(path => pathname.startsWith(path))) {
+					window.location.href = '/signin';
+				}
 				return Promise.reject(error);
 			}
 		}

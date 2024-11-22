@@ -3,7 +3,6 @@ import { Plus } from 'lucide-react';
 import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FaSort } from 'react-icons/fa';
-import { formatVNCurrency } from '../../../common/formatVNCurrency';
 import productService, { PRODUCT } from '../../../services/admin/product';
 import LoadingTable from '../LoadingTable';
 import { toast } from 'react-hot-toast';
@@ -54,6 +53,13 @@ const Product = () => {
 		} finally {
 			setLoading(false);
 		}
+	};
+
+	const calculateQuantity = (product: PRODUCT) => {
+		return (
+			product.variants.reduce((acc, curr) => acc + curr.quantity, 0) +
+			product.stock_quantity
+		);
 	};
 
 	const deleteProduct = async (id: number) => {
@@ -227,15 +233,13 @@ const Product = () => {
 										</div>
 									</td>
 									<td className="px-6 py-3 font-semibold">
-										{formatVNCurrency(Number(product.price))}
+										{product.price} ₫
 									</td>
 									<td className="px-6 py-3 font-semibold">
-										{formatVNCurrency(
-											Number(product.promotional_price)
-										)}
+										{product.promotional_price} ₫
 									</td>
 									<td className="px-6 py-3">
-										{product.stock_quantity}
+										{calculateQuantity(product)}
 									</td>
 									<td className="px-6 py-3">
 										<div
@@ -255,7 +259,7 @@ const Product = () => {
 											<Eye size={16} />
 										</button>
 										<Link
-											to={`/admin/update/${product.id}`}
+											to={`/admin/product/update/${product.id}`}
 											className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 										>
 											<PencilLine size={16} />

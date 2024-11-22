@@ -25,7 +25,7 @@ class ColorController extends Controller
     {
 
         $page = $request->input('page', 1);
-        $limit = $request->input('limit', 9);
+        $limit = $request->input('limit', null);
         $orderBy = $request->input('orderBy', 'id');
         $order = $request->input('order', 'asc');
 
@@ -33,7 +33,7 @@ class ColorController extends Controller
         $clors = $query->orderBy($orderBy, $order)
         ->paginate($limit, ['*'], 'page', $page);
         return response()->json([
-            'message' => 'Danh sách sizes',
+            'message' => 'Danh sách color',
             'clors' => $clors
         ], 200);
     }

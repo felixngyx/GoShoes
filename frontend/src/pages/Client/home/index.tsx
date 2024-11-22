@@ -3,8 +3,11 @@ import { RiRefund2Line } from "react-icons/ri";
 import { MdOutlineSupportAgent } from "react-icons/md";
 import { IoStar } from "react-icons/io5";
 import ProductCard from "../ProductCard";
+import { useNavigate } from "react-router-dom";
 
 const Homepage = () => {
+  const navigate = useNavigate();
+
   return (
     <>
       {/* Banner */}
@@ -75,9 +78,11 @@ const Homepage = () => {
         <div className="grid grid-cols-4 gap-10 mt-10">
           <ProductCard />
         </div>
-        <p className="text-center text-[#40BFFF] cursor-pointer underline text-xl font-bold mt-10">
-          Load More
-        </p>
+        <button onClick={() => navigate("/products")} className="w-full">
+          <p className="text-center text-[#40BFFF] cursor-pointer underline text-xl font-bold mt-10">
+            View All
+          </p>
+        </button>
       </div>
 
       {/* Category */}
@@ -151,7 +156,7 @@ const Homepage = () => {
       </div>
 
       {/* Featured Product */}
-      <div className="container max-w-7xl mx-auto my-10">
+      {/* <div className="container max-w-7xl mx-auto my-10">
         <p className="text-black text-3xl font-bold text-center">
           Featured Product
         </p>
@@ -191,7 +196,7 @@ const Homepage = () => {
         <p className="text-[#40BFFF] text-xl font-bold text-center mt-10 cursor-pointer underline ">
           View All
         </p>
-      </div>
+      </div> */}
     </>
   );
 };

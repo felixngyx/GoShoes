@@ -1,8 +1,7 @@
 import Slider from "@mui/material/Slider";
 import { useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
-import { BsGrid3X3GapFill } from "react-icons/bs";
-import { FaListUl } from "react-icons/fa";
+import React, { useEffect, useMemo, useState } from "react";
+import { FaBars, FaTh } from "react-icons/fa";
 import Banner from "../../../components/client/Banner";
 import Breadcrumb from "../../../components/client/Breadcrumb";
 import { filterProduct } from "../../../services/client/filterPrice";
@@ -14,14 +13,73 @@ const ProductList = () => {
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [showCount, setShowCount] = useState(9);
+  const [sortByName, setSortByName] = useState<"asc" | "desc" | undefined>();
+  const [sortByPrice, setSortByPrice] = useState<"asc" | "desc" | undefined>();
+  const [sortByRating, setSortByRating] = useState<
+    "asc" | "desc" | undefined
+  >();
 
   const { data: products, refetch } = useQuery<IProduct[]>({
-    queryKey: ["PRODUCT_KEY", priceRange, showCount],
+    queryKey: [
+      "PRODUCT_KEY",
+      priceRange,
+      showCount,
+      sortByName,
+      sortByPrice,
+      sortByRating,
+    ],
     queryFn: () => filterProduct(priceRange[0], priceRange[1], showCount),
     staleTime: 2,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
   });
+
+  const parsePrice = (price: string) => {
+    return parseFloat(price.replace(/\./g, "").replace(",", "."));
+  };
+
+  const filteredProducts = useMemo(() => {
+    let filteredData = [...(products || [])];
+
+    // Lọc theo giá
+    filteredData = filteredData.filter((product: any) => {
+      const productPrice = parsePrice(product.promotional_price);
+      return productPrice >= priceRange[0] && productPrice <= priceRange[1];
+    });
+    // Sắp xếp theo tên
+    if (sortByName) {
+      filteredData.sort((a, b) =>
+        sortByName === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name)
+      );
+    }
+
+    // Sắp xếp theo giá
+    if (sortByPrice) {
+      filteredData.sort((a: any, b: any) => {
+        const priceA = parsePrice(a.promotional_price);
+        const priceB = parsePrice(b.promotional_price);
+
+        return sortByPrice === "asc" ? priceA - priceB : priceB - priceA;
+      });
+    }
+
+    // Sắp xếp theo rating
+    if (sortByRating) {
+      filteredData.sort((a, b) =>
+        sortByRating === "asc"
+          ? b.rating_count - a.rating_count
+          : a.rating_count - b.rating_count
+      );
+    }
+
+    return filteredData;
+  }, [products, priceRange, sortByName, sortByPrice, sortByRating]);
+
+  useEffect(() => {
+    refetch();
+  }, [sortByName, priceRange, sortByPrice, sortByRating]);
 
   const formatPrice = (price: number) => {
     if (price < 1000000) return (price / 1000).toFixed(0) + " K";
@@ -33,6 +91,17 @@ const ProductList = () => {
       setPriceRange(newValue as [number, number]);
     }
   };
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      setIsLoading(false);
+    };
+
+    loadData();
+  }, [priceRange, products]);
 
   const handlePriceChangeCommitted = () => {
     refetch();
@@ -152,40 +221,62 @@ const ProductList = () => {
           <Banner />
 
           {/* Filter */}
-          <div className="flex flex-row gap-5 bg-[#F6F7F8] px-5 py-2 items-center">
-            <p className="text-lg">Sort by</p>
-            <select className="select select-sm select-bordered w-fit">
-              <option defaultValue="Name">Name</option>
-              <option>Price</option>
-              <option>Rating</option>
-            </select>
-            <p className="text-lg">Show</p>
-            <select
-              className="select select-sm select-bordered w-fit"
-              onChange={handleShowCountChange}
-            >
-              <option defaultValue={9}>9</option>
-              <option>12</option>
-              <option>15</option>
-            </select>
-            <button
-              className="ms-auto btn btn-sm bg-inherit hover:bg-inherit"
-              onClick={() => setLayout("grid")}
-            >
-              <BsGrid3X3GapFill
-                size={20}
-                color={layout === "grid" ? "#40BFFF" : "#C1C8CE"}
-              />
-            </button>
-            <button
-              className="btn btn-sm bg-inherit hover:bg-inherit"
-              onClick={() => setLayout("list")}
-            >
-              <FaListUl
-                size={20}
-                color={layout === "list" ? "#40BFFF" : "#C1C8CE"}
-              />
-            </button>
+          <div className="flex gap-3">
+            <div className="flex items-center gap-2">
+              <span>{filteredProducts.length} Items</span>
+              <select
+                className="select select-bordered bg-white text-gray-800"
+                onChange={(e) => {
+                  const [type, order] = e.target.value.split("-");
+                  if (type === "name") {
+                    setSortByName(order as "asc" | "desc");
+                  } else if (type === "price") {
+                    setSortByPrice(order as "asc" | "desc");
+                  } else if (type === "rating") {
+                    setSortByRating(order as "asc" | "desc");
+                  }
+                }}
+              >
+                <option disabled value="">
+                  Sort By
+                </option>
+                <option value="name-asc">Name A-Z</option>
+                <option value="name-desc">Name Z-A</option>
+                <option value="price-asc">Price Low to High</option>
+                <option value="price-desc">Price High to Low</option>
+                <option value="rating-asc">Rating Highest to Lowest</option>
+                <option value="rating-desc">Rating Lowest to Highest</option>
+              </select>
+            </div>
+
+            {/* Show Select */}
+            <div>
+              <select
+                className="select select-bordered bg-white text-gray-800"
+                value={showCount}
+                onChange={handleShowCountChange}
+              >
+                <option value={12}>Show 12</option>
+                <option value={24}>Show 24</option>
+                <option value={36}>Show 36</option>
+              </select>
+            </div>
+
+            {/* Layout Buttons */}
+            <div className=" items-center space-x-2 ml-auto">
+              <button
+                className="btn btn-square bg-[#40BFFF] text-white"
+                onClick={() => setLayout("grid")}
+              >
+                <FaTh />
+              </button>
+              <button
+                className="btn btn-square bg-white text-gray-800 border border-gray-300"
+                onClick={() => setLayout("list")}
+              >
+                <FaBars />
+              </button>
+            </div>
           </div>
 
           {/* Product List */}
@@ -194,31 +285,93 @@ const ProductList = () => {
               layout === "grid" ? "grid-cols-3" : "grid-cols-1"
             } gap-5`}
           >
-            {products === undefined ? (
-              // Hiển thị skeleton loading khi đang tải dữ liệu
+            {isLoading ? (
               <>
-                {Array(9).fill(null).map((_, index) => (
-                  layout === "grid" ? (
-                    <ProductItems key={index} product={null} isLoading={true} />
-                  ) : (
-                    <ProductCardList key={index} product={null} isLoading={true} />
-                  )
-                ))}
+                {Array(9)
+                  .fill(null)
+                  .map((_, index) =>
+                    layout === "grid" ? (
+                      <ProductItems
+                        key={index}
+                        product={null}
+                        isLoading={true}
+                      />
+                    ) : (
+                      <ProductCardList
+                        key={index}
+                        product={null}
+                        isLoading={true}
+                      />
+                    )
+                  )}
               </>
-            ) : products.length > 0 ? (
+            ) : filteredProducts.length > 0 ? (
               // Hiển thị danh sách sản phẩm nếu có
-              products.map((product) =>
+              filteredProducts.map((product) =>
                 layout === "grid" ? (
-                  <ProductItems key={product.id} product={product} isLoading={false} />
+                  <ProductItems
+                    key={product.id}
+                    product={product}
+                    isLoading={false}
+                  />
                 ) : (
-                  <ProductCardList key={product.id} product={product} isLoading={false} />
+                  <ProductCardList
+                    key={product.id}
+                    product={product}
+                    isLoading={false}
+                  />
                 )
               )
             ) : (
               // Hiển thị thông báo khi không có sản phẩm nào
-              <p className="text-center text-gray-500">
-                Không có sản phẩm nào phù hợp.
-              </p>
+              <div
+                className={`grid ${
+                  layout === "grid" ? "grid-cols-3" : "grid-cols-1"
+                } gap-5`}
+              >
+                {isLoading ? (
+                  // Hiển thị skeleton loading khi đang tải hoặc lọc
+
+                  <>
+                    {Array(9)
+                      .fill(null)
+                      .map((_, index) =>
+                        layout === "grid" ? (
+                          <ProductItems
+                            key={index}
+                            product={null}
+                            isLoading={true}
+                          />
+                        ) : (
+                          <ProductCardList
+                            key={index}
+                            product={null}
+                            isLoading={true}
+                          />
+                        )
+                      )}
+                  </>
+                ) : filteredProducts.length > 0 ? (
+                  // Hiển thị danh sách sản phẩm nếu có
+                  filteredProducts.map((product) =>
+                    layout === "grid" ? (
+                      <ProductItems
+                        key={product.id}
+                        product={product}
+                        isLoading={false}
+                      />
+                    ) : (
+                      <ProductCardList
+                        key={product.id}
+                        product={product}
+                        isLoading={false}
+                      />
+                    )
+                  )
+                ) : (
+                  <span className="loading loading-dots loading-sm"></span>
+                )}
+              </div>
             )}
           </div>
 
