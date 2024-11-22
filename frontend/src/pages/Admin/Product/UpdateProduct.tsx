@@ -157,9 +157,10 @@ const UpdateProduct = () => {
 			}
 
 			setThumbnailFile(product.thumbnail);
-		} catch (error) {
-			console.log(error);
-			toast.error('Failed to fetch product data');
+		} catch (error: any) {
+			toast.error(
+				error?.response?.data?.message || 'Error fetching product data'
+			);
 		}
 	};
 

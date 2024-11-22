@@ -1,5 +1,3 @@
-/// <reference types="vite/client" />
-
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from 'react-hot-toast';
@@ -10,10 +8,6 @@ const axiosClient = axios.create({
 	baseURL,
 	headers: {
 		'Content-Type': 'application/json',
-		'Access-Control-Allow-Origin': '*',
-		'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-		'Access-Control-Allow-Headers':
-			'Origin, Content-Type, Accept, Authorization',
 	},
 });
 
@@ -43,7 +37,7 @@ axiosClient.interceptors.response.use(
 
 		const originalRequest = error.config;
 
-		if (error.response.status === 401) {
+		if (error.response.status === 401 && !originalRequest._retry) {
 			originalRequest._retry = true;
 
 			const refreshToken = Cookies.get('refresh_token');
