@@ -75,7 +75,6 @@ axiosClient.interceptors.response.use(
 					window.location.href = '/admin/signin';
 				}
 				return Promise.reject(error);
-				console.log(error);
 			}
 		}
 		return Promise.reject(error);
