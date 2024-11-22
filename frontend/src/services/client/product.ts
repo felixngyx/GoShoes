@@ -55,3 +55,13 @@ export const checkStock = async (variant_id: number): Promise<number> => {
     throw error;
   }
 };
+
+export const getProductByBrandId = async (brandId: number) => {
+  try {
+    const response = await axiosClient.get(`/products?brand_id=${brandId}`);
+    return response.data.data.products;
+  } catch (error) {
+    console.error("Error fetching products by brand ID:", error);
+    throw new Error("Failed to fetch products by brand ID");
+  }
+};
