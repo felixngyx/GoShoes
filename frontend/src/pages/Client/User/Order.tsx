@@ -270,7 +270,7 @@ export default function OrderList(): JSX.Element {
   const handleBuyAgain = async (order: Order) => {
     try {
       if (!order.items || order.items.length === 0) {
-        throw new Error("Không có sản phẩm trong đơn hàng");
+        throw new Error("No items in order");
       }
 
       const itemsWithCurrentPrice = await Promise.all(
@@ -288,11 +288,11 @@ export default function OrderList(): JSX.Element {
             const currentProduct = response.data.Data.product;
 
             if (!currentProduct) {
-              throw new Error(`Sản phẩm ${item.product.name} không còn tồn tại`);
+              throw new Error(`Product ${item.product.name} no longer exists`);
             }
 
             if (currentProduct.status !== "public") {
-              throw new Error(`Sản phẩm ${item.product.name} hiện không khả dụng`);
+              throw new Error(`Product ${item.product.name} is currently unavailable`);
             }
 
             let currentPrice = currentProduct.promotional_price || currentProduct.price;
@@ -300,11 +300,10 @@ export default function OrderList(): JSX.Element {
             if (item.variant) {
               if (!currentProduct.variants || currentProduct.variants.length === 0) {
                 throw new Error(
-                  `Sản phẩm ${item.product.name} không còn biến thể`
+                  `Product ${item.product.name} has no variants available`
                 );
               }
 
-              // Tìm variant dựa trên size_id và color_id
               const currentVariant = currentProduct.variants.find(
                 (v) => 
                   v.variant_id === item.variant.id
@@ -312,19 +311,19 @@ export default function OrderList(): JSX.Element {
 
               if (!currentVariant) {
                 throw new Error(
-                  `Biến thể của sản phẩm ${item.product.name} không còn tồn tại`
+                  `Variant of product ${item.product.name} no longer exists`
                 );
               }
 
               if (currentVariant.quantity === 0) {
                 throw new Error(
-                  `Biến thể của sản phẩm ${item.product.name} đã hết hàng`
+                  `Variant of product ${item.product.name} is out of stock`
                 );
               }
 
               if (currentVariant.quantity < item.quantity) {
                 throw new Error(
-                  `Chỉ còn ${currentVariant.quantity} sản phẩm cho biến thể của ${item.product.name}`
+                  `Only ${currentVariant.quantity} items left for variant of ${item.product.name}`
                 );
               }
 
@@ -344,12 +343,12 @@ export default function OrderList(): JSX.Element {
               };
             } else {
               if (currentProduct.stock_quantity === 0) {
-                throw new Error(`Sản phẩm ${item.product.name} đã hết hàng`);
+                throw new Error(`Product ${item.product.name} is out of stock`);
               }
 
               if (currentProduct.stock_quantity < item.quantity) {
                 throw new Error(
-                  `Chỉ còn ${currentProduct.stock_quantity} sản phẩm ${item.product.name}`
+                  `Only ${currentProduct.stock_quantity} items left for ${item.product.name}`
                 );
               }
 
@@ -365,7 +364,7 @@ export default function OrderList(): JSX.Element {
             }
           } catch (error: any) {
             throw new Error(
-              error.message || `Không thể lấy thông tin sản phẩm ${item.product.name}`
+              error.message || `Unable to get information for product ${item.product.name}`
             );
           }
         })
@@ -390,7 +389,7 @@ export default function OrderList(): JSX.Element {
       });
     } catch (error: any) {
       console.error("Error handling buy again:", error);
-      toast.error(error.message || "Không thể xử lý yêu cầu mua lại. Vui lòng thử lại sau.");
+      toast.error(error.message || "Unable to process buy again request. Please try again later.");
     }
   };
 
