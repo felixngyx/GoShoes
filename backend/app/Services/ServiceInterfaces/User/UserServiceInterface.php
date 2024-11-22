@@ -4,7 +4,7 @@ namespace App\Services\ServiceInterfaces\User;
 
 Interface UserServiceInterface
 {
-    public function all();
+    public function all() : \Illuminate\Http\JsonResponse;
 
     public function create(array $request);
 
@@ -15,5 +15,9 @@ Interface UserServiceInterface
     public function findById(int $id);
 
     public function findByEmail(string $email);
+
+    public function updateService(array $request, int $id) : \Illuminate\Http\JsonResponse;
+
+    public function deleteService(int $id) : \Illuminate\Http\JsonResponse;
 
 }
