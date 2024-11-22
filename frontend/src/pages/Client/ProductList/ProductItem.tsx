@@ -10,28 +10,23 @@ import { formatVNCurrency } from "../../../common/formatVNCurrency";
 const ProductItemSkeleton = () => {
   return (
     <div className="col-span-1 border border-[#F6F7F8] rounded-lg group overflow-hidden shadow-sm">
-      {/* Phần ảnh */}
       <div className="relative w-full h-[280px]">
         <div className="w-full h-full bg-gray-200 animate-pulse" />
-        {/* Tag HOT */}
         <div className="absolute top-2 left-2 h-6 w-12 bg-gray-200 animate-pulse rounded-md" />
       </div>
-
-      {/* Phần tên sản phẩm */}
       <div className="mt-2 px-2">
         <div className="h-6 bg-gray-200 animate-pulse rounded w-3/4 mx-auto" />
       </div>
-
-      {/* Phần rating */}
       <div className="flex justify-center mt-1">
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((index) => (
-            <div key={index} className="w-4 h-4 bg-gray-200 animate-pulse rounded" />
+            <div
+              key={index}
+              className="w-4 h-4 bg-gray-200 animate-pulse rounded"
+            />
           ))}
         </div>
       </div>
-
-      {/* Phần giá */}
       <div className="flex items-center justify-center gap-2 mt-1 mb-3">
         <div className="h-6 bg-gray-200 animate-pulse rounded w-24" />
         <div className="h-4 bg-gray-200 animate-pulse rounded w-20" />
@@ -41,31 +36,56 @@ const ProductItemSkeleton = () => {
   );
 };
 
-const ProductItems = ({ product, isLoading }: { product: any, isLoading: boolean }) => {
+const ProductItems = ({
+  product,
+  isLoading,
+}: {
+  product: any;
+  isLoading: boolean;
+}) => {
   const accessToken = Cookies.get("access_token");
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+  const [modalCheckLogin, setModalCheckLogin] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const { handleAddToCart } = useCart();
 
   if (isLoading) {
     return <ProductItemSkeleton />;
   }
+
   const addCart = (product: IProduct) => {
-    const productVariantId = product.variants[0].id;
-    const quantity = 1;
-    handleAddToCart(productVariantId, quantity);
+    const productVariant = product.variants.find(
+      (variant: any) =>
+        variant.size === selectedSize && variant.color === selectedColor
+    );
+    if (productVariant) {
+      const productVariantId = productVariant.id;
+      const quantity = 1;
+      handleAddToCart(productVariantId, quantity);
+    }
   };
 
-  const handleCheckAdd = (product: IProduct) => {
+  const handleCheckAdd = () => {
     if (!accessToken) {
-      setShowModal(true);
+      setModalCheckLogin(true);
+      setShowModal(false);
       return;
     }
-    addCart(product);
+    setShowModal(true);
   };
+
+  const uniqueSize = Array.from(
+    new Set(product.variants.map((v: any) => v.size))
+  );
+  const uniqueColor = Array.from(
+    new Set(product.variants.map((v: any) => v.color))
+  );
 
   const closeModal = () => {
     setShowModal(false);
+    setModalCheckLogin(false);
   };
 
   const handleLoginNow = () => {
@@ -108,7 +128,7 @@ const ProductItems = ({ product, isLoading }: { product: any, isLoading: boolean
               color="#40BFFF"
             />
             <IoCart
-              onClick={() => handleCheckAdd(product)}
+              onClick={() => handleCheckAdd()}
               className="cursor-pointer p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
               size={52}
               color="#40BFFF"
@@ -128,40 +148,127 @@ const ProductItems = ({ product, isLoading }: { product: any, isLoading: boolean
         </div>
         <div className="flex items-center justify-center gap-2 mt-1 mb-3">
           <p className="text-primary text-lg font-semibold">
-            {formatVNCurrency(product.promotional_price)}
+            {formatVNCurrency(product.promotional_price)} ₫
           </p>
           <p className="text-[#9098B1] text-sm font-medium line-through">
-            {formatVNCurrency(product.price)}
+            {formatVNCurrency(product.price)} ₫
           </p>
           <p className="text-[#E71D36] text-sm font-semibold">-10%</p>
         </div>
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center ">
-          <div className="modal modal-open ">
+        <div className="fixed inset-0 z-50 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+          <div className="modal modal-open">
             <div className="modal-box relative">
               <h2 className="text-2xl font-semibold text-center mb-4">
-                You need to login
+                Select Size and Color
               </h2>
-              <p className="mb-6 text-center">
-                Please login to add this product to your cart.
-              </p>
+
+              {/* Size Selection */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <h3 className="w-full text-center text-lg mb-2">Size</h3>
+                {uniqueSize.map((size: any) => {
+                  // Kiểm tra xem kích thước có sản phẩm với số lượng > 0 hay không
+                  const isSizeAvailable = product.variants.some(
+                    (variant: any) =>
+                      variant.size === size &&
+                      variant.color === selectedColor &&
+                      variant.quantity > 0
+                  );
+
+                  return (
+                    <button
+                      key={size}
+                      className={`px-8 py-2 text-center text-sm font-medium border rounded-md transition ${
+                        selectedSize === size
+                          ? "border-theme-color-primary ring-2 ring-theme-color-primary"
+                          : "bg-white text-gray-700 border-gray-300"
+                      } ${
+                        !isSizeAvailable
+                          ? "cursor-not-allowed opacity-50 line-through"
+                          : "hover:border-theme-color-primary"
+                      }`}
+                      onClick={() => {
+                        if (isSizeAvailable) {
+                          setSelectedSize(size);
+                        }
+                      }}
+                      disabled={!isSizeAvailable} // Vô hiệu hóa nếu không có sản phẩm
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Color Selection */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <h3 className="w-full text-center text-lg mb-2">Color</h3>
+                {uniqueColor.map((color: any) => (
+                  <button
+                    key={color}
+                    className={`px-6 py-2 border rounded-md hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary flex items-center gap-2 ${
+                      selectedColor === color
+                        ? "bg-theme-color-primary outline-none ring-2"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedColor(color)}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+
+              {/* Actions */}
               <div className="flex justify-center gap-4">
                 <button
-                  onClick={handleLoginNow}
-                  className="btn bg-blue-500 text-white hover:bg-blue-600 w-32"
+                  onClick={closeModal}
+                  className="btn bg-gray-300 text-black hover:bg-gray-400"
                 >
-                  Login Now
+                  Cancel
+                </button>
+                <button
+                  onClick={() => addCart(product)}
+                  className="btn bg-blue-500 text-white hover:bg-blue-600"
+                  disabled={!selectedSize || !selectedColor}
+                >
+                  Add to Cart
                 </button>
               </div>
-              {/* Close button */}
+
               <button
                 className="absolute top-2 right-2 text-xl"
                 onClick={closeModal}
               >
                 ✕
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalCheckLogin && (
+        <div className="fixed inset-0 z-50 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+          <div className="modal modal-open">
+            <div className="modal-box relative">
+              <h2 className="text-2xl font-semibold text-center mb-4">
+                Please log in to continue adding items to your cart.
+              </h2>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={handleLoginNow}
+                  className="btn bg-blue-500 text-white hover:bg-blue-600"
+                >
+                  Login Now
+                </button>
+                <button
+                  onClick={closeModal}
+                  className="btn bg-gray-300 text-black hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
