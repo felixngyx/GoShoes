@@ -21,8 +21,12 @@ class PostCategorySeeder extends Seeder
             ['name' => 'Phụ kiện thời trang', 'slug' => Str::slug('Phụ kiện thời trang')],
             ['name' => 'Thời trang mùa hè', 'slug' => Str::slug('Thời trang mùa hè')],
         ];
+
         foreach ($categories as $category) {
-            PostCategory::create($category);
+            PostCategory::updateOrCreate(
+                ['slug' => $category['slug']],
+                $category
+            );
         }
     }
 }
