@@ -23,6 +23,8 @@ class BrandService
 
             $BrandData = [
                 'name' => $validated['name'],
+                'logo_url' => $validated['logo_url'],
+
             ];
             $brand = $this->brandRepository->createBrand($BrandData);
 
@@ -48,6 +50,7 @@ class BrandService
 
             $brandData = [
                 'name' => $validated['name'],
+                'logo_url' => $validated['logo_url'],
             ];
             $updatedBrand = $this->brandRepository->updateBrand($id, $brandData);
 
