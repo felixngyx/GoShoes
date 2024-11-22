@@ -36,10 +36,9 @@ axiosClient.interceptors.response.use(
 		}
 
 		const originalRequest = error.config;
-
+		console.log('originalRequest', originalRequest);
 		if (error.response.status === 401 && !originalRequest._retry) {
 			originalRequest._retry = true;
-
 			const refreshToken = Cookies.get('refresh_token');
 
 			if (!refreshToken) {
@@ -56,10 +55,14 @@ axiosClient.interceptors.response.use(
 			}
 
 			try {
-				const response = await axiosClient.post('/auth/refresh-token', {
-					refresh_token: refreshToken,
+				const response = await fetch(`${baseURL}/auth/refresh-token`, {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${refreshToken}`,
+					},
 				});
-				Cookies.set('access_token', response.data.access_token);
+				const data = await response.json();
+				Cookies.set('access_token', data.access_token);
 				return axiosClient(originalRequest);
 			} catch (error) {
 				Cookies.remove('access_token');
@@ -72,6 +75,7 @@ axiosClient.interceptors.response.use(
 					window.location.href = '/admin/signin';
 				}
 				return Promise.reject(error);
+				console.log(error);
 			}
 		}
 		return Promise.reject(error);

@@ -18,6 +18,7 @@ import { COLOR } from '../../../services/admin/color';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 
 const productSchema = Joi.object({
+	id: Joi.number().optional(),
 	name: Joi.string().required().messages({
 		'string.empty': 'Product name is required',
 	}),
@@ -75,6 +76,8 @@ const productSchema = Joi.object({
 	variants: Joi.array()
 		.items(
 			Joi.object({
+				id: Joi.number().optional(),
+				variant_id: Joi.number().optional(),
 				color_id: Joi.number().required().messages({
 					'number.base': 'Color is required',
 				}),
@@ -88,6 +91,7 @@ const productSchema = Joi.object({
 			})
 		)
 		.allow(''),
+	rating_count: Joi.number().optional(),
 });
 const UpdateProduct = () => {
 	const { id } = useParams();
@@ -102,65 +106,63 @@ const UpdateProduct = () => {
 
 	const fetchProduct = async () => {
 		try {
-			// Fetch all necessary data first
-			const [resCategory, resSize, resBrand, resColor, productRes] =
-				await Promise.all([
-					categoryService.getAll(),
-					sizeService.getAll(),
-					brandService.getAll(),
-					colorService.getAll(),
-					productService.getById(Number(id)),
-				]);
+			setLoading(true);
+			const [resCategory, resSize, resBrand, resColor, productRes] = await Promise.all([
+				categoryService.getAll(),
+				sizeService.getAll(),
+				brandService.getAll(),
+				colorService.getAll(),
+				productService.getById(Number(id)),
+			]);
 
-			// Set all the data
-			const categories = resCategory.data.category.data;
+			if (!productRes) {
+				toast.error('Không tìm thấy sản phẩm');
+				navigate('/admin/product');
+				return;
+			}
+
+			// Kiểm tra và xử lý dữ liệu trước khi set state
+			const categories = resCategory.data?.categories?.data || [];
+			const sizes = resSize.data?.sizes?.data || [];
+			const brands = resBrand.data?.data?.brands || [];
+			const colors = resColor.data?.clors?.data || [];
+
 			setCategories(categories);
-			setSizes(resSize.data.sizes.data);
-			setBrands(resBrand.data.brands.data);
-			setColors(resColor.data.clors.data);
+			setSizes(sizes);
+			setBrands(brands);
+			setColors(colors);
 
-			const product = productRes;
-			setInitialData(product);
+			// Set initial data
+			setInitialData(productRes);
 
-			// Set form values
-			setValue('name', product.name);
-			setValue('description', product.description);
-			setValue('price', Number(product.price));
-			setValue('promotional_price', Number(product.promotional_price));
-			setValue('status', product.status);
-			setValue('sku', product.sku);
-			setValue('hagtag', product.hagtag);
-			setValue('brand_id', product.brand_id);
-			setValue('thumbnail', product.thumbnail);
-			setValue('images', product.images);
-			setValue('stock_quantity', Number(product.stock_quantity));
-
-			// Now we can safely handle categories since we have both product and categories data
-			if (product.category_ids && Array.isArray(product.category_ids)) {
-				const selectedCategories = categories.filter((cat: CATEGORY) =>
-					product.category_ids.includes(Number(cat.id))
+			// Xử lý categories ngay khi có dữ liệu
+			if (productRes.category_ids) {
+				const selectedCats = categories.filter((cat: CATEGORY) =>
+					productRes.category_ids.includes(Number(cat.id))
 				);
-				setSelectedCategories(selectedCategories);
-				setValue(
-					'category_ids',
-					product.category_ids.map((id) => Number(id))
-				);
+				setSelectedCategories(selectedCats);
+				
+				// Quan trọng: Set giá trị cho category_ids ngay lập tức
+				setValue('category_ids', selectedCats.map(cat => Number(cat.id)));
 			}
 
-			const productImages = product.images.map(
-				(image: { image_path: string }) => image.image_path
-			);
-			setProductImageFiles(productImages);
+			// Reset form với dữ liệu đầy đủ
+			reset({
+				...productRes,
+				category_ids: productRes.category_ids, // Đảm bảo category_ids được set
+				variants: productRes.variants || []
+			});
 
-			if (product.variants && Array.isArray(product.variants)) {
-				setValue('variants', product.variants);
-			}
+			// Set các state khác
+			setThumbnailFile(productRes.thumbnail);
+			setProductImageFiles(productRes.images.map(img => img.image_path));
 
-			setThumbnailFile(product.thumbnail);
 		} catch (error: any) {
-			toast.error(
-				error?.response?.data?.message || 'Error fetching product data'
-			);
+			console.error('Fetch error:', error);
+			toast.error(error?.response?.data?.message || 'Lỗi khi tải dữ liệu');
+			navigate('/admin/product');
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -170,6 +172,7 @@ const UpdateProduct = () => {
 		control,
 		clearErrors,
 		setValue,
+		reset,
 		formState: { errors },
 	} = useForm<PRODUCT_DETAIL>({
 		resolver: joiResolver(productSchema),
@@ -273,6 +276,7 @@ const UpdateProduct = () => {
 			color_id: 0,
 			size_id: 0,
 			quantity: 0,
+			variant_id: undefined
 		});
 		setVariantImageFiles([...variantImageFiles, null]);
 	};
@@ -290,11 +294,13 @@ const UpdateProduct = () => {
 		if (category) {
 			const newSelectedCategories = [...selectedCategories, category];
 			setSelectedCategories(newSelectedCategories);
-			setValue(
-				'category_ids',
-				newSelectedCategories.map((cat) => Number(cat.id))
-			);
-			clearErrors('category_ids');
+			
+			// Set giá trị mới cho category_ids
+			const newCategoryIds = newSelectedCategories.map(cat => Number(cat.id));
+			setValue('category_ids', newCategoryIds, { 
+				shouldValidate: true,
+				shouldDirty: true 
+			});
 		}
 	};
 
@@ -303,23 +309,21 @@ const UpdateProduct = () => {
 			(cat) => Number(cat.id) !== categoryId
 		);
 		setSelectedCategories(newSelectedCategories);
-		setValue(
-			'category_ids',
-			newSelectedCategories.map((cat) => Number(cat.id))
-		);
+		
+		// Cập nhật category_ids khi xóa category
+		const newCategoryIds = newSelectedCategories.map(cat => Number(cat.id));
+		setValue('category_ids', newCategoryIds, { 
+			shouldValidate: true,
+			shouldDirty: true 
+		});
 	};
 
 	useEffect(() => {
-		if (id) {
-			(async () => {
-				setLoading(true);
-				try {
-					await fetchProduct();
-				} finally {
-					setLoading(false);
-				}
-			})();
+		if (!id) {
+			navigate('/admin/product');
+			return;
 		}
+		fetchProduct();
 	}, [id]);
 
 	// Add state for initial data
@@ -821,115 +825,119 @@ const UpdateProduct = () => {
 
 							<h3 className="text-lg font-bold col-span-3">Variant</h3>
 
-							{fields.map((_, index) => (
-								<div
-									key={index}
-									className="col-span-3 flex items-center justify-between gap-3"
-								>
+							{fields.map((field, index) => (
+								<div key={field.id} className="col-span-3 flex items-center justify-between gap-3">
 									<div className="flex gap-3 w-full items-center">
 										<div className="grid grid-cols-3 gap-3 w-full items-center">
 											<div className="form-control relative">
 												<select
 													className="select select-bordered w-full"
-													{...register(
-														`variants.${index}.size_id`
-													)}
+													{...register(`variants.${index}.size_id`)}
 												>
 													<option value="">Select Size</option>
-													{sizes.map((size) => (
-														<option key={size.id} value={size.id}>
-															{size.size}
-														</option>
-													))}
+													{sizes
+														// Lọc ra các size chưa được chọn hoặc đang được chọn ở variant hiện tại
+														.filter(size => {
+															const sizeId = Number(size.id);
+															const currentSizeId = field.size_id;
+															return !fields.some((f, i) => 
+																i !== index && // Không phải variant hiện tại
+																Number(f.size_id) === sizeId && // Size đã được chọn
+																Number(f.color_id) === Number(field.color_id) // Cùng màu
+															) || sizeId === currentSizeId;
+														})
+														.map((size) => (
+															<option key={size.id} value={size.id}>
+																{size.size}
+															</option>
+														))
+													}
 												</select>
 												{errors.variants && (
 													<p className="text-red-500 text-xs absolute -bottom-5">
-														{
-															errors.variants?.[index]?.size_id
-																?.message
-														}
+														{errors.variants?.[index]?.size_id?.message}
 													</p>
 												)}
 											</div>
 
 											<div className="form-control relative">
 												<select
-													className="select select-bordered w-full"
-													{...register(
-														`variants.${index}.color_id`
-													)}
+														className="select select-bordered w-full"
+														{...register(
+															`variants.${index}.color_id`
+														)}
 												>
-													<option value="">Select Color</option>
-													{colors.map((color) => (
-														<option
-															key={color.id}
-															value={color.id}
-														>
-															{color.color}
-														</option>
-													))}
+														<option value="">Select Color</option>
+														{colors.map((color) => (
+																<option
+																		key={color.id}
+																		value={color.id}
+																>
+																		{color.color}
+																</option>
+														))}
 												</select>
 												{errors.variants && (
-													<p className="text-red-500 text-xs absolute -bottom-5">
-														{
-															errors.variants?.[index]?.color_id
-																?.message
-														}
-													</p>
+														<p className="text-red-500 text-xs absolute -bottom-5">
+																{
+																		errors.variants?.[index]?.color_id
+																			?.message
+																}
+														</p>
 												)}
 											</div>
 
 											<div className="form-control relative">
 												<input
-													type="number"
-													placeholder="Quantity"
-													className="input input-bordered w-full"
-													{...register(
-														`variants.${index}.quantity`
-													)}
+														type="number"
+														placeholder="Quantity"
+														className="input input-bordered w-full"
+														{...register(
+															`variants.${index}.quantity`
+														)}
 												/>
 												{errors.variants && (
-													<p className="text-red-500 text-xs absolute -bottom-5">
-														{
-															errors.variants?.[index]?.quantity
-																?.message
-														}
-													</p>
+														<p className="text-red-500 text-xs absolute -bottom-5">
+																{
+																		errors.variants?.[index]?.quantity
+																			?.message
+																}
+														</p>
 												)}
 											</div>
 										</div>
 									</div>
 									<button
-										type="button"
-										onClick={() => removeVariant(index)}
-										className="btn btn-sm btn-error"
+											type="button"
+											onClick={() => removeVariant(index)}
+											className="btn btn-sm btn-error"
 									>
-										<TrashIcon className="w-5 h-5 text-white" />
+											<TrashIcon className="w-5 h-5 text-white" />
 									</button>
 								</div>
 							))}
 
 							<button
-								type="button"
-								onClick={addVariant}
-								className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit"
+									type="button"
+									onClick={addVariant}
+									className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit"
 							>
-								Add Variant
+									Add Variant
 							</button>
 
 							<button
-								disabled={loading}
-								type="submit"
-								className="btn mt-4 col-span-3 bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+									disabled={loading}
+									type="submit"
+									className="btn mt-4 col-span-3 bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 							>
-								{loading ? (
-									<>
-										<span className="loading loading-spinner loading-sm text-info"></span>
-										Updating product...
-									</>
-								) : (
-									'Update product'
-								)}
+									{loading ? (
+											<>
+													<span className="loading loading-spinner loading-sm text-info"></span>
+													Updating product...
+											</>
+									) : (
+											'Update product'
+									)}
 							</button>
 						</form>
 					)}
@@ -938,17 +946,17 @@ const UpdateProduct = () => {
 
 			{/* Add this dialog for image preview */}
 			<dialog ref={modalRef} className="modal">
-				{previewImage && (
-					<div className="modal-box">
-						<img src={previewImage} alt="Preview" className="w-full" />
-						<button
-							onClick={closeModal}
-							className="btn btn-sm btn-circle absolute right-2 top-2"
-						>
-							<X />
-						</button>
-					</div>
-				)}
+					{previewImage && (
+							<div className="modal-box">
+									<img src={previewImage} alt="Preview" className="w-full" />
+									<button
+											onClick={closeModal}
+											className="btn btn-sm btn-circle absolute right-2 top-2"
+									>
+											<X />
+									</button>
+							</div>
+					)}
 			</dialog>
 		</>
 	);

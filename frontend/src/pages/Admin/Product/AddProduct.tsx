@@ -93,16 +93,20 @@ const AddProduct = () => {
 		(async () => {
 			try {
 				setLoading(true);
-				const resCategory = await categoryService.getAll();
-				setCategories(resCategory.data.category.data);
-				const resSize = await sizeService.getAll();
-				setSizes(resSize.data.sizes.data);
-				const resBrand = await brandService.getAll();
-				setBrands(resBrand.data.brands.data);
-				const resColor = await colorService.getAll();
-				setColors(resColor.data.clors.data);
+				const [resCategory, resSize, resBrand, resColor] = await Promise.all([
+					categoryService.getAll(),
+					sizeService.getAll(),
+					brandService.getAll(),
+					colorService.getAll(),
+				]);
+
+				setCategories(resCategory.data?.categories?.data || []);
+				setSizes(resSize.data?.sizes?.data || []);
+				setBrands(resBrand.data?.data?.brands || []);
+				setColors(resColor.data?.clors?.data || []);
 			} catch (error) {
-				console.error(error);
+				console.error('Error:', error);
+				toast.error('Lỗi khi tải dữ liệu');
 			} finally {
 				setLoading(false);
 			}

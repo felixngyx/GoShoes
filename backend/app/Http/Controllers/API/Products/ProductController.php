@@ -33,24 +33,24 @@ class ProductController extends Controller
             $name = $request->input('name');
             $brand_name = $request->input('brand_name');
             $brand_id = $request->input('brand_id');
-        
+
             // Khởi tạo query với các relations cần thiết
             $query = Product::with(['variants.color', 'variants.size', 'categories', 'brand', 'images'])
                 ->where('is_deleted', false);
-        
+
             // Áp dụng các điều kiện lọc
             if (!is_null($minPrice)) {
                 $query->where('price', '>=', $minPrice);
             }
-        
+
             if (!is_null($maxPrice)) {
                 $query->where('price', '<=', $maxPrice);
             }
-        
+
             if ($name) {
                 $query->where('name', 'LIKE', '%' . $name . '%');
             }
-        
+
             if ($category) {
                 if (is_array($category)) {
                     $query->whereHas('categories', function ($q) use ($category) {
@@ -62,27 +62,27 @@ class ProductController extends Controller
                     });
                 }
             }
-        
+
             if ($color) {
                 $query->whereHas('variants.color', function ($q) use ($color) {
                     $q->where('color', $color);
                 });
             }
-        
+
             if ($brand_name) {
                 $query->whereHas('brand', function ($q) use ($brand_name) {
                     $q->where('name', $brand_name);
                 });
             }
-        
+
             if ($brand_id) {
                 $query->where('brand_id', $brand_id);
             }
-        
+
             // Thực hiện phân trang
             $paginatedProducts = $query->orderBy($orderBy, $order)
                 ->paginate($limit, ['*'], 'page', $page);
-        
+
             // Transform dữ liệu theo format mong muốn
             $transformedProducts = $paginatedProducts->through(function ($product) {
                 return [
@@ -109,7 +109,7 @@ class ProductController extends Controller
                     })->toArray()
                 ];
             });
-        
+
             // Chuẩn bị response
             return response()->json([
                 'status' => 'success',
@@ -312,7 +312,7 @@ class ProductController extends Controller
     }
     public function getDetailProduct(string $id)
     {
-       
+
         $product = $this->productService->findProductWithRelations($id);
 
         if (!$product) {

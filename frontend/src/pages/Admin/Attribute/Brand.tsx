@@ -43,16 +43,20 @@ const Brand = () => {
 			setLoading(true);
 			const res = await brandService.getAll(
 				pagination.page,
-				Number(pagination.limit) // Ensure limit is a number
+				Number(pagination.limit)
 			);
-			setBrands(res.data.brands.data);
-			setPagination({
-				page: Number(res.data.brands.current_page),
-				limit: Number(res.data.brands.per_page),
-				total: Number(res.data.brands.total),
-			});
+			if (res?.data?.data?.brands) {
+				setBrands(res.data.data.brands || []);
+				const paginationData = res.data.data.pagination;
+				setPagination({
+					page: Number(paginationData.current_page || 1),
+					limit: Number(paginationData.per_page || 5),
+					total: Number(paginationData.total || 0),
+				});
+			}
 		} catch (error) {
-			console.log(error);
+			console.error('Error fetching brands:', error);
+			toast.error('Không thể tải danh sách thương hiệu');
 		} finally {
 			setLoading(false);
 		}

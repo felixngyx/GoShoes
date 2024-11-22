@@ -24,6 +24,7 @@ use App\Http\Controllers\API\Shipping\ShippingController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\Order\RefundController;
+use App\Http\Controllers\API\User\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -108,7 +109,6 @@ Route::put('/banners/{id}', [BannerController::class, 'update']);
 Route::delete('/banners/{id}', [BannerController::class, 'destroy']);
 Route::delete('/banners', [BannerController::class, 'destroyMultiple']);
 
-
 Route::get('categories', [CategoryController::class, 'index']);
 
 // This route is Authenticated
@@ -160,7 +160,7 @@ Route::group([
     Route::get('/user/reviews', [ReviewController::class, 'userReviews']);
 
 
-    
+
     Route::post('categories', [CategoryController::class, 'store']);
     Route::get('categories/{id}', [CategoryController::class, 'show']);
     Route::put('categories/{id}', [CategoryController::class, 'update']);
@@ -209,6 +209,19 @@ Route::prefix('payment')->group(function () {
     });
 });
 
+// Admin routes
+Route::group([
+    'prefix' => '/admin',
+    'middleware' => 'authorize'
+], function () {
+    Route::prefix('/user')->group(function () {
+        Route::get('/', [UserController::class, 'index']);
+        Route::get('/{id}', [UserController::class, 'show']);
+        Route::put('/{id}', [UserController::class, 'update']);
+        Route::delete('/{id}', [UserController::class, 'destroy']);
+        Route::delete('/', [UserController::class, 'destroyMultiple']);
+    });
+});
 
 Route::post('/auth/facebook-login', [FacebookAuthController::class, 'loginWithFacebook']);
 

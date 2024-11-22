@@ -1,5 +1,5 @@
 import { FaUser } from 'react-icons/fa';
-import { Box, Boxes, TicketPercent } from 'lucide-react';
+import { Box, Boxes, Newspaper, TicketPercent } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import Logo from '../../../images/logo/logo.svg';
@@ -285,9 +285,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 											Refund Request
 										</NavLink>
 									</li>
-									
 								</ul>
 							</li>
+							
 
 							<li>
 								<NavLink
@@ -299,6 +299,18 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 								>
 									<TicketPercent size={18} />
 									Discounts
+								</NavLink>
+							</li>
+							<li>
+								<NavLink
+									to="/admin/post"
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+										pathname.includes('post') &&
+										'bg-graydark dark:bg-meta-4'
+									}`}
+								>
+									<Newspaper size={18} />
+									Post
 								</NavLink>
 							</li>
 
