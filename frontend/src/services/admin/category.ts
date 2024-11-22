@@ -30,13 +30,13 @@ export interface CategoryResponse {
 }
 
 const categoryService = {
-	getAll: (page: number = 1, limit: number = 5) => {
-		return axiosClient.get(`/categories?page=${page}&limit=${limit}`);
+	getAll: (page: number = 1, limit: number = 15) => {
+		return axiosClient.get<CategoryResponse>(`/categories?page=${page}&limit=${limit}`);
 	},
-	create: (data: CATEGORY) => {
+	create: (data: Partial<CATEGORY>) => {
 		return axiosClient.post('/categories', data);
 	},
-	update: (id: number, data: CATEGORY) => {
+	update: (id: number, data: Partial<CATEGORY>) => {
 		return axiosClient.put(`/categories/${id}`, data);
 	},
 	delete: (id: number) => {

@@ -100,7 +100,7 @@ const AddProduct = () => {
 					colorService.getAll(),
 				]);
 
-				setCategories(resCategory.data?.category?.data || []);
+				setCategories(resCategory.data?.categories?.data || []);
 				setSizes(resSize.data?.sizes?.data || []);
 				setBrands(resBrand.data?.data?.brands || []);
 				setColors(resColor.data?.clors?.data || []);
