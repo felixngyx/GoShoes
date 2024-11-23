@@ -5,5 +5,5 @@ abstract class VerifyAbstract
 {
     protected abstract static function encryptToken(object $user, string $type) : string;
 
-    protected abstract static function decryptToken(string $token) : object;
+    abstract protected static function decryptToken(string $token) : object;
 }

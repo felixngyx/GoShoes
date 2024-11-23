@@ -12,7 +12,7 @@ class User extends Authenticatable implements JWTSubject
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable. 
+     * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
@@ -21,12 +21,15 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'phone',
-        'is_admin',
         'is_deleted',
         'auth_provider',
         'email_verified_at',
         'avt',
         'facebook_id',
+        'bio',
+        'birth_date',
+        'gender',
+        'role'
     ];
 
     /**

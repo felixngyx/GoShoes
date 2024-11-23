@@ -18,13 +18,8 @@ class Authorize
     public function handle(Request $request, Closure $next): Response
     {
         try {
-            $token = $request->bearerToken();
-            $decoded = JWTAuth::setToken($token)->getPayload();
-            if ($decoded['token_type'] !== 'access') {
-                return response()->json(['error' => 'Invalid token type'], 403);
-            }
             $user = JWTAuth::parseToken()->authenticate();
-            if (!$user['is_admin']) {
+            if (!$user['role'] == 'admin' || $user['role'] == 'super-admin') {
                 return response()->json(['error' => 'Admin cannot be verified'], 403);
             }
         } catch (Exception $e) {

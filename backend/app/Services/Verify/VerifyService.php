@@ -37,7 +37,7 @@ class VerifyService extends VerifyAbstract implements VerifyServiceInterface
         // token data
         $tokenData = [
             'user_id' => $user->id,
-            'is_admin' => $user->is_admin,
+            'role' => $user->role,
             'type' => $type,
             'expires_at' => now()->addMinutes(5)->timestamp
         ];
@@ -78,14 +78,21 @@ class VerifyService extends VerifyAbstract implements VerifyServiceInterface
             // decrypt token
            $decrypted = self::decryptToken($request['token']);
 
-           $checkTokenIsUsed = self::getTokenService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted->user_id);
+           $token = self::getTokenService()->findDetailToken($request['token'], $decrypted->user_id);
 
-           if ($checkTokenIsUsed) {
+           if (!$token) {
                return response()->json([
                    'success' => false,
                    'message' => 'Token is already used'
                ], 400);
            }
+
+              if ($token->is_used) {
+                  return response()->json([
+                      'success' => false,
+                      'message' => 'Token is already used'
+                  ], 400);
+              }
 
             // Check if token is expired
             if (now()->timestamp > $decrypted->expires_at) {
@@ -94,14 +101,6 @@ class VerifyService extends VerifyAbstract implements VerifyServiceInterface
                         'success' => false,
                         'message' => 'Token is expired'
                     ], 400);
-            }
-
-            // Check if user is admin
-            if ($decrypted->is_admin) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Admin cannot be verified'
-                ], 403);
             }
 
             return response()->json([
