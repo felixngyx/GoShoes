@@ -26,7 +26,6 @@ class UpdateUserRequest extends FormRequest
             'email' => 'email|unique:users,email,'.$this->id.'|max:191',
             'phone' => 'regex:/^([0-9\s\-\+\(\)]*)$/|min:10|unique:users,phone,'.$this->id,
             'is_deleted' => 'boolean',
-            'is_admin' => 'boolean',
             'avt' => 'string'
         ];
     }
@@ -51,7 +50,6 @@ class UpdateUserRequest extends FormRequest
             'phone.min' => 'Phone must be at least 10 characters',
             'phone.unique' => 'Phone already exists',
             'is_deleted.boolean' => 'Is deleted must be a boolean',
-            'is_admin.boolean' => 'Is admin must be a boolean',
             'avt.string' => 'Avt must be a string'
         ];
     }
