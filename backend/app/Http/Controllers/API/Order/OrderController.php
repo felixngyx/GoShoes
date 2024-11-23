@@ -716,7 +716,7 @@ class OrderController extends Controller
             DB::beginTransaction();
 
             // Tìm đơn hàng của user hiện tại
-            $order = Order::when(!auth()->user()->is_admin, function ($query) {
+            $order = Order::when(!auth()->user()->role == 'admin' || !auth()->user()->role == 'super-admin', function ($query) {
                 $query->where('user_id', auth()->id());
             })
                 ->where('id', $id)
@@ -795,7 +795,7 @@ class OrderController extends Controller
             $user = auth()->user();
             $order = Order::findOrFail($id);
 
-            if (!$user->is_admin && $order->user_id !== $user->id) {
+            if (!$user->role == 'admin' && !$user->role == 'super-admin' && $order->user_id !== $user->id) {
                 throw new \Exception('Bạn không có quyền truy cập đơn hàng này');
             }
 

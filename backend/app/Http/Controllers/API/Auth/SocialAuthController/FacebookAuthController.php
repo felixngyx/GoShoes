@@ -54,7 +54,7 @@ class FacebookAuthController extends Controller
                 'email_is_verified' => (bool) $user->email_verified_at,
                 'avt' => $user->avt,
                 'auth_provider' => $user->auth_provider,
-                'is_admin' => $user->is_admin,
+                'role' => $user->role,
             ],
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
