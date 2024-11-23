@@ -3,6 +3,7 @@
 use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
 // use App\Http\Controllers\API\Shipping\ShippingController;
+use App\Http\Controllers\API\Profile\ProfileController;
 use App\Http\Controllers\API\Wishlist\WishlistController;
 use App\Http\Controllers\API\Cart\CartController;
 use Illuminate\Support\Facades\Route;
@@ -42,9 +43,6 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('/register', [AuthController::class, 'registerController']);
     Route::post('/register-verify', [AuthController::class, 'registerVerifyController']);
     Route::post('/login', [AuthController::class, 'loginController']);
-    Route::post('/reset-password-request', [AuthController::class, 'sendResetPasswordRequestController']);
-    Route::post('/reset-password', [AuthController::class, 'resetPasswordController']);
-    Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
     Route::post('/refresh-token', [AuthController::class, 'refreshTokenController'])->middleware('jwt.refresh.token');
     Route::post('/send-verify-email', [AuthController::class, 'sendEmailVerifyController'])->middleware('jwt.auth');
 });
@@ -111,10 +109,26 @@ Route::delete('/banners', [BannerController::class, 'destroyMultiple']);
 
 Route::get('categories', [CategoryController::class, 'index']);
 
+// This route is Public for all user change email and phone
+Route::group(['prefix' => 'profile'], function () {
+    Route::post('/verify-token-change-email', [ProfileController::class, 'verifyChangeEmail']);
+    Route::post('/verify-token-change-phone', [ProfileController::class, 'verifyChangePhone']);
+    Route::post('/reset-password-request', [AuthController::class, 'sendResetPasswordRequestController']);
+    Route::post('/reset-password', [AuthController::class, 'resetPasswordController']);
+    Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
+});
+
 // This route is Authenticated
 Route::group([
     'middleware' => 'jwt.auth',
 ], function () {
+
+    Route::group(['prefix' => 'profile'], function () {
+        Route::get('/', [ProfileController::class, 'index']);
+        Route::put('/update', [ProfileController::class, 'update']);
+        Route::post('/change-detail-request', [ProfileController::class, 'changeDetailRequest']);
+    });
+
     Route::post('/logout', [AuthController::class, 'logoutController']);
 
     Route::prefix('orders')->group(function () {

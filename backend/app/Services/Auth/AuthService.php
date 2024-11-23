@@ -103,7 +103,7 @@ class AuthService implements AuthServiceInterface
                     'name' => $user->name,
                     'email' => $user->email,
                     'email_is_verified' => (bool)$user->email_verified_at,
-                    'is_admin' => $user->is_admin
+                    'role' => $user->role
                 ],
                 'access_token' => $accessToken,
                 'refresh_token' => $refreshToken,
@@ -141,14 +141,14 @@ class AuthService implements AuthServiceInterface
             $verificationLink = self::getVerifyService()->generateLinkVerification($user, 'register');
             DB::commit();
             Mail::to($user->email)->send(new \App\Mail\RegisterMail($verificationLink));
+
             return response()->json([
                 'success' => true,
                 'message' => 'User created successfully',
                 'data' => [
                     'user' => $user->name,
                     'email' => $user->email,
-                    'email_is_verified' => (bool)$user->email_verified_at,
-                    'is_admin' => $user->is_admin
+                    'verification_link' => $verificationLink
                 ]
             ], 201);
         } catch (\Exception $e) {
@@ -157,7 +157,7 @@ class AuthService implements AuthServiceInterface
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], 200);
+            ], $e->getCode());
         }
     }
 
@@ -175,15 +175,6 @@ class AuthService implements AuthServiceInterface
                 ], 404);
             }
 
-            //  If user is admin
-            // Admin cannot reset password
-            if ($user->is_admin) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Admin cannot reset password'
-                ], 403);
-            }
-
             // Generate verification link
             $verificationLink = (self::getVerifyService()->generateLinkVerification($user, 'reset-password'));
 
@@ -195,6 +186,7 @@ class AuthService implements AuthServiceInterface
                 'success' => true,
                 'message' => 'Reset password link sent to your email',
                 'data' => [
+                    'verification_link' => $verificationLink,
                     'email' => $user->email
                 ]
             ], 200);
@@ -275,16 +267,7 @@ class AuthService implements AuthServiceInterface
                 ], 404);
             }
 
-            //  If user is admin
-            // Admin cannot reset password
-            if ($user->is_admin) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Admin cannot reset password'
-                ], 403);
-            }
-
-            $tokenIsUsed = self::getTokenService()->findByTokenAndUserIdIsUsedService($request['token'], $decrypted['user_id']);
+            $tokenIsUsed = self::getTokenService()->findDetailToken($request['token'], $decrypted->user_id);
 
             if (!$tokenIsUsed) {
                 return response()->json([
@@ -303,6 +286,7 @@ class AuthService implements AuthServiceInterface
             // Update password
             $user->password = bcrypt($request['password']);
             $this->userService->update(['password' => $user->password], $user->id);
+            self::getTokenService()->update(['is_used' => true], $tokenIsUsed->id);
             DB::commit();
             // Return response
             return response()->json([
@@ -347,15 +331,6 @@ class AuthService implements AuthServiceInterface
                     'success' => false,
                     'message' => 'Email not found'
                 ], 404);
-            }
-
-            //  If user is admin
-            // Admin cannot verify email
-            if ($user->is_admin) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Admin cannot verify email'
-                ], 403);
             }
 
             $tokenIsUsed = self::getTokenService()->findDetailToken($request['token'], $decrypted->user_id);
