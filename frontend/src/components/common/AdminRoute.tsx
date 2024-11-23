@@ -11,7 +11,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
 	const roles = ['super-admin', 'admin'];
 	const accessToken = Cookies.get('access_token');
 
-	if (!roles.includes(role) && !accessToken) {
+	if (!roles.includes(role) || !accessToken) {
 		return <Navigate to="/admin/signin" />;
 	}
 

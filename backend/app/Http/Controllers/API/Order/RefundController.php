@@ -10,6 +10,7 @@ use App\Models\OrderPayment;
 use App\Models\RefundRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PhpParser\Node\Expr\Throw_;
 
 use function PHPUnit\Framework\throwException;
@@ -110,7 +111,7 @@ class RefundController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error when refund request: ' . $e->getMessage());
+            Log::error('Error when refund request: ' . $e->getMessage());
 
             return response()->json([
                 'status' => false,
@@ -170,7 +171,7 @@ class RefundController extends Controller
                 (int)$order->total
             );
 
-            \Log::info('ZaloPay Refund Result:', [
+            Log::info('ZaloPay Refund Result:', [
                 'result' => $refundResult
             ]);
 
