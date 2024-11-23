@@ -52,7 +52,6 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
                 'email' => $request['email'] ?? $user->email,
                 'phone' => $request['phone'] ?? $user->phone,
                 'is_deleted' => $request['is_deleted'] ?? $user->is_deleted,
-                'is_admin' => $request['is_admin'] ?? $user->is_admin,
                 'avt' => $request['avt'] ?? $user->avt
             ];
             $result = self::getUserRepository()->update($data, $id);
