@@ -2,6 +2,7 @@ import axiosClient from '../../apis/axiosClient';
 import { CATEGORY } from './category';
 
 export type PRODUCT = {
+	id?: number;
 	name: string;
 	description: string;
 	price: number;

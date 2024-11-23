@@ -7,10 +7,11 @@ interface AdminRouteProps {
 }
 
 const AdminRoute = ({ children }: AdminRouteProps) => {
-	const { is_admin } = useSelector((state: RootState) => state.client.user);
+	const { role } = useSelector((state: RootState) => state.client.user);
+	const roles = ['super-admin', 'admin'];
 	const accessToken = Cookies.get('access_token');
 
-	if (!is_admin || !accessToken) {
+	if (!roles.includes(role) && !accessToken) {
 		return <Navigate to="/admin/signin" />;
 	}
 

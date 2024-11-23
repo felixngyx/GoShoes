@@ -33,6 +33,7 @@ const SignIn: React.FC = () => {
 	const [loading, setLoading] = useState(false);
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
+	const roles = ['super-admin', 'admin'];
 
 	const {
 		register,
@@ -48,7 +49,7 @@ const SignIn: React.FC = () => {
 			const response = await authService.login(data);
 
 			if (response.data.success) {
-				if (response.data.user.is_admin) {
+				if (roles.includes(response.data.user.role)) {
 					Cookies.set('user', JSON.stringify(response.data.user));
 					Cookies.set('access_token', response.data.access_token);
 					Cookies.set('refresh_token', response.data.refresh_token);
