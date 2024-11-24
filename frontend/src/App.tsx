@@ -53,6 +53,8 @@ import BrandPage from "./pages/Client/Brand";
 import CategoryPage from "./pages/Client/Category";
 import ProductListBrand from "./pages/Client/Brand/ProductListBrand";
 import ProductListCate from "./pages/Client/Category/ProductListCate";
+import NewsPage from "./pages/Client/News";
+import NewsPageDetail from "./pages/Client/News/NewsPageDetail";
 
 function App() {
   const { pathname } = useLocation();
@@ -100,6 +102,8 @@ function App() {
             <Route path="whish-list" element={<Wishlist />} />
           </Route>
           <Route path="/about-us" element={<AboutPage />} />
+          <Route path="/news" element={<NewsPage />} />
+          <Route path="/news/:id" element={<NewsPageDetail />} />
           <Route path="/brand" element={<BrandPage />} />
           <Route path="/brand/:id" element={<ProductListBrand />} />
           <Route path="/category" element={<CategoryPage />} />
