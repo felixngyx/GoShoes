@@ -4,15 +4,18 @@ import { toast } from 'react-hot-toast';
 import axiosClient from '../../../apis/axiosClient';
 import RichTextEditor from '../../../components/admin/RichTextEditor';
 import PageTitle from '../../../components/admin/PageTitle';
+import { useNavigate } from 'react-router-dom';
+import * as Joi from 'joi';
+import { joiResolver } from '@hookform/resolvers/joi';
 
 interface FormData {
     title: string;
     content: string;
     image: string;
-    category_id: string;
-    slug: string;
-    scheduled_at: string;
-    published_at: string;
+    category_id: string | number;
+    scheduled_at: string | null;
+    published_at: string | null;
+    status: 'draft' | 'published' | 'scheduled';
 }
 
 interface Category {
@@ -35,12 +38,44 @@ interface CategoryResponse {
     };
 }
 
+const postSchema = Joi.object({
+    title: Joi.string().required().max(255).messages({
+        'string.empty': 'Title is required',
+        'string.max': 'Title cannot exceed 255 characters',
+    }),
+    content: Joi.string().allow('').optional(),
+    image: Joi.string().required().messages({
+        'string.empty': 'Image is required',
+    }),
+    category_id: Joi.alternatives().try(
+        Joi.string(),
+        Joi.number()
+    ).required().messages({
+        'any.required': 'Category is required',
+    }),
+    scheduled_at: Joi.string().allow(null),
+    published_at: Joi.string().allow(null),
+    status: Joi.string().valid('draft', 'published', 'scheduled').required()
+});
+
 const CreatePost = () => {
     const [content, setContent] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
-    const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>();
+    const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
+        resolver: joiResolver(postSchema),
+        defaultValues: {
+            title: '',
+            content: '',
+            image: '',
+            category_id: '',
+            status: 'draft',
+            published_at: null,
+            scheduled_at: null
+        }
+    });
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -49,11 +84,11 @@ const CreatePost = () => {
                 if (response.data.success) {
                     setCategories(response.data.data.categories);
                 } else {
-                    toast.error('Không thể tải danh sách danh mục');
+                    toast.error('Failed to load categories');
                 }
             } catch (error) {
                 console.error('Categories error:', error);
-                toast.error('Không thể tải danh sách danh mục');
+                toast.error('Failed to load categories');
                 setCategories([]);
             }
         };
@@ -62,7 +97,9 @@ const CreatePost = () => {
     }, []);
 
     const generateSlug = (title: string) => {
-        return title
+        const timestamp = Date.now();
+        const randomString = Math.random().toString(36).substring(2, 8);
+        const baseSlug = title
             .toLowerCase()
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
@@ -71,9 +108,10 @@ const CreatePost = () => {
             .replace(/\s+/g, '-')
             .replace(/-+/g, '-')
             .trim();
+        
+        return `${baseSlug}-${timestamp}-${randomString}`;
     };
 
-    // Handle image upload through Cloudinary
     const handleEditorImageUpload = async (blobInfo: any): Promise<string> => {
         return new Promise(async (resolve, reject) => {
             const formData = new FormData();
@@ -93,19 +131,17 @@ const CreatePost = () => {
                 resolve(data.secure_url);
             } catch (error) {
                 reject('Image upload failed');
-                toast.error('Không thể tải ảnh lên');
+                toast.error('Failed to upload image');
             }
         });
     };
 
-    // Handle featured image upload
     const handleFeaturedImageUpload = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         fileInputRef.current?.click();
     };
 
-    // Handle file change
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -125,29 +161,46 @@ const CreatePost = () => {
             
             const data = await response.json();
             setValue("image", data.secure_url);
-            toast.success("Tải ảnh đại diện thành công!");
+            toast.success("Featured image uploaded successfully!");
         } catch (error) {
             console.error('Upload error:', error);
-            toast.error("Có lỗi xảy ra khi tải ảnh!");
+            toast.error("Error uploading image!");
         }
     };
 
     const onSubmit = async (data: FormData) => {
-        if (!content) return;
+        console.log('Form data:', data);
+        console.log('Content:', content);
+        
+        if (!content) {
+            toast.error('Content is required');
+            return;
+        }
 
         try {
             setIsLoading(true);
+            const loadingToast = toast.loading('Creating post...');
+
             const postData = {
-                ...data,
-                content,
-                slug: generateSlug(data.title)
+                title: data.title,
+                content: content,
+                image: data.image,
+                category_id: Number(data.category_id),
+                scheduled_at: data.status === 'scheduled' ? data.published_at : null,
+                published_at: data.status === 'published' ? new Date().toISOString().slice(0, 19).replace('T', ' ') : null,
+                status: data.status
             };
 
             const response = await axiosClient.post('/posts', postData);
-            toast.success('Tạo bài viết thành công!');
-            // Redirect to post list or post detail
+            
+            if (response.data.success) {
+                toast.dismiss(loadingToast);
+                toast.success('Post created successfully');
+                navigate('/admin/posts');
+            }
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo bài viết');
+            console.error('Create post error:', error);
+            toast.error(error.response?.data?.message || 'Error creating post');
         } finally {
             setIsLoading(false);
         }
@@ -157,16 +210,19 @@ const CreatePost = () => {
         <>
             <PageTitle title="Create Post | Goshoes" />
             <div className="max-w-5xl mx-auto p-4">
-                <h1 className="text-2xl font-bold mb-6">Tạo bài viết mới</h1>
+                <h1 className="text-2xl font-bold mb-6">Create New Post</h1>
                 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSubmit(onSubmit)(e);
+                }} className="space-y-6">
                     <div>
-                        <label className="block mb-2 font-medium">Tiêu đề</label>
+                        <label className="block mb-2 font-medium">Title</label>
                         <input
                             type="text"
-                            {...register("title", { required: "Vui lòng nhập tiêu đề" })}
+                            {...register("title", { required: "Title is required" })}
                             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                            placeholder="Nhập tiêu đề bài viết"
+                            placeholder="Enter post title"
                         />
                         {errors.title && (
                             <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
@@ -174,7 +230,7 @@ const CreatePost = () => {
                     </div>
 
                     <div>
-                        <label className="block mb-2 font-medium">Ảnh đại diện</label>
+                        <label className="block mb-2 font-medium">Featured Image</label>
                         <input 
                             type="file"
                             ref={fileInputRef}
@@ -187,7 +243,7 @@ const CreatePost = () => {
                             onClick={handleFeaturedImageUpload}
                             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                         >
-                            Tải ảnh đại diện
+                            Upload Featured Image
                         </button>
                         {watch("image") && (
                             <div className="mt-2">
@@ -201,7 +257,7 @@ const CreatePost = () => {
                     </div>
 
                     <div>
-                        <label className="block mb-2 font-medium">Nội dung</label>
+                        <label className="block mb-2 font-medium">Content</label>
                         <RichTextEditor
                             initialValue=""
                             onChange={setContent}
@@ -209,12 +265,12 @@ const CreatePost = () => {
                     </div>
 
                     <div>
-                        <label className="block mb-2 font-medium">Danh mục</label>
+                        <label className="block mb-2 font-medium">Category</label>
                         <select
-                            {...register("category_id", { required: "Vui lòng chọn danh mục" })}
+                            {...register("category_id", { required: "Please select a category" })}
                             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                         >
-                            <option value="">Chọn danh mục</option>
+                            <option value="">Select category</option>
                             {categories.map((category) => (
                                 <option key={category.id} value={category.id}>
                                     {category.name}
@@ -229,12 +285,29 @@ const CreatePost = () => {
                     </div>
 
                     <div>
-                        <label className="block mb-2 font-medium">Thời gian xuất bản</label>
+                        <label className="block mb-2 font-medium">Publish Date</label>
                         <input
                             type="datetime-local"
                             {...register("published_at")}
                             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block mb-2 font-medium">Status</label>
+                        <select
+                            {...register("status", { required: "Status is required" })}
+                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="published">Published</option>
+                            <option value="draft">Draft</option>
+                            <option value="scheduled">Scheduled</option>
+                        </select>
+                        {errors.status && (
+                            <p className="text-red-500 text-sm mt-1">
+                                {errors.status.message}
+                            </p>
+                        )}
                     </div>
 
                     <div className="pt-4">
@@ -247,7 +320,7 @@ const CreatePost = () => {
                                     : 'bg-green-500 hover:bg-green-600'
                             }`}
                         >
-                            {isLoading ? 'Đang xử lý...' : 'Tạo bài viết'}
+                            {isLoading ? 'Processing...' : 'Create Post'}
                         </button>
                     </div>
                 </form>

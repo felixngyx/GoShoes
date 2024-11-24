@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { useState, useMemo } from "react";
+import { MoreHorizontal, Pencil, Trash, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -33,6 +33,8 @@ const PostSkeleton = () => (
 
 const Post = () => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   
   const { data, isLoading } = useQuery({
@@ -48,6 +50,23 @@ const Post = () => {
       }
     }
   });
+
+  const sortedPosts = useMemo(() => {
+    if (!data.posts) return [];
+    return [...data.posts].sort((a, b) => {
+      if (sortOrder === 'newest') {
+        return new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
+      }
+      return new Date(a.published_at).getTime() - new Date(b.published_at).getTime();
+    });
+  }, [data.posts, sortOrder]);
+
+  const filteredPosts = useMemo(() => {
+    if (!sortedPosts) return [];
+    return sortedPosts.filter(post => 
+      post.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [sortedPosts, searchTerm]);
 
   const renderPagination = () => {
     const pages = [];
@@ -72,13 +91,33 @@ const Post = () => {
   return (
     <div className="p-6 bg-[#1C2434]">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white">Quản lý bài viết</h1>
-        <button 
-          onClick={() => navigate('/admin/post/create')}
-          className="bg-[#3C50E0] hover:bg-[#3C50E0]/80 text-white px-4 py-2 rounded-lg transition"
-        >
-          Create post
-        </button>
+        <h1 className="text-2xl font-bold text-white">Post Management</h1>
+        <div className="flex gap-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search posts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-white/5 text-gray-400 px-4 py-2 rounded-lg pl-10 w-64"
+            />
+            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          </div>
+          <select 
+            className="bg-white/5 text-gray-400 px-4 py-2 rounded-lg"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
+          >
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
+          <button 
+            onClick={() => navigate('/admin/post/create')}
+            className="bg-[#3C50E0] hover:bg-[#3C50E0]/80 text-white px-4 py-2 rounded-lg transition"
+          >
+            Create post
+          </button>
+        </div>
       </div>
 
       <motion.div 
@@ -95,18 +134,19 @@ const Post = () => {
           </>
         ) : (
           // Actual posts
-          data.posts.map((post: Posts) => (
+          filteredPosts.map((post: Posts) => (
             <div key={post.id} className="bg-white/5 backdrop-blur-sm rounded-sm border border-white/10 shadow-md">
               <div className="p-4">
                 <div className="flex items-start gap-4">
-                  <div className="w-32 h-32 bg-white/10 rounded-sm overflow-hidden">
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-
+                  {post.image && (
+                    <div className="w-32 h-32 bg-white/10 rounded-sm overflow-hidden">
+                      <img
+                        src={post.image}
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
                       <div>
@@ -114,6 +154,9 @@ const Post = () => {
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-sm text-gray-400">
                             {post.category_name}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            by {post.author_name}
                           </span>
                         </div>
                       </div>
@@ -128,29 +171,26 @@ const Post = () => {
                                       transition-all duration-300">
                           <div className="bg-[#1C2434] border border-white/10 rounded-sm shadow-lg py-1 w-48">
                             <button 
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 
-                                       hover:bg-white/5 w-full transition"
-                              onClick={() => toast.success('Chỉnh sửa bài viết')}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 w-full transition"
+                              onClick={() => navigate(`/admin/post/update/${post.id}`)}
                             >
                               <Pencil className="w-4 h-4" />
-                              Chỉnh sửa
+                              Edit
                             </button>
                             <button 
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 
-                                       hover:bg-white/5 w-full transition"
-                              onClick={() => toast.error('Xóa bài viết')}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-white/5 w-full transition"
+                              onClick={() => toast.error('Delete post')}
                             >
                               <Trash className="w-4 h-4" />
-                              Xóa
+                              Delete
                             </button>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <p className="text-gray-400 mt-2 line-clamp-2">{post.content}</p>
                     <div className="mt-4 text-sm text-gray-500">
-                      {new Date(post.published_at).toLocaleDateString('vi-VN')}
+                      {new Date(post.published_at).toLocaleDateString('en-US')}
                     </div>
                   </div>
                 </div>
@@ -168,7 +208,7 @@ const Post = () => {
             disabled={currentPage === 1}
             className="px-3 py-1 rounded-md bg-white/5 text-gray-400 hover:bg-white/10 disabled:opacity-50"
           >
-            Prev
+            Previous
           </button>
           {renderPagination()}
           <button

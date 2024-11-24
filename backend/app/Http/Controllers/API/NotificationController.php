@@ -10,7 +10,7 @@ class NotificationController extends Controller
 {
     public function index(Request $request)
     {
-        if (!auth()->user()->is_admin) {
+        if (!auth()->user()->role == 'admin' || !auth()->user()->role == 'super-admin') {
             return response()->json([
                 'success' => false,
                 'message' => 'Access denied'
@@ -36,7 +36,7 @@ class NotificationController extends Controller
 
     public function markAsRead($id)
     {
-        if (!auth()->user()->is_admin) {
+        if (!auth()->user()->role == 'admin' || !auth()->user()->role == 'super-admin') {
             return response()->json([
                 'success' => false,
                 'message' => 'Access denied'
@@ -54,7 +54,7 @@ class NotificationController extends Controller
 
     public function markAllAsRead()
     {
-        if (!auth()->user()->is_admin) {
+        if (!auth()->user()->role == 'admin' || !auth()->user()->role == 'super-admin') {
             return response()->json([
                 'success' => false,
                 'message' => 'Access denied'
@@ -72,7 +72,7 @@ class NotificationController extends Controller
 
     public function getUnreadCount()
     {
-        if (!auth()->user()->is_admin) {
+        if (!auth()->user()->role == 'admin' || !auth()->user()->role == 'super-admin') {
             return response()->json([
                 'success' => false,
                 'message' => 'Access denied'
@@ -89,7 +89,7 @@ class NotificationController extends Controller
 
     public function destroy($id)
     {
-        if (!auth()->user()->is_admin) {
+        if (!auth()->user()->role == 'admin' || !auth()->user()->role == 'super-admin') {
             return response()->json([
                 'success' => false,
                 'message' => 'Access denied'
