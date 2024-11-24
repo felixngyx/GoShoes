@@ -40,31 +40,13 @@ const User = () => {
 		}
 	};
 
-	const updateRole = async (id: number, is_admin: boolean) => {
-		try {
-			const toastId = toast.loading('Updating role...');
-			const response = await userService.update(id, { is_admin });
-			if (response.status === 200) {
-				setUsers(
-					users.map((user) =>
-						user.id === id ? { ...user, is_admin } : user
-					)
-				);
-				toast.success('Update role success');
-				toast.dismiss(toastId);
-			}
-		} catch (error) {
-			console.error('Error updating user:', error);
-		}
-	};
-
 	return (
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
 			<h4 className="text-xl font-semibold text-black dark:text-white">
 				User List
 			</h4>
 
-			<div className="relative overflow-x-auto border border-stroke">
+			{/* <div className="relative overflow-x-auto border border-stroke">
 				<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 					<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
 						<tr>
@@ -133,23 +115,12 @@ const User = () => {
 									<td className="px-6 py-4">{user.email}</td>
 									<td className="px-6 py-4">{user.phone}</td>
 									<td className="px-6 py-4">
-										{user.email_verified_at
-											? new Date(
-													user.email_verified_at
-											  ).toLocaleDateString()
-											: ''}
+										<span className="badge badge-success">
+											Verified
+										</span>
 									</td>
 									<td className="px-6 py-4">
-										<input
-											type="checkbox"
-											className="toggle toggle-info"
-											checked={user.is_admin}
-											onChange={(e) => {
-												e.preventDefault();
-												updateRole(user.id!, !user.is_admin);
-											}}
-											disabled={loading}
-										/>
+										{user.role === 'admin' ? 'Admin' : 'User'}
 									</td>
 									<td className="px-6 py-4">
 										<span
@@ -170,7 +141,7 @@ const User = () => {
 											: ''}
 									</td>
 									<td className="px-6 py-4">
-										{!user.is_admin && (
+										{user.role !== 'super-admin' && (
 											<TrashIcon
 												color="red"
 												className="w-5 h-5 cursor-pointer"
@@ -183,7 +154,7 @@ const User = () => {
 						)}
 					</tbody>
 				</table>
-			</div>
+			</div> */}
 			<div className="join ms-auto">
 				<button className="join-item btn btn-sm">1</button>
 				<button className="join-item btn btn-sm">2</button>

@@ -33,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
         'App\Services\ServiceInterfaces\Wishlist\WishlistServiceInterface' => 'App\Services\Wishlist\WishlistService',
         'App\Services\ServiceInterfaces\Review\ReviewServiceInterface' => 'App\Services\Review\ReviewService',
         'App\Services\ServiceInterfaces\Shipping\ShippingServiceInterface' => 'App\Services\Shipping\ShippingService',
+        'App\Services\ServiceInterfaces\Profile\ProfileServiceInterface' => 'App\Services\Profile\ProfileService',
     ];
     /**
      * Register any application services.

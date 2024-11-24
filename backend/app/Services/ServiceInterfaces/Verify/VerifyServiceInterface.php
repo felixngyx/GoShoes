@@ -6,4 +6,6 @@ interface VerifyServiceInterface
     public static function generateLinkVerification(object $user, string $type) : string;
 
     public function verifyTokenService(array $request) : \Illuminate\Http\JsonResponse;
+
+    public static function decryptTokenService(string $token) : object;
 }

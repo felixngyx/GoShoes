@@ -19,12 +19,19 @@ class JwtMiddleware
     public function handle($request, Closure $next)
     {
         try {
-            JWTAuth::parseToken()->authenticate();
             $token = $request->bearerToken();
             $decoded = JWTAuth::setToken($token)->getPayload();
             if ($decoded['token_type'] !== 'access') {
                 return response()->json(['error' => 'Invalid token type'], 403);
             }
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user['email_verified_at']) {
+                return response()->json(['error' => 'Email not verified'], 403);
+            }
+            if ($user['is_deleted']) {
+                return response()->json(['error' => 'User is deleted'], 403);
+            }
+
         } catch (Exception $e) {
             if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException) {
                 return response()->json(['status' => 'Token is Invalid'], 401);
