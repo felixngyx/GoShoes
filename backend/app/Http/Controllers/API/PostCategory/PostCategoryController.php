@@ -22,7 +22,7 @@ class PostCategoryController extends Controller
     {
         try {
             $page = $request->input('page', 1);
-            $limit = $request->input('limit', 2);
+            $limit = $request->input('limit', 9);
             $orderBy = $request->input('orderBy', 'id');
             $order = $request->input('order', 'asc');
 
