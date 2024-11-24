@@ -45,9 +45,9 @@ trait QueryScopes
         return $query;
     }
 
-    public function scopeRelation($query, $relation){
+    public function scopeRelation($query, $relations){
         if(!empty($relation)){
-            foreach($relation as $relation){
+            foreach($relations as $relation){
                 $query->with($relation);
             }
         }

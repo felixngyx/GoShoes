@@ -7,6 +7,11 @@ use App\Models\ProductVariant;
 
 interface ProductRepositoryInterface
 {
+    public function listProduct(
+        array $filters = [],
+        int $page = 1,
+        int $perPage = 10
+    );
     public function find($id);
     public function createProduct(array $data);
     public function syncCategories(Product $product, array $categoryIds);
@@ -18,6 +23,6 @@ interface ProductRepositoryInterface
     public function softDeleteProduct(Product $product);
     public function restoreProduct(Product $product);
     public function checkStockProductVariant($id);
-  
-   
+
+
 }
