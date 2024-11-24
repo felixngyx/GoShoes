@@ -7,16 +7,25 @@ use App\Models\ProductVariant;
 use App\Models\VariantColor;
 use App\Models\VariantSize;
 use App\Repositories\RepositoryInterfaces\ProductRepositoryInterface;
+use App\Services\ServiceInterfaces\Product\ProductServiceInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-class ProductService
+class ProductService implements ProductServiceInterface
 {
     protected $productRepository;
 
     public function __construct(ProductRepositoryInterface $productRepository)
     {
         $this->productRepository = $productRepository;
+    }
+
+    public function listProduct(array $request) : \Illuminate\Http\JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->productRepository->listProduct($request, $request['page'], $request['perPage']),
+        ]);
     }
 
     public function storeProduct($validated)
@@ -45,7 +54,7 @@ class ProductService
             // Xử lý variants nếu có
             if (isset($validated['variants']) && !empty($validated['variants'])) {
                 foreach ($validated['variants'] as $variantData) {
-    
+
                     $color = VariantColor::find($variantData['color_id']);
                     $size = VariantSize::find($variantData['size_id']);
 
@@ -101,7 +110,7 @@ class ProductService
         return $this->productRepository->findProductForDeletion($id);
     }
 
-    // chi tiết sản phẩm có 
+    // chi tiết sản phẩm có
     public function findProductWithRelations(string $id)
     {
         return $this->productRepository->findProductWithRelations($id);
@@ -146,8 +155,13 @@ class ProductService
         }
     }
 
-
-
+    public function findById(int $id) : \Illuminate\Http\JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->productRepository->find($id),
+        ]);
+    }
     public function updateProduct(Product $product, $validated)
     {
         try {

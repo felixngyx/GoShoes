@@ -18,6 +18,30 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
         $this->model = $model;
     }
 
+    public function getAllWithCustomWhere(
+        array $column = ['*'],
+        array $condition = [],
+        int $perPage = 1,
+        array $extend = [],
+        array $orderBy = ['id', 'DESC'],
+        array $join = [],
+        array $relations = [],
+        array $rawQuery = []
+    )
+    {
+        $query = $this->model->select($column);
+        return $query
+            ->keyword($condition['keyword'] ?? null)
+            ->publish($condition['publish'] ?? null)
+            ->relation($relations ?? null)
+            ->CustomWhere($condition['where'] ?? null)
+            ->customWhereRaw($rawQuery['whereRaw'] ?? null)
+            ->customJoin($join ?? null)
+            ->customGroupBy($extend['groupBy'] ?? null)
+            ->customOrderBy($orderBy ?? null)
+            ->paginate($perPage)->toSql();
+    }
+
     public function all()
     {
         return $this->model->all()->where('is_deleted', false);

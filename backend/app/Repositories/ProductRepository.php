@@ -6,10 +6,37 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductImage;
 use App\Repositories\RepositoryInterfaces\ProductRepositoryInterface;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-class ProductRepository implements ProductRepositoryInterface
+class ProductRepository extends BaseRepository implements ProductRepositoryInterface
 {
+
+
+    public function __construct(
+        Product $product
+    )
+    {
+        parent::__construct($product);
+    }
+
+    public function listProduct(
+        array $filters = [],
+        int $page = 1,
+        int $perPage = 10
+    )
+    {
+        $query = $this->getBaseQuery($filters);
+
+        // Thêm phân trang
+        if ($page && $perPage) {
+            $offset = ($page - 1) * $perPage;
+            $query .= " LIMIT $perPage OFFSET $offset";
+        }
+
+        return DB::select($query);
+    }
+
     public function createProduct(array $data)
     {
         return Product::create($data);
@@ -144,7 +171,6 @@ class ProductRepository implements ProductRepositoryInterface
         ];
     }
 
-
     public function softDeleteProduct(Product $product)
     {
         return $product->update(['is_deleted' => 1]);
@@ -156,13 +182,81 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function find($id)
     {
-        return Product::where('is_deleted', false)->findOrFail($id);
+        $results = $this->listProduct(['id' => $id]);
+        return $results[0] ?? null;
     }
+
     public function checkStockProductVariant($id)
     {
         return ProductVariant::find($id);
 
     }
+
+    private function getBaseQuery($filters = [])
+    {
+        $query = "
+            WITH variant_info AS (
+                SELECT
+                    pv.product_id,
+                    pv.color_id,
+                    vc.color,
+                    JSON_ARRAYAGG(
+                        JSON_OBJECT(
+                            'size_id', pv.size_id,
+                            'size', vs.size,
+                            'quantity', pv.quantity
+                        )
+                    ) as sizes,
+                    iv.image,
+                    SUM(pv.quantity) as total_quantity
+                FROM product_variants pv
+                LEFT JOIN variant_colors vc ON pv.color_id = vc.id
+                LEFT JOIN variant_sizes vs ON pv.size_id = vs.id
+                LEFT JOIN image_variants iv ON pv.product_id = iv.product_id
+                    AND pv.color_id = iv.color_id
+                GROUP BY pv.product_id, pv.color_id, vc.color, iv.image
+            )
+            SELECT
+                p.*,
+                JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        'color_id', vi.color_id,
+                        'color', vi.color,
+                        'sizes', vi.sizes,
+                        'image', vi.image,
+                        'total_quantity', vi.total_quantity
+                    )
+                ) as variants
+            FROM products p
+            LEFT JOIN variant_info vi ON p.id = vi.product_id
+            WHERE 1=1
+        ";
+
+        // Thêm các điều kiện lọc
+        if (!empty($filters['id'])) {
+            $query .= " AND p.id = " . intval($filters['id']);
+        }
+        if (!empty($filters['brand_id'])) {
+            $query .= " AND p.brand_id = " . intval($filters['brand_id']);
+        }
+        if (!empty($filters['name'])) {
+            $query .= " AND p.name LIKE '%" . $filters['name'] . "%'";
+        }
+        if (!empty($filters['price_from'])) {
+            $query .= " AND p.price >= " . floatval($filters['price_from']);
+        }
+        if (!empty($filters['price_to'])) {
+            $query .= " AND p.price <= " . floatval($filters['price_to']);
+        }
+        if (isset($filters['status'])) {
+            $query .= " AND p.status = '" . $filters['status'] . "'";
+        }
+
+        $query .= " GROUP BY p.id ORDER BY p.id";
+
+        return $query;
+    }
+
 }
 
     // $variantDetails = $product->variants->map(function ($variant) {
