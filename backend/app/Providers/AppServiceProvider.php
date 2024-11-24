@@ -34,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         'App\Services\ServiceInterfaces\Review\ReviewServiceInterface' => 'App\Services\Review\ReviewService',
         'App\Services\ServiceInterfaces\Shipping\ShippingServiceInterface' => 'App\Services\Shipping\ShippingService',
         'App\Services\ServiceInterfaces\Profile\ProfileServiceInterface' => 'App\Services\Profile\ProfileService',
+        'App\Services\ServiceInterfaces\Product\ProductServiceInterface' => 'App\Services\Product\ProductService',
     ];
     /**
      * Register any application services.
@@ -46,7 +47,6 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->app->register(RepositoryServiceProvider::class);
-        $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
         $this->app->bind(ColorRepositoryInterface::class, ColorRepository::class);
         $this->app->bind(SizeRepositoryInterface::class, SizeRepository::class);
         $this->app->bind(BrandRepositoryInterface::class, BrandRepository::class);
