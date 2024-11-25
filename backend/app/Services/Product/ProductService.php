@@ -8,16 +8,56 @@ use App\Models\VariantColor;
 use App\Models\VariantSize;
 use App\Repositories\RepositoryInterfaces\ProductRepositoryInterface;
 use App\Services\ServiceInterfaces\Product\ProductServiceInterface;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
+use App\Services\ServiceInterfaces\ImageVariant\ImageVariantServiceInterface as ImageVariantService;
+use App\Services\ServiceInterfaces\ProductVariant\ProductVariantServiceInterface as ProductVariantService;
 
 class ProductService implements ProductServiceInterface
 {
     protected $productRepository;
 
+    protected static $imageVariantService;
+
+    protected static $productVariantService;
+
     public function __construct(ProductRepositoryInterface $productRepository)
     {
         $this->productRepository = $productRepository;
+        self::setImageVariantService(app(ImageVariantService::class));
+        self::setProductVariantService(app(ProductVariantService::class));
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function getImageVariantService(): ImageVariantService
+    {
+        return self::$imageVariantService;
+    }
+
+    /**
+     * @param mixed $imageVariantService
+     */
+    public static function setImageVariantService(ImageVariantService $imageVariantService): void
+    {
+        self::$imageVariantService = $imageVariantService;
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function getProductVariantService() : ProductVariantService
+    {
+        return self::$productVariantService;
+    }
+
+    /**
+     * @param mixed $productVariantService
+     */
+    public static function setProductVariantService(ProductVariantService $productVariantService): void
+    {
+        self::$productVariantService = $productVariantService;
     }
 
     public function listProduct(array $request) : \Illuminate\Http\JsonResponse
@@ -102,6 +142,114 @@ class ProductService implements ProductServiceInterface
                 'message' => 'Có lỗi xảy ra khi lưu sản phẩm.',
                 'error' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function createProductService(array $request) : \Illuminate\Http\JsonResponse
+    {
+        $productData = [
+            'name' => $request['name'],
+            'description' => $request['description'],
+            'brand_id' => $request['brand_id'],
+            'price' => $request['price'],
+            'promotional_price' => $request['promotional_price'],
+            'stock_quantity' => 0,
+            'status' => $request['status'],
+            'sku' => $request['sku'],
+            'is_deleted' => $request['is_deleted'],
+            'slug' => $request['slug'],
+            'thumbnail' => $request['thumbnail'],
+            'hagtag' => $request['hagtag'],
+        ];
+
+        DB::beginTransaction();
+
+        try {
+            $product = $this->productRepository->upsert($productData, ['name' => $request['name']]);
+
+            $variants = self::handleCreateVariants($request['variants'], $product->id);
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'variants' => $variants,
+                ],
+            ]);
+            $product->stock_quantity = self::getProductVariantService()->getTotalStockQuantity($product->id);;
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'product' => $product,
+                    'variants' => $variants,
+                ],
+            ]);
+        }catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error creating product: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi lưu sản phẩm.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    protected static function handleCreateVariants(array $variantData, int $productId) : array
+    {
+        if (!$variantData) {
+            return[];
+        }
+        $variants = [];
+        DB::beginTransaction();
+        try {
+            foreach ($variantData as $variant) {
+                if (!isset($variant['color_id'], $variant['image'], $variant['variant_details'])) {
+                    continue;
+                }
+
+                $variantData = [
+                    'product_id' => $productId,
+                    'color_id' => $variant['color_id'],
+                    'image' => $variant['image'],
+                ];
+
+                self::getImageVariantService()->upsert($variantData, [
+                    'product_id' => $productId,
+                    'color_id' => (int)$variant['color_id']
+                ]);
+
+                $variantDetails = [];
+                foreach ($variant['variant_details'] as $detail) {
+                    $variantDetails[] = [
+                        'size_id' => $detail['size_id'],
+                        'quantity' => $detail['quantity'],
+                        'sku' => $detail['sku'],
+                    ];
+                    self::getProductVariantService()->upsert([
+                        'product_id' => $productId,
+                        'color_id' => $variant['color_id'],
+                        'size_id' => $detail['size_id'],
+                        'quantity' => $detail['quantity'],
+                        'sku' => $detail['sku'],
+                    ], [
+                        'product_id' => $productId,
+                        'color_id' => $variant['color_id'],
+                        'size_id' => $detail['size_id'],
+                    ]);
+                }
+                $variantData['variant_details'] = $variantDetails;
+
+                $variants[] = $variantData;
+            }
+            DB::commit();
+            return $variants;
+        }catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'message' => 'Có lỗi xảy ra khi lưu sản phẩm.',
+                'error' => $e->getMessage(),
+            ];
         }
     }
 

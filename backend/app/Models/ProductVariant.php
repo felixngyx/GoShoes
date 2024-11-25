@@ -36,8 +36,10 @@ class ProductVariant extends Model
     /**
      * @return BelongsTo
      */
-    public function image_variants(): BelongsTo
+    public function image_variants(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(ImageVariant::class, ['product_id', 'color_id'], ['product_id', 'color_id']);
+        return $this->belongsTo(ImageVariant::class, 'product_id', 'product_id')
+            ->whereColumn('product_variants.color_id', 'image_variants.color_id');
     }
+
 }

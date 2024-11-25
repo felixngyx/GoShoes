@@ -127,6 +127,11 @@ class ProductController extends Controller
 //            ]);
 //    }\
 
+    public function createProduct(StoreProductRequest $request) : \Illuminate\Http\JsonResponse
+    {
+        return $this->productService->createProductService($request->all());
+    }
+
     public function index(Request $request)
     {
         $filters = $request->only(['id', 'brand_id', 'name', 'price_from', 'price_to', 'status']);
@@ -166,7 +171,7 @@ class ProductController extends Controller
     {
         //
     }
-    public function update(UpdateProductRequest $request, string $id)
+    public function update(UpdateProductRequest $request, int $id)
     {
         // Xác thực dữ liệu đầu vào
         $validated = $request->validated();
