@@ -46,20 +46,14 @@ const Product = () => {
 		try {
 			setLoading(true);
 			const res = await productService.getAll(page, limit);
-			setProductData(res.data.data.products);
-			setTotalPages(res.data.data.pagination.last_page);
+			setProductData(res);
+			const totalPages = Math.ceil(res.length / limit);
+			setTotalPages(totalPages);
 		} catch (error) {
 			console.error(error);
 		} finally {
 			setLoading(false);
 		}
-	};
-
-	const calculateQuantity = (product: PRODUCT) => {
-		return (
-			product.variants.reduce((acc, curr) => acc + curr.quantity, 0) +
-			product.stock_quantity
-		);
 	};
 
 	const deleteProduct = async (id: number) => {
@@ -239,7 +233,7 @@ const Product = () => {
 										{product.promotional_price} ₫
 									</td>
 									<td className="px-6 py-3">
-										{calculateQuantity(product)}
+										{product.stock_quantity}
 									</td>
 									<td className="px-6 py-3">
 										<div
