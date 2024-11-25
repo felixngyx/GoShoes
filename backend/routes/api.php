@@ -52,7 +52,7 @@ Route::get('/products/trashed', [ProductController::class, 'trashedProducts']);
 Route::post('/products/restore/{id}', [ProductController::class, 'restore']);
 Route::post('/restore-multiple', [ProductController::class, 'restoreMultiple']);
 Route::get('/products/{id}', [ProductController::class, 'show'])->where(['id' => '[0-9]+']);
-Route::put('/products/{id}', [ProductController::class, 'update'])->where(['id' => '[0-9]+']);
+Route::put('/products/{id}', [ProductController::class, 'updateProduct'])->where(['id' => '[0-9]+']);
 Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/productDetail/{id}', [ProductController::class, 'getDetailProduct']);

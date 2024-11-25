@@ -132,6 +132,11 @@ class ProductController extends Controller
         return $this->productService->createProductService($request->all());
     }
 
+    public function updateProduct(UpdateProductRequest $request, int $id) : \Illuminate\Http\JsonResponse
+    {
+        return $this->productService->updateProductService($request->all(), $id);
+    }
+
     public function index(Request $request)
     {
         $filters = $request->only(['id', 'brand_id', 'name', 'price_from', 'price_to', 'status']);

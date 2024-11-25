@@ -17,6 +17,6 @@ class ProductVariantRepository extends BaseRepository implements ProductVariantR
 
     public function getStockQuantityByProduct(int $productId)
     {
-        return $this->model->where('product_id', $productId)->sum('stock_quantity');
+        return $this->model->where('product_id', $productId)->sum('quantity');
     }
 }

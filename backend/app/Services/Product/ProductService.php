@@ -165,24 +165,107 @@ class ProductService implements ProductServiceInterface
         DB::beginTransaction();
 
         try {
-            $product = $this->productRepository->upsert($productData, ['name' => $request['name']]);
+            $product = $this->productRepository->create($productData);
+            $productId = $product->id;
+            $colorsAndImagesWithProductId = array_map(function($variant) use ($productId) {
+                return [
+                    'color_id' => $variant['color_id'],
+                    'image' => $variant['image'],
+                    'product_id' => $productId,
+                ];
+            }, $request['variants']);
 
-            $variants = self::handleCreateVariants($request['variants'], $product->id);
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'variants' => $variants,
-                ],
-            ]);
-            $product->stock_quantity = self::getProductVariantService()->getTotalStockQuantity($product->id);;
+            DB::table('image_variants')->insert($colorsAndImagesWithProductId);
+
+            $allVariantDetails = array_merge(...array_map(function ($variant) use ($productId) {
+                return array_map(function ($detail) use ($variant, $productId) {
+                    return array_merge($detail, [
+                        'product_id' => $productId,
+                        'color_id' => $variant['color_id'],
+                    ]);
+                }, $variant['variant_details']);
+            }, $request['variants']));
+
+            self::getProductVariantService()->createMany($allVariantDetails);
+
+            $product->stock_quantity = self::getProductVariantService()->getStockQuantityByProduct((int)$product->id);
             DB::commit();
             return response()->json([
                 'success' => true,
                 'data' => [
                     'product' => $product,
-                    'variants' => $variants,
+                    'variants' => $request['variants']
                 ],
-            ]);
+            ], 201);
+        }catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error creating product: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi lưu sản phẩm.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function updateProductService(array $request, int $id) : \Illuminate\Http\JsonResponse
+    {
+        $productData = [
+            'name' => $request['name'],
+            'description' => $request['description'],
+            'brand_id' => $request['brand_id'],
+            'price' => $request['price'],
+            'promotional_price' => $request['promotional_price'],
+            'stock_quantity' => 0,
+            'status' => $request['status'],
+            'sku' => $request['sku'],
+            'is_deleted' => $request['is_deleted'],
+            'slug' => $request['slug'],
+            'thumbnail' => $request['thumbnail'],
+            'hagtag' => $request['hagtag']
+        ];
+
+        DB::beginTransaction();
+
+        try {
+            $product = $this->productRepository->update($productData, $id);
+            $productId = $product->id;
+            $colorsAndImagesWithProductId = array_map(function($variant) use ($productId) {
+                return [
+                    'color_id' => $variant['color_id'],
+                    'image' => $variant['image'],
+                    'product_id' => $productId,
+                ];
+            }, $request['variants']);
+
+            DB::table('image_variants')->upsert(
+                $colorsAndImagesWithProductId,
+                [
+                    'product_id' => $productId,
+                    'color_id' => $request['variants'][0]['color_id']
+                ]
+            );
+
+            $allVariantDetails = array_merge(...array_map(function ($variant) use ($productId) {
+                return array_map(function ($detail) use ($variant, $productId) {
+                    return array_merge($detail, [
+                        'product_id' => $productId,
+                        'color_id' => $variant['color_id'],
+                    ]);
+                }, $variant['variant_details']);
+            }, $request['variants']));
+
+            self::getProductVariantService()->createMany($allVariantDetails);
+
+            $product->stock_quantity = self::getProductVariantService()->getStockQuantityByProduct((int)$product->id);
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'product' => $product,
+                    'variants' => $request['variants']
+                ],
+            ], 201);
         }catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating product: ' . $e->getMessage());
@@ -198,50 +281,50 @@ class ProductService implements ProductServiceInterface
     protected static function handleCreateVariants(array $variantData, int $productId) : array
     {
         if (!$variantData) {
-            return[];
+            return [];
         }
         $variants = [];
         DB::beginTransaction();
         try {
-            foreach ($variantData as $variant) {
-                if (!isset($variant['color_id'], $variant['image'], $variant['variant_details'])) {
-                    continue;
-                }
-
-                $variantData = [
-                    'product_id' => $productId,
-                    'color_id' => $variant['color_id'],
-                    'image' => $variant['image'],
-                ];
-
-                self::getImageVariantService()->upsert($variantData, [
-                    'product_id' => $productId,
-                    'color_id' => (int)$variant['color_id']
-                ]);
-
-                $variantDetails = [];
-                foreach ($variant['variant_details'] as $detail) {
-                    $variantDetails[] = [
-                        'size_id' => $detail['size_id'],
-                        'quantity' => $detail['quantity'],
-                        'sku' => $detail['sku'],
-                    ];
-                    self::getProductVariantService()->upsert([
-                        'product_id' => $productId,
-                        'color_id' => $variant['color_id'],
-                        'size_id' => $detail['size_id'],
-                        'quantity' => $detail['quantity'],
-                        'sku' => $detail['sku'],
-                    ], [
-                        'product_id' => $productId,
-                        'color_id' => $variant['color_id'],
-                        'size_id' => $detail['size_id'],
-                    ]);
-                }
-                $variantData['variant_details'] = $variantDetails;
-
-                $variants[] = $variantData;
-            }
+            // Duyệt qua từng variant
+//            foreach ($variantData as $variant) {
+//                $colorId = (int)$variant['color_id'];
+//
+//                // Lưu dữ liệu vào bảng image_variants
+//
+//
+//                // Lưu dữ liệu vào bảng product_variants
+//                foreach ($variant['variant_details'] as $variantDetail) {
+//                    self::getImageVariantService()->upsert(
+//                        [
+//                            'product_id' => $productId,
+//                            'color_id' => $colorId,
+//                            'image' => $variant['image'],
+//                            'size_id' => (int)$variantDetail['size_id'],
+//                            'quantity' => $variantDetail['quantity'],
+//                            'sku' => $variantDetail['sku']
+//                        ],
+//                        [
+//                            'product_id' => $productId,
+//                            'color_id' => $colorId
+//                        ]
+//                    );
+//                    self::getProductVariantService()->upsert(
+//                        [
+//                            'product_id' => $productId,
+//                            'color_id' => $colorId,
+//                            'size_id' => (int)$variantDetail['size_id'],
+//                            'quantity' => $variantDetail['quantity'],
+//                            'sku' => $variantDetail['sku']
+//                        ],
+//                        [
+//                            'product_id' => $productId,
+//                            'color_id' => $colorId,
+//                            'size_id' => (int)$variantDetail['size_id']
+//                        ]
+//                    );
+//                }
+//            }
             DB::commit();
             return $variants;
         }catch (\Exception $e) {
@@ -251,6 +334,44 @@ class ProductService implements ProductServiceInterface
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    private static function handleUpsertImageVariant(array $variantData) : array
+    {
+        self::getImageVariantService()->upsert(
+            [
+                'product_id' => $variantData['product_id'],
+                'color_id' => $variantData['color_id'],
+                'image' => $variantData['image'],
+            ],
+            [
+                'product_id' => $variantData['product_id'],
+                'color_id' => $variantData['color_id']
+            ]
+        );
+        return $variantData;
+    }
+
+    private static function handleUpsertProductVariant(array $detail, array $parentCondition, array $variantDetails) : array
+    {
+        $variantDetails[] = [
+            'size_id' => $detail['size_id'],
+            'quantity' => $detail['quantity'],
+            'sku' => $detail['sku'],
+        ];
+        self::getProductVariantService()->upsert([
+            'product_id' => $parentCondition['product_id'],
+            'color_id' => $parentCondition['color_id'],
+            'size_id' => $detail['size_id'],
+            'quantity' => $detail['quantity'],
+            'sku' => $detail['sku'],
+        ], [
+            'product_id' => $parentCondition['product_id'],
+            'color_id' => $parentCondition['color_id'],
+            'size_id' => $detail['size_id'],
+        ]);
+
+        return $variantDetails;
     }
 
     public function findProductForDeletion(string $id)

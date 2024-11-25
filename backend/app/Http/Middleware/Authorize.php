@@ -19,8 +19,8 @@ class Authorize
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
-            if (!$user['role'] == 'admin' || $user['role'] == 'super-admin') {
-                return response()->json(['error' => 'Admin cannot be verified'], 403);
+            if (!$user['role'] == ROLE['ADMIN'] || !$user['role'] == ROLE['super-admin']) {
+                return response()->json(['error' => "You don't have permission for this action"], 403);
             }
         } catch (Exception $e) {
             if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException) {

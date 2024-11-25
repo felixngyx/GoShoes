@@ -34,8 +34,18 @@ abstract class BaseServiceAbstract
         return static::getRepository()->upsert($data, $condition);
     }
 
+    public function updateOrCreate(array $data, array $condition)
+    {
+        return static::getRepository()->updateOrCreate($data, $condition);
+    }
+
     public function create(array $data)
     {
         return self::getRepository()->create($data);
+    }
+
+    public function createMany(array $data)
+    {
+        return self::getRepository()->createMany($data);
     }
 }

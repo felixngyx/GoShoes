@@ -8,9 +8,4 @@ use App\Repositories\RepositoryInterfaces\ImageVariantRepositoryInterface as Ima
 
 class ImageVariantService extends ImageVariantServiceAbstract implements ImageVariantServiceInterface
 {
-
-    public function __construct()
-    {
-        parent::setRepository(app(ImageVariantRepository::class));
-    }
 }
