@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getAllNews } from "../../../services/client/news";
@@ -15,14 +15,37 @@ const stripHtml = (html: string) => {
 const NewsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 9;
 
-  const { data: news = [], isLoading } = useQuery({
-    queryKey: ["NEWS"],
-    queryFn: getAllNews,
+  const { data, isLoading } = useQuery({
+    queryKey: ["NEWS", currentPage],
+    queryFn: () => getAllNews(currentPage),
+    initialData: {
+      success: true,
+      message: '',
+      data: {
+        posts: [],
+        pagination: {
+          currentPage: 1,
+          perPage: postsPerPage,
+          totalItems: 0,
+          totalPages: 1
+        }
+      }
+    }
   });
 
+  // Sắp xếp tin tức mới nhất lên đầu
+  const sortedNews = useMemo(() => {
+    if (!data?.data?.posts) return [];
+    return [...data.data.posts].sort((a, b) => {
+      return new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
+    });
+  }, [data?.data?.posts]);
+
   // Lọc tin tức dựa trên tìm kiếm và danh mục
-  const filteredNews = news.filter((article: News) => {
+  const filteredNews = sortedNews.filter((article: News) => {
     const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       stripHtml(article.content).toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "" || article.category_name === selectedCategory;
@@ -30,7 +53,53 @@ const NewsPage = () => {
   });
 
   // Lấy danh sách unique categories
-  const categories = Array.from(new Set(news.map((article: News) => article.category_name)));
+  const categories = Array.from(new Set(sortedNews.map((article: News) => article.category_name)));
+
+  // Render phân trang
+  const renderPagination = () => {
+    const { currentPage, totalPages } = data.data.pagination;
+    const pages = [];
+
+    pages.push(
+      <button
+        key="prev"
+        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+      >
+        Previous
+      </button>
+    );
+
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i)}
+          className={`px-4 py-2 text-sm font-medium ${
+            currentPage === i 
+              ? 'text-white bg-indigo-500 border border-indigo-500' 
+              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+          } rounded-md`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    pages.push(
+      <button
+        key="next"
+        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+        disabled={currentPage === totalPages}
+        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+      >
+        Next
+      </button>
+    );
+
+    return pages;
+  };
 
   if (isLoading) {
     return (
@@ -68,7 +137,7 @@ const NewsPage = () => {
     );
   }
 
-  if (news.length === 0) {
+  if (sortedNews.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
         <p className="text-gray-700 text-lg font-medium">
@@ -154,6 +223,13 @@ const NewsPage = () => {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {!isLoading && data.data.pagination.totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-8">
+              {renderPagination()}
+            </div>
+          )}
 
           {/* No results message */}
           {filteredNews.length === 0 && (
