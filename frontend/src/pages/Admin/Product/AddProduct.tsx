@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { COLOR } from '../../../services/admin/color';
 import colorService from '../../../services/admin/color';
 import { Eye, TrashIcon, Logs, Upload, X } from 'lucide-react';
+import LoadingIcon from '../../../components/common/LoadingIcon';
 
 type PRODUCT_UPLOAD = {
 	name: string;
@@ -21,10 +22,10 @@ type PRODUCT_UPLOAD = {
 	status: 'public' | 'unpublic' | 'hidden';
 	sku: string;
 	hagtag: string;
+	stock_quantity: number;
 	category_ids: number[];
 	brand_id: number;
 	thumbnail: string;
-	images: string[];
 	description: string;
 	variants: {
 		color_id: number;
@@ -87,11 +88,6 @@ const productSchema = Joi.object({
 		'string.empty': 'Thumbnail cannot be empty',
 		'any.required': 'Thumbnail is required',
 	}),
-	images: Joi.array().items(Joi.string()).min(1).required().messages({
-		'array.base': 'Product image must be an array',
-		'array.min': 'Must have at least one product image',
-		'any.required': 'Product image is required',
-	}),
 	description: Joi.string().required().messages({
 		'string.empty': 'Description cannot be empty',
 		'any.required': 'Description is required',
@@ -99,23 +95,28 @@ const productSchema = Joi.object({
 	variants: Joi.array()
 		.items(
 			Joi.object({
-				color_id: Joi.number().required().messages({
+				color_id: Joi.number().invalid(0).required().messages({
+					'number.invalid': 'Please select a color',
 					'any.required': 'Color is required',
+					'number.base': 'Please select a color',
+					'any.invalid': 'Please select a color',
 				}),
 				image_variant: Joi.string().required().messages({
 					'string.empty': 'Variant image cannot be empty',
 					'any.required': 'Variant image is required',
 				}),
+				sku: Joi.string().allow('').optional(),
 				size: Joi.array()
 					.items(
 						Joi.object({
-							size_id: Joi.number().required().messages({
-								'number.base': 'Size ID must be a number',
-								'any.required': 'Size ID is required',
+							size_id: Joi.number().min(1).required().messages({
+								'number.base': 'Please select a size',
+								'number.min': 'Please select a size',
+								'any.required': 'Please select a size',
 							}),
-							quantity: Joi.number().min(0).required().messages({
-								'number.base': 'Số lượng phải là số',
-								'number.min': 'Quantity cannot be negative',
+							quantity: Joi.number().min(1).required().messages({
+								'number.base': 'Quantity must be a number',
+								'number.min': 'Quantity must be greater than 0',
 								'any.required': 'Quantity is required',
 							}),
 						})
@@ -125,12 +126,15 @@ const productSchema = Joi.object({
 					.messages({
 						'array.min': 'Must have at least one size',
 						'any.required': 'Size is required',
+						'array.base': 'Please select a size',
 					}),
 			})
 		)
 		.required()
+		.min(1)
 		.messages({
 			'array.base': 'Variant must be an array',
+			'array.min': 'Must have at least one variant',
 			'any.required': 'Variant is required',
 		}),
 });
@@ -148,6 +152,7 @@ const AddProduct = () => {
 	const [colors, setColors] = useState<COLOR[]>([]);
 	const [selectedCategories, setSelectedCategories] = useState<CATEGORY[]>([]);
 	const [loading, setLoading] = useState(false);
+	const [loadingData, setLoadingData] = useState(false);
 	const [stockQuantity, setStockQuantity] = useState(0);
 	const navigate = useNavigate();
 
@@ -165,6 +170,7 @@ const AddProduct = () => {
 				{
 					color_id: 0,
 					image_variant: '',
+					sku: '',
 					size: [
 						{
 							size_id: 0,
@@ -185,11 +191,11 @@ const AddProduct = () => {
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	const productImagesInputRef = useRef<HTMLInputElement>(null);
+	const variantImagesInputRefs = useRef<{
+		[key: number]: HTMLInputElement | null;
+	}>({});
 
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
-
-	const [productImageFiles, setProductImageFiles] = useState<File[]>([]);
 
 	// Thêm state để quản lý sizes cho từng variant
 	const [variantSizes, setVariantSizes] = useState<{
@@ -197,17 +203,24 @@ const AddProduct = () => {
 	}>({});
 
 	// Thêm state để quản lý search
-	const [colorSearchTerm, setColorSearchTerm] = useState<string>('');
+	const [colorSearchTerms, setColorSearchTerms] = useState<{
+		[key: number]: string;
+	}>({});
 
-	// Thêm hàm lọc colors
-	const filteredColors = colors.filter((color) =>
-		color.color.toLowerCase().includes(colorSearchTerm.toLowerCase())
-	);
+	// Thêm state để quản lý variant images
+	const [variantImageFiles, setVariantImageFiles] = useState<{
+		[key: number]: File[];
+	}>({});
+
+	// Thêm state để lưu giá trị trước đó
+	const [previousValues, setPreviousValues] = useState<{
+		[key: string]: number;
+	}>({});
 
 	useEffect(() => {
 		(async () => {
 			try {
-				setLoading(true);
+				setLoadingData(true);
 				const [resCategory, resSize, resBrand, resColor] =
 					await Promise.all([
 						categoryService.getAll(),
@@ -229,7 +242,7 @@ const AddProduct = () => {
 				console.error('Error:', error);
 				toast.error('Lỗi khi tải dữ liệu');
 			} finally {
-				setLoading(false);
+				setLoadingData(false);
 			}
 		})();
 	}, []);
@@ -264,40 +277,16 @@ const AddProduct = () => {
 		fileInputRef.current?.click();
 	};
 
-	const handleProductImagesChange = (
-		event: React.ChangeEvent<HTMLInputElement>
+	const handleVariantImagesUploadClick = (
+		e: React.MouseEvent,
+		variantIndex: number
 	) => {
-		event.preventDefault();
-		const files = event.target.files;
-		if (files) {
-			const filesArray = Array.from(files);
-			setProductImageFiles((prev) => [...prev, ...filesArray]);
-			setValue(
-				'images',
-				[...productImageFiles, ...filesArray].map((file) => file.name)
-			);
-			clearErrors('images');
-		}
-	};
-
-	const removeProductImage = (index: number) => {
-		setProductImageFiles((prev) => {
-			const newFiles = prev.filter((_, i) => i !== index);
-			setValue(
-				'images',
-				newFiles.map((file) => file.name)
-			);
-			return newFiles;
-		});
-	};
-
-	const handleProductImagesUploadClick = (e: React.MouseEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
-		productImagesInputRef.current?.click();
+		variantImagesInputRefs.current[variantIndex]?.click();
 	};
 
-	// Modify the append function to also add a null image
+	// Modify the append function to initialize with empty values
 	const addVariant = () => {
 		append({
 			color_id: 0,
@@ -310,14 +299,151 @@ const AddProduct = () => {
 				},
 			],
 		});
+
+		const newIndex = fields.length;
+
+		// Khởi tạo state cho variant mới với giá trị mặc định
+		setVariantSizes((prev) => ({
+			...prev,
+			[newIndex]: [{ size_id: 0, quantity: 0 }],
+		}));
+
+		// Khởi tạo previousValues cho variant mới
+		setPreviousValues((prev) => ({
+			...prev,
+			[`variants.${newIndex}.size.0.quantity`]: 0,
+		}));
+
+		setColorSearchTerms((prev) => ({
+			...prev,
+			[newIndex]: '',
+		}));
 	};
 
-	// Modify the remove function to also remove the corresponding image
 	const removeVariant = (index: number) => {
+		// Lấy variant hiện tại từ form
+		const currentVariant = control._formValues.variants[index];
+
+		// Cập nhật stockQuantity bằng cách trừ đi tất cả quantity trong variant bị xóa
+		if (currentVariant?.size) {
+			currentVariant.size.forEach((_: VariantSize, sizeIndex: number) => {
+				const inputPath = `variants.${index}.size.${sizeIndex}.quantity`;
+				const quantityToRemove = previousValues[inputPath] || 0;
+				setStockQuantity((prev) => prev - quantityToRemove);
+
+				// Xóa previous values cho variant này
+				setPreviousValues((prev) => {
+					const newPrev = { ...prev };
+					delete newPrev[inputPath];
+					return newPrev;
+				});
+			});
+		}
+
+		// Cập nhật lại index cho các state khác
+		setVariantSizes((prev) => {
+			const newVariantSizes: { [key: number]: VariantSize[] } = {};
+			Object.entries(prev).forEach(([key, value]) => {
+				const keyNum = parseInt(key);
+				if (keyNum < index) {
+					newVariantSizes[keyNum] = value;
+				} else if (keyNum > index) {
+					newVariantSizes[keyNum - 1] = value;
+				}
+			});
+			return newVariantSizes;
+		});
+
+		// Cập nhật lại previousValues cho các variant còn lại
+		setPreviousValues((prev) => {
+			const newPrev: { [key: string]: number } = {};
+			Object.entries(prev).forEach(([key, value]) => {
+				const match = key.match(/variants\.(\d+)\.size\.(\d+)\.quantity/);
+				if (match) {
+					const variantIndex = parseInt(match[1]);
+					const sizeIndex = match[2];
+					if (variantIndex < index) {
+						newPrev[key] = value;
+					} else if (variantIndex > index) {
+						newPrev[
+							`variants.${variantIndex - 1}.size.${sizeIndex}.quantity`
+						] = value;
+					}
+				}
+			});
+			return newPrev;
+		});
+
+		// Cập nhật các state khác như cũ
+		setVariantImageFiles((prev) => {
+			const newFiles = { ...prev };
+			delete newFiles[index];
+			Object.keys(newFiles).forEach((key) => {
+				const keyNum = parseInt(key);
+				if (keyNum > index) {
+					newFiles[keyNum - 1] = newFiles[keyNum];
+					delete newFiles[keyNum];
+				}
+			});
+			return newFiles;
+		});
+
+		setColorSearchTerms((prev) => {
+			const newTerms = { ...prev };
+			delete newTerms[index];
+			Object.keys(newTerms).forEach((key) => {
+				const keyNum = parseInt(key);
+				if (keyNum > index) {
+					newTerms[keyNum - 1] = newTerms[keyNum];
+					delete newTerms[keyNum];
+				}
+			});
+			return newTerms;
+		});
+
 		remove(index);
 	};
 
-	const onSubmit = async (data: PRODUCT_UPLOAD) => {};
+	const onSubmit = async (data: PRODUCT_UPLOAD) => {
+		try {
+			setLoading(true);
+
+			const thumbnailName = thumbnailFile?.name || '';
+
+			// Xử lý variants để format image_variant thành chuỗi
+			const formattedData = {
+				...data,
+				thumbnail: thumbnailName,
+				variants: data.variants.map((variant, index) => {
+					const imageNames =
+						variantImageFiles[index]
+							?.map((file) => file.name)
+							.join(', ') || '';
+
+					return {
+						...variant,
+						image_variant: imageNames,
+					};
+				}),
+			};
+
+			// Tính toán stock_quantity từ tổng số lượng các variant
+			formattedData.stock_quantity = stockQuantity;
+
+			console.log('Formatted submit data:', formattedData);
+
+			// TODO: Gọi API để tạo sản phẩm
+			// await productService.create(formattedData);
+
+			// toast.success('Tạo sản phẩm thành công!');
+			// navigate('/admin/products');
+		} catch (error) {
+			console.error('Error submitting form:', error);
+			toast.error('Có lỗi xảy ra khi tạo sản phẩm');
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	const handleCategoryChange = (categoryId: number) => {
 		const category = categories.find((cat) => Number(cat.id) === categoryId);
@@ -365,22 +491,93 @@ const AddProduct = () => {
 
 	// Hàm xử lý xóa size
 	const handleRemoveSize = (variantIndex: number, sizeIndex: number) => {
+		// Lấy giá trị hiện tại của variant sizes từ form
+		const currentVariant = control._formValues.variants[variantIndex];
+		const sizeToRemove = currentVariant.size[sizeIndex];
+
+		// Trừ đi số lượng của size bị xóa khỏi tổng stock quantity
+		setStockQuantity((prev) => prev - (Number(sizeToRemove.quantity) || 0));
+
+		const updatedSizes = currentVariant.size.filter(
+			(_: VariantSize, idx: number) => idx !== sizeIndex
+		);
+
+		// Cập nhật state local
 		setVariantSizes((prev) => ({
 			...prev,
-			[variantIndex]: prev[variantIndex].filter(
-				(_, idx) => idx !== sizeIndex
-			),
+			[variantIndex]: updatedSizes,
 		}));
 
 		// Cập nhật giá trị trong form
-		const currentSizes = fields[variantIndex].size || [];
-		setValue(
-			`variants.${variantIndex}.size`,
-			currentSizes.filter((_, idx) => idx !== sizeIndex)
+		setValue(`variants.${variantIndex}.size`, updatedSizes);
+	};
+
+	// Thêm hàm kiểm tra size đã được chọn chưa
+	const isSelectedSize = (
+		variantIndex: number,
+		sizeId: number,
+		currentSizeIndex: number
+	) => {
+		const variant = control._formValues.variants[variantIndex];
+		return variant.size.some(
+			(size: VariantSize, index: number) =>
+				index !== currentSizeIndex &&
+				Number(size.size_id) === Number(sizeId)
 		);
 	};
 
-	return (
+	// Thêm hàm xử lý khi chọn variant images
+	const handleVariantImagesChange = (
+		event: React.ChangeEvent<HTMLInputElement>,
+		variantIndex: number
+	) => {
+		event.preventDefault();
+		const files = event.target.files;
+		if (files) {
+			const filesArray = Array.from(files);
+			setVariantImageFiles((prev) => ({
+				...prev,
+				[variantIndex]: [...(prev[variantIndex] || []), ...filesArray],
+			}));
+
+			// Cập nhật giá trị cho form
+			setValue(
+				`variants.${variantIndex}.image_variant`,
+				filesArray[0].name // Tạm thời lấy tên file đầu tiên
+			);
+			clearErrors(`variants.${variantIndex}.image_variant`);
+		}
+	};
+
+	// Thêm hàm xóa variant image
+	const removeVariantImage = (variantIndex: number, imageIndex: number) => {
+		setVariantImageFiles((prev) => {
+			const newFiles = {
+				...prev,
+				[variantIndex]: prev[variantIndex].filter(
+					(_, i) => i !== imageIndex
+				),
+			};
+
+			// Cập nhật lại giá trị form nếu không còn ảnh nào
+			if (newFiles[variantIndex].length === 0) {
+				setValue(`variants.${variantIndex}.image_variant`, '');
+			} else {
+				setValue(
+					`variants.${variantIndex}.image_variant`,
+					newFiles[variantIndex][0].name
+				);
+			}
+
+			return newFiles;
+		});
+	};
+
+	return loadingData ? (
+		<div className="flex justify-center items-center h-screen">
+			<LoadingIcon size="lg" color="primary" type="spinner" />
+		</div>
+	) : (
 		<>
 			<div className="w-full border border-stroke p-4 shadow-lg">
 				<h3 className="font-bold text-2xl">Add Product</h3>
@@ -391,7 +588,9 @@ const AddProduct = () => {
 					>
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text">Product Name</span>
+								<span className="label-text font-semibold">
+									Product Name
+								</span>
 							</div>
 							<input
 								{...register('name')}
@@ -408,7 +607,7 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text">Price</span>
+								<span className="label-text font-semibold">Price</span>
 							</div>
 							<input
 								{...register('price')}
@@ -425,7 +624,9 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text">Promotion Price</span>
+								<span className="label-text font-semibold">
+									Promotion Price
+								</span>
 							</div>
 							<input
 								{...register('promotional_price')}
@@ -442,7 +643,9 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text">Stock Quantity</span>
+								<span className="label-text font-semibold">
+									Stock Quantity
+								</span>
 							</div>
 							<input
 								value={stockQuantity}
@@ -454,7 +657,7 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text">SKU</span>
+								<span className="label-text font-semibold">SKU</span>
 							</div>
 							<input
 								{...register('sku')}
@@ -471,7 +674,9 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text">Hashtag</span>
+								<span className="label-text font-semibold">
+									Hashtag
+								</span>
 							</div>
 							<input
 								{...register('hagtag')}
@@ -488,7 +693,7 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text">Status</span>
+								<span className="label-text font-semibold">Status</span>
 							</div>
 							<select
 								{...register('status')}
@@ -508,7 +713,7 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text">Brand</span>
+								<span className="label-text font-semibold">Brand</span>
 							</div>
 							<select
 								{...register('brand_id')}
@@ -532,7 +737,9 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text">Select Categories</span>
+								<span className="label-text font-semibold">
+									Select Categories
+								</span>
 							</div>
 							<div className="flex flex-col gap-2">
 								<div className="dropdown w-full relative">
@@ -611,12 +818,9 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1 w-fit">
 							<div className="label">
-								<span className="label-text">Thumbnail</span>
-								{errors.thumbnail && (
-									<span className="text-red-500 text-xs">
-										{errors.thumbnail.message}
-									</span>
-								)}
+								<span className="label-text font-semibold">
+									Thumbnail
+								</span>
 							</div>
 							<input
 								{...register('thumbnail')} // Add this
@@ -628,7 +832,7 @@ const AddProduct = () => {
 							/>
 							<div className="flex gap-2">
 								{thumbnailFile ? (
-									<div className="relative size-[100px] group">
+									<div className="relative size-[150px] group">
 										<img
 											src={URL.createObjectURL(thumbnailFile)}
 											alt="Thumbnail"
@@ -660,87 +864,34 @@ const AddProduct = () => {
 										</div>
 									</div>
 								) : (
-									<div
-										onClick={(e) => handleUploadClick(e)}
-										className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
-									>
-										<Upload />
-										<p className="text-xs text-gray-500">
-											Upload Image
-										</p>
-									</div>
-								)}
-							</div>
-						</label>
-
-						{/* New section for product images */}
-						<label className="form-control col-span-1 w-fit">
-							<div className="label">
-								<span className="label-text">Product Images</span>
-								{errors.images && (
-									<span className="text-red-500 text-xs">
-										{errors.images.message}
-									</span>
-								)}
-							</div>
-							<input
-								ref={productImagesInputRef}
-								type="file"
-								className="hidden"
-								onChange={handleProductImagesChange}
-								accept="image/*"
-								multiple
-							/>
-							<div className="flex flex-wrap gap-2">
-								<div
-									onClick={(e) => handleProductImagesUploadClick(e)}
-									className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
-								>
-									<Upload />
-									<p className="text-xs text-gray-500">Add Images</p>
-								</div>
-								{productImageFiles.map((image, index) => (
-									<div
-										key={index}
-										className="relative size-[100px] group"
-									>
-										<img
-											src={URL.createObjectURL(image)}
-											alt={`Product ${index + 1}`}
-											className="w-full h-full object-cover rounded-md border border-gray-300"
-										/>
-										<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
-											<button
-												onClick={(e) => {
-													e.preventDefault();
-													e.stopPropagation();
-													openModal(URL.createObjectURL(image));
-												}}
-												className="bg"
-											>
-												<Eye color="white" size={16} />
-											</button>
-											<button
-												onClick={(e) => {
-													e.preventDefault();
-													e.stopPropagation();
-													removeProductImage(index);
-												}}
-												className="bg"
-											>
-												<TrashIcon color="white" size={16} />
-											</button>
+									<div className="flex flex-col gap-2">
+										<div
+											onClick={(e) => handleUploadClick(e)}
+											className="size-[150px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
+										>
+											<Upload />
+											<p className="text-xs text-gray-500">
+												Upload Image
+											</p>
 										</div>
+										{errors.thumbnail && (
+											<span className="text-red-500 text-xs">
+												{errors.thumbnail.message}
+											</span>
+										)}
 									</div>
-								))}
+								)}
 							</div>
 						</label>
 
-						<label className="form-control col-span-1	">
+						<label className="form-control col-span-2">
 							<div className="label">
-								<span className="label-text">Description</span>
+								<span className="label-text font-semibold">
+									Description
+								</span>
 							</div>
 							<textarea
+								rows={5}
 								{...register('description')}
 								className="textarea textarea-bordered"
 								placeholder="Type here"
@@ -752,7 +903,15 @@ const AddProduct = () => {
 							)}
 						</label>
 
-						<h3 className="text-lg font-bold col-span-3">Variant</h3>
+						<div className="col-span-3">
+							<h3 className="text-lg font-bold">Variant</h3>
+							{errors.variants && (
+								<span className="label-text text-red-500 text-xs ms-2">
+									{errors.variants.root?.message ||
+										errors.variants?.message}
+								</span>
+							)}
+						</div>
 
 						{fields.map((field, index) => (
 							<div
@@ -764,6 +923,11 @@ const AddProduct = () => {
 										<span className="label-text font-bold">
 											Color
 										</span>
+										{errors.variants?.[index]?.color_id && (
+											<span className="label-text text-red-500 text-xs">
+												{errors.variants[index].color_id?.message}
+											</span>
+										)}
 									</div>
 									<div className="dropdown w-full">
 										<div className="w-full">
@@ -773,9 +937,12 @@ const AddProduct = () => {
 												type="text"
 												placeholder="Select color"
 												className="input input-bordered input-sm w-full"
-												value={colorSearchTerm}
+												value={colorSearchTerms[index] || ''}
 												onChange={(e) =>
-													setColorSearchTerm(e.target.value)
+													setColorSearchTerms((prev) => ({
+														...prev,
+														[index]: e.target.value,
+													}))
 												}
 												onClick={(e) => e.stopPropagation()}
 											/>
@@ -784,54 +951,129 @@ const AddProduct = () => {
 											tabIndex={0}
 											className="dropdown-content menu p-2 shadow bg-base-100 w-full max-h-[200px] overflow-y-auto"
 										>
-											{filteredColors.map((color) => (
-												<li key={color.id}>
-													<button
-														type="button"
-														onClick={() => {
-															setValue(
-																`variants.${index}.color_id`,
-																color.id!
-															);
-															setColorSearchTerm(color.color);
-														}}
-														className="flex items-center gap-2"
-													>
-														<img
-															src={color.link_image}
-															alt={color.color}
-															className="size-4 rounded-full"
-														/>
-														{color.color}
-													</button>
-												</li>
-											))}
+											{colors
+												.filter((color) =>
+													color.color
+														.toLowerCase()
+														.includes(
+															(
+																colorSearchTerms[index] || ''
+															).toLowerCase()
+														)
+												)
+												.map((color) => (
+													<li key={color.id}>
+														<button
+															type="button"
+															onClick={() => {
+																setValue(
+																	`variants.${index}.color_id`,
+																	color.id!
+																);
+																setColorSearchTerms((prev) => ({
+																	...prev,
+																	[index]: color.color,
+																}));
+															}}
+															className="flex items-center gap-2"
+														>
+															<img
+																src={color.link_image}
+																alt={color.color}
+																className="size-4 rounded-full"
+															/>
+															{color.color}
+														</button>
+													</li>
+												))}
 										</ul>
 									</div>
 								</div>
 								<div className="col-span-1 p-2 border border-gray-300 rounded-md">
 									<label className="form-control col-span-1 w-fit">
-										<div className="label">
+										<div className="label flex justify-between">
 											<span className="label-text font-bold">
-												Image
+												Images
 											</span>
+											{errors.variants?.[index]?.image_variant && (
+												<span className="label-text text-red-500 text-xs ms-2">
+													{
+														errors.variants[index].image_variant
+															?.message
+													}
+												</span>
+											)}
 										</div>
 										<input
-											ref={fileInputRef}
+											ref={(el) =>
+												(variantImagesInputRefs.current[index] = el)
+											}
 											type="file"
 											className="hidden"
+											onChange={(e) =>
+												handleVariantImagesChange(e, index)
+											}
 											accept="image/*"
+											multiple
 										/>
-										<div className="flex gap-2">
+										<div className="flex flex-wrap gap-2">
 											<div
-												onClick={(e) => handleUploadClick(e)}
+												onClick={(e) =>
+													handleVariantImagesUploadClick(e, index)
+												}
 												className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
 											>
 												<Upload />
 												<p className="text-xs text-gray-500">
-													Upload Image
+													Add Images
 												</p>
 											</div>
+											{variantImageFiles[index]?.map(
+												(image, imageIndex) => (
+													<div
+														key={imageIndex}
+														className="relative size-[100px] group"
+													>
+														<img
+															src={URL.createObjectURL(image)}
+															alt={`Variant ${index + 1} - ${
+																imageIndex + 1
+															}`}
+															className="w-full h-full object-cover rounded-md border border-gray-300"
+														/>
+														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
+															<button
+																onClick={(e) => {
+																	e.preventDefault();
+																	e.stopPropagation();
+																	openModal(
+																		URL.createObjectURL(image)
+																	);
+																}}
+																className="bg"
+															>
+																<Eye color="white" size={16} />
+															</button>
+															<button
+																onClick={(e) => {
+																	e.preventDefault();
+																	e.stopPropagation();
+																	removeVariantImage(
+																		index,
+																		imageIndex
+																	);
+																}}
+																className="bg"
+															>
+																<TrashIcon
+																	color="white"
+																	size={16}
+																/>
+															</button>
+														</div>
+													</div>
+												)
+											)}
 										</div>
 									</label>
 								</div>
@@ -840,52 +1082,115 @@ const AddProduct = () => {
 										<span className="label-text font-bold">
 											Size and Quantity
 										</span>
+										{errors.variants?.[index]?.size && (
+											<span className="label-text text-red-500 text-xs ms-2">
+												{errors.variants[index].size.root
+													?.message ||
+													errors.variants[index].size?.message}
+											</span>
+										)}
 									</div>
 									<div className="flex flex-col gap-2 w-full">
 										{(variantSizes[index] || []).map(
 											(_, sizeIndex) => (
-												<div
-													key={sizeIndex}
-													className="flex gap-2 w-full"
-												>
-													<select
-														className="select select-bordered select-sm"
-														{...register(
-															`variants.${index}.size.${sizeIndex}.size_id`
-														)}
+												<>
+													<div
+														key={sizeIndex}
+														className="flex gap-2 w-full"
 													>
-														<option value="0">Select size</option>
-														{sizes.map((size) => (
-															<option
-																key={size.id}
-																value={size.id}
-															>
-																{size.size}
+														<select
+															className="select select-bordered select-sm"
+															{...register(
+																`variants.${index}.size.${sizeIndex}.size_id`
+															)}
+														>
+															<option value="0">
+																Select size
 															</option>
-														))}
-													</select>
-													<input
-														type="number"
-														placeholder="Quantity"
-														className="input input-bordered input-sm w-full"
-														{...register(
-															`variants.${index}.size.${sizeIndex}.quantity`
-														)}
-													/>
-													<button
-														type="button"
-														onClick={() =>
-															handleRemoveSize(index, sizeIndex)
-														}
-														className="btn btn-sm btn-error"
-													>
-														<TrashIcon
-															size={16}
-															color="white"
-															className="z-10"
+															{sizes.map((size) => {
+																const isDisabled =
+																	isSelectedSize(
+																		index,
+																		Number(size.id),
+																		sizeIndex
+																	);
+																return (
+																	<option
+																		className="font-semibold"
+																		key={size.id}
+																		value={Number(size.id)}
+																		disabled={isDisabled}
+																	>
+																		{size.size}
+																	</option>
+																);
+															})}
+														</select>
+														<input
+															type="text"
+															placeholder="Quantity"
+															className="input input-bordered input-sm w-full"
+															{...register(
+																`variants.${index}.size.${sizeIndex}.quantity`
+															)}
+															onChange={(e) => {
+																const inputPath = `variants.${index}.size.${sizeIndex}.quantity`;
+																const newValue =
+																	Number(e.target.value) || 0;
+																const oldValue =
+																	previousValues[inputPath] ||
+																	0;
+
+																setStockQuantity(
+																	(prev) =>
+																		prev - oldValue + newValue
+																);
+																setPreviousValues((prev) => ({
+																	...prev,
+																	[inputPath]: newValue,
+																}));
+															}}
 														/>
-													</button>
-												</div>
+														<button
+															type="button"
+															onClick={() =>
+																handleRemoveSize(
+																	index,
+																	sizeIndex
+																)
+															}
+															className="btn btn-sm btn-error"
+														>
+															<TrashIcon
+																size={16}
+																color="white"
+																className="z-10"
+															/>
+														</button>
+													</div>
+													{errors.variants?.[index]?.size?.[
+														sizeIndex
+													]?.size_id && (
+														<span className="label-text text-red-500 text-xs ms-2">
+															{
+																errors.variants[index].size[
+																	sizeIndex
+																]?.size_id?.message
+															}
+														</span>
+													)}
+													{errors.variants?.[index]?.size?.[
+														sizeIndex
+													]?.quantity && (
+														<span className="label-text text-red-500 text-xs ms-2">
+															{
+																errors.variants[index].size[
+																	sizeIndex
+																]?.quantity?.message
+															}
+														</span>
+													)}
+												</>
 											)
 										)}
 										<button
