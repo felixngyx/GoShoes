@@ -16,4 +16,5 @@ export const TINYMCE_SETTINGS = {
     language: 'vi',
     // Thêm API key của TinyMCE (đăng ký miễn phí tại: https://www.tiny.cloud/)
     apiKey: import.meta.env.VITE_TINYMCE_API_KEY,
+    send_stats: false,
 };

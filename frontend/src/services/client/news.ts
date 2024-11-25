@@ -1,12 +1,12 @@
 import axiosClient from "../../apis/axiosClient";
 
-export const getAllNews = async () => {
+export const getAllNews = async (page = 1) => {
   try {
-    const { data } = await axiosClient.get("/posts");
-    return data?.data?.posts || [];
+    const response = await axiosClient.get(`/posts?page=${page}`);
+    return response.data;
   } catch (error) {
-    console.error("Error fetching news:", error);
-    return [];
+    console.error('Error fetching news:', error);
+    throw error;
   }
 };
 

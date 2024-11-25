@@ -1,28 +1,21 @@
 import axiosClient from "../../apis/axiosClient";
-import { Posts } from "../../types/admin/template/post";
-
-interface PostResponse {
-  data: Posts[];
-  // thêm các field khác nếu API trả về
-  message?: string;
-  status?: number;
-}
+import { Posts, SinglePostResponse, PostListResponse } from "../../types/admin/template/post";
 
 // Get all posts
-export const getAllPosts = async () => {
+export const getAllPosts = async (page = 1) => {
   try {
-    const response = await axiosClient.get<PostResponse>('/posts');
-    // Trả về response.data.data nếu API của bạn wrap data trong một object
-    return response.data.data;
+    const response = await axiosClient.get(`/posts?page=${page}`);
+    return response.data;
   } catch (error) {
+    console.error('Error fetching posts:', error);
     throw error;
   }
 };
 
 // Get post by id
-export const getPostById = async (id: number): Promise<Posts> => {
+export const getPostById = async (id: number): Promise<SinglePostResponse> => {
   try {
-    const response = await axiosClient.get(`/posts/${id}`);
+    const response = await axiosClient.get<SinglePostResponse>(`/posts/${id}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -44,9 +37,9 @@ export const createPost = async (data: FormData): Promise<Posts> => {
 };
 
 // Update post
-export const updatePost = async (id: number, data: FormData): Promise<Posts> => {
+export const updatePost = async (id: number, data: FormData): Promise<SinglePostResponse> => {
   try {
-    const response = await axiosClient.put(`/posts/${id}`, data, {
+    const response = await axiosClient.put<SinglePostResponse>(`/posts/${id}`, data, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -58,10 +51,12 @@ export const updatePost = async (id: number, data: FormData): Promise<Posts> => 
 };
 
 // Delete post
-export const deletePost = async (id: number): Promise<void> => {
+export const deletePost = async (id: number) => {
   try {
-    await axiosClient.delete(`/posts/${id}`);
+    const response = await axiosClient.delete(`/posts/${id}`);
+    return response.data;
   } catch (error) {
+    console.error('Error deleting post:', error);
     throw error;
   }
 }; 

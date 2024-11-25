@@ -55,6 +55,9 @@ import ProductListBrand from "./pages/Client/Brand/ProductListBrand";
 import ProductListCate from "./pages/Client/Category/ProductListCate";
 import NewsPage from "./pages/Client/News";
 import NewsPageDetail from "./pages/Client/News/NewsPageDetail";
+import CreatePost from "./pages/Admin/Post/create";
+import Post from "./pages/Admin/Post";
+import UpdatePost from "./pages/Admin/Post/update";
 
 function App() {
   const { pathname } = useLocation();
@@ -146,6 +149,11 @@ function App() {
             <Route index element={<DiscountPage />}></Route>
             <Route path="create" element={<CreateDiscount />}></Route>
             <Route path="update/:id" element={<UpdateDiscount />}></Route>
+          </Route>
+          <Route path="post">
+            <Route index element={<Post />}></Route>
+            <Route path="create" element={<CreatePost />}></Route>
+            <Route path="update/:id" element={<UpdatePost />}></Route>
           </Route>
 
           <Route
