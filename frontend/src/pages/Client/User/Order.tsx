@@ -285,7 +285,7 @@ export default function OrderList(): JSX.Element {
               }
             );
 
-            const currentProduct = response.data.Data.product;
+            const currentProduct = response.data.data;
 
             if (!currentProduct) {
               throw new Error(`Product ${item.product.name} no longer exists`);
@@ -298,15 +298,16 @@ export default function OrderList(): JSX.Element {
             let currentPrice = currentProduct.promotional_price || currentProduct.price;
 
             if (item.variant) {
-              if (!currentProduct.variants || currentProduct.variants.length === 0) {
+              const variants = JSON.parse(currentProduct.variants);
+              
+              if (!variants || variants.length === 0) {
                 throw new Error(
                   `Product ${item.product.name} has no variants available`
                 );
               }
 
-              const currentVariant = currentProduct.variants.find(
-                (v) => 
-                  v.variant_id === item.variant.id
+              const currentVariant = variants.find(
+                (v) => v.variant_id === item.variant.id
               );
 
               if (!currentVariant) {
@@ -315,15 +316,15 @@ export default function OrderList(): JSX.Element {
                 );
               }
 
-              if (currentVariant.quantity === 0) {
+              if (currentVariant.total_quantity === 0) {
                 throw new Error(
                   `Variant of product ${item.product.name} is out of stock`
                 );
               }
 
-              if (currentVariant.quantity < item.quantity) {
+              if (currentVariant.total_quantity < item.quantity) {
                 throw new Error(
-                  `Only ${currentVariant.quantity} items left for variant of ${item.product.name}`
+                  `Only ${currentVariant.total_quantity} items left for variant of ${item.product.name}`
                 );
               }
 
@@ -334,7 +335,7 @@ export default function OrderList(): JSX.Element {
                 thumbnail: currentProduct.thumbnail,
                 price: Number(currentPrice),
                 total: Number(currentPrice) * item.quantity,
-                stock_quantity: currentVariant.quantity,
+                stock_quantity: currentVariant.total_quantity,
                 product_variant: {
                   variant_id: currentVariant.variant_id,
                   size_id: currentVariant.size_id,
@@ -511,6 +512,9 @@ export default function OrderList(): JSX.Element {
         );
 
       case "expired":
+        if (order.status === "completed") {
+          return viewDetailsButton;
+        }
         return (
           <div className="space-x-2">
             {viewDetailsButton}

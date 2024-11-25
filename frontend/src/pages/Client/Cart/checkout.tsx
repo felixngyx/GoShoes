@@ -62,6 +62,39 @@ const CheckoutPage = () => {
         subtotal: cartOrderSummary?.subtotal || 0,
         total: cartOrderSummary?.total || 0,
       };
+    } else if (buyAgainItems?.length > 0) {
+      // Thêm xử lý cho buyAgainItems
+      return {
+        items: buyAgainItems.map((item: {
+          id: number;
+          name: string;
+          price: number;
+          quantity: number;
+          thumbnail: string;
+          total: number;
+          product_variant: any;
+        }) => ({
+          id: item.id,
+          name: item.name,
+          price: Number(item.price),
+          quantity: item.quantity,
+          thumbnail: item.thumbnail,
+          total: item.total,
+          product_variant: item.product_variant,
+          // Thêm các trường variant nếu có
+          variant: item.product_variant ? {
+            id: item.product_variant.variant_id,
+            size: {
+              size: item.product_variant.size?.size
+            },
+            color: {
+              color: item.product_variant.color?.color
+            }
+          } : null,
+        })),
+        subtotal: buyAgainItems.reduce((sum: number, item) => sum + item.total, 0),
+        total: buyAgainItems.reduce((sum: number, item) => sum + item.total, 0),
+      };
     } else {
       return {
         items: [],
@@ -69,7 +102,7 @@ const CheckoutPage = () => {
         total: 0,
       };
     }
-  }, [buyNowProduct, cartItems, cartOrderSummary]);
+  }, [buyNowProduct, cartItems, cartOrderSummary, buyAgainItems]);
 
   console.log(address);
 
