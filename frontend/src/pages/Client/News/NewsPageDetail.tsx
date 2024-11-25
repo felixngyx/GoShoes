@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "react-router-dom";
 import { getNewsById } from "../../../services/client/news";
+import parse from 'html-react-parser';
 
 const NewsPageDetail = () => {
   const { id } = useParams(); // Lấy ID từ URL
@@ -31,7 +32,7 @@ const NewsPageDetail = () => {
           className="w-full h-72 object-cover rounded-lg mb-6"
         />
         <div className="text-lg text-gray-700 leading-relaxed mb-6">
-          {newDetail.content}
+          {parse(newDetail.content)}
         </div>
 
         {/* Thêm thông tin thêm về bài viết */}
