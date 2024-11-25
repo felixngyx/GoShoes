@@ -233,7 +233,8 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                         'name', c.name,
                         'parent_id', c.parent_id,
                         'description', c.description,
-                        'slug', c.slug
+                        'slug', c.slug,
+                        'id', c.id
                     )
                 ) AS categories
             FROM products p
