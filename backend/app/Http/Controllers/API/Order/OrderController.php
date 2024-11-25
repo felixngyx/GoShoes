@@ -261,6 +261,7 @@ class OrderController extends Controller
                         throw new \Exception("Product {$product->name} ({$variant->size->size}/{$variant->color->color}) only has {$variant->quantity} items left");
                     }
                     $price = $product->promotional_price ?? $product->price;
+
                 } else {
                     // Nếu không có biến thể, kiểm tra số lượng sản phẩm trực tiếp
                     if ($product->stock_quantity < $item['quantity']) {
@@ -346,6 +347,7 @@ class OrderController extends Controller
                             throw new \Exception("Sản phẩm {$item['product']->name} đã hết hàng trong quá trình xử lý");
                         }
                         $variant->decrement('quantity', $item['quantity']);
+                        $product->decrement('stock_quantity', $item['quantity']);
                     } else {
                         $product = $item['product'];
                         // Kiểm tra lại lần cuối để đảm bảo số lượng vẫn đủ

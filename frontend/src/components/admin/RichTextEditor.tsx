@@ -1,16 +1,32 @@
 import { Editor } from '@tinymce/tinymce-react';
-import { useRef, useState } from 'react';
+import { useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { toast } from 'react-hot-toast';
 import { TINYMCE_SETTINGS } from '../../common/tinymce';
 
 interface RichTextEditorProps {
     initialValue?: string;
     onChange?: (content: string) => void;
+    key?: string;
 }
 
-const RichTextEditor = ({ initialValue = '', onChange }: RichTextEditorProps) => {
+const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(({ 
+    initialValue = '', 
+    onChange,
+    key 
+}, ref) => {
     const editorRef = useRef<any>(null);
     const [isUploading, setIsUploading] = useState(false);
+
+    useImperativeHandle(ref, () => ({
+        setContent: (content: string) => {
+            if (editorRef.current) {
+                editorRef.current.setContent(content);
+            }
+        },
+        getContent: () => {
+            return editorRef.current ? editorRef.current.getContent() : '';
+        }
+    }));
 
     const handleEditorChange = (content: string) => {
         if (onChange) {
@@ -40,10 +56,10 @@ const RichTextEditor = ({ initialValue = '', onChange }: RichTextEditorProps) =>
 
                 const data = await response.json();
                 resolve(data.secure_url);
-                toast.success('Tải ảnh thành công');
+                toast.success('Image uploaded successfully');
             } catch (error) {
                 reject('Image upload failed');
-                toast.error('Không thể tải ảnh lên');
+                toast.error('Unable to upload image');
             } finally {
                 setIsUploading(false);
             }
@@ -53,28 +69,29 @@ const RichTextEditor = ({ initialValue = '', onChange }: RichTextEditorProps) =>
     return (
         <div className="relative">
             <Editor
+                key={key}
                 apiKey={TINYMCE_SETTINGS.apiKey}
-                onInit={(evt, editor) => editorRef.current = editor}
+                onInit={(evt, editor) => {
+                    editorRef.current = editor;
+                }}
                 initialValue={initialValue}
                 init={{
                     ...TINYMCE_SETTINGS,
                     images_upload_handler: handleImageUpload,
                     automatic_uploads: true,
                     file_picker_types: 'image',
-                    // Thêm các placeholder khi upload ảnh
-                    image_uploadtab: true,
-                    image_advtab: true,
-                    images_reuse_filename: true,
+                    directionality: 'ltr',
+                    content_style: 'body { direction: ltr; }'
                 }}
-                onEditorChange={handleEditorChange}
+                onEditorChange={onChange}
             />
             {isUploading && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                    <div className="text-white">Đang tải ảnh lên...</div>
+                    <div className="text-white">Uploading image...</div>
                 </div>
             )}
         </div>
     );
-};
+});
 
 export default RichTextEditor;
