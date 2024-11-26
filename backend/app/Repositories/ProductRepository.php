@@ -244,6 +244,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             )
             SELECT
                 p.*,
+                b.name AS brand_name,
                 JSON_ARRAYAGG(
                     JSON_OBJECT(
                         'color_id', vi.color_id,
@@ -258,6 +259,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             LEFT JOIN variant_info vi ON p.id = vi.product_id
             LEFT JOIN category_info ci ON p.id = ci.product_id
             LEFT JOIN product_category pc ON p.id = pc.product_id
+            LEFT JOIN brands b ON p.brand_id = b.id
             WHERE 1=1
         ";
 
