@@ -23,6 +23,8 @@ class UpdateProductRequest extends FormRequest
             "sku" => "string|unique:products,sku,$this->id,id",
             "thumbnail" => "string|max:255",
             "hagtag" => "nullable|string|max:255",
+            'category_ids' => 'array',
+            'category_ids.*' => 'exists:categories,id',
             'is_deleted' => 'nullable|boolean',
             'variants' => 'array',
             'variants.*.color_id' => 'exists:variant_colors,id',
