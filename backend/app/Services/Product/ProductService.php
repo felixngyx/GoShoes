@@ -210,6 +210,12 @@ class ProductService implements ProductServiceInterface
 
     public function updateProductService(array $request, int $id) : \Illuminate\Http\JsonResponse
     {
+        $product = $this->productRepository->find($id);
+        if (!$product) {
+            return response()->json([
+                'message' => 'Không tìm thấy sản phẩm',
+            ], 404);
+        }
         $productData = [
             'name' => $request['name'],
             'description' => $request['description'],
@@ -228,7 +234,7 @@ class ProductService implements ProductServiceInterface
         DB::beginTransaction();
 
         try {
-            $product = $this->productRepository->update($productData, $id);
+            $this->productRepository->update($productData, $id);
             $colorsAndImagesWithProductId = array_map(function($variant) use ($id) {
                 return [
                     'color_id' => $variant['color_id'],
@@ -258,8 +264,8 @@ class ProductService implements ProductServiceInterface
             }
 
             $stock_quantity = self::getProductVariantService()->getStockQuantityByProduct($id);
-            $productUpdated = $this->productRepository->update(['stock_quantity' => $stock_quantity], $id);
-            $product['stock_quantity'] = $stock_quantity;
+            $this->productRepository->update(['stock_quantity' => $stock_quantity], $id);
+            $product = $this->productRepository->find($id);
             DB::commit();
             return response()->json([
                 'success' => true,

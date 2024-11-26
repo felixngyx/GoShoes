@@ -54,7 +54,6 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
 
     public function update(array $data,int $id)
     {
-        return $data;
         return $this->model->find($id)->update($data);
     }
 
