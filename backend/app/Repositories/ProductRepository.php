@@ -28,7 +28,6 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     {
         $query = $this->getBaseQuery($filters);
 
-        // Thêm phân trang
         if ($page && $perPage) {
             $offset = ($page - 1) * $perPage;
             $query .= " LIMIT $perPage OFFSET $offset";
