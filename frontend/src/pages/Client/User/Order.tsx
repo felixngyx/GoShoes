@@ -197,7 +197,7 @@ export default function OrderList(): JSX.Element {
 
   const handleRefundRequest = async (orderId: string): Promise<void> => {
     try {
-      // Upload ảnh lên Cloudinary trước
+      // Upload ảnh l��n Cloudinary trước
       const uploadedImages = await Promise.all(
         refundForm.images.map(async (image) => {
           const imageFormData = new FormData();
@@ -511,6 +511,23 @@ export default function OrderList(): JSX.Element {
           </div>
         );
 
+      case "processing":
+        return (
+          <div className="space-x-2">
+            {viewDetailsButton}
+            <Button
+              variant="outlined"
+              size="small"
+              color="error"
+              onClick={() =>
+                setOpenDialog({ type: "cancel", orderId: order.id })
+              }
+            >
+              Cancel Order
+            </Button>
+          </div>
+        );
+
       case "expired":
         if (order.status === "completed") {
           return viewDetailsButton;
@@ -526,23 +543,6 @@ export default function OrderList(): JSX.Element {
               disabled={isRenewing === order.id}
             >
               {isRenewing === order.id ? "Renewing..." : "Renew Link"}
-            </Button>
-          </div>
-        );
-
-      case "processing":
-        return (
-          <div className="space-x-2">
-            {viewDetailsButton}
-            <Button
-              variant="outlined"
-              size="small"
-              color="error"
-              onClick={() =>
-                setOpenDialog({ type: "cancel", orderId: order.id })
-              }
-            >
-              Cancel Order
             </Button>
           </div>
         );
