@@ -64,7 +64,7 @@ class CartService implements CartServiceInterface
                 }
             })();
 
-            self::getCartRepository()->upsert(
+            self::getCartRepository()->updateOrCreate(
                 ['quantity' => $quantity],
                 ['user_id' => $data['user_id'], 'product_variant_id' => $data['product_variant_id']]
             );
