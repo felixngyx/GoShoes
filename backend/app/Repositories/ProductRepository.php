@@ -202,6 +202,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                     vc.color,
                     JSON_ARRAYAGG(
                         JSON_OBJECT(
+                            'product_variant_id', pv.id,
                             'size_id', pv.size_id,
                             'size', vs.size,
                             'quantity', pv.quantity

@@ -158,6 +158,8 @@ const ProductDetail = () => {
     queryFn: async () => await getProductById(Number(id)),
   });
 
+  console.log("product", product);
+
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(
     null
@@ -305,42 +307,51 @@ const ProductDetail = () => {
     }
   };
 
-  const uniqueSizes = product?.variants
-    ? Array.from(
-        new Map(
-          product.variants
-            .filter((variant: Variant) => variant.size?.size) // Lọc các variant có size hợp lệ
-            .map((variant: Variant) => ({
-              size: variant.size?.size, // Lấy tên size
-              disabled: variant.quantity === 0, // Kiểm tra nếu quantity == 0
-              color: variant.color?.id, // Thêm màu để tính toán riêng cho từng màu
-            }))
-            .reduce((acc: any[], current: any) => {
-              // Kiểm tra nếu đã có size trong danh sách, nếu chưa thì thêm
-              const existing = acc.find(
-                (item) =>
-                  item.size === current.size && item.color === current.color
-              );
-              if (!existing) {
-                acc.push(current);
-              }
-              return acc;
-            }, [])
-            .map((sizeInfo: any) => [sizeInfo.size, sizeInfo]) // Chuyển thành mảng để dùng Map loại bỏ trùng lặp
-        ).values()
-      )
+  const variants = product?.variants ? JSON.parse(product.variants) : []; // Chuyển chuỗi thành mảng
+
+  const uniqueSizes = variants
+    .flatMap((variant: any) =>
+      variant.sizes.map((size: any) => ({
+        size: size.size, // Lấy tên size
+        color: variant.color_id, // Màu sắc tương ứng với size
+        disabled: size.quantity === 0, // Kiểm tra nếu không còn hàng
+      }))
+    )
+    .reduce((acc: any[], current: any) => {
+      // Kiểm tra nếu đã có size và color đã tồn tại trong danh sách
+      const existing = acc.find(
+        (item) => item.size === current.size && item.color === current.color
+      );
+      if (!existing) {
+        acc.push(current); // Thêm nếu chưa có
+      }
+      return acc;
+    }, []);
+
+  console.log("Unique Sizes:", uniqueSizes);
+
+  const parsedVariants = Array.isArray(product?.variants)
+    ? product?.variants
+    : product?.variants
+    ? JSON.parse(product?.variants)
     : [];
 
   const uniqueColors = Array.from(
     new Map(
-      product?.variants
-        .map((variant: Variant) => [
-          variant.color?.color, // Kiểm tra màu sắc không null
-          variant,
+      parsedVariants
+        .map((variant: any) => [
+          variant.color_id, // Lấy color_id duy nhất
+          {
+            color: variant.color, // Lấy tên màu sắc
+            image: variant.image, // Lấy image cho màu sắc
+            id: variant.color_id, // color_id để chọn
+          },
         ])
-        .filter(([color]: any) => color !== null) // Lọc bỏ các giá trị màu sắc null
+        .filter(([colorId]: any) => colorId !== null) // Loại bỏ null
     ).values()
   );
+
+  console.log("Unique Colors:", uniqueColors);
 
   useEffect(() => {
     if (product && product.images && product.images.length > 0) {
@@ -459,7 +470,7 @@ const ProductDetail = () => {
         <div className="md:col-span-5">
           <div className="relative overflow-hidden rounded-lg bg-gray-100 mb-2">
             <img
-              src={selectedThumbnail || product.thumbnail}
+              src={product.thumbnail}
               // alt={product.name}
               className="w-[575px] h-[571px] object-cover transition-transform duration-500 hover:scale-105"
             />
@@ -471,7 +482,7 @@ const ProductDetail = () => {
             >
               <ChevronLeft color="#9098B1" />
             </button>
-            <div className="grid grid-cols-4 gap-2">
+            {/* <div className="grid grid-cols-4 gap-2">
               {product.images
                 .slice(currentSlide, currentSlide + 4)
                 .map((image: IImages, index: number) => (
@@ -498,7 +509,7 @@ const ProductDetail = () => {
                     />
                   </button>
                 ))}
-            </div>
+            </div> */}
             <button
               onClick={handleNextSlide}
               className="p-2 hover:bg-gray-100 rounded-full absolute right-0 top-1/2 -translate-y-1/2 z-10"
@@ -534,14 +545,14 @@ const ProductDetail = () => {
             <div className="grid grid-cols-2 max-w-xs">
               <span className="col-span-1">Category:</span>
               <span className="col-span-1 text-left">
-                {product.categories
+                {/* {product.categories
                   .map((category: Category) => category.name)
-                  .join(", ")}
+                  .join(", ")} */}
               </span>
             </div>
             <div className="grid grid-cols-2 max-w-xs">
               <span className="col-span-1">Brand:</span>
-              <span className="col-span-1 text-left">{product.brand.name}</span>
+              {/* <span className="col-span-1 text-left">{product.brand.name}</span> */}
             </div>
             <div className="grid grid-cols-2 max-w-xs">
               <span className="col-span-1">Availability:</span>
@@ -554,60 +565,58 @@ const ProductDetail = () => {
           <div className="mb-3 max-w-xs">
             <span className="block mb-2 font-medium">Size:</span>
             <div className="grid grid-cols-3 gap-2">
-              {uniqueSizes.map((sizeInfo: any) => {
-                // Tìm variant theo size và màu hiện tại
-                const sizeVariant = product?.variants.find(
-                  (variant: any) =>
-                    variant.size?.size === sizeInfo.size &&
-                    variant.color?.id === selectedColor
-                );
+              {uniqueSizes.length > 0 ? (
+                uniqueSizes.map((sizeInfo: any) => {
+                  const isSelected = selectedSize === sizeInfo.size;
+                  const isDisabled = sizeInfo.disabled;
 
-                const isSelected = selectedSize === sizeInfo.size;
-                const isDisabled = sizeVariant?.quantity === 0;
-
-                return (
-                  <button
-                    key={sizeVariant?.size?.id}
-                    onClick={() =>
-                      !isDisabled && handleSizeChange(sizeInfo.size)
-                    }
-                    className={`py-2 text-center text-sm font-medium border rounded-md ${
-                      isSelected
-                        ? "border-theme-color-primary ring-2 ring-theme-color-primary"
-                        : "bg-white text-gray-700 border-gray-300"
-                    } ${
-                      isDisabled
-                        ? "cursor-not-allowed opacity-50 line-through"
-                        : "focus:outline-none focus:ring-2 focus:ring-theme-color-primary"
-                    }`}
-                    disabled={isDisabled}
-                  >
-                    {sizeInfo.size}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={sizeInfo.size + sizeInfo.color} // Sử dụng key duy nhất để tránh lặp lại
+                      onClick={() =>
+                        !isDisabled && handleSizeChange(sizeInfo.size)
+                      }
+                      className={`py-2 text-center text-sm font-medium border rounded-md ${
+                        isSelected
+                          ? "border-theme-color-primary ring-2 ring-theme-color-primary"
+                          : "bg-white text-gray-700 border-gray-300"
+                      } ${
+                        isDisabled
+                          ? "cursor-not-allowed opacity-50 line-through"
+                          : "focus:outline-none focus:ring-2 focus:ring-theme-color-primary"
+                      }`}
+                      disabled={isDisabled}
+                    >
+                      {sizeInfo.size}
+                    </button>
+                  );
+                })
+              ) : (
+                <p>No sizes available</p> // Thông báo nếu không có size
+              )}
             </div>
           </div>
 
           <div className="mb-6">
-            <h3 className="mb-2">Color:</h3>
-            <div className="flex flex-wrap gap-2">
+            <h3 className="mb-2 text-lg font-semibold">Color:</h3>
+            <div className="flex flex-wrap gap-3">
               {uniqueColors.map((variant: any) => (
                 <button
-                  key={variant.color.id}
-                  onClick={() => handleColorChange(variant.color.id)}
-                  className={`px-2 py-2 border rounded-md hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary flex items-center gap-2 ${
-                    selectedColor === variant.color.id
-                      ? "bg-theme-color-primary outline-none ring-2"
-                      : ""
+                  key={variant.id} // Sử dụng color_id làm key
+                  onClick={() => handleColorChange(variant.id)} // Chọn màu khi click
+                  className={`flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-theme-color-primary ${
+                    selectedColor === variant.id
+                      ? "bg-theme-color-primary text-white border-theme-color-primary ring-2"
+                      : "text-gray-700 border-gray-300 hover:border-theme-color-primary"
                   }`}
                 >
+                  {/* Hiển thị ảnh màu sắc */}
                   <img
-                    className="w-6 h-6 border border-x"
-                    src={variant.color.link_image}
-                    alt={variant.color.color}
+                    className="w-8 h-8 rounded-full border border-gray-300"
+                    src={variant.image.split(",")[0]} // Chọn ảnh đầu tiên từ danh sách
+                    alt={variant.color}
                   />
-                  {variant.color.color}
+                  {variant.color}
                 </button>
               ))}
             </div>
