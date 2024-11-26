@@ -22,7 +22,9 @@ class RepositoryServiceProvider extends ServiceProvider
         'App\Repositories\RepositoryInterfaces\ReviewRepositoryInterface' => 'App\Repositories\ReviewRepository',
         'App\Repositories\RepositoryInterfaces\DiscountRepositoryInterface' => 'App\Repositories\DiscountRepository',
         'App\Repositories\RepositoryInterfaces\ShippingRepositoryInterface' => 'App\Repositories\ShippingRepository',
-         'App\Repositories\RepositoryInterfaces\ProductRepositoryInterface' => 'App\Repositories\ProductRepository',
+        'App\Repositories\RepositoryInterfaces\ProductRepositoryInterface' => 'App\Repositories\ProductRepository',
+        'App\Repositories\RepositoryInterfaces\ProductVariantRepositoryInterface' => 'App\Repositories\ProductVariantRepository',
+        'App\Repositories\RepositoryInterfaces\ImageVariantRepositoryInterface' => 'App\Repositories\ImageVariantRepository',
      ];
 
     public function register(): void
