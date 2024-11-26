@@ -43,8 +43,14 @@ class OrderCreated extends Mailable
      */
     public function content(): Content
     {
+        $shippingDetail = json_decode($this->order->shipping->shipping_detail ?? '{}', true);
+
         return new Content(
             markdown: 'mail.order-created',
+            with: [
+                'order' => $this->order,
+                'shipping' => $shippingDetail
+            ]
         );
     }
 
