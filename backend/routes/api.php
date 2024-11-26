@@ -13,6 +13,7 @@ use App\Http\Controllers\API\Auth\SocialAuthController\FacebookAuthController;
 use App\Http\Controllers\API\Colors\ColorController;
 use App\Http\Controllers\API\Sizes\SizeController;
 use App\Http\Controllers\API\Brands\BrandController;
+use App\Http\Controllers\API\Contact\ContactController;
 use App\Http\Controllers\API\Order\OrderController;
 use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use App\Http\Controllers\API\Products\ProductController;
@@ -26,7 +27,7 @@ use App\Http\Controllers\BannerController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\Order\RefundController;
 use App\Http\Controllers\API\User\UserController;
-
+use App\Http\Controllers\API\Statistical\StatisticalController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -109,6 +110,15 @@ Route::delete('/banners', [BannerController::class, 'destroyMultiple']);
 
 Route::get('categories', [CategoryController::class, 'index']);
 
+// thống kê 
+Route::get('/revenue/today', [StatisticalController::class, 'getTodayRevenue']);
+Route::get('/revenue/monthly', [StatisticalController::class, 'getMonthlyRevenue']);
+Route::get('/revenue/top-products', [StatisticalController::class, 'getTopRevenueProducts']);
+
+//  Contact 
+Route::get('/contacts', [ContactController::class, 'index']);
+Route::post('/contacts', [ContactController::class, 'store']);
+Route::get('/contacts/{id}', [ContactController::class, 'show']);
 // This route is Public for all user change email and phone
 Route::group(['prefix' => 'profile'], function () {
     Route::post('/verify-token-change-email', [ProfileController::class, 'verifyChangeEmail']);

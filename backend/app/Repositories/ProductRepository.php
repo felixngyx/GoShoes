@@ -195,7 +195,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     private function getBaseQuery($filters = [])
     {
         $query = "
-            WITH variant_info AS (
+           WITH variant_info AS (
                 SELECT
                     pv.product_id,
                     pv.color_id,
@@ -216,9 +216,35 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 LEFT JOIN image_variants iv ON pv.product_id = iv.product_id
                     AND pv.color_id = iv.color_id
                 GROUP BY pv.product_id, pv.color_id, vc.color, iv.image
+            ),
+            category_info AS (
+                SELECT
+                    product_id,
+                    JSON_ARRAYAGG(
+                        JSON_OBJECT(
+                            'name', name,
+                            'parent_id', parent_id,
+                            'description', description,
+                            'slug', slug,
+                            'id', id
+                        )
+                    ) AS categories
+                FROM (
+                    SELECT DISTINCT
+                        pc.product_id,
+                        c.name,
+                        c.parent_id,
+                        c.description,
+                        c.slug,
+                        c.id
+                    FROM product_category pc
+                    LEFT JOIN categories c ON pc.category_id = c.id
+                ) AS distinct_categories
+                GROUP BY product_id
             )
             SELECT
                 p.*,
+                b.name AS brand_name,
                 JSON_ARRAYAGG(
                     JSON_OBJECT(
                         'color_id', vi.color_id,
@@ -228,19 +254,12 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                         'total_quantity', vi.total_quantity
                     )
                 ) AS variants,
-                JSON_ARRAYAGG(
-                    JSON_OBJECT(
-                        'name', c.name,
-                        'parent_id', c.parent_id,
-                        'description', c.description,
-                        'slug', c.slug,
-                        'id', c.id
-                    )
-                ) AS categories
+                ci.categories
             FROM products p
             LEFT JOIN variant_info vi ON p.id = vi.product_id
+            LEFT JOIN category_info ci ON p.id = ci.product_id
             LEFT JOIN product_category pc ON p.id = pc.product_id
-            LEFT JOIN categories c ON pc.category_id = c.id
+            LEFT JOIN brands b ON p.brand_id = b.id
             WHERE 1=1
         ";
 
@@ -279,7 +298,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             $query .= " AND p.is_deleted = " . intval($filters['is_deleted']);
         }
 
-        $query .= " GROUP BY p.id ORDER BY p.id";
+        $query .= " GROUP BY p.id,  ci.categories ORDER BY p.id";
 
         return $query;
     }

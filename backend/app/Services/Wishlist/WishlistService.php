@@ -60,7 +60,7 @@ class WishlistService implements WishlistServiceInterface
                 'user_id' => $user->id,
                 'product_id' => $request['product_id'],
             ];
-            self::getWishListRepository()->upsert(
+            self::getWishListRepository()->updateOrCreate(
                 $data,
                 ['user_id'=>$data['user_id'], 'product_id'=>$data['product_id']],
             );

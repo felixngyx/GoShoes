@@ -39,6 +39,8 @@ class BannerRepository implements BannerRepositoryInterface
                         'banner_id' => $banner->id,
                         'image_path' => $imageData['image_path'],
                         'title' => $imageData['title'] ?? null,
+                        'section' => $imageData['section'],
+                        'url' => $imageData['url'] ?? null
                         
                     ]);
                 }
@@ -89,13 +91,17 @@ class BannerRepository implements BannerRepositoryInterface
                         // Cập nhật ảnh hiện có
                         BannerImage::where('id', $imageData['id'])->update([
                             'image_path' => $imageData['image_path'],
-                            'title' => $imageData['title'] ?? null
+                            'title' => $imageData['title'] ?? null,
+                            'section' => $imageData['section'],
+                            'url' => $imageData['url']
                         ]);
                     } else {
                         // Thêm ảnh mới
                         $banner->images()->create([
                             'image_path' => $imageData['image_path'],
-                            'title' => $imageData['title'] ?? null
+                            'title' => $imageData['title'] ?? null,
+                            'section' => $imageData['section'],
+                            'url' => $imageData['url']
                         ]);
                     }
                 }
