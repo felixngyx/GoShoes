@@ -24,6 +24,8 @@ class StoreProductRequest extends FormRequest
             "thumbnail" => "required|string|max:255",
             "hagtag" => "required|nullable|string|max:255",
             'is_deleted' => 'required|nullable|boolean',
+            'category_ids' => 'required|array',
+            'category_ids.*' => 'exists:categories,id',
             'variants' => 'required|array',
             'variants.*.color_id' => 'required|exists:variant_colors,id',
             'variants.*.image' => 'required|string',

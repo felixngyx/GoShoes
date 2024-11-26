@@ -162,11 +162,14 @@ class ProductService implements ProductServiceInterface
             'hagtag' => $request['hagtag'],
         ];
 
+        $categoryIds = $request['category_ids'];
+
         DB::beginTransaction();
 
         try {
             $product = $this->productRepository->create($productData);
             $productId = $product->id;
+            $this->productRepository->syncCategories($product, $categoryIds);
             $colorsAndImagesWithProductId = array_map(function($variant) use ($productId) {
                 return [
                     'color_id' => $variant['color_id'],
@@ -210,7 +213,7 @@ class ProductService implements ProductServiceInterface
 
     public function updateProductService(array $request, int $id) : \Illuminate\Http\JsonResponse
     {
-        $product = $this->productRepository->find($id);
+        $product = Product::find($id);
         if (!$product) {
             return response()->json([
                 'message' => 'Không tìm thấy sản phẩm',
@@ -231,10 +234,13 @@ class ProductService implements ProductServiceInterface
             'hagtag' => $request['hagtag']
         ];
 
+        $categoryIds = $request['category_ids'];
+
         DB::beginTransaction();
 
         try {
             $this->productRepository->update($productData, $id);
+            $this->productRepository->syncCategories($product, $categoryIds);
             $colorsAndImagesWithProductId = array_map(function($variant) use ($id) {
                 return [
                     'color_id' => $variant['color_id'],
