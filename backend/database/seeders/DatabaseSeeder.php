@@ -17,5 +17,6 @@ class DatabaseSeeder extends Seeder
         \App\Models\VariantSize::factory()->upsertVariantSizes(5);
         \App\Models\ImageVariant::factory()->upsertImageVariants(300);
         \App\Models\ProductVariant::factory()->upsertProductVariants(100);
+
     }
 }

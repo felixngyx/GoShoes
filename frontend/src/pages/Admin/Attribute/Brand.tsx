@@ -248,7 +248,7 @@ const Brand = () => {
 		try {
 			if (editingBrand) {
 				// Handle edit
-				await brandService.update(editingBrand.id!, data);
+				await brandService.update(editingBrand.id!.toString(), data);
 				toast.success('Brand updated successfully');
 			} else {
 				// Handle add
@@ -384,7 +384,9 @@ const Brand = () => {
 										</button>
 										<button
 											className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error"
-											onClick={() => deleteBrand(brand.id!)}
+											onClick={() =>
+												deleteBrand(brand.id!.toString())
+											}
 										>
 											<Trash2 size={16} />
 										</button>

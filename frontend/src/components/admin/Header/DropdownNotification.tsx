@@ -5,6 +5,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import Pusher from 'pusher-js';
 import { PUSHER_CONFIG } from '../../../common/pusher';
+import axiosClient from '../../../apis/axiosClient';
 
 interface Notification {
 	id: number;
@@ -34,17 +35,7 @@ const DropdownNotification = () => {
 
 	const fetchNotifications = async () => {
 		try {
-			const response = await axios.get(
-				`${import.meta.env.VITE_API_URL}/notifications`,
-				{
-					headers: {
-						Authorization: `Bearer ${Cookies.get('access_token')}`,
-					},
-					params: {
-						per_page: 10, // Số thông báo mỗi trang
-					},
-				}
-			);
+			const response = await axiosClient.get('/notifications');
 			if (response.data.success && response.data.data) {
 				setNotifications(response.data.data.data); // data đầu tiên là wrapper, data thứ hai là từ paginate
 			}
@@ -55,14 +46,7 @@ const DropdownNotification = () => {
 
 	const fetchUnreadCount = async () => {
 		try {
-			const response = await axios.get(
-				`${import.meta.env.VITE_API_URL}/notifications/unread-count`,
-				{
-					headers: {
-						Authorization: `Bearer ${Cookies.get('access_token')}`,
-					},
-				}
-			);
+			const response = await axiosClient.get(`/notifications/unread-count`);
 			setUnreadCount(response.data.count);
 		} catch (error) {
 			console.error('Lỗi khi tải số thông báo chưa đọc:', error);
