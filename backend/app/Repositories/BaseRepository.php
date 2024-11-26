@@ -54,8 +54,8 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
 
     public function update(array $data,int $id)
     {
-        $record = $this->model->find($id);
-        return $record->update($data);
+        return $data;
+        return $this->model->find($id)->update($data);
     }
 
     public function delete(int $id)
@@ -131,5 +131,10 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
     public function createMany(array $data)
     {
         return $this->model->insert($data);
+    }
+
+    public function updateMany(array $data, int $id)
+    {
+        return $this->model->whereIn('id', $id)->update($data);
     }
 }
