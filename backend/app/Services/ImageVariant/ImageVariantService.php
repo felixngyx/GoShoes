@@ -2,9 +2,10 @@
 
 namespace App\Services\ImageVariant;
 
+use App\Services\ServiceAbstracts\ImageVariant\ImageVariantServiceAbstract;
 use App\Services\ServiceInterfaces\ImageVariant\ImageVariantServiceInterface;
+use App\Repositories\RepositoryInterfaces\ImageVariantRepositoryInterface as ImageVariantRepository;
 
-class ImageVariantService implements ImageVariantServiceInterface
+class ImageVariantService extends ImageVariantServiceAbstract implements ImageVariantServiceInterface
 {
-
 }

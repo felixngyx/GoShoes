@@ -207,9 +207,9 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                             'size', vs.size,
                             'quantity', pv.quantity
                         )
-                    ) as sizes,
+                    ) AS sizes,
                     iv.image,
-                    SUM(pv.quantity) as total_quantity
+                    SUM(pv.quantity) AS total_quantity
                 FROM product_variants pv
                 LEFT JOIN variant_colors vc ON pv.color_id = vc.id
                 LEFT JOIN variant_sizes vs ON pv.size_id = vs.id
@@ -227,9 +227,20 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                         'image', vi.image,
                         'total_quantity', vi.total_quantity
                     )
-                ) as variants
+                ) AS variants,
+                JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        'name', c.name,
+                        'parent_id', c.parent_id,
+                        'description', c.description,
+                        'slug', c.slug,
+                        'id', c.id
+                    )
+                ) AS categories
             FROM products p
             LEFT JOIN variant_info vi ON p.id = vi.product_id
+            LEFT JOIN product_category pc ON p.id = pc.product_id
+            LEFT JOIN categories c ON pc.category_id = c.id
             WHERE 1=1
         ";
 
@@ -251,6 +262,21 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
         }
         if (isset($filters['status'])) {
             $query .= " AND p.status = '" . $filters['status'] . "'";
+        }
+        if (!empty($filters['category_id'])) {
+            $query .= " AND pc.category_id = " . intval($filters['category_id']);
+        }
+        if (!empty($filters['color_id'])) {
+            $query .= " AND vi.color_id = " . intval($filters['color_id']);
+        }
+        if (!empty($filters['size_id'])) {
+            $query .= " AND JSON_CONTAINS(vi.sizes, JSON_OBJECT('size_id', " . intval($filters['size_id']) . "))";
+        }
+        if (!empty($filters['hagtag'])) {
+            $query .= " AND p.hagtag LIKE '%" . $filters['hagtag'] . "%'";
+        }
+        if (!empty($filters['is_deleted'])) {
+            $query .= " AND p.is_deleted = " . intval($filters['is_deleted']);
         }
 
         $query .= " GROUP BY p.id ORDER BY p.id";

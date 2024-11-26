@@ -26,12 +26,14 @@ export interface CategoryResponse {
 			label: string;
 			active: boolean;
 		}[];
-	}
+	};
 }
 
 const categoryService = {
 	getAll: (page: number = 1, limit: number = 15) => {
-		return axiosClient.get<CategoryResponse>(`/categories?page=${page}&limit=${limit}`);
+		return axiosClient.get<CategoryResponse>(
+			`/categories?page=${page}&limit=${limit}`
+		);
 	},
 	create: (data: Partial<CATEGORY>) => {
 		return axiosClient.post('/categories', data);

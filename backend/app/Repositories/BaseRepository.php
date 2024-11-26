@@ -70,7 +70,12 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
 
     public function upsert(array $data, array $condition)
     {
-        return $this->model->updateOrCreate($condition, $data);
+        return $this->model->upsert($data, $condition);
+    }
+
+    public function updateOrCreate(array $data, array $condition)
+    {
+        return $this->model->updateOrCreate($data, $condition);
     }
 
     public function forceDelete(int $id)
@@ -121,5 +126,10 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
     public function getListByUserId(int $userId)
     {
         return $this->model->where('user_id', $userId)->get();
+    }
+
+    public function createMany(array $data)
+    {
+        return $this->model->insert($data);
     }
 }
