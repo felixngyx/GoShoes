@@ -79,12 +79,12 @@ class AuthService implements AuthServiceInterface
                 ], 403);
             }
 
-            if (!$user->email_verified_at) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Email not verified'
-                ], 403);
-            }
+//            if (!$user->email_verified_at) {
+//                return response()->json([
+//                    'success' => false,
+//                    'message' => 'Email not verified'
+//                ], 403);
+//            }
 
             // Set access token TTL to 30 minutes
             config(['jwt.ttl' => 30]);
