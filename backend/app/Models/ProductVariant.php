@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ProductVariant extends Model
 {
@@ -34,11 +33,11 @@ class ProductVariant extends Model
         return $this->hasMany(Cart::class);
     }
 
-    /**
-     * @return HasOne
-     */
-    public function image_variants(): HasOne
-    {
-        return $this->hasOne(ImageVariant::class, ['product_id', 'color_id'], ['product_id', 'color_id']);
-    }
+//    /**
+//     * @return BelongsTo
+//     */
+//    public function image_variants(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+//    {
+//        return $this->belongsTo(ImageVariant::class, ['product_id', 'color_id'], ['product_id', 'color_id']);
+//    }
 }

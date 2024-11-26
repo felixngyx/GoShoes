@@ -17,6 +17,7 @@ class ProductFactory extends Factory
             'name' => $this->faker->word,
             'description' => $this->faker->sentence,
             'price' => $this->faker->randomFloat(2, 50, 500),
+            'brand_id' => rand(1, 10),
             'stock_quantity' => rand(10, 100),
             'promotional_price' => $this->faker->randomFloat(2, 30, 150),
             'status' => 'public',
@@ -35,6 +36,6 @@ class ProductFactory extends Factory
             $products[] = $this->definition();
         }
 
-        Product::upsert($products, ['sku'], ['name', 'description', 'price', 'stock_quantity', 'promotional_price', 'status', 'is_deleted', 'rating_count', 'slug', 'thumbnail', 'hagtag']);
+        Product::upsert($products, ['sku'], ['name', 'brand_id', 'description', 'price', 'stock_quantity', 'promotional_price', 'status', 'is_deleted', 'rating_count', 'slug', 'thumbnail', 'hagtag']);
     }
 }

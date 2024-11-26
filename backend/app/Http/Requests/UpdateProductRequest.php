@@ -15,10 +15,9 @@ class UpdateProductRequest extends FormRequest
     {
         $id = $this->route('id');
         return [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:products,name,' . $id,
             'description' => 'nullable|string',
             'price' => 'nullable|numeric',
-            'stock_quantity' => 'required|integer|min:1',
             'promotional_price' => 'nullable|numeric|min:0|required_without:price',
             'status' => 'required|in:public,unpublic,hidden',
             'brand_id' => 'required|exists:brands,id',
