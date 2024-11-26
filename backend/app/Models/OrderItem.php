@@ -31,4 +31,8 @@ class OrderItem extends Model
         return $this->belongsTo(ProductVariant::class, 'variant_id')
             ->select(['id', 'size_id', 'color_id']);
     }
+    public function getTotalRevenueAttribute()
+    {
+        return $this->price * $this->quantity;
+    }
 }

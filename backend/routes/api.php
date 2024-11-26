@@ -26,7 +26,7 @@ use App\Http\Controllers\BannerController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\Order\RefundController;
 use App\Http\Controllers\API\User\UserController;
-
+use App\Http\Controllers\API\Statistical\StatisticalController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -108,6 +108,11 @@ Route::delete('/banners/{id}', [BannerController::class, 'destroy']);
 Route::delete('/banners', [BannerController::class, 'destroyMultiple']);
 
 Route::get('categories', [CategoryController::class, 'index']);
+
+
+Route::get('/revenue/today', [StatisticalController::class, 'getTodayRevenue']);
+Route::get('/revenue/monthly', [StatisticalController::class, 'getMonthlyRevenue']);
+Route::get('/revenue/top-products', [StatisticalController::class, 'getTopRevenueProducts']);
 
 // This route is Public for all user change email and phone
 Route::group(['prefix' => 'profile'], function () {
