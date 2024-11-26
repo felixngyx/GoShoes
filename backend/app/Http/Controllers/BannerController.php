@@ -35,6 +35,8 @@ class BannerController extends Controller
             'images' => 'required|array',
             'images.*.image_path' => 'required|string',
             'images.*.title' => 'nullable|string',
+            'images.*.url' => 'nullable|string',
+            'images.*.section' => 'nullable|in:banner,content,footer',
         ]);
 
         try {
@@ -64,7 +66,9 @@ class BannerController extends Controller
             'active' => 'nullable|boolean',
             'images' => 'nullable|array',
             'images.*.image_path' => 'required|string',
-            'images.*.title' => 'nullable|string'
+            'images.*.title' => 'nullable|string',
+            'images.*.url' => 'nullable|string',
+            'images.*.section' => 'nullable|in:banner,content,footer',
         ]);
 
         try {

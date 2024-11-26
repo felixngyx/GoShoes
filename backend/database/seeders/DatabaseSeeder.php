@@ -2,10 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Models\ImageVariant;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
+
     public function run()
     {
         // Upsert dữ liệu cho các bảng
@@ -15,8 +17,10 @@ class DatabaseSeeder extends Seeder
         \App\Models\Product::factory()->upsertProducts(10);
         \App\Models\VariantColor::factory()->upsertVariantColors(5);
         \App\Models\VariantSize::factory()->upsertVariantSizes(5);
-        \App\Models\ImageVariant::factory()->upsertImageVariants(300);
-        \App\Models\ProductVariant::factory()->upsertProductVariants(100);
+        \App\Models\ImageVariant::factory()->upsertImageVariants(20);
+        \App\Models\ProductVariant::factory()->upsertProductVariants(20);
+        \App\Models\VariantSize::factory()->upsertVariantSizes(30);
 
+        // git
     }
 }

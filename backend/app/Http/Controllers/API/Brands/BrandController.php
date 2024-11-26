@@ -50,8 +50,6 @@ class BrandController extends Controller
                     'average_rating' => number_format($brand->products_avg_rating_count, 1) // Định dạng 1 số sau dấu phẩy
                 ];
             });
-
-
             return response()->json([
                 'status' => 'success',
                 'message' => 'Danh sách thương hiệu',
@@ -76,6 +74,22 @@ class BrandController extends Controller
         }
     }
 
+    // public function index(Request $request)
+    // {
+
+    //     $page = $request->input('page', 1);
+    //     $limit = $request->input('limit', null);
+    //     $orderBy = $request->input('orderBy', 'id');
+    //     $order = $request->input('order', 'asc');
+
+    //     $query = Brand::query();
+    //     $brand = $query->orderBy($orderBy, $order)
+    //         ->paginate($limit, ['*'], 'page', $page);
+    //     return response()->json([
+    //         'message' => 'Danh sách sizes',
+    //         'brands' => $brand
+    //     ], 200);
+    // }
     /**
      * Show the form for creating a new resource.
      */
