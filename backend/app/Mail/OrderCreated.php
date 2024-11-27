@@ -17,15 +17,15 @@ class OrderCreated extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(Order $order)
+    public function __construct($orderData)
     {
-        $this->order = $order;
+        $this->order = json_decode($orderData, true);
     }
 
     public function build()
     {
         return $this->markdown('emails.orders.created')
-                    ->subject('Đơn hàng #' . $this->order->sku . ' đã được tạo thành công');
+                    ->subject('Đơn hàng #' . $this->order['sku'] . ' đã được tạo thành công');
     }
 
     /**
@@ -43,7 +43,7 @@ class OrderCreated extends Mailable
      */
     public function content(): Content
     {
-        $shippingDetail = json_decode($this->order->shipping->shipping_detail ?? '{}', true);
+        $shippingDetail = json_decode($this->order['shipping']['shipping_detail'] ?? '{}', true);
 
         return new Content(
             markdown: 'mail.order-created',

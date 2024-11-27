@@ -61,7 +61,7 @@ const useCart = () => {
   ) => {
     if (!selectedSize || !selectedColor || quantity < 1) {
       toast.error(
-        "Vui lòng chọn đầy đủ kích thước, màu sắc và số lượng sản phẩm."
+        "Please select size, color and quantity before adding to cart."
       );
       return;
     }
@@ -173,19 +173,19 @@ const useCart = () => {
   const { mutate: deleteProductFromCart } = useMutation({
     mutationFn: deleteCartItem,
     onSuccess: () => {
-      toast.success("Sản phẩm đã được xóa khỏi giỏ hàng.");
-      queryClient.invalidateQueries({ queryKey: ["CART"] }); // Làm mới dữ liệu giỏ hàng sau khi xóa
+      toast.success("Product has been removed from cart.");
+      queryClient.invalidateQueries({ queryKey: ["CART"] });
     },
     onError: (error) => {
-      console.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng:", error);
-      toast.error("Xóa sản phẩm khỏi giỏ hàng thất bại. Vui lòng thử lại.");
+      console.error("Error removing product from cart:", error);
+      toast.error("Failed to remove product from cart. Please try again.");
     },
   });
 
   // Hàm xử lý xóa sản phẩm khỏi giỏ hàng
   const handleDeleteFromCart = (productVariantId: number) => {
     const confirm = window.confirm(
-      "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?"
+      "Are you sure you want to remove this product from cart?"
     );
 
     if (confirm) {

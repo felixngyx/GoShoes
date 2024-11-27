@@ -202,12 +202,14 @@ const Cart = () => {
             parseFloat(item.product_variant.product.price),
           quantity: item.quantity,
           thumbnail: firstImage,
-
-          product_variant: {
+          variant: {
             id: item.product_variant.id,
-            size: item.product_variant.size,
-            color: item.product_variant.color,
-            image_variant: firstImage,
+            size: {
+              size: item.product_variant.size.size
+            },
+            color: {
+              color: item.product_variant.color.color
+            }
           },
           total: item.totalPrice,
         };

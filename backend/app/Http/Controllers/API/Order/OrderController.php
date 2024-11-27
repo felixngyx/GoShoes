@@ -364,7 +364,14 @@ class OrderController extends Controller
                 }
 
                 // Gửi email xác nhận đơn hàng
-                Mail::to(auth()->user()->email)->queue(new OrderCreated($order));
+                try {
+                    $orderData = $order->toArray();
+                    $jsonOrderData = json_encode($orderData);
+                    Mail::to(auth()->user()->email)->queue(new OrderCreated($jsonOrderData));
+                } catch (\Exception $e) {
+                    Log::error('Email sending error: ' . $e->getMessage());
+                    // Continue processing the order even if email fails
+                }
 
                 DB::commit();
                 event(new NewOrderCreated($order->id));
@@ -454,7 +461,14 @@ class OrderController extends Controller
                 }
 
                 // Gửi email xác nhận đơn hàng qua queue
-                Mail::to(auth()->user()->email)->queue(new OrderCreated($order));
+                try {
+                    $orderData = $order->toArray();
+                    $jsonOrderData = json_encode($orderData);
+                    Mail::to(auth()->user()->email)->queue(new OrderCreated($jsonOrderData));
+                } catch (\Exception $e) {
+                    Log::error('Email sending error: ' . $e->getMessage());
+                    // Continue processing the order even if email fails
+                }
 
                 DB::commit();
                 event(new NewOrderCreated($order->id));
@@ -496,9 +510,12 @@ class OrderController extends Controller
 
                 // Gửi email xác nhận đơn hàng
                 try {
-                    Mail::to(auth()->user()->email)->send(new OrderCreated($order));
+                    $orderData = $order->toArray();
+                    $jsonOrderData = json_encode($orderData);
+                    Mail::to(auth()->user()->email)->queue(new OrderCreated($jsonOrderData));
                 } catch (\Exception $e) {
-                    Log::error('Gửi email thất bại: ' . $e->getMessage());
+                    Log::error('Email sending error: ' . $e->getMessage());
+                    // Continue processing the order even if email fails
                 }
 
                 DB::commit();
@@ -521,7 +538,7 @@ class OrderController extends Controller
                     'final_total' => $finalTotal,
                 ], 201);
             } else {
-                throw new \Exception('Khởi tạo thanh toán thất bại: ' . json_encode($paymentResponse));
+                throw new \Exception('Failed to create payment: ' . json_encode($paymentResponse));
             }
         } catch (\Exception $e) {
             DB::rollBack();
@@ -798,7 +815,7 @@ class OrderController extends Controller
             $order = Order::findOrFail($id);
 
             if (!$user->role == 'admin' && !$user->role == 'super-admin' && $order->user_id !== $user->id) {
-                throw new \Exception('Bạn không có quyền truy cập đơn hàng này');
+                throw new \Exception('You do not have permission to access this order');
             }
 
             $order->load([
@@ -962,7 +979,7 @@ class OrderController extends Controller
             Log::error('Lỗi xử lý mã giảm giá: ' . $e->getMessage());
             return [
                 'status' => false,
-                'message' => 'Lỗi khi xử lý mã giảm giá: ' . $e->getMessage()
+                'message' => 'Error processing discount code: ' . $e->getMessage()
             ];
         }
     }

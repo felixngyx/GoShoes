@@ -7,6 +7,8 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { toast } from "react-hot-toast";
 
+import PageTitle from "../../../components/admin/PageTitle";
+
 const CheckoutPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -113,12 +115,11 @@ const CheckoutPage = () => {
     const initialQuantities = orderDetails.items.reduce(
       (acc, item) => ({
         ...acc,
-        [item.id]: item.quantity,
+        [item.variant?.id || item.id]: item.quantity,
       }),
       {}
     );
 
-    // Kiểm tra nếu quantities đã thay đổi
     const hasChanged = Object.keys(initialQuantities).some(
       (key) => quantities[key] !== initialQuantities[key]
     );
@@ -126,13 +127,23 @@ const CheckoutPage = () => {
     if (hasChanged) {
       setQuantities(initialQuantities);
     }
-  }, [orderDetails.items]); // Chỉ phụ thuộc vào items
+  }, [orderDetails.items]);
 
   // Thêm state để quản lý orderDetails
   const [orderState, setOrderState] = useState(orderDetails);
 
+  // Tạo title từ orderDetails
+  const pageTitle = useMemo(() => {
+    if (orderState.items.length === 1) {
+      return `Checkout | ${orderState.items[0].name}`;
+    } else if (orderState.items.length > 1) {
+      return `Checkout | ${orderState.items[0].name} and ${orderState.items.length - 1} other items`;
+    }
+    return "Checkout";
+  }, [orderState.items]);
+
   // Cập nhật hàm handleQuantityChange
-  const handleQuantityChange = async (itemId: number, newQuantity: number) => {
+  const handleQuantityChange = async (variantId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
 
     let newSubtotal = 0;
@@ -161,7 +172,7 @@ const CheckoutPage = () => {
       }));
     } else {
       const updatedItems = orderState.items.map((item) => {
-        if (item.id === itemId) {
+        if (item.variant?.id === variantId) {
           const updatedTotal = item.price * newQuantity;
           return {
             ...item,
@@ -184,7 +195,7 @@ const CheckoutPage = () => {
 
     setQuantities((prev) => ({
       ...prev,
-      [itemId]: newQuantity,
+      [variantId]: newQuantity,
     }));
 
     if (discountCode && discountInfo) {
@@ -194,9 +205,7 @@ const CheckoutPage = () => {
           {
             code: discountCode,
             total_amount: newSubtotal,
-            product_ids: orderState.items.map(
-              (item) => item.id || item.product_id
-            ),
+            product_ids: orderState.items.map((item) => item.id || item.product_id),
           },
           {
             headers: {
@@ -245,54 +254,71 @@ const CheckoutPage = () => {
       setIsLoading(true);
       setHasOrdered(true);
 
-      const shipping_id = defaultAddress?.id;
-
-      if (!shipping_id) {
+      if (!defaultAddress || !defaultAddress.id) {
         toast.error("Please select a shipping address");
         setHasOrdered(false);
+        setIsLoading(false);
         return;
       }
 
-      const items = orderState.items.map((item: any) => ({
-        product_id: item.id || item.product_id,
-        quantity: item.quantity,
-        variant_id: item.variant?.id || item.product_variant?.id,
+      // Tạo mảng items theo đúng format
+      const items = orderState.items.map(item => ({
+        product_id: Number(item.id || item.product_id),
+        quantity: Number(item.quantity),
+        ...(item.variant?.id || item.product_variant?.id) && {
+          variant_id: Number(item.variant?.id || item.product_variant?.id)
+        }
       }));
 
-      // Tạo checkoutData mà không có discount_code mặc định
-      const checkoutData = {
-        items,
-        shipping_id,
-        payment_method_id: paymentMethod,
-      };
+      // Tạo request body và chuyển thành JSON string
+      const requestData = JSON.stringify({
+        items: items,
+        shipping_id: Number(defaultAddress.id),
+        payment_method_id: Number(paymentMethod),
+        ...(discountInfo?.discount_info?.code && {
+          discount_code: discountInfo.discount_info.code
+        })
+      });
 
-      // Chỉ thêm discount_code nếu đã áp dụng mã giảm giá thành công
-      if (discountInfo?.discount_info?.code) {
-        checkoutData.discount_code = discountInfo.discount_info.code;
-      }
+      // Log để kiểm tra
+      console.log('Request Data:', requestData);
 
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/orders`,
-        checkoutData,
+        requestData,
         {
           headers: {
-            Authorization: `Bearer ${Cookies.get("access_token")}`,
-          },
+            'Authorization': `Bearer ${Cookies.get("access_token")}`,
+            'Content-Type': 'application/json'
+          }
         }
       );
 
       // Xử lý response thành công
-      if (paymentMethod === 1) {
+      if (paymentMethod === 1) { // ZaloPay
         const finalAmount = orderState.subtotal - calculateDiscount();
-        if (finalAmount > 0) {
-          window.location.href = response.data.payment_url;
+        if (finalAmount > 0 && response.data.payment_url) {
+          // Add confirmation before redirecting
+          const willRedirect = window.confirm(
+            "You will be redirected to ZaloPay payment page. Do you want to continue?"
+          );
+          
+          if (willRedirect) {
+            window.location.href = response.data.payment_url;
+          } else {
+            // If user declines, redirect to orders page
+            navigate("/account/my-order", {
+              replace: true,
+              state: { message: "Order created! Please complete payment within 24 hours." },
+            });
+          }
         } else {
           navigate("/account/my-order", {
             replace: true,
             state: { message: "Order placed successfully!" },
           });
         }
-      } else {
+      } else { // COD
         navigate("/account/my-order", {
           replace: true,
           state: { message: "Order placed successfully!" },
@@ -305,56 +331,21 @@ const CheckoutPage = () => {
       // Xử lý lỗi từ backend
       if (error.response?.data?.message) {
         const errorMessage = error.response.data.message;
-
-        // Kiểm tra nếu là lỗi về số lượng tồn kho
-        if (errorMessage.includes("không đủ") || errorMessage.includes("còn")) {
-          // Định dạng lại thông báo lỗi từ backend
-          const productName = errorMessage.match(/'([^']+)'/)?.[1] || "Product";
-          const availableQty = errorMessage.match(/\d+/)?.[0] || "0";
-
-          // Tìm sản phẩm trong orderState
-          const requestedItem = orderState.items.find(
-            (item) =>
-              item.name === productName || item.product?.name === productName
-          );
-
-          // Lấy thông tin về size và color
-          const size =
-            requestedItem?.size ||
-            requestedItem?.variant?.size?.size ||
-            requestedItem?.product_variant?.size?.size;
-          const color =
-            requestedItem?.color ||
-            requestedItem?.variant?.color?.color ||
-            requestedItem?.product_variant?.color?.color;
-
-          // Tạo thông báo với thông tin chi tiết về variant
-          const variantInfo = size && color ? ` (${color}/${size})` : "";
-          const message = `${productName}${variantInfo} is out of stock`;
-
-          toast.error(message, {
-            position: "top-right",
-            duration: 5000,
-          });
-        } else if (errorMessage.includes("hết hàng")) {
-          // Xử lý trường hợp sản phẩm hết hàng
+        
+        // Xử lý các trường hợp lỗi cụ thể
+        if (errorMessage.includes("không đủ") || errorMessage.includes("còn") || errorMessage.includes("hết hàng")) {
           const productName = errorMessage.match(/'([^']+)'/)?.[1] || "Product";
           const requestedItem = orderState.items.find(
-            (item) =>
-              item.name === productName || item.product?.name === productName
+            item => item.name === productName || item.product?.name === productName
           );
 
-          // Lấy thông tin về size và color
-          const size =
-            requestedItem?.size ||
-            requestedItem?.variant?.size?.size ||
-            requestedItem?.product_variant?.size?.size;
-          const color =
-            requestedItem?.color ||
-            requestedItem?.variant?.color?.color ||
-            requestedItem?.product_variant?.color?.color;
+          const size = requestedItem?.size || 
+                      requestedItem?.variant?.size?.size || 
+                      requestedItem?.product_variant?.size?.size;
+          const color = requestedItem?.color || 
+                       requestedItem?.variant?.color?.color || 
+                       requestedItem?.product_variant?.color?.color;
 
-          // Tạo thông báo với thông tin chi tiết về variant
           const variantInfo = size && color ? ` (${color}/${size})` : "";
           const message = `${productName}${variantInfo} is out of stock`;
 
@@ -363,14 +354,12 @@ const CheckoutPage = () => {
             duration: 5000,
           });
         } else {
-          // Các lỗi khác
           toast.error(errorMessage, {
             position: "top-right",
             duration: 3000,
           });
         }
       } else {
-        // Thông báo lỗi mặc định
         toast.error("Something went wrong. Please try again later.", {
           position: "top-right",
           duration: 3000,
@@ -498,7 +487,7 @@ const CheckoutPage = () => {
             Please select a default shipping address to continue with your
             order.
           </p>
-
+          
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
             {address.map((item: any, index: number) => (
               <div
@@ -594,7 +583,7 @@ const CheckoutPage = () => {
             Please add a shipping address to continue with your order.
           </p>
 
-          {/* Thêm component AddressForm của bạn vào đây */}
+          {/* Thêm component AddressForm của bạn vào ở đây */}
           <AddressComponent onSuccess={handleAddressAdded} />
 
           {/* Nút đóng form nếu có địa chỉ khác */}
@@ -615,7 +604,10 @@ const CheckoutPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
-      {/* Chỉ hiện modal khi không đang loading và thỏa điều kiện */}
+      {/* Thêm PageTitle component */}
+      <PageTitle title={pageTitle} />
+      
+      {/* Chỉ hiện modal khi không đang loading v�� thỏa điều kiện */}
       {!isLoadingAddress && showAddressForm && <AddressFormModal />}
       {!isLoadingAddress && showAddressSelection && !showAddressForm && (
         <AddressSelectionModal />
@@ -630,7 +622,7 @@ const CheckoutPage = () => {
             {/* Hiển thị danh sách sản phẩm */}
             <div className="space-y-4">
               {orderState.items.map((item: any) => (
-                <div key={item.id} className="flex gap-4 border-b pb-4">
+                <div key={item.variant?.id || item.id} className="flex gap-4 border-b pb-4">
                   <img
                     src={item.thumbnail || item.product_variant?.image_variant}
                     className="w-24 h-24 object-cover rounded"
@@ -638,23 +630,16 @@ const CheckoutPage = () => {
                   <div className="flex-1">
                     <h3 className="font-medium">{item.name}</h3>
                     <p className="text-sm text-gray-500">
-                      Size:{" "}
-                      {item.size ||
-                        item.variant?.size?.size ||
-                        item.product_variant?.size?.size}
-                      <br />
-                      Color:{" "}
-                      {item.color ||
-                        item.variant?.color?.color ||
-                        item.product_variant?.color?.color}
+                      Size: {item.variant?.size?.size}<br />
+                      Color: {item.variant?.color?.color}
                     </p>
                     <div className="flex justify-between items-center mt-2">
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() =>
                             handleQuantityChange(
-                              item.id,
-                              quantities[item.id] - 1
+                              item.variant?.id || item.id,
+                              quantities[item.variant?.id || item.id] - 1
                             )
                           }
                           className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100"
@@ -662,13 +647,13 @@ const CheckoutPage = () => {
                           -
                         </button>
                         <span className="w-8 text-center">
-                          {quantities[item.id]}
+                          {quantities[item.variant?.id || item.id]}
                         </span>
                         <button
                           onClick={() =>
                             handleQuantityChange(
-                              item.id,
-                              quantities[item.id] + 1
+                              item.variant?.id || item.id,
+                              quantities[item.variant?.id || item.id] + 1
                             )
                           }
                           className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100"
@@ -677,7 +662,7 @@ const CheckoutPage = () => {
                         </button>
                       </div>
                       <span className="font-medium">
-                        {formatVND(item.price * quantities[item.id])}
+                        {formatVND(item.price * quantities[item.variant?.id || item.id])}
                       </span>
                     </div>
                   </div>

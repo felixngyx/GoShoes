@@ -80,13 +80,13 @@ const ProductItems = ({
           setSelectedSize(null);
           setSelectedColor(null);
         } else {
-          toast.error("Size hoặc sản phẩm không khả dụng.");
+          toast.error("Size or product is not available.");
         }
       } else {
-        toast.error("Không tìm thấy màu được chọn.");
+        toast.error("Selected color not found.");
       }
     } else {
-      toast.error("Hãy chọn kích thước và màu trước khi thêm vào giỏ hàng.");
+      toast.error("Please select size and color before adding to cart.");
     }
   };
 
