@@ -88,8 +88,6 @@ const ProductCard = () => {
           const quantity = 1;
 
           handleAddToCart(productVariantId, quantity);
-
-          // Reset trạng thái sau khi thêm vào giỏ hàng
           setSelectedProduct(null);
           setSelectedSize(null);
           setSelectedColor(null);
@@ -113,13 +111,12 @@ const ProductCard = () => {
     }
   };
 
-  // Cập nhật filtered variants khi chọn màu
   const getVariantsForColor = (color: string) => {
     if (!selectedProduct) return [];
 
     return parseVariants(selectedProduct.variants)
       .filter((variant: any) => variant.color === color)
-      .flatMap((variant: any) => variant.sizes); // Bỏ lọc quantity > 0
+      .flatMap((variant: any) => variant.sizes);
   };
 
   const closeModal = () => {
@@ -222,9 +219,8 @@ const ProductCard = () => {
                   <h4 className="text-lg font-semibold mb-2">Size:</h4>
                   <div className="flex flex-wrap gap-2">
                     {getVariantsForColor(selectedColor)
-                      .sort((a: any, b: any) => a.size - b.size) // Sắp xếp các kích thước từ bé đến lớn
+                      .sort((a: any, b: any) => a.size - b.size)
                       .map((variant: any) => {
-                        // Kiểm tra xem kích thước này có sẵn sản phẩm không
                         const isSizeAvailable = variant.quantity > 0;
                         const isSelected = selectedSize === variant.size;
 

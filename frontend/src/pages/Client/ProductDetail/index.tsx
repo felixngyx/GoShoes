@@ -158,8 +158,6 @@ const ProductDetail = () => {
     queryFn: async () => await getProductById(Number(id)),
   });
 
-  console.log("product", product);
-
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(
     null
@@ -174,23 +172,51 @@ const ProductDetail = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [availableQuantity, setAvailableQuantity] = useState(0);
   const { handleAddToCartDetail } = useCart();
+  const [allImages, setAllImages] = useState<string[]>([]);
 
+  console.log("so", quantity);
   useEffect(() => {
-    if (product && selectedColor) {
-      setSelectedThumbnail(product.thumbnail);
+    if (product) {
+      const parsedVariants = Array.isArray(product?.variants)
+        ? product.variants
+        : product?.variants
+        ? JSON.parse(product.variants)
+        : [];
 
-      // Tìm size đầu tiên có quantity > 0 dựa trên selectedColor
-      const availableSize = product.variants.find(
-        (variant: any) =>
-          variant.color.id === selectedColor && variant.quantity > 0
-      );
+      // Nếu chưa có màu nào được chọn, chọn màu đầu tiên
+      if (!selectedColor && parsedVariants.length > 0) {
+        const firstColorId = parsedVariants[0].color_id;
+        setSelectedColor(firstColorId);
+        return;
+      }
 
-      if (availableSize) {
-        setSelectedSize(availableSize.size.size);
-        setAvailableQuantity(availableSize.quantity);
+      if (selectedColor) {
+        // Cập nhật thumbnail dựa trên màu sắc đã chọn
+        const selectedVariant = parsedVariants.find(
+          (variant: any) => variant.color_id === selectedColor
+        );
+
+        if (selectedVariant) {
+          // Tách các URL ảnh và lưu tất cả vào mảng
+          const images = selectedVariant.image.split(","); // Tách các URL
+          setSelectedThumbnail(images[0]); // Lấy ảnh đầu tiên làm thumbnail
+          setAllImages(images); // Lưu tất cả các ảnh vào state
+        }
+
+        const availableSize = selectedVariant?.sizes.find(
+          (size: any) => size.quantity > 0
+        );
+
+        if (availableSize) {
+          setSelectedSize(availableSize.size);
+          setAvailableQuantity(availableSize.quantity);
+        } else {
+          setSelectedSize(null);
+          setAvailableQuantity(0);
+        }
       } else {
-        setSelectedSize(null);
-        setAvailableQuantity(0);
+        // Nếu không có màu sắc được chọn, sử dụng thumbnail mặc định
+        setSelectedThumbnail(product.thumbnail);
       }
     }
   }, [product, selectedColor]);
@@ -199,52 +225,70 @@ const ProductDetail = () => {
     if (!accessToken) {
       toast.error("Please login to add to cart");
       navigate("/signin");
-    } else {
-      if (!selectedSize || !selectedColor) {
-        toast.custom((t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
-          >
-            <div className="flex-1 w-0 p-4">
-              <div className="flex items-start">
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-red-500">
-                    Select a Size and Color to add to cart.
-                  </p>
-                </div>
+      return;
+    }
+
+    if (!selectedSize || !selectedColor) {
+      toast.custom((t) => (
+        <div
+          className={`${
+            t.visible ? "animate-enter" : "animate-leave"
+          } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+        >
+          <div className="flex-1 w-0 p-4">
+            <div className="flex items-start">
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-red-500">
+                  Select a Size and Color to add to cart.
+                </p>
               </div>
             </div>
-            <div className="flex border-l border-gray-200">
-              <button
-                onClick={() => toast.dismiss(t.id)}
-                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Close
-              </button>
-            </div>
           </div>
-        ));
-        return;
-      }
+          <div className="flex border-l border-gray-200">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      ));
+      return;
+    }
 
-      const selectedVariant = product?.variants.find(
-        (variant: any) =>
-          variant.size.size === selectedSize &&
-          variant.color.id === selectedColor
+    const parsedVariants = Array.isArray(product?.variants)
+      ? product.variants
+      : product?.variants
+      ? JSON.parse(product.variants)
+      : [];
+
+    const selectedVariant = parsedVariants.find(
+      (variant: any) =>
+        variant.color_id === selectedColor &&
+        variant.sizes.some((size: any) => size.size === selectedSize)
+    );
+
+    if (selectedVariant) {
+      const selectedSizeDetails = selectedVariant.sizes.find(
+        (size: any) => size.size === selectedSize
       );
 
-      if (selectedVariant) {
+      if (selectedSizeDetails) {
+        const { product_variant_id } = selectedSizeDetails;
+
         handleAddToCartDetail(
-          selectedVariant.id,
+          product_variant_id,
           selectedSize,
           selectedColor,
           quantity
         );
       }
+    } else {
+      toast.error("Selected size or color is unavailable.");
     }
   };
+
   const handleAddToWishlist = () => {
     if (product?.id) {
       const productToAdd = {
@@ -266,107 +310,111 @@ const ProductDetail = () => {
     }
   };
 
-  const handleImageClick = (image: IImages) => {
-    setSelectedThumbnail(image.image_path);
+  const handleColorChange = (colorId: number, imageUrl: string) => {
+    if (imageUrl) {
+      setSelectedThumbnail(imageUrl); // Cập nhật thumbnail nếu có URL ảnh
+    }
+    setSelectedColor(colorId);
+    setSelectedSize(null);
+    setAvailableQuantity(0);
 
-    // Tìm variant có image_variant khớp với image_path được nhấn
-    const matchedVariant = product?.variants.find(
-      (variant: Variant) => variant.image_variant === image.image_path
+    const parsedVariants = Array.isArray(product?.variants)
+      ? product.variants
+      : product?.variants
+      ? JSON.parse(product.variants)
+      : [];
+
+    const selectedVariant = parsedVariants.find(
+      (variant: any) => variant.color.id === colorId
     );
 
-    if (matchedVariant) {
-      setSelectedColor(matchedVariant.color.id); // Cập nhật màu tương ứng
-      setSelectedSize(matchedVariant.size.size); // Cập nhật size tương ứng nếu có
-      setAvailableQuantity(matchedVariant.quantity); // Cập nhật số lượng có sẵn tương ứng
+    if (selectedVariant) {
+      // Tách các URL ảnh và lưu tất cả vào mảng
+      const images = selectedVariant.image.split(",");
+      setAllImages(images); // Lưu tất cả các ảnh vào state
+
+      const availableSize = selectedVariant.sizes.find(
+        (size: any) => size.quantity > 0
+      );
+
+      if (availableSize) {
+        setSelectedSize(availableSize.size);
+        setAvailableQuantity(availableSize.quantity);
+      } else {
+        setSelectedSize(null);
+        setAvailableQuantity(0);
+      }
+    } else {
+      setSelectedThumbnail(product.thumbnail);
     }
   };
 
   const handleSizeChange = (size: string) => {
-    setSelectedSize(size);
+    const selectedVariant = parsedVariants
+      .find((variant: any) => variant.color_id === selectedColor)
+      ?.sizes.find((s: any) => s.size === size);
 
-    const sizeVariant = product?.variants.find(
-      (variant: any) =>
-        variant.size?.size === size && variant.color.id === selectedColor
-    );
-
-    if (sizeVariant) {
-      setAvailableQuantity(sizeVariant.quantity);
+    if (selectedVariant) {
+      setSelectedSize(size);
+      setAvailableQuantity(selectedVariant.quantity);
     }
   };
-
-  const handleColorChange = (colorId: string) => {
-    setSelectedColor(colorId);
-
-    const colorVariant = product?.variants.find(
-      (variant: any) =>
-        variant.color.id === colorId && variant.size.size === selectedSize
-    );
-
-    if (colorVariant) {
-      setAvailableQuantity(colorVariant.quantity);
-    }
-  };
-
-  const variants = product?.variants ? JSON.parse(product.variants) : []; // Chuyển chuỗi thành mảng
-
-  const uniqueSizes = variants
-    .flatMap((variant: any) =>
-      variant.sizes.map((size: any) => ({
-        size: size.size, // Lấy tên size
-        color: variant.color_id, // Màu sắc tương ứng với size
-        disabled: size.quantity === 0, // Kiểm tra nếu không còn hàng
-      }))
-    )
-    .reduce((acc: any[], current: any) => {
-      // Kiểm tra nếu đã có size và color đã tồn tại trong danh sách
-      const existing = acc.find(
-        (item) => item.size === current.size && item.color === current.color
-      );
-      if (!existing) {
-        acc.push(current); // Thêm nếu chưa có
-      }
-      return acc;
-    }, []);
-
-  console.log("Unique Sizes:", uniqueSizes);
 
   const parsedVariants = Array.isArray(product?.variants)
-    ? product?.variants
+    ? product.variants
     : product?.variants
-    ? JSON.parse(product?.variants)
+    ? JSON.parse(product.variants)
+    : [];
+
+  const uniqueSizes = selectedColor
+    ? Array.from(
+        parsedVariants
+          .filter((variant: any) => variant.color_id === selectedColor) // Lọc variants của color được chọn
+          .flatMap((variant: any) =>
+            variant.sizes.map((size: any) => ({
+              size: size.size,
+              disabled: size.quantity === 0,
+              quantity: size.quantity,
+            }))
+          )
+          .reduce(
+            (
+              acc: Map<
+                string,
+                { size: string; disabled: boolean; quantity: number }
+              >,
+              current
+            ) => {
+              if (!acc.has(current.size)) {
+                acc.set(current.size, current);
+              }
+              return acc;
+            },
+            new Map()
+          )
+          .values()
+      )
+        .map((value: any) => value)
+        .sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size)) // Sắp xếp theo kích thước từ nhỏ đến lớn
     : [];
 
   const uniqueColors = Array.from(
     new Map(
       parsedVariants
         .map((variant: any) => [
-          variant.color_id, // Lấy color_id duy nhất
+          variant.color_id,
           {
-            color: variant.color, // Lấy tên màu sắc
-            image: variant.image, // Lấy image cho màu sắc
-            id: variant.color_id, // color_id để chọn
+            color: variant.color,
+            // Nếu image là chuỗi chứa nhiều ảnh (cách nhau bởi dấu phẩy), ta chuyển thành mảng
+            image: variant.image.includes(",")
+              ? variant.image.split(",").join(", ") // Tách các ảnh và nối chúng lại với dấu phẩy
+              : variant.image, // Nếu chỉ có 1 ảnh thì giữ nguyên
+            id: variant.color_id,
           },
         ])
-        .filter(([colorId]: any) => colorId !== null) // Loại bỏ null
+        .filter(([colorId]: any) => colorId !== null)
     ).values()
   );
-
-  console.log("Unique Colors:", uniqueColors);
-
-  useEffect(() => {
-    if (product && product.images && product.images.length > 0) {
-      const interval = setInterval(() => {
-        setSelectedThumbnail((prevIndex: any) => {
-          if (prevIndex === product.images.length - 1) {
-            return product.thumbnail;
-          }
-          return product.images[prevIndex + 1];
-        });
-      }, 7000);
-
-      return () => clearInterval(interval);
-    }
-  }, [product]);
 
   const handleQuantityChange = (value: number) => {
     const newQuantity = quantity + value;
@@ -408,16 +456,20 @@ const ProductDetail = () => {
   };
 
   const handleNextSlide = () => {
-    const nextIndex = (currentSlide + 1) % product.images.length;
-    setCurrentSlide(nextIndex);
-    setSelectedThumbnail(product.images[nextIndex].image_path);
+    if (allImages && allImages.length > 0) {
+      const nextIndex = (currentSlide + 1) % allImages.length;
+      setCurrentSlide(nextIndex);
+      setSelectedThumbnail(allImages[nextIndex]);
+    }
   };
 
   const handlePrevSlide = () => {
-    const prevIndex =
-      (currentSlide - 1 + product.images.length) % product.images.length;
-    setCurrentSlide(prevIndex);
-    setSelectedThumbnail(product.images[prevIndex].image_path);
+    if (allImages && allImages.length > 0) {
+      const prevIndex =
+        (currentSlide - 1 + allImages.length) % allImages.length;
+      setCurrentSlide(prevIndex);
+      setSelectedThumbnail(allImages[prevIndex]);
+    }
   };
 
   const handleBuyNow = () => {
@@ -470,8 +522,8 @@ const ProductDetail = () => {
         <div className="md:col-span-5">
           <div className="relative overflow-hidden rounded-lg bg-gray-100 mb-2">
             <img
-              src={product.thumbnail}
-              // alt={product.name}
+              src={selectedThumbnail || product.thumbnail} // Đảm bảo sử dụng selectedThumbnail nếu có
+              alt={product.name}
               className="w-[575px] h-[571px] object-cover transition-transform duration-500 hover:scale-105"
             />
           </div>
@@ -482,34 +534,32 @@ const ProductDetail = () => {
             >
               <ChevronLeft color="#9098B1" />
             </button>
-            {/* <div className="grid grid-cols-4 gap-2">
-              {product.images
-                .slice(currentSlide, currentSlide + 4)
-                .map((image: IImages, index: number) => (
-                  <button
-                    key={index}
-                    onClick={() =>
-                      setSelectedThumbnail(
-                        product.images[currentSlide + index].image_path
-                      )
-                    }
-                    className={`relative overflow-hidden rounded-md ${
-                      selectedThumbnail ===
-                      product.images[currentSlide + index].image_path
-                        ? "ring-2 ring-theme-color-primary"
-                        : ""
-                    }`}
-                  >
-                    <img
-                      key={image.id}
-                      src={image.image_path}
-                      alt={`${product.name} Thumbnail ${index + 1}`}
-                      className="w-full object-cover"
-                      onClick={() => handleImageClick(image)}
-                    />
-                  </button>
-                ))}
-            </div> */}
+            <div className="mt-4">
+              <div className="flex flex-wrap gap-3">
+                {allImages && allImages.length > 0 ? (
+                  allImages.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedThumbnail(image)} // Cập nhật hình ảnh được chọn
+                      className={`relative overflow-hidden rounded-md ${
+                        selectedThumbnail === image
+                          ? "ring-2 ring-theme-color-primary"
+                          : ""
+                      }`}
+                    >
+                      <img
+                        src={image}
+                        alt={`product-image-${index}`}
+                        className="w-20 h-20 rounded-md border border-gray-300 object-cover"
+                      />
+                    </button>
+                  ))
+                ) : (
+                  <p>No images available</p>
+                )}
+              </div>
+            </div>
+
             <button
               onClick={handleNextSlide}
               className="p-2 hover:bg-gray-100 rounded-full absolute right-0 top-1/2 -translate-y-1/2 z-10"
@@ -545,14 +595,21 @@ const ProductDetail = () => {
             <div className="grid grid-cols-2 max-w-xs">
               <span className="col-span-1">Category:</span>
               <span className="col-span-1 text-left">
-                {/* {product.categories
-                  .map((category: Category) => category.name)
-                  .join(", ")} */}
+                {product.categories &&
+                Array.isArray(JSON.parse(product.categories))
+                  ? [
+                      ...new Set(
+                        JSON.parse(product.categories).map(
+                          (category: { name: string }) => category.name
+                        )
+                      ),
+                    ].join(", ")
+                  : "No categories available"}
               </span>
             </div>
             <div className="grid grid-cols-2 max-w-xs">
               <span className="col-span-1">Brand:</span>
-              {/* <span className="col-span-1 text-left">{product.brand.name}</span> */}
+              <span className="col-span-1 text-left">{product.brand_name}</span>
             </div>
             <div className="grid grid-cols-2 max-w-xs">
               <span className="col-span-1">Availability:</span>
@@ -563,7 +620,7 @@ const ProductDetail = () => {
           </div>
 
           <div className="mb-3 max-w-xs">
-            <span className="block mb-2 font-medium">Size:</span>
+            <span className="mb-2 text-lg font-semibold">Size:</span>
             <div className="grid grid-cols-3 gap-2">
               {uniqueSizes.length > 0 ? (
                 uniqueSizes.map((sizeInfo: any) => {
@@ -572,11 +629,11 @@ const ProductDetail = () => {
 
                   return (
                     <button
-                      key={sizeInfo.size + sizeInfo.color} // Sử dụng key duy nhất để tránh lặp lại
+                      key={sizeInfo.size}
                       onClick={() =>
                         !isDisabled && handleSizeChange(sizeInfo.size)
                       }
-                      className={`py-2 text-center text-sm font-medium border rounded-md ${
+                      className={`py-2 text-center text-sm font-medium border rounded-md w-full ${
                         isSelected
                           ? "border-theme-color-primary ring-2 ring-theme-color-primary"
                           : "bg-white text-gray-700 border-gray-300"
@@ -592,7 +649,9 @@ const ProductDetail = () => {
                   );
                 })
               ) : (
-                <p>No sizes available</p> // Thông báo nếu không có size
+                <p className="text-gray-500 text-sm italic">
+                  No sizes available
+                </p>
               )}
             </div>
           </div>
@@ -600,25 +659,32 @@ const ProductDetail = () => {
           <div className="mb-6">
             <h3 className="mb-2 text-lg font-semibold">Color:</h3>
             <div className="flex flex-wrap gap-3">
-              {uniqueColors.map((variant: any) => (
-                <button
-                  key={variant.id} // Sử dụng color_id làm key
-                  onClick={() => handleColorChange(variant.id)} // Chọn màu khi click
-                  className={`flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-theme-color-primary ${
-                    selectedColor === variant.id
-                      ? "bg-theme-color-primary text-white border-theme-color-primary ring-2"
-                      : "text-gray-700 border-gray-300 hover:border-theme-color-primary"
-                  }`}
-                >
-                  {/* Hiển thị ảnh màu sắc */}
-                  <img
-                    className="w-8 h-8 rounded-full border border-gray-300"
-                    src={variant.image.split(",")[0]} // Chọn ảnh đầu tiên từ danh sách
-                    alt={variant.color}
-                  />
-                  {variant.color}
-                </button>
-              ))}
+              {uniqueColors.length > 0 ? (
+                uniqueColors.map((variant: any) => (
+                  <button
+                    key={variant.id}
+                    onClick={() =>
+                      handleColorChange(variant.id, variant.image.split(",")[0])
+                    }
+                    className={`flex items-center gap-3 px-4 py-2 border rounded-md text-sm font-medium transition-all ${
+                      selectedColor === variant.id
+                        ? "bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-theme-color-primary"
+                    }`}
+                  >
+                    <img
+                      className="w-8 h-8 rounded-full border border-gray-300 object-cover"
+                      src={variant.image.split(",")[0]} // Chỉ lấy ảnh đầu tiên để hiển thị
+                      alt={variant.color}
+                    />
+                    <span>{variant.color}</span>
+                  </button>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm italic">
+                  No colors available
+                </p>
+              )}
             </div>
           </div>
 
@@ -642,7 +708,7 @@ const ProductDetail = () => {
               </button>
             </div>
             <button
-              onClick={handleAddToWishlist} // Gọi hàm khi người dùng nhấn vào
+              onClick={handleAddToWishlist}
               className="btn ms-auto bg-[#ebf6ff] hover:bg-[#ebf6ff]/80 hover:border-[#40BFFF]"
             >
               <Heart size={16} color="#40BFFF" />
@@ -726,8 +792,6 @@ const ProductDetail = () => {
           <div className="p-4">
             {activeTab === "description" && (
               <div>
-                <p className="mb-2 text-[#9098B1]">{product.description}</p>
-                <p className="mb-2 text-[#9098B1]">{product.description}</p>
                 <p className="mb-2 text-[#9098B1]">{product.description}</p>
               </div>
             )}
