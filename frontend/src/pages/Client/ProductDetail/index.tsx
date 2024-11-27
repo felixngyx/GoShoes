@@ -174,7 +174,6 @@ const ProductDetail = () => {
   const { handleAddToCartDetail } = useCart();
   const [allImages, setAllImages] = useState<string[]>([]);
 
-  console.log("so", quantity);
   useEffect(() => {
     if (product) {
       const parsedVariants = Array.isArray(product?.variants)
@@ -183,7 +182,6 @@ const ProductDetail = () => {
         ? JSON.parse(product.variants)
         : [];
 
-      // Nếu chưa có màu nào được chọn, chọn màu đầu tiên
       if (!selectedColor && parsedVariants.length > 0) {
         const firstColorId = parsedVariants[0].color_id;
         setSelectedColor(firstColorId);
@@ -191,16 +189,14 @@ const ProductDetail = () => {
       }
 
       if (selectedColor) {
-        // Cập nhật thumbnail dựa trên màu sắc đã chọn
         const selectedVariant = parsedVariants.find(
           (variant: any) => variant.color_id === selectedColor
         );
 
         if (selectedVariant) {
-          // Tách các URL ảnh và lưu tất cả vào mảng
-          const images = selectedVariant.image.split(","); // Tách các URL
-          setSelectedThumbnail(images[0]); // Lấy ảnh đầu tiên làm thumbnail
-          setAllImages(images); // Lưu tất cả các ảnh vào state
+          const images = selectedVariant.image.split(",");
+          setSelectedThumbnail(images[0]);
+          setAllImages(images);
         }
 
         const availableSize = selectedVariant?.sizes.find(
@@ -215,7 +211,6 @@ const ProductDetail = () => {
           setAvailableQuantity(0);
         }
       } else {
-        // Nếu không có màu sắc được chọn, sử dụng thumbnail mặc định
         setSelectedThumbnail(product.thumbnail);
       }
     }
@@ -292,10 +287,9 @@ const ProductDetail = () => {
   const handleAddToWishlist = () => {
     if (product?.id) {
       const productToAdd = {
-        product_id: product.id, // Truyền product_id của sản phẩm
+        product_id: product.id,
       };
 
-      // Gọi hàm thêm sản phẩm vào wishlist
       addProductToWishlist(productToAdd)
         .then(() => {
           toast.success("The product has been added to your wishlist!");
@@ -312,7 +306,7 @@ const ProductDetail = () => {
 
   const handleColorChange = (colorId: number, imageUrl: string) => {
     if (imageUrl) {
-      setSelectedThumbnail(imageUrl); // Cập nhật thumbnail nếu có URL ảnh
+      setSelectedThumbnail(imageUrl);
     }
     setSelectedColor(colorId);
     setSelectedSize(null);
@@ -329,9 +323,8 @@ const ProductDetail = () => {
     );
 
     if (selectedVariant) {
-      // Tách các URL ảnh và lưu tất cả vào mảng
       const images = selectedVariant.image.split(",");
-      setAllImages(images); // Lưu tất cả các ảnh vào state
+      setAllImages(images);
 
       const availableSize = selectedVariant.sizes.find(
         (size: any) => size.quantity > 0
@@ -369,7 +362,7 @@ const ProductDetail = () => {
   const uniqueSizes = selectedColor
     ? Array.from(
         parsedVariants
-          .filter((variant: any) => variant.color_id === selectedColor) // Lọc variants của color được chọn
+          .filter((variant: any) => variant.color_id === selectedColor)
           .flatMap((variant: any) =>
             variant.sizes.map((size: any) => ({
               size: size.size,
@@ -395,7 +388,7 @@ const ProductDetail = () => {
           .values()
       )
         .map((value: any) => value)
-        .sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size)) // Sắp xếp theo kích thước từ nhỏ đến lớn
+        .sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
     : [];
 
   const uniqueColors = Array.from(
@@ -405,10 +398,9 @@ const ProductDetail = () => {
           variant.color_id,
           {
             color: variant.color,
-            // Nếu image là chuỗi chứa nhiều ảnh (cách nhau bởi dấu phẩy), ta chuyển thành mảng
             image: variant.image.includes(",")
-              ? variant.image.split(",").join(", ") // Tách các ảnh và nối chúng lại với dấu phẩy
-              : variant.image, // Nếu chỉ có 1 ảnh thì giữ nguyên
+              ? variant.image.split(",").join(", ")
+              : variant.image,
             id: variant.color_id,
           },
         ])
@@ -420,7 +412,7 @@ const ProductDetail = () => {
     const newQuantity = quantity + value;
 
     if (newQuantity < 1) {
-      setQuantity(1); // Đảm bảo số lượng không nhỏ hơn 1
+      setQuantity(1);
     } else if (newQuantity > availableQuantity) {
       alert(
         `Số lượng hiện tại là ${availableQuantity}. Không thể mua nhiều hơn.`
@@ -478,17 +470,14 @@ const ProductDetail = () => {
       return;
     }
 
-    // Parse variants nếu cần
-    const parsedVariants = Array.isArray(product?.variants) 
-      ? product.variants 
-      : product?.variants 
-        ? JSON.parse(product.variants) 
-        : [];
+    const parsedVariants = Array.isArray(product?.variants)
+      ? product.variants
+      : product?.variants
+      ? JSON.parse(product.variants)
+      : [];
 
-    // Tìm variant phù hợp với size và color đã chọn
     const selectedVariant = parsedVariants.find(
-      (variant: any) => 
-        variant.color_id === selectedColor
+      (variant: any) => variant.color_id === selectedColor
     );
 
     const selectedSizeObj = selectedVariant?.sizes?.find(
@@ -496,15 +485,14 @@ const ProductDetail = () => {
     );
 
     if (selectedVariant && selectedSizeObj) {
-      // Tạo object variant để truyền đi
       const variantInfo = {
         id: selectedSizeObj.product_variant_id,
         size: {
-          size: selectedSize
+          size: selectedSize,
         },
         color: {
-          color: selectedVariant.color
-        }
+          color: selectedVariant.color,
+        },
       };
 
       navigate("/checkout", {
@@ -515,7 +503,7 @@ const ProductDetail = () => {
             price: product.promotional_price || product.price,
             thumbnail: selectedThumbnail || product.thumbnail,
             quantity: quantity,
-            variant: variantInfo, // Truyền toàn bộ thông tin variant
+            variant: variantInfo,
             total: (product.promotional_price || product.price) * quantity,
           },
         },
@@ -898,7 +886,7 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        <RelatedProduct id={product.id} />
+        <RelatedProduct id={product.brand_id} productId={product.id} />
       </div>
     </div>
   );
