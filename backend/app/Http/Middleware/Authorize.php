@@ -10,6 +10,12 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class Authorize
 {
+    const role = [
+        'ADMIN' => "admin",
+        'USER' => 'user',
+        'SUPER-ADMIN' => 'super-admin',
+    ];
+
     /**
      * Handle an incoming request.
      *
@@ -18,9 +24,20 @@ class Authorize
     public function handle(Request $request, Closure $next): Response
     {
         try {
+            $token = $request->bearerToken();
+            $decoded = JWTAuth::setToken($token)->getPayload();
+            if ($decoded['token_type'] !== 'access') {
+                return response()->json(['error' => 'Invalid token type'], 403);
+            }
             $user = JWTAuth::parseToken()->authenticate();
-            if (!$user['role'] == ROLE['ADMIN'] || !$user['role'] == ROLE['super-admin']) {
-                return response()->json(['error' => "You don't have permission for this action"], 403);
+            if (!$user['email_verified_at']) {
+                return response()->json(['error' => 'Email not verified'], 403);
+            }
+            if ($user['is_deleted']) {
+                return response()->json(['error' => 'User is deleted'], 403);
+            }
+            if ($user['role'] !== self::role['ADMIN'] && $user['role'] !== self::role['SUPER-ADMIN']) {
+                return response()->json(['error' => 'Unauthorized'], 403);
             }
         } catch (Exception $e) {
             if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException) {
