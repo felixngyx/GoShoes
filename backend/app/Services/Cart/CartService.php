@@ -42,7 +42,8 @@ class CartService implements CartServiceInterface
     public function getAllByUserId()
     {
         $user = JWTAuth::parseToken()->authenticate();
-        return self::getCartRepository()->getAllByUserId($user->id)->makeHidden(self::columnHiddens());
+        $result = self::getCartRepository()->getAllByUserId($user->id);
+        return json_decode($result[0]->result, true);
     }
 
     public function createOrUpdate(array $request)
@@ -64,8 +65,12 @@ class CartService implements CartServiceInterface
                 }
             })();
 
-            self::getCartRepository()->updateOrCreate(
-                ['quantity' => $quantity],
+            self::getCartRepository()->upsert(
+                [
+                    'quantity' => $quantity,
+                    'user_id' => $data['user_id'],
+                    'product_variant_id' => $data['product_variant_id']
+                ],
                 ['user_id' => $data['user_id'], 'product_variant_id' => $data['product_variant_id']]
             );
 
