@@ -6,6 +6,11 @@ import Cookies from 'js-cookie';
 import Pusher from 'pusher-js';
 import { PUSHER_CONFIG } from '../../../common/pusher';
 import axiosClient from '../../../apis/axiosClient';
+import { toast } from 'react-toastify';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import { Maximize2, X } from 'lucide-react';
 
 interface Notification {
 	id: number;
@@ -32,6 +37,7 @@ const DropdownNotification = () => {
 	const [notifying, setNotifying] = useState(true);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [unreadCount, setUnreadCount] = useState(0);
+	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const fetchNotifications = async () => {
 		try {
@@ -88,9 +94,40 @@ const DropdownNotification = () => {
 			fetchNotifications();
 			fetchUnreadCount();
 
+			// Thêm toast notification
+			toast.info('🔔 New order received!', {
+				position: "top-right",
+				autoClose: 5000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+			});
+
 			// Tùy chọn: Thêm hiệu ứng nhấp nháy hoặc highlight cho icon chuông
 			setNotifying(true);
-			setTimeout(() => setNotifying(false), 3000); // Tắt hiệu ứng sau 3s
+			setTimeout(() => setNotifying(false), 3000);
+		});
+
+		// Thêm xử lý cho các loại thông báo khác nếu cần
+		channel.bind('notification', (data: any) => {
+			fetchNotifications();
+			fetchUnreadCount();
+
+			// Hiển thị toast dựa vào loại thông báo
+			toast.info(`🔔 ${data.title || 'New notification'}`, {
+				position: "top-right",
+				autoClose: 5000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+			});
+
+			setNotifying(true);
+			setTimeout(() => setNotifying(false), 3000);
 		});
 
 		// Polling interval for backup
@@ -102,6 +139,7 @@ const DropdownNotification = () => {
 		return () => {
 			// Cleanup
 			channel.unbind(PUSHER_CONFIG.events.newOrder);
+			channel.unbind('notification');
 			pusher.unsubscribe(PUSHER_CONFIG.channels.admin);
 			pusher.disconnect();
 			clearInterval(interval);
@@ -144,10 +182,19 @@ const DropdownNotification = () => {
 
 				{dropdownOpen && (
 					<div className="absolute -right-27 mt-2.5 flex h-90 w-75 flex-col rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark sm:right-0 sm:w-80">
-						<div className="px-4.5 py-3">
+						<div className="px-4.5 py-3 flex justify-between items-center">
 							<h5 className="text-sm font-medium text-bodydark2">
 								Notifications {unreadCount > 0 && `(${unreadCount})`}
 							</h5>
+							<button 
+								onClick={() => {
+									setIsModalOpen(true);
+									setDropdownOpen(false);
+								}}
+								className="text-gray-500 hover:text-gray-700"
+							>
+								<Maximize2 className="h-4 w-4" />
+							</button>
 						</div>
 
 						<ul className="flex h-auto flex-col overflow-y-auto">
@@ -197,6 +244,95 @@ const DropdownNotification = () => {
 						</ul>
 					</div>
 				)}
+
+				<Dialog 
+					open={isModalOpen} 
+					onClose={() => setIsModalOpen(false)}
+					maxWidth="md"
+					fullWidth
+					PaperProps={{
+						className: "bg-white dark:bg-boxdark"
+					}}
+				>
+					<DialogTitle className="flex justify-between items-center border-b border-stroke dark:border-strokedark pb-3">
+						<h5 className="text-lg font-medium text-black dark:text-white">
+							Notifications {unreadCount > 0 && `(${unreadCount})`}
+						</h5>
+						<button 
+							onClick={() => setIsModalOpen(false)}
+							className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+						>
+							<X className="w-5 h-5" />
+						</button>
+					</DialogTitle>
+					<DialogContent className="mt-4 dark:bg-boxdark">
+						<div className="max-h-[70vh] overflow-y-auto">
+							{notifications.length > 0 ? (
+								notifications.map((notification) => (
+									<div
+										key={notification.id}
+										className={`flex flex-col gap-2.5 border-b border-stroke dark:border-strokedark px-6 py-4 
+											hover:bg-gray-2 dark:hover:bg-meta-4 cursor-pointer
+											${!notification.is_read ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+										onClick={() => {
+											if (notification.type === 'order' && notification.order_id) {
+												// Đóng modal trước khi chuyển trang
+												setIsModalOpen(false);
+												// Đánh dấu là đã đọc
+												markAsRead(notification.id);
+												// Chuyển đến trang chi tiết đơn hàng
+												window.location.href = `/admin/orders/detail/${notification.order_id}`;
+											}
+										}}
+									>
+										<div className="flex items-center justify-between">
+											<p className="text-sm font-medium text-black dark:text-white">
+												{notification.title}
+											</p>
+											{!notification.is_read && (
+												<button
+													onClick={(e) => {
+														e.stopPropagation(); // Ngăn sự kiện click lan ra ngoài
+														markAsRead(notification.id);
+													}}
+													className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+												>
+													Mark as read
+												</button>
+											)}
+										</div>
+										<p className="text-sm text-gray-600 dark:text-gray-300">
+											{notification.message}
+										</p>
+										{notification.order && (
+											<p className="text-xs text-gray-500 dark:text-gray-400">
+												Order ID: {notification.order.sku}
+											</p>
+										)}
+										<p className="text-xs text-gray-500 dark:text-gray-400">
+											{new Date(notification.created_at).toLocaleDateString('en-US', {
+												year: 'numeric',
+													month: 'long',
+													day: 'numeric',
+													hour: '2-digit',
+													minute: '2-digit',
+											})}
+										</p>
+										{notification.type === 'order' && notification.order_id && (
+											<div className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+												Click to view order details →
+											</div>
+										)}
+									</div>
+								))
+							) : (
+								<div className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+									No notifications
+								</div>
+							)}
+						</div>
+					</DialogContent>
+				</Dialog>
 			</li>
 		</ClickOutside>
 	);
