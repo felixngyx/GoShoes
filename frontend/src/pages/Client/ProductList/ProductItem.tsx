@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 import { useState } from "react";
 import { formatVNCurrency } from "../../../common/formatVNCurrency";
 import useWishlist from "../../../hooks/client/useWhishList";
+import toast from "react-hot-toast";
 
 const ProductItemSkeleton = () => {
   return (
@@ -57,15 +58,35 @@ const ProductItems = ({
     return <ProductItemSkeleton />;
   }
 
-  const addCart = (product: IProduct) => {
-    const productVariant = product.variants.find(
-      (variant: any) =>
-        variant.size === selectedSize && variant.color === selectedColor
-    );
-    if (productVariant) {
-      const productVariantId = productVariant.id;
-      const quantity = 1;
-      handleAddToCart(productVariantId, quantity);
+  const addCart = () => {
+    if (selectedSize && selectedColor) {
+      const variants = parseVariants(product?.variants);
+      const selectedVariant = variants.find(
+        (variant: any) => variant.color === selectedColor
+      );
+
+      if (selectedVariant) {
+        const selectedSizeObj = selectedVariant.sizes.find(
+          (sizeObj: any) => sizeObj.size === selectedSize
+        );
+
+        if (selectedSizeObj && selectedSizeObj.quantity > 0) {
+          const productVariantId = selectedSizeObj.product_variant_id;
+          const quantity = 1;
+
+          handleAddToCart(productVariantId, quantity);
+
+          setShowModal(false);
+          setSelectedSize(null);
+          setSelectedColor(null);
+        } else {
+          toast.error("Size or product is not available.");
+        }
+      } else {
+        toast.error("Selected color not found.");
+      }
+    } else {
+      toast.error("Please select size and color before adding to cart.");
     }
   };
 
@@ -78,12 +99,22 @@ const ProductItems = ({
     setShowModal(true);
   };
 
-  const uniqueSize = Array.from(
-    new Set(product.variants.map((v: any) => v.size))
-  );
-  const uniqueColor = Array.from(
-    new Set(product.variants.map((v: any) => v.color))
-  );
+  const parseVariants = (variants: string | any[]) => {
+    try {
+      return Array.isArray(variants) ? variants : JSON.parse(variants);
+    } catch (error) {
+      console.error("Error parsing variants:", error);
+      return [];
+    }
+  };
+
+  const getVariantsForColor = (color: string) => {
+    if (!product) return [];
+
+    return parseVariants(product.variants)
+      .filter((variant: any) => variant.color === color)
+      .flatMap((variant: any) => variant.sizes);
+  };
 
   const closeModal = () => {
     setShowModal(false);
@@ -161,91 +192,93 @@ const ProductItems = ({
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
           <div className="modal modal-open">
             <div className="modal-box relative">
-              <h2 className="text-2xl font-semibold text-center mb-4">
-                Select Size and Color
-              </h2>
+              <h3 className="font-bold text-xl text-blue-500">
+                {product.name}
+              </h3>
+              <p className="mt-2">Select size and color:</p>
+              <div className="flex flex-col gap-6 mt-4">
+                <div>
+                  <h4 className="text-lg font-semibold mb-2">Size:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {getVariantsForColor(selectedColor)
+                      .sort((a: any, b: any) => a.size - b.size)
+                      .map((variant: any) => {
+                        const isSizeAvailable = variant.quantity > 0;
+                        const isSelected = selectedSize === variant.size;
 
-              {/* Size Selection */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <h3 className="w-full text-center text-lg mb-2">Size</h3>
-                {uniqueSize.map((size: any) => {
-                  // Kiểm tra xem kích thước có sản phẩm với số lượng > 0 hay không
-                  const isSizeAvailable = product.variants.some(
-                    (variant: any) =>
-                      variant.size === size &&
-                      variant.color === selectedColor &&
-                      variant.quantity > 0
-                  );
+                        return (
+                          <button
+                            key={variant.size}
+                            className={`px-8 py-2 text-center text-sm font-medium border rounded-md transition ${
+                              isSelected
+                                ? "border-theme-color-primary ring-2 ring-theme-color-primary"
+                                : "bg-white text-gray-700 border-gray-300"
+                            } ${
+                              !isSizeAvailable
+                                ? "cursor-not-allowed opacity-50 line-through"
+                                : "hover:border-theme-color-primary"
+                            }`}
+                            onClick={() => {
+                              if (isSizeAvailable) {
+                                setSelectedSize(variant.size);
+                              }
+                            }}
+                            disabled={!isSizeAvailable}
+                          >
+                            {variant.size}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
 
-                  return (
-                    <button
-                      key={size}
-                      className={`px-8 py-2 text-center text-sm font-medium border rounded-md transition ${
-                        selectedSize === size
-                          ? "border-theme-color-primary ring-2 ring-theme-color-primary"
-                          : "bg-white text-gray-700 border-gray-300"
-                      } ${
-                        !isSizeAvailable
-                          ? "cursor-not-allowed opacity-50 line-through"
-                          : "hover:border-theme-color-primary"
-                      }`}
-                      onClick={() => {
-                        if (isSizeAvailable) {
-                          setSelectedSize(size);
-                        }
-                      }}
-                      disabled={!isSizeAvailable} // Vô hiệu hóa nếu không có sản phẩm
-                    >
-                      {size}
-                    </button>
-                  );
-                })}
+                <div>
+                  <h4 className="text-lg font-semibold mb-2">Color:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {parseVariants(product.variants)
+                      .map((variant: any) => variant.color)
+                      .filter(
+                        (value: string, index: number, self: string[]) =>
+                          self.indexOf(value) === index
+                      )
+                      .map((color: string) => {
+                        const isSelected = selectedColor === color;
+                        return (
+                          <button
+                            key={color}
+                            className={`px-6 py-2 border rounded-md hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary flex items-center gap-2 ${
+                              isSelected
+                                ? "bg-theme-color-primary outline-none ring-2"
+                                : ""
+                            }`}
+                            onClick={() => setSelectedColor(color)}
+                          >
+                            {color}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
               </div>
 
-              {/* Color Selection */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <h3 className="w-full text-center text-lg mb-2">Color</h3>
-                {uniqueColor.map((color: any) => (
-                  <button
-                    key={color}
-                    className={`px-6 py-2 border rounded-md hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary flex items-center gap-2 ${
-                      selectedColor === color
-                        ? "bg-theme-color-primary outline-none ring-2"
-                        : ""
-                    }`}
-                    onClick={() => setSelectedColor(color)}
-                  >
-                    {color}
-                  </button>
-                ))}
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-center gap-4">
+              <div className="mt-4 flex justify-end gap-4">
                 <button
+                  className="btn bg-gray-300 text-black"
                   onClick={closeModal}
-                  className="btn bg-gray-300 text-black hover:bg-gray-400"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => addCart(product)}
-                  className="btn bg-blue-500 text-white hover:bg-blue-600"
+                  className="btn bg-blue-500 text-white"
+                  onClick={addCart}
                   disabled={!selectedSize || !selectedColor}
                 >
                   Add to Cart
                 </button>
               </div>
-
-              <button
-                className="absolute top-2 right-2 text-xl"
-                onClick={closeModal}
-              >
-                ✕
-              </button>
             </div>
           </div>
         </div>

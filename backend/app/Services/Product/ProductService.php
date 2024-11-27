@@ -162,11 +162,14 @@ class ProductService implements ProductServiceInterface
             'hagtag' => $request['hagtag'],
         ];
 
+        $categoryIds = $request['category_ids'];
+
         DB::beginTransaction();
 
         try {
             $product = $this->productRepository->create($productData);
             $productId = $product->id;
+            $this->productRepository->syncCategories($product, $categoryIds);
             $colorsAndImagesWithProductId = array_map(function($variant) use ($productId) {
                 return [
                     'color_id' => $variant['color_id'],
@@ -210,6 +213,12 @@ class ProductService implements ProductServiceInterface
 
     public function updateProductService(array $request, int $id) : \Illuminate\Http\JsonResponse
     {
+        $product = Product::find($id);
+        if (!$product) {
+            return response()->json([
+                'message' => 'Không tìm thấy sản phẩm',
+            ], 404);
+        }
         $productData = [
             'name' => $request['name'],
             'description' => $request['description'],
@@ -225,39 +234,44 @@ class ProductService implements ProductServiceInterface
             'hagtag' => $request['hagtag']
         ];
 
+        $categoryIds = $request['category_ids'];
+
         DB::beginTransaction();
 
         try {
-            $product = $this->productRepository->update($productData, $id);
-            $productId = $product->id;
-            $colorsAndImagesWithProductId = array_map(function($variant) use ($productId) {
+            $this->productRepository->update($productData, $id);
+            $this->productRepository->syncCategories($product, $categoryIds);
+            $colorsAndImagesWithProductId = array_map(function($variant) use ($id) {
                 return [
                     'color_id' => $variant['color_id'],
                     'image' => $variant['image'],
-                    'product_id' => $productId,
+                    'product_id' => $id,
                 ];
             }, $request['variants']);
 
             DB::table('image_variants')->upsert(
                 $colorsAndImagesWithProductId,
                 [
-                    'product_id' => $productId,
+                    'product_id' => $id,
                     'color_id' => $request['variants'][0]['color_id']
                 ]
             );
 
-            $allVariantDetails = array_merge(...array_map(function ($variant) use ($productId) {
-                return array_map(function ($detail) use ($variant, $productId) {
-                    return array_merge($detail, [
-                        'product_id' => $productId,
-                        'color_id' => $variant['color_id'],
-                    ]);
-                }, $variant['variant_details']);
-            }, $request['variants']));
+            foreach ($request['variants'] as $variant) {
+                $colorId = $variant['color_id'];
+                $parentCondition = [
+                    'product_id' => $id,
+                    'color_id' => $colorId
+                ];
+                $variantDetails = [];
+                foreach ($variant['variant_details'] as $detail) {
+                    $variantDetails = self::handleUpsertProductVariant($detail, $parentCondition, $variantDetails);
+                }
+            }
 
-            self::getProductVariantService()->createMany($allVariantDetails);
-
-            $product->stock_quantity = self::getProductVariantService()->getStockQuantityByProduct((int)$product->id);
+            $stock_quantity = self::getProductVariantService()->getStockQuantityByProduct($id);
+            $this->productRepository->update(['stock_quantity' => $stock_quantity], $id);
+            $product = $this->productRepository->find($id);
             DB::commit();
             return response()->json([
                 'success' => true,
@@ -276,7 +290,6 @@ class ProductService implements ProductServiceInterface
             ], 500);
         }
     }
-
 
     protected static function handleCreateVariants(array $variantData, int $productId) : array
     {

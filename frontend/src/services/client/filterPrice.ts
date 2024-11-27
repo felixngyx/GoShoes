@@ -1,8 +1,8 @@
 import axiosClient from "../../apis/axiosClient";
 
 export const filterProduct = async (
-  minPrice: number,
-  maxPrice: number,
+  price_from: number,
+  price_to: number,
   limit: number,
   sortByName?: "asc" | "desc",
   sortByPrice?: "asc" | "desc",
@@ -10,8 +10,8 @@ export const filterProduct = async (
 ) => {
   try {
     const params: Record<string, string | number> = {
-      minPrice,
-      maxPrice,
+      price_from,
+      price_to,
       limit,
     };
 
@@ -21,7 +21,7 @@ export const filterProduct = async (
 
     const response = await axiosClient.get("/products", { params });
 
-    return response.data.data.products;
+    return response.data.data;
   } catch (error: unknown) {
     console.error("An error occurred:", error);
     return [];

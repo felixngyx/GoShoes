@@ -28,7 +28,7 @@ class CategoryController extends Controller
         $order = $request->input('order', 'asc');
     
         // Sử dụng withCount để lấy số lượng sản phẩm
-        $categories = Category::select('id', 'name')
+        $categories = Category::select('*')
                               ->withCount('products') // Thêm số lượng sản phẩm
                               ->orderBy($orderBy, $order)
                               ->paginate($limit, ['*'], 'page', $page);

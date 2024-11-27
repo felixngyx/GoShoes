@@ -48,4 +48,29 @@ abstract class BaseServiceAbstract
     {
         return self::getRepository()->createMany($data);
     }
+
+    public function updateMany(array $data, int $id)
+    {
+        return self::getRepository()->updateMany($data, $id);
+    }
+
+    public function update(array $data, int $id)
+    {
+        return self::getRepository()->update($data, $id);
+    }
+
+    public function delete(int $id)
+    {
+        return self::getRepository()->delete($id);
+    }
+
+    public function forceDelete(int $id)
+    {
+        return self::getRepository()->forceDelete($id);
+    }
+
+    public function findById(int $id)
+    {
+        return self::getRepository()->findById($id);
+    }
 }

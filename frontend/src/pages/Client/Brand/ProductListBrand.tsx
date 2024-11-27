@@ -58,6 +58,8 @@ const ProductListBrand = () => {
     return 0;
   });
 
+  console.log("1", sortedProducts);
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Brand List - New Section */}

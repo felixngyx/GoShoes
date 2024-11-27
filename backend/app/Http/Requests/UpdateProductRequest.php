@@ -13,26 +13,31 @@ class UpdateProductRequest extends FormRequest
 
     public function rules(): array
     {
-        $id = $this->route('id');
         return [
-            'name' => 'required|string|max:255|unique:products,name,' . $id,
-            'description' => 'nullable|string',
-            'price' => 'nullable|numeric',
-            'promotional_price' => 'nullable|numeric|min:0|required_without:price',
-            'status' => 'required|in:public,unpublic,hidden',
-            'brand_id' => 'required|exists:brands,id',
-            'sku' => 'required|string|unique:products,sku,' . $id,
-            'thumbnail' => 'required|string|max:255',
-            'hagtag' => 'nullable|string',
-            'category_ids' => 'required|array',
+            "name" => "string|max:255|unique:products,name,$this->id,id",
+            "description" => "string",
+            "brand_id" => "exists:brands,id",
+            "price" => "numeric|min:0",
+            "promotional_price" => "nullable|numeric|min:0|lte:price",
+            "status" => "in:public,unpublic,hidden",
+            "sku" => "string|unique:products,sku,$this->id,id",
+            "thumbnail" => "string|max:255",
+            "hagtag" => "nullable|string|max:255",
+            'category_ids' => 'array',
             'category_ids.*' => 'exists:categories,id',
-            'variants' => 'nullable|array', // Thay đổi thành nullable
-            'variants.*.color_id' => 'required_with:variants|exists:variant_colors,id',
-            'variants.*.size_id' => 'required_with:variants|exists:variant_sizes,id',
-            'variants.*.quantity' => 'required_with:variants|integer|min:1',
-            // 'variants.*.image_variant' => 'nullable|string',
-            'images.*.id' => 'nullable|exists:product_image,id',
-            'images.*.image_path' => 'required|string|max:255'
+            'is_deleted' => 'nullable|boolean',
+            'variants' => 'array',
+            'variants.*.color_id' => 'exists:variant_colors,id',
+            'variants.*.image' => 'string',
+            'variants.*.variant_details' => 'array',
+            'variants.*.variant_details.*.size_id' => 'exists:variant_sizes,id',
+            'variants.*.variant_details.*.quantity' => 'integer|min:0'
+        ];
+    }
+
+    public function messages() : array
+    {
+        return [
         ];
     }
 }

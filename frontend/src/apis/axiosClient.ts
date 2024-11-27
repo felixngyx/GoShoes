@@ -11,6 +11,8 @@ const axiosClient = axios.create({
 	},
 });
 
+
+
 axiosClient.interceptors.request.use(
 	async (config) => {
 		const token = Cookies.get('access_token');
