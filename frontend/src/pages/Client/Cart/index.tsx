@@ -190,23 +190,28 @@ const Cart = () => {
 
     const selectedItems = cartItemsWithSelected
       .filter((item: any) => item.selected)
-      .map((item: any) => ({
-        id: item.product_variant.product_id,
-        name: item.product_variant.product.name,
-        price:
-          parseFloat(item.product_variant.product.promotional_price) ||
-          parseFloat(item.product_variant.product.price),
-        quantity: item.quantity,
-        thumbnail: item.product_variant.image_variant,
+      .map((item: any) => {
+        const images = item.product_variant.image_variants.image.split(", ");
+        const firstImage = images[0];
 
-        product_variant: {
-          id: item.product_variant.id,
-          size: item.product_variant.size,
-          color: item.product_variant.color,
-          image_variant: item.product_variant.image_variant,
-        },
-        total: item.totalPrice,
-      }));
+        return {
+          id: item.product_variant.product_id,
+          name: item.product_variant.product.name,
+          price:
+            parseFloat(item.product_variant.product.promotional_price) ||
+            parseFloat(item.product_variant.product.price),
+          quantity: item.quantity,
+          thumbnail: firstImage,
+
+          product_variant: {
+            id: item.product_variant.id,
+            size: item.product_variant.size,
+            color: item.product_variant.color,
+            image_variant: firstImage,
+          },
+          total: item.totalPrice,
+        };
+      });
 
     navigate("/checkout", {
       state: {
@@ -275,94 +280,106 @@ const Cart = () => {
 
               <div className="space-y-4">
                 <AnimatePresence>
-                  {cartItemsWithSelected.map((item: any) => (
-                    <motion.div
-                      key={item.product_variant.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      className={`flex items-center space-x-4 p-6 rounded-lg ${
-                        item.selected ? "bg-indigo-50" : "bg-gray-50"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={item.selected || false}
-                        onChange={() =>
-                          toggleSelectItem(item.product_variant.id)
-                        }
-                        className="checkbox checkbox-sm checkbox-primary rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <Link to={`/products/${item.product_variant.product_id}`}>
-                        <img
-                          src={item.product_variant.product.thumbnail}
-                          className="w-32 h-32 object-cover rounded"
+                  {cartItemsWithSelected.map((item: any) => {
+                    // Tách mảng image_variants
+                    const images =
+                      item.product_variant.image_variants.image.split(", ");
+                    const firstImage = images[0]; // Lấy ảnh đầu tiên
+
+                    return (
+                      <motion.div
+                        key={item.product_variant.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className={`flex items-center space-x-4 p-6 rounded-lg ${
+                          item.selected ? "bg-indigo-50" : "bg-gray-50"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={item.selected || false}
+                          onChange={() =>
+                            toggleSelectItem(item.product_variant.id)
+                          }
+                          className="checkbox checkbox-sm checkbox-primary rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
-                      </Link>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-medium text-gray-900">
-                          {item.product_variant.product.name}
-                        </h3>
-                        <p className="text-gray-500 mt-1">{item.description}</p>
-                        <div className="mt-2 space-y-1">
-                          <span className="text-sm text-gray-600">
-                            <p>Color: {item.product_variant.color.color}</p>
-                            <p>Size: {item.product_variant.size.size}</p>
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2 mt-4">
-                          <button className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <FiMinus
+                        <Link
+                          to={`/products/${item.product_variant.product_id}`}
+                        >
+                          <img
+                            src={firstImage}
+                            alt={item.product_variant.product.name}
+                            className="w-32 h-32 object-cover rounded"
+                          />
+                        </Link>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-medium text-gray-900">
+                            {item.product_variant.product.name}
+                          </h3>
+                          <p className="text-gray-500 mt-1">
+                            {item.description}
+                          </p>
+                          <div className="mt-2 space-y-1">
+                            <span className="text-sm text-gray-600">
+                              <p>Color: {item.product_variant.color.color}</p>
+                              <p>Size: {item.product_variant.size.size}</p>
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2 mt-4">
+                            <button
+                              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                               onClick={() =>
                                 handleQuantityChange(
                                   item.product_variant.id,
                                   String(item.quantity - 1)
                                 )
                               }
-                              className="w-5 h-5 text-gray-600"
+                            >
+                              <FiMinus className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) =>
+                                handleQuantityChange(
+                                  item.product_variant.id,
+                                  e.target.value
+                                )
+                              }
+                              className="w-16 text-center border-gray-300 rounded-md"
+                              min="1"
                             />
-                          </button>
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              handleQuantityChange(
-                                item.product_variant.id,
-                                e.target.value
-                              )
-                            }
-                            className="w-16 text-center border-gray-300 rounded-md"
-                            min="1"
-                          />
-                          <button className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <FiPlus
+                            <button
+                              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                               onClick={() =>
                                 handleQuantityChange(
                                   item.product_variant.id,
                                   String(item.quantity + 1)
                                 )
                               }
-                              className="w-5 h-5 text-gray-600"
-                            />
+                            >
+                              <FiPlus className="w-5 h-5 text-gray-600" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-medium text-gray-900">
+                            {formatVND(item.totalPrice)}
+                          </p>
+                          <button
+                            onClick={() =>
+                              handleDeleteFromCart(item.product_variant.id)
+                            }
+                            className="mt-4 text-red-600 hover:text-red-800 focus:outline-none focus:underline flex items-center justify-end"
+                          >
+                            <FiTrash2 className="w-5 h-5 mr-1" />
+                            Remove
                           </button>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-medium text-gray-900">
-                          {formatVND(item.totalPrice)}
-                        </p>
-                        <button
-                          onClick={() =>
-                            handleDeleteFromCart(item.product_variant.id)
-                          }
-                          className="mt-4 text-red-600 hover:text-red-800 focus:outline-none focus:underline flex items-center justify-end"
-                        >
-                          <FiTrash2 className="w-5 h-5 mr-1" />
-                          Remove
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    );
+                  })}
                 </AnimatePresence>
               </div>
 

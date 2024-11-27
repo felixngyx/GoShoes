@@ -36,9 +36,10 @@ const useCart = () => {
     enabled: !!Cookies.get("access_token"), // Không chạy query nếu không có `access_token`
   });
 
-  const totalQuantity = token
-    ? cartItems.reduce((total, item: any) => total + item.quantity, 0)
-    : 0; // Nếu không có token, totalQuantity = 0
+  const totalQuantity =
+    token && Array.isArray(cartItems)
+      ? cartItems.reduce((total, item: any) => total + item.quantity, 0)
+      : 0;
   const addToCartMutation = useMutation({
     mutationFn: addToCart,
     onSuccess: (data: any) => {
