@@ -320,18 +320,29 @@ const updateOrderStatus = async (
 	}
 };
 
-// Thêm interface cho shipping detail
+// Sửa lại interface ShippingDetail
 interface ShippingDetail {
 	name: string;
 	phone_number: string;
 	address: string;
 	address_detail: string;
+	is_default: boolean;
 }
 
-// Trong component, thêm hàm parse shipping detail
-const parseShippingDetail = (shippingDetailString: string): ShippingDetail | null => {
+// Sửa lại hàm parseShippingDetail
+const parseShippingDetail = (shippingDetail: any): ShippingDetail | null => {
 	try {
-		return JSON.parse(shippingDetailString);
+		// Nếu shippingDetail đã là object, return luôn
+		if (typeof shippingDetail === 'object' && shippingDetail !== null) {
+			return shippingDetail as ShippingDetail;
+		}
+		
+		// Nếu là string thì mới parse
+		if (typeof shippingDetail === 'string') {
+			return JSON.parse(shippingDetail);
+		}
+
+		return null;
 	} catch (error) {
 		console.error('Error parsing shipping detail:', error);
 		return null;
@@ -748,17 +759,17 @@ const OrderDetails = () => {
 												},
 												{
 													label: 'City/Province',
-													value: shippingDetail.address.split('|').map(part => part.trim()).join(' | '),
+													value: shippingDetail.address,
 												},
 												{
 													label: 'Default Address',
-													value: order.shipping.is_default ? 'Yes' : 'No',
+													value: shippingDetail.is_default ? 'Yes' : 'No',
 												},
 										  ]
 										: [
 												{
-													label: 'Error loading shipping details',
-													value: 'N/A',
+													label: 'Error',
+													value: 'Invalid shipping details',
 												},
 										  ];
 								})()

@@ -694,9 +694,23 @@ class OrderController extends Controller
                 switch ($status) {
                     case 'completed':
                         $orderPayment->update(['status' => 'success']);
+                        Notification::create([
+                            'user_id' => auth()->id(),
+                            'order_id' => $order->id,
+                            'title' => 'Order Completed',
+                            'message' => "Order #{$order->sku} has been completed",
+                            'type' => 'order'
+                        ]);
                         break;
                     case 'cancelled':
                         $orderPayment->update(['status' => 'failed']);
+                        Notification::create([
+                            'user_id' => auth()->id(),
+                            'order_id' => $order->id,
+                            'title' => 'Order Cancelled',
+                            'message' => "Order #{$order->sku} has been cancelled",
+                            'type' => 'order'
+                        ]);
                         // Hoàn trả số lượng sản phẩm và mã giảm giá nếu đơn bị hủy
                         if ($prevStatus != 'cancelled') {
                             $this->handleFailedPayment($order);
@@ -704,12 +718,26 @@ class OrderController extends Controller
                         break;
                     case 'expired':
                         $orderPayment->update(['status' => 'expired']);
+                        Notification::create([
+                            'user_id' => auth()->id(),
+                            'order_id' => $order->id,
+                            'title' => 'Order Expired',
+                            'message' => "Order #{$order->sku} has been expired",
+                            'type' => 'order'
+                        ]);
                         if ($prevStatus != 'expired' && $prevStatus != 'cancelled') {
                             $this->handleFailedPayment($order);
                         }
                         break;
                     case 'shipping':
                         $orderPayment->update(['status' => 'pending']);
+                        Notification::create([
+                            'user_id' => auth()->id(),
+                            'order_id' => $order->id,
+                            'title' => 'Order Shipping',
+                            'message' => "Order #{$order->sku} is shipping",
+                            'type' => 'order'
+                        ]);
                         break;
                     default:
                         $orderPayment->update(['status' => 'pending']);
