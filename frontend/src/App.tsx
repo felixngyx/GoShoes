@@ -5,7 +5,7 @@ import SignUp from "./pages/Client/SignUp";
 import ProductList from "./pages/Client/ProductList";
 import ProductDetail from "./pages/Client/ProductDetail";
 import Account from "./pages/Client/User/Account";
-import Profile from "./pages/Client/User/Profile";
+import Profile from "./pages/Client/User/Profile/Profile";
 import DefaultLayout from "./layout/DefaultLayout";
 import PageTitle from "./components/admin/PageTitle";
 import ECommerce from "./pages/Admin/Dashboard/ECommerce";
