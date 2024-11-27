@@ -473,34 +473,55 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
-    if (selectedSize && selectedColor && quantity > 0) {
-      const selectedVariant = product?.variants.find(
-        (variant: any) =>
-          variant.size.size === selectedSize &&
-          variant.color.id === selectedColor
-      );
-
-      if (selectedVariant) {
-        // Chỉ chuyển hướng đến trang checkout với thông tin sản phẩm
-        navigate("/checkout", {
-          state: {
-            productInfo: {
-              id: product.id,
-              name: product.name,
-              price: product.promotional_price || product.price,
-              thumbnail: selectedThumbnail || product.thumbnail,
-              variant: selectedVariant,
-              quantity: quantity,
-              size: selectedSize,
-              color: selectedColor,
-              // Thêm các thông tin khác nếu cần
-              total: (product.promotional_price || product.price) * quantity,
-            },
-          },
-        });
-      }
-    } else {
+    if (!selectedSize || !selectedColor || !quantity) {
       toast.error("Vui lòng chọn size và màu sắc trước khi mua hàng");
+      return;
+    }
+
+    // Parse variants nếu cần
+    const parsedVariants = Array.isArray(product?.variants) 
+      ? product.variants 
+      : product?.variants 
+        ? JSON.parse(product.variants) 
+        : [];
+
+    // Tìm variant phù hợp với size và color đã chọn
+    const selectedVariant = parsedVariants.find(
+      (variant: any) => 
+        variant.color_id === selectedColor
+    );
+
+    const selectedSizeObj = selectedVariant?.sizes?.find(
+      (size: any) => size.size === selectedSize
+    );
+
+    if (selectedVariant && selectedSizeObj) {
+      // Tạo object variant để truyền đi
+      const variantInfo = {
+        id: selectedSizeObj.product_variant_id,
+        size: {
+          size: selectedSize
+        },
+        color: {
+          color: selectedVariant.color
+        }
+      };
+
+      navigate("/checkout", {
+        state: {
+          productInfo: {
+            id: product.id,
+            name: product.name,
+            price: product.promotional_price || product.price,
+            thumbnail: selectedThumbnail || product.thumbnail,
+            quantity: quantity,
+            variant: variantInfo, // Truyền toàn bộ thông tin variant
+            total: (product.promotional_price || product.price) * quantity,
+          },
+        },
+      });
+    } else {
+      toast.error("Không tìm thấy phiên bản sản phẩm phù hợp");
     }
   };
 
