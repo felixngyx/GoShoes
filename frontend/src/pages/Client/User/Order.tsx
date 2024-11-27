@@ -116,7 +116,6 @@ export default function OrderList(): JSX.Element {
     reason: "",
     images: [],
   });
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
   const {
     data: ordersData,
@@ -690,14 +689,6 @@ export default function OrderList(): JSX.Element {
     }));
   };
 
-  const handleExpandOrder = (orderId: string) => {
-    setExpandedOrder(orderId);
-  };
-
-  const handleCloseExpandedOrder = () => {
-    setExpandedOrder(null);
-  };
-
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="mb-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -845,13 +836,6 @@ export default function OrderList(): JSX.Element {
               <div className="flex justify-end items-center pt-4 space-x-2">
                 {renderActionButtons(order)}
               </div>
-              <button
-                onClick={() => handleExpandOrder(order.id)}
-                className="mt-2 flex items-center text-blue-600 hover:text-blue-800"
-              >
-                <ChevronDown className="w-4 h-4 mr-1" />
-                View Details
-              </button>
             </Paper>
           ))}
 
@@ -1112,43 +1096,6 @@ export default function OrderList(): JSX.Element {
             color="primary"
           >
             Got it
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Expanded Order Modal */}
-      <Dialog
-        open={!!expandedOrder}
-        onClose={handleCloseExpandedOrder}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle className="flex justify-between items-center">
-          Order Details
-          <button onClick={handleCloseExpandedOrder} className="text-gray-500 hover:text-gray-700">
-            <X className="w-6 h-6" />
-          </button>
-        </DialogTitle>
-        <DialogContent>
-          {expandedOrder && (
-            <div>
-              {/* Render detailed order information here */}
-              <h3 className="font-bold mb-2">Order #{expandedOrder}</h3>
-              {/* Add more details like items, total, shipping info, etc. */}
-              {ordersData?.data.find(order => order.id === expandedOrder)?.items.map((item, index) => (
-                <div key={index} className="flex justify-between items-center mb-2">
-                  <span>{item.name}</span>
-                  <span>x{item.quantity}</span>
-                  <span>${item.price.toFixed(2)}</span>
-                </div>
-              ))}
-              {/* Add more sections for shipping, payment, etc. */}
-            </div>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseExpandedOrder} color="primary">
-            Close
           </Button>
         </DialogActions>
       </Dialog>
