@@ -31,11 +31,6 @@ class ReviewService implements ReviewServiceInterface
                 throw new ReviewException('You must purchase the product before reviewing');
             }
 
-            // Kiểm tra xem đã review chưa
-            if ($this->reviewRepository->checkExistingReview($userId, $data['product_id'])) {
-                throw new ReviewException('You have already reviewed this product');
-            }
-
             $reviewData = array_merge($data, ['user_id' => $userId]);
             return $this->reviewRepository->create($reviewData);
 
