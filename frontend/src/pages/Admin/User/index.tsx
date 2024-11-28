@@ -1,24 +1,40 @@
 import { useEffect, useState } from 'react';
-import { FaSort } from 'react-icons/fa';
+import { FaRegEye, FaSort } from 'react-icons/fa';
 import userService from '../../../services/admin/user';
 import { User as UserType } from '../../../services/admin/user';
 import { Link } from 'react-router-dom';
-import { TrashIcon } from 'lucide-react';
+import { Eye, TrashIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import LoadingIcon from '../../../components/common/LoadingIcon';
+import { X } from 'lucide-react';
 
 const User = () => {
 	const [users, setUsers] = useState<UserType[]>([]);
 	const [loading, setLoading] = useState(false);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [itemsPerPage] = useState(5);
+	const [totalPages, setTotalPages] = useState(0);
+	const [previewUser, setPreviewUser] = useState<UserType | null>(null);
 
 	const fetchUsers = async () => {
 		try {
 			const response = await userService.getAll();
-			console.log(response);
-			setUsers(response);
+			const user = Array.isArray(response)
+				? response
+				: (Object.values(response) as UserType[]);
+			setUsers(user);
+			setTotalPages(Math.ceil(user.length / itemsPerPage));
 		} catch (error) {
 			console.error('Error fetching users:', error);
 		}
 	};
+
+	const getCurrentUsers = () => {
+		const indexOfLastItem = currentPage * itemsPerPage;
+		const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+		return users.slice(indexOfFirstItem, indexOfLastItem);
+	};
+
 	useEffect(() => {
 		setLoading(true);
 		fetchUsers();
@@ -40,20 +56,28 @@ const User = () => {
 		}
 	};
 
+	const openUserDetailModal = (user: UserType) => {
+		setPreviewUser(user);
+	};
+
+	const closeUserDetailModal = () => {
+		setPreviewUser(null);
+	};
+
 	return (
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
 			<h4 className="text-xl font-semibold text-black dark:text-white">
 				User List
 			</h4>
 
-			{/* <div className="relative overflow-x-auto border border-stroke">
+			<div className="relative overflow-x-auto border border-stroke">
 				<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 					<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
 						<tr>
 							<th scope="col" className="px-6 py-3">
 								Name
 							</th>
-							<th scope="col" className="px-6 py-3">
+							{/* <th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
 									Email
 									<a>
@@ -68,7 +92,7 @@ const User = () => {
 										<FaSort />
 									</a>
 								</div>
-							</th>
+							</th> */}
 							<th scope="col" className="px-6 py-3">
 								Is verified
 							</th>
@@ -95,11 +119,15 @@ const User = () => {
 						{loading ? (
 							<tr>
 								<td colSpan={5} className="text-center py-4">
-									Đang tải...
+									<LoadingIcon
+										type="spinner"
+										color="primary"
+										size="md"
+									/>
 								</td>
 							</tr>
 						) : (
-							users.map((user) => (
+							getCurrentUsers().map((user) => (
 								<tr
 									key={user.id}
 									className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
@@ -112,15 +140,35 @@ const User = () => {
 										/>
 										{user.name}
 									</td>
-									<td className="px-6 py-4">{user.email}</td>
-									<td className="px-6 py-4">{user.phone}</td>
+									{/* <td className="px-6 py-4">{user.email}</td>
+									<td className="px-6 py-4">{user.phone}</td> */}
 									<td className="px-6 py-4">
-										<span className="badge badge-success">
-											Verified
-										</span>
+										{new Date(
+											user.email_verified_at
+										).toLocaleDateString()}
 									</td>
 									<td className="px-6 py-4">
-										{user.role === 'admin' ? 'Admin' : 'User'}
+										<select
+											defaultValue={user.role}
+											className={`select select-bordered select-xs text-xs font-bold ${
+												user.role === 'super-admin'
+													? 'select-disabled text-info'
+													: ''
+											}`}
+											// onChange={(e) => handleRoleChange(e, user.id!)}
+										>
+											{user.role === 'super-admin' && (
+												<option value="super-admin" disabled>
+													Super Admin
+												</option>
+											)}
+											{user.role !== 'super-admin' && (
+												<>
+													<option value="admin">Admin</option>
+													<option value="user">User</option>
+												</>
+											)}
+										</select>
 									</td>
 									<td className="px-6 py-4">
 										<span
@@ -142,11 +190,23 @@ const User = () => {
 									</td>
 									<td className="px-6 py-4">
 										{user.role !== 'super-admin' && (
-											<TrashIcon
-												color="red"
-												className="w-5 h-5 cursor-pointer"
-												onClick={() => handleDelete(user.id!)}
-											/>
+											<div className="flex items-center gap-2">
+												<button
+													className="btn btn-sm btn-ghost p-2 rounded-md hover:bg-gray-100"
+													onClick={() => openUserDetailModal(user)}
+												>
+													<FaRegEye
+														size={18}
+														className="cursor-pointer"
+														color="primary"
+													/>
+												</button>
+												<TrashIcon
+													color="red"
+													className="w-5 h-5 cursor-pointer"
+													onClick={() => handleDelete(user.id!)}
+												/>
+											</div>
 										)}
 									</td>
 								</tr>
@@ -154,14 +214,179 @@ const User = () => {
 						)}
 					</tbody>
 				</table>
-			</div> */}
-			<div className="join ms-auto">
-				<button className="join-item btn btn-sm">1</button>
-				<button className="join-item btn btn-sm">2</button>
-				<button className="join-item btn btn-sm btn-disabled">...</button>
-				<button className="join-item btn btn-sm">99</button>
-				<button className="join-item btn btn-sm">100</button>
 			</div>
+			<div className="join ms-auto">
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === 1 ? 'btn-disabled' : ''
+					}`}
+					onClick={() => setCurrentPage(1)}
+				>
+					«
+				</button>
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === 1 ? 'btn-disabled' : ''
+					}`}
+					onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+				>
+					‹
+				</button>
+				{[...Array(totalPages)].map((_, index) => (
+					<button
+						key={index + 1}
+						className={`join-item btn btn-sm ${
+							currentPage === index + 1 ? 'btn-active' : ''
+						}`}
+						onClick={() => setCurrentPage(index + 1)}
+					>
+						{index + 1}
+					</button>
+				))}
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === totalPages ? 'btn-disabled' : ''
+					}`}
+					onClick={() =>
+						setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+					}
+				>
+					›
+				</button>
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === totalPages ? 'btn-disabled' : ''
+					}`}
+					onClick={() => setCurrentPage(totalPages)}
+				>
+					»
+				</button>
+			</div>
+			{previewUser && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/2">
+						<div className="flex justify-between items-center mb-4">
+							<h2 className="text-xl font-semibold">User Details</h2>
+							<button
+								onClick={closeUserDetailModal}
+								className="btn btn-sm btn-ghost"
+							>
+								<X size={20} />
+							</button>
+						</div>
+
+						<div className="grid grid-cols-2 gap-4">
+							<div className="flex flex-col gap-2">
+								<div className="flex items-center gap-4 border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
+									<img
+										src={`https://ui-avatars.com/api/?name=${previewUser.name}&background=random`}
+										alt=""
+										className="w-20 h-20 rounded-full"
+									/>
+									<div>
+										<h3 className="font-semibold text-lg">
+											{previewUser.name}
+										</h3>
+										<p className="text-sm text-gray-500">
+											{previewUser.role}
+										</p>
+									</div>
+								</div>
+
+								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
+									<p className="text-sm text-gray-600 font-semibold">
+										Email:
+									</p>
+									<p className="font-medium">{previewUser.email}</p>
+								</div>
+
+								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
+									<p className="text-sm text-gray-600 font-semibold">
+										Phone:
+									</p>
+									<p className="font-medium">
+										{previewUser.phone || 'N/A'}
+									</p>
+								</div>
+
+								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
+									<p className="text-sm text-gray-600 font-semibold">
+										Gender:
+									</p>
+									<p className="font-medium capitalize">
+										{previewUser.gender || 'N/A'}
+									</p>
+								</div>
+							</div>
+
+							<div className="flex flex-col gap-2">
+								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
+									<p className="text-sm text-gray-600 font-semibold">
+										Birth Date:
+									</p>
+									<p className="font-medium">
+										{previewUser.birth_date
+											? new Date(
+													previewUser.birth_date
+											  ).toLocaleDateString()
+											: 'N/A'}
+									</p>
+								</div>
+
+								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
+									<p className="text-sm text-gray-600 font-semibold">
+										Status:
+									</p>
+									<span
+										className={`px-2 py-1 rounded-full text-xs ${
+											previewUser.is_deleted
+												? 'bg-danger/10 text-danger'
+												: 'bg-success/10 text-success'
+										}`}
+									>
+										{previewUser.is_deleted ? 'Inactive' : 'Active'}
+									</span>
+								</div>
+
+								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
+									<p className="text-sm text-gray-600 font-semibold">
+										Email Verified:
+									</p>
+									<p className="font-medium">
+										{previewUser.email_verified_at
+											? new Date(
+													previewUser.email_verified_at
+											  ).toLocaleDateString()
+											: 'Not verified'}
+									</p>
+								</div>
+
+								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
+									<p className="text-sm text-gray-600 font-semibold">
+										Created At:
+									</p>
+									<p className="font-medium">
+										{previewUser.created_at
+											? new Date(
+													previewUser.created_at
+											  ).toLocaleDateString()
+											: 'N/A'}
+									</p>
+								</div>
+
+								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
+									<p className="text-sm text-gray-600 font-semibold">
+										Bio:
+									</p>
+									<p className="font-medium">
+										{previewUser.bio || 'N/A'}
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

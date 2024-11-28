@@ -6,6 +6,7 @@ use App\Repositories\RepositoryAbstracts\BaseRepositoryAbstract;
 use App\Repositories\RepositoryInterfaces\BaseRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Redis;
+use Monolog\Logger;
 
 class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInterface
 {
@@ -54,8 +55,7 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
 
     public function update(array $data,int $id)
     {
-        $record = $this->model->find($id);
-        return $record->update($data);
+        return $this->model->find($id)->update($data);
     }
 
     public function delete(int $id)
@@ -70,7 +70,12 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
 
     public function upsert(array $data, array $condition)
     {
-        return $this->model->updateOrCreate($condition, $data);
+        return $this->model->upsert($data, $condition);
+    }
+
+    public function updateOrCreate(array $data, array $condition)
+    {
+        return $this->model->updateOrCreate($data, $condition);
     }
 
     public function forceDelete(int $id)
@@ -121,5 +126,32 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
     public function getListByUserId(int $userId)
     {
         return $this->model->where('user_id', $userId)->get();
+    }
+
+    public function createMany(array $data)
+    {
+        return $this->model->insert($data);
+    }
+
+    public function updateMany(array $data, int $id)
+    {
+        return $this->model->whereIn('id', $id)->update($data);
+    }
+
+    public function getByListId(array $ids)
+    {
+        return $this->model->whereIn('id', $ids);
+    }
+
+    public function forceDeleteMany(array $ids)
+    {
+        foreach ($ids as $id) {
+            $this->forceDelete((int)$id);
+        }
+    }
+
+    public function forceDeleteOne(int $id)
+    {
+        return $this->forceDelete($id);
     }
 }

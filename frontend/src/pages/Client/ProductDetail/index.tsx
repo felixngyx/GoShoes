@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { FaShoppingCart } from "react-icons/fa";
 import { IoMdAdd, IoMdRemove } from "react-icons/io";
@@ -172,84 +172,173 @@ const ProductDetail = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [availableQuantity, setAvailableQuantity] = useState(0);
   const { handleAddToCartDetail } = useCart();
+  const [allImages, setAllImages] = useState<string[]>([]);
 
+  // Xử lý variants an toàn hơn
+  const parsedVariants = useMemo(() => {
+    if (!product?.variants) return [];
+    
+    try {
+      return JSON.parse(product.variants);
+    } catch {
+      return [];
+    }
+  }, [product?.variants]);
+
+  // Xử lý uniqueColors an toàn hơn
+  const uniqueColors = useMemo(() => {
+    return parsedVariants.map((variant: any) => ({
+      id: variant.color_id,
+      color: variant.color,
+      image: variant.image ? variant.image.split(',')[0].trim() : null,
+      allImages: variant.image ? variant.image.split(',').map((img: string) => img.trim()) : [],
+      sizes: variant.sizes
+    }));
+  }, [parsedVariants]);
+
+  // Xử lý selectedColor và images
   useEffect(() => {
-    if (product && selectedColor) {
-      setSelectedThumbnail(product.thumbnail);
+    if (!product) return;
 
-      // Tìm size đầu tiên có quantity > 0 dựa trên selectedColor
-      const availableSize = product.variants.find(
-        (variant: any) =>
-          variant.color.id === selectedColor && variant.quantity > 0
+    const variants = parsedVariants;
+    
+    if (!selectedColor && variants.length > 0) {
+      const firstColorId = variants[0]?.color_id;
+      setSelectedColor(firstColorId);
+      return;
+    }
+
+    if (selectedColor) {
+      const selectedVariant = variants.find(
+        (variant: any) => variant.color_id === selectedColor
+      );
+
+      if (selectedVariant?.image) {
+        const images = selectedVariant.image.includes(',')
+          ? selectedVariant.image.split(',').map((img: string) => img.trim())
+          : [selectedVariant.image];
+        
+        setSelectedThumbnail(images[0] || product.thumbnail);
+        setAllImages(images);
+      } else {
+        setSelectedThumbnail(product.thumbnail);
+        setAllImages([product.thumbnail]);
+      }
+
+      // Xử lý sizes
+      const availableSize = selectedVariant?.sizes?.find(
+        (size: any) => size?.quantity > 0
       );
 
       if (availableSize) {
-        setSelectedSize(availableSize.size.size);
+        setSelectedSize(availableSize.size);
         setAvailableQuantity(availableSize.quantity);
       } else {
         setSelectedSize(null);
         setAvailableQuantity(0);
       }
+    } else {
+      setSelectedThumbnail(product.thumbnail);
+      setAllImages([product.thumbnail]);
     }
-  }, [product, selectedColor]);
+  }, [product, selectedColor, parsedVariants]);
+
+  // Xử lý color change
+  const handleColorChange = (colorId: number, imageUrl: string) => {
+    setSelectedColor(colorId);
+    
+    const selectedVariant = parsedVariants.find(
+      (variant: any) => variant.color_id === colorId
+    );
+
+    if (selectedVariant) {
+      const images = selectedVariant.image 
+        ? selectedVariant.image.split(',').map((img: string) => img.trim())
+        : [product?.thumbnail];
+        
+      setSelectedThumbnail(imageUrl || product?.thumbnail);
+      setAllImages(images);
+
+      // Reset size selection
+      setSelectedSize(null);
+      setAvailableQuantity(0);
+    }
+  };
 
   const handleAdd = () => {
     if (!accessToken) {
       toast.error("Please login to add to cart");
       navigate("/signin");
-    } else {
-      if (!selectedSize || !selectedColor) {
-        toast.custom((t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
-          >
-            <div className="flex-1 w-0 p-4">
-              <div className="flex items-start">
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-red-500">
-                    Select a Size and Color to add to cart.
-                  </p>
-                </div>
+      return;
+    }
+
+    if (!selectedSize || !selectedColor) {
+      toast.custom((t) => (
+        <div
+          className={`${
+            t.visible ? "animate-enter" : "animate-leave"
+          } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+        >
+          <div className="flex-1 w-0 p-4">
+            <div className="flex items-start">
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-red-500">
+                  Select a Size and Color to add to cart.
+                </p>
               </div>
             </div>
-            <div className="flex border-l border-gray-200">
-              <button
-                onClick={() => toast.dismiss(t.id)}
-                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Close
-              </button>
-            </div>
           </div>
-        ));
-        return;
-      }
+          <div className="flex border-l border-gray-200">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      ));
+      return;
+    }
 
-      const selectedVariant = product?.variants.find(
-        (variant: any) =>
-          variant.size.size === selectedSize &&
-          variant.color.id === selectedColor
+    const parsedVariants = Array.isArray(product?.variants)
+      ? product.variants
+      : product?.variants
+      ? JSON.parse(product.variants)
+      : [];
+
+    const selectedVariant = parsedVariants.find(
+      (variant: any) =>
+        variant.color_id === selectedColor &&
+        variant.sizes.some((size: any) => size.size === selectedSize)
+    );
+
+    if (selectedVariant) {
+      const selectedSizeDetails = selectedVariant.sizes.find(
+        (size: any) => size.size === selectedSize
       );
 
-      if (selectedVariant) {
+      if (selectedSizeDetails) {
+        const { product_variant_id } = selectedSizeDetails;
+
         handleAddToCartDetail(
-          selectedVariant.id,
+          product_variant_id,
           selectedSize,
           selectedColor,
           quantity
         );
       }
+    } else {
+      toast.error("Selected size or color is unavailable.");
     }
   };
+
   const handleAddToWishlist = () => {
     if (product?.id) {
       const productToAdd = {
-        product_id: product.id, // Truyền product_id của sản phẩm
+        product_id: product.id,
       };
 
-      // Gọi hàm thêm sản phẩm vào wishlist
       addProductToWishlist(productToAdd)
         .then(() => {
           toast.success("The product has been added to your wishlist!");
@@ -264,104 +353,54 @@ const ProductDetail = () => {
     }
   };
 
-  const handleImageClick = (image: IImages) => {
-    setSelectedThumbnail(image.image_path);
-
-    // Tìm variant có image_variant khớp với image_path được nhấn
-    const matchedVariant = product?.variants.find(
-      (variant: Variant) => variant.image_variant === image.image_path
-    );
-
-    if (matchedVariant) {
-      setSelectedColor(matchedVariant.color.id); // Cập nhật màu tương ứng
-      setSelectedSize(matchedVariant.size.size); // Cập nhật size tương ứng nếu có
-      setAvailableQuantity(matchedVariant.quantity); // Cập nhật số lượng có sẵn tương ứng
-    }
-  };
-
   const handleSizeChange = (size: string) => {
-    setSelectedSize(size);
+    const selectedVariant = parsedVariants
+      .find((variant: any) => variant.color_id === selectedColor)
+      .sizes.find((s: any) => s.size === size);
 
-    const sizeVariant = product?.variants.find(
-      (variant: any) =>
-        variant.size?.size === size && variant.color.id === selectedColor
-    );
-
-    if (sizeVariant) {
-      setAvailableQuantity(sizeVariant.quantity);
+    if (selectedVariant) {
+      setSelectedSize(size);
+      setAvailableQuantity(selectedVariant.quantity);
     }
   };
 
-  const handleColorChange = (colorId: string) => {
-    setSelectedColor(colorId);
-
-    const colorVariant = product?.variants.find(
-      (variant: any) =>
-        variant.color.id === colorId && variant.size.size === selectedSize
-    );
-
-    if (colorVariant) {
-      setAvailableQuantity(colorVariant.quantity);
-    }
-  };
-
-  const uniqueSizes = product?.variants
+  const uniqueSizes = selectedColor
     ? Array.from(
-        new Map(
-          product.variants
-            .filter((variant: Variant) => variant.size?.size) // Lọc các variant có size hợp lệ
-            .map((variant: Variant) => ({
-              size: variant.size?.size, // Lấy tên size
-              disabled: variant.quantity === 0, // Kiểm tra nếu quantity == 0
-              color: variant.color?.id, // Thêm màu để tính toán riêng cho từng màu
+        parsedVariants
+          .filter((variant: any) => variant.color_id === selectedColor)
+          .flatMap((variant: any) =>
+            variant.sizes.map((size: any) => ({
+              size: size.size,
+              disabled: size.quantity === 0,
+              quantity: size.quantity,
             }))
-            .reduce((acc: any[], current: any) => {
-              // Kiểm tra nếu đã có size trong danh sách, nếu chưa thì thêm
-              const existing = acc.find(
-                (item) =>
-                  item.size === current.size && item.color === current.color
-              );
-              if (!existing) {
-                acc.push(current);
+          )
+          .reduce(
+            (
+              acc: Map<
+                string,
+                { size: string; disabled: boolean; quantity: number }
+              >,
+              current
+            ) => {
+              if (!acc.has(current.size)) {
+                acc.set(current.size, current);
               }
               return acc;
-            }, [])
-            .map((sizeInfo: any) => [sizeInfo.size, sizeInfo]) // Chuyển thành mảng để dùng Map loại bỏ trùng lặp
-        ).values()
+            },
+            new Map()
+          )
+          .values()
       )
+        .map((value: any) => value)
+        .sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
     : [];
-
-  const uniqueColors = Array.from(
-    new Map(
-      product?.variants
-        .map((variant: Variant) => [
-          variant.color?.color, // Kiểm tra màu sắc không null
-          variant,
-        ])
-        .filter(([color]: any) => color !== null) // Lọc bỏ các giá trị màu sắc null
-    ).values()
-  );
-
-  useEffect(() => {
-    if (product && product.images && product.images.length > 0) {
-      const interval = setInterval(() => {
-        setSelectedThumbnail((prevIndex: any) => {
-          if (prevIndex === product.images.length - 1) {
-            return product.thumbnail;
-          }
-          return product.images[prevIndex + 1];
-        });
-      }, 7000);
-
-      return () => clearInterval(interval);
-    }
-  }, [product]);
 
   const handleQuantityChange = (value: number) => {
     const newQuantity = quantity + value;
 
     if (newQuantity < 1) {
-      setQuantity(1); // Đảm bảo số lượng không nhỏ hơn 1
+      setQuantity(1);
     } else if (newQuantity > availableQuantity) {
       alert(
         `Số lượng hiện tại là ${availableQuantity}. Không thể mua nhiều hơn.`
@@ -397,47 +436,68 @@ const ProductDetail = () => {
   };
 
   const handleNextSlide = () => {
-    const nextIndex = (currentSlide + 1) % product.images.length;
-    setCurrentSlide(nextIndex);
-    setSelectedThumbnail(product.images[nextIndex].image_path);
+    if (allImages && allImages.length > 0) {
+      const nextIndex = (currentSlide + 1) % allImages.length;
+      setCurrentSlide(nextIndex);
+      setSelectedThumbnail(allImages[nextIndex]);
+    }
   };
 
   const handlePrevSlide = () => {
-    const prevIndex =
-      (currentSlide - 1 + product.images.length) % product.images.length;
-    setCurrentSlide(prevIndex);
-    setSelectedThumbnail(product.images[prevIndex].image_path);
+    if (allImages && allImages.length > 0) {
+      const prevIndex =
+        (currentSlide - 1 + allImages.length) % allImages.length;
+      setCurrentSlide(prevIndex);
+      setSelectedThumbnail(allImages[prevIndex]);
+    }
   };
 
   const handleBuyNow = () => {
-    if (selectedSize && selectedColor && quantity > 0) {
-      const selectedVariant = product?.variants.find(
-        (variant: any) =>
-          variant.size.size === selectedSize &&
-          variant.color.id === selectedColor
-      );
-
-      if (selectedVariant) {
-        // Chỉ chuyển hướng đến trang checkout với thông tin sản phẩm
-        navigate("/checkout", {
-          state: {
-            productInfo: {
-              id: product.id,
-              name: product.name,
-              price: product.promotional_price || product.price,
-              thumbnail: selectedThumbnail || product.thumbnail,
-              variant: selectedVariant,
-              quantity: quantity,
-              size: selectedSize,
-              color: selectedColor,
-              // Thêm các thông tin khác nếu cần
-              total: (product.promotional_price || product.price) * quantity,
-            },
-          },
-        });
-      }
-    } else {
+    if (!selectedSize || !selectedColor || !quantity) {
       toast.error("Vui lòng chọn size và màu sắc trước khi mua hàng");
+      return;
+    }
+
+    const parsedVariants = Array.isArray(product?.variants)
+      ? product.variants
+      : product?.variants
+      ? JSON.parse(product.variants)
+      : [];
+
+    const selectedVariant = parsedVariants.find(
+      (variant: any) => variant.color_id === selectedColor
+    );
+
+    const selectedSizeObj = selectedVariant?.sizes?.find(
+      (size: any) => size.size === selectedSize
+    );
+
+    if (selectedVariant && selectedSizeObj) {
+      const variantInfo = {
+        id: selectedSizeObj.product_variant_id,
+        size: {
+          size: selectedSize,
+        },
+        color: {
+          color: selectedVariant.color,
+        },
+      };
+
+      navigate("/checkout", {
+        state: {
+          productInfo: {
+            id: product.id,
+            name: product.name,
+            price: product.promotional_price || product.price,
+            thumbnail: selectedThumbnail || product.thumbnail,
+            quantity: quantity,
+            variant: variantInfo,
+            total: (product.promotional_price || product.price) * quantity,
+          },
+        },
+      });
+    } else {
+      toast.error("Không tìm thấy phiên bản sản phẩm phù hợp");
     }
   };
 
@@ -459,8 +519,8 @@ const ProductDetail = () => {
         <div className="md:col-span-5">
           <div className="relative overflow-hidden rounded-lg bg-gray-100 mb-2">
             <img
-              src={selectedThumbnail || product.thumbnail}
-              // alt={product.name}
+              src={selectedThumbnail || product.thumbnail} // Đảm bảo sử dụng selectedThumbnail nếu có
+              alt={product.name}
               className="w-[575px] h-[571px] object-cover transition-transform duration-500 hover:scale-105"
             />
           </div>
@@ -471,34 +531,32 @@ const ProductDetail = () => {
             >
               <ChevronLeft color="#9098B1" />
             </button>
-            <div className="grid grid-cols-4 gap-2">
-              {product.images
-                .slice(currentSlide, currentSlide + 4)
-                .map((image: IImages, index: number) => (
-                  <button
-                    key={index}
-                    onClick={() =>
-                      setSelectedThumbnail(
-                        product.images[currentSlide + index].image_path
-                      )
-                    }
-                    className={`relative overflow-hidden rounded-md ${
-                      selectedThumbnail ===
-                      product.images[currentSlide + index].image_path
-                        ? "ring-2 ring-theme-color-primary"
-                        : ""
-                    }`}
-                  >
-                    <img
-                      key={image.id}
-                      src={image.image_path}
-                      alt={`${product.name} Thumbnail ${index + 1}`}
-                      className="w-full object-cover"
-                      onClick={() => handleImageClick(image)}
-                    />
-                  </button>
-                ))}
+            <div className="mt-4">
+              <div className="flex flex-wrap gap-3">
+                {allImages && allImages.length > 0 ? (
+                  allImages.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedThumbnail(image)} // Cập nhật hình ảnh được chọn
+                      className={`relative overflow-hidden rounded-md ${
+                        selectedThumbnail === image
+                          ? "ring-2 ring-theme-color-primary"
+                          : ""
+                      }`}
+                    >
+                      <img
+                        src={image}
+                        alt={`product-image-${index}`}
+                        className="w-20 h-20 rounded-md border border-gray-300 object-cover"
+                      />
+                    </button>
+                  ))
+                ) : (
+                  <p>No images available</p>
+                )}
+              </div>
             </div>
+
             <button
               onClick={handleNextSlide}
               className="p-2 hover:bg-gray-100 rounded-full absolute right-0 top-1/2 -translate-y-1/2 z-10"
@@ -518,14 +576,16 @@ const ProductDetail = () => {
             </span>
             <span className="text-xs text-[#40BFFF]">Submit a review</span>
           </div>
-          <div className="flex items-center gap-3">
-            <p className="text-2xl font-bold text-[#40BFFF]">
-              {formatVNCurrency(Number(product.promotional_price))}
+          <div className="flex items-center gap-2 mt-1 mb-3">
+            <p className="text-primary text-lg font-semibold">
+              {formatVNCurrency(Number(product?.promotional_price))}
             </p>
-            <span className="text-[#9098B1] text-sm line-through">
-              {formatVNCurrency(Number(product.price))}
-            </span>
-            <span className="text-[#FB7181] text-sm font-bold">24% Off</span>
+            <p className="text-[#9098B1] text-sm font-medium line-through">
+              {formatVNCurrency(Number(product?.price))}
+            </p>
+            <p className="text-[#E71D36] text-sm font-semibold">
+              {Math.round(((Number(product?.price) - Number(product?.promotional_price)) / Number(product?.price)) * 100)}%
+            </p>
           </div>
 
           <hr className="my-4" />
@@ -534,14 +594,21 @@ const ProductDetail = () => {
             <div className="grid grid-cols-2 max-w-xs">
               <span className="col-span-1">Category:</span>
               <span className="col-span-1 text-left">
-                {product.categories
-                  .map((category: Category) => category.name)
-                  .join(", ")}
+                {product.categories &&
+                Array.isArray(JSON.parse(product.categories))
+                  ? [
+                      ...new Set(
+                        JSON.parse(product.categories).map(
+                          (category: { name: string }) => category.name
+                        )
+                      ),
+                    ].join(", ")
+                  : "No categories available"}
               </span>
             </div>
             <div className="grid grid-cols-2 max-w-xs">
               <span className="col-span-1">Brand:</span>
-              <span className="col-span-1 text-left">{product.brand.name}</span>
+              <span className="col-span-1 text-left">{product.brand_name}</span>
             </div>
             <div className="grid grid-cols-2 max-w-xs">
               <span className="col-span-1">Availability:</span>
@@ -552,64 +619,67 @@ const ProductDetail = () => {
           </div>
 
           <div className="mb-3 max-w-xs">
-            <span className="block mb-2 font-medium">Size:</span>
+            <span className="mb-2 text-lg font-semibold">Size:</span>
             <div className="grid grid-cols-3 gap-2">
-              {uniqueSizes.map((sizeInfo: any) => {
-                // Tìm variant theo size và màu hiện tại
-                const sizeVariant = product?.variants.find(
-                  (variant: any) =>
-                    variant.size?.size === sizeInfo.size &&
-                    variant.color?.id === selectedColor
-                );
+              {uniqueSizes.length > 0 ? (
+                uniqueSizes.map((sizeInfo: any) => {
+                  const isSelected = selectedSize === sizeInfo.size;
+                  const isDisabled = sizeInfo.disabled;
 
-                const isSelected = selectedSize === sizeInfo.size;
-                const isDisabled = sizeVariant?.quantity === 0;
-
-                return (
-                  <button
-                    key={sizeVariant?.size?.id}
-                    onClick={() =>
-                      !isDisabled && handleSizeChange(sizeInfo.size)
-                    }
-                    className={`py-2 text-center text-sm font-medium border rounded-md ${
-                      isSelected
-                        ? "border-theme-color-primary ring-2 ring-theme-color-primary"
-                        : "bg-white text-gray-700 border-gray-300"
-                    } ${
-                      isDisabled
-                        ? "cursor-not-allowed opacity-50 line-through"
-                        : "focus:outline-none focus:ring-2 focus:ring-theme-color-primary"
-                    }`}
-                    disabled={isDisabled}
-                  >
-                    {sizeInfo.size}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={sizeInfo.size}
+                      onClick={() =>
+                        !isDisabled && handleSizeChange(sizeInfo.size)
+                      }
+                      className={`py-2 text-center text-sm font-medium border rounded-md w-full ${
+                        isSelected
+                          ? "border-theme-color-primary ring-2 ring-theme-color-primary"
+                          : "bg-white text-gray-700 border-gray-300"
+                      } ${
+                        isDisabled
+                          ? "cursor-not-allowed opacity-50 line-through"
+                          : "focus:outline-none focus:ring-2 focus:ring-theme-color-primary"
+                      }`}
+                      disabled={isDisabled}
+                    >
+                      {sizeInfo.size}
+                    </button>
+                  );
+                })
+              ) : (
+                <p className="text-gray-500 text-sm italic">
+                  No sizes available
+                </p>
+              )}
             </div>
           </div>
 
           <div className="mb-6">
-            <h3 className="mb-2">Color:</h3>
-            <div className="flex flex-wrap gap-2">
-              {uniqueColors.map((variant: any) => (
-                <button
-                  key={variant.color.id}
-                  onClick={() => handleColorChange(variant.color.id)}
-                  className={`px-2 py-2 border rounded-md hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary flex items-center gap-2 ${
-                    selectedColor === variant.color.id
-                      ? "bg-theme-color-primary outline-none ring-2"
-                      : ""
-                  }`}
-                >
-                  <img
-                    className="w-6 h-6 border border-x"
-                    src={variant.color.link_image}
-                    alt={variant.color.color}
-                  />
-                  {variant.color.color}
-                </button>
-              ))}
+            <h3 className="mb-2 text-lg font-semibold">Color:</h3>
+            <div className="flex flex-wrap gap-3">
+              {uniqueColors.length > 0 ? (
+                uniqueColors.map((colorInfo: any) => (
+                  <button
+                    key={colorInfo.id}
+                    onClick={() => handleColorChange(colorInfo.id, colorInfo.image || product?.thumbnail)}
+                    className={`flex items-center gap-3 px-4 py-2 border rounded-md text-sm font-medium transition-all ${
+                      selectedColor === colorInfo.id
+                        ? "bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-theme-color-primary"
+                    }`}
+                  >
+                    <img
+                      className="w-8 h-8 rounded-full border border-gray-300 object-cover"
+                      src={colorInfo.image || product?.thumbnail}
+                      alt={colorInfo.color}
+                    />
+                    <span>{colorInfo.color}</span>
+                  </button>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm italic">No colors available</p>
+              )}
             </div>
           </div>
 
@@ -633,7 +703,7 @@ const ProductDetail = () => {
               </button>
             </div>
             <button
-              onClick={handleAddToWishlist} // Gọi hàm khi người dùng nhấn vào
+              onClick={handleAddToWishlist}
               className="btn ms-auto bg-[#ebf6ff] hover:bg-[#ebf6ff]/80 hover:border-[#40BFFF]"
             >
               <Heart size={16} color="#40BFFF" />
@@ -717,8 +787,6 @@ const ProductDetail = () => {
           <div className="p-4">
             {activeTab === "description" && (
               <div>
-                <p className="mb-2 text-[#9098B1]">{product.description}</p>
-                <p className="mb-2 text-[#9098B1]">{product.description}</p>
                 <p className="mb-2 text-[#9098B1]">{product.description}</p>
               </div>
             )}
@@ -804,7 +872,7 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        <RelatedProduct id={product.id} />
+        <RelatedProduct id={product.brand_id} productId={product.id} />
       </div>
     </div>
   );

@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Notification;
+use App\Mail\OrderCancelled;
 
 class OrderController extends Controller
 {
@@ -346,6 +347,7 @@ class OrderController extends Controller
                             throw new \Exception("Sản phẩm {$item['product']->name} đã hết hàng trong quá trình xử lý");
                         }
                         $variant->decrement('quantity', $item['quantity']);
+                        $product->decrement('stock_quantity', $item['quantity']);
                     } else {
                         $product = $item['product'];
                         // Kiểm tra lại lần cuối để đảm bảo số lượng vẫn đủ
@@ -362,7 +364,20 @@ class OrderController extends Controller
                 }
 
                 // Gửi email xác nhận đơn hàng
-                Mail::to(auth()->user()->email)->queue(new OrderCreated($order));
+                try {
+                    $order->load([
+                        'items.product',
+                        'items.variant.size',
+                        'items.variant.color',
+                        'shipping',
+                        'payment.method'
+                    ]);
+                    $orderData = $order->toArray();
+                    Mail::to(auth()->user()->email)->queue(new OrderCreated($orderData));
+                } catch (\Exception $e) {
+                    Log::error('Email sending error: ' . $e->getMessage());
+                    // Continue processing the order even if email fails
+                }
 
                 DB::commit();
                 event(new NewOrderCreated($order->id));
@@ -452,7 +467,21 @@ class OrderController extends Controller
                 }
 
                 // Gửi email xác nhận đơn hàng qua queue
-                Mail::to(auth()->user()->email)->queue(new OrderCreated($order));
+                try {
+                    $order->load([
+                        'items.product',
+                        'items.variant.size',
+                        'items.variant.color',
+                        'shipping',
+                        'payment.method'
+                    ]);
+                    $orderData = $order->toArray();
+                    $jsonOrderData = json_encode($orderData);
+                    Mail::to(auth()->user()->email)->queue(new OrderCreated($jsonOrderData));
+                } catch (\Exception $e) {
+                    Log::error('Email sending error: ' . $e->getMessage());
+                    // Continue processing the order even if email fails
+                }
 
                 DB::commit();
                 event(new NewOrderCreated($order->id));
@@ -494,9 +523,19 @@ class OrderController extends Controller
 
                 // Gửi email xác nhận đơn hàng
                 try {
-                    Mail::to(auth()->user()->email)->send(new OrderCreated($order));
+                    $order->load([
+                        'items.product',
+                        'items.variant.size',
+                        'items.variant.color',
+                        'shipping',
+                        'payment.method'
+                    ]);
+                    $orderData = $order->toArray();
+                    $jsonOrderData = json_encode($orderData);
+                    Mail::to(auth()->user()->email)->queue(new OrderCreated($jsonOrderData));
                 } catch (\Exception $e) {
-                    Log::error('Gửi email thất bại: ' . $e->getMessage());
+                    Log::error('Email sending error: ' . $e->getMessage());
+                    // Continue processing the order even if email fails
                 }
 
                 DB::commit();
@@ -519,7 +558,7 @@ class OrderController extends Controller
                     'final_total' => $finalTotal,
                 ], 201);
             } else {
-                throw new \Exception('Khởi tạo thanh toán thất bại: ' . json_encode($paymentResponse));
+                throw new \Exception('Failed to create payment: ' . json_encode($paymentResponse));
             }
         } catch (\Exception $e) {
             DB::rollBack();
@@ -675,9 +714,43 @@ class OrderController extends Controller
                 switch ($status) {
                     case 'completed':
                         $orderPayment->update(['status' => 'success']);
+                        Notification::create([
+                            'user_id' => auth()->id(),
+                            'order_id' => $order->id,
+                            'title' => 'Order Completed',
+                            'message' => "Order #{$order->sku} has been completed",
+                            'type' => 'order'
+                        ]);
                         break;
                     case 'cancelled':
                         $orderPayment->update(['status' => 'failed']);
+                        // Tạo thông báo
+                        Notification::create([
+                            'user_id' => $order->user_id,
+                            'order_id' => $order->id,
+                            'title' => 'Order Cancelled',
+                            'message' => "Order #{$order->sku} has been cancelled",
+                            'type' => 'order'
+                        ]);
+
+                        // Gửi email thông báo hủy đơn
+                        try {
+                            $order->load([
+                                'user:id,name,email',
+                                'items.product:id,name',
+                                'items.variant.size:id,size',
+                                'items.variant.color:id,color',
+                                'payment.method:id,name'
+                            ]);
+
+                            $orderData = $order->toArray();
+                           
+                            Mail::to($order->user->email)
+                                ->queue(new OrderCancelled($orderData));
+                        } catch (\Exception $e) {
+                            Log::error('Email sending error: ' . $e->getMessage());
+                        }
+
                         // Hoàn trả số lượng sản phẩm và mã giảm giá nếu đơn bị hủy
                         if ($prevStatus != 'cancelled') {
                             $this->handleFailedPayment($order);
@@ -685,12 +758,26 @@ class OrderController extends Controller
                         break;
                     case 'expired':
                         $orderPayment->update(['status' => 'expired']);
+                        Notification::create([
+                            'user_id' => auth()->id(),
+                            'order_id' => $order->id,
+                            'title' => 'Order Expired',
+                            'message' => "Order #{$order->sku} has been expired",
+                            'type' => 'order'
+                        ]);
                         if ($prevStatus != 'expired' && $prevStatus != 'cancelled') {
                             $this->handleFailedPayment($order);
                         }
                         break;
                     case 'shipping':
                         $orderPayment->update(['status' => 'pending']);
+                        Notification::create([
+                            'user_id' => auth()->id(),
+                            'order_id' => $order->id,
+                            'title' => 'Order Shipping',
+                            'message' => "Order #{$order->sku} is shipping",
+                            'type' => 'order'
+                        ]);
                         break;
                     default:
                         $orderPayment->update(['status' => 'pending']);
@@ -796,7 +883,7 @@ class OrderController extends Controller
             $order = Order::findOrFail($id);
 
             if (!$user->role == 'admin' && !$user->role == 'super-admin' && $order->user_id !== $user->id) {
-                throw new \Exception('Bạn không có quyền truy cập đơn hàng này');
+                throw new \Exception('You do not have permission to access this order');
             }
 
             $order->load([
@@ -848,7 +935,7 @@ class OrderController extends Controller
                             'price' => $item->price,
                             'subtotal' => $item->quantity * $item->price,
                             'product' => [
-                                'id'=> $item->product->id,
+                                'id' => $item->product->id,
                                 'name' => $item->product->name,
                                 'thumbnail' => (string) $item->product->thumbnail,
                             ],
@@ -921,7 +1008,7 @@ class OrderController extends Controller
                     if ($discountProducts->contains('id', $product->id)) {
                         $hasValidProduct = true;
 
-                        // Xử lý giá dựa trên variant nếu có
+                        // Xử lý giá da trên variant nếu có
                         if (isset($item['variant_id'])) {
                             $variant = ProductVariant::find($item['variant_id']);
                             if ($variant) {
@@ -955,14 +1042,12 @@ class OrderController extends Controller
                 'discount_amount' => $discountAmount,
                 'message' => 'Discount code applied successfully'
             ];
-
         } catch (\Exception $e) {
             Log::error('Lỗi xử lý mã giảm giá: ' . $e->getMessage());
             return [
                 'status' => false,
-                'message' => 'Lỗi khi xử lý mã giảm giá: ' . $e->getMessage()
+                'message' => 'Error processing discount code: ' . $e->getMessage()
             ];
         }
     }
-
 }

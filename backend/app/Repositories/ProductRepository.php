@@ -195,29 +195,56 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     private function getBaseQuery($filters = [])
     {
         $query = "
-            WITH variant_info AS (
+           WITH variant_info AS (
                 SELECT
                     pv.product_id,
                     pv.color_id,
                     vc.color,
                     JSON_ARRAYAGG(
                         JSON_OBJECT(
+                            'product_variant_id', pv.id,
                             'size_id', pv.size_id,
                             'size', vs.size,
                             'quantity', pv.quantity
                         )
-                    ) as sizes,
+                    ) AS sizes,
                     iv.image,
-                    SUM(pv.quantity) as total_quantity
+                    SUM(pv.quantity) AS total_quantity
                 FROM product_variants pv
                 LEFT JOIN variant_colors vc ON pv.color_id = vc.id
                 LEFT JOIN variant_sizes vs ON pv.size_id = vs.id
                 LEFT JOIN image_variants iv ON pv.product_id = iv.product_id
                     AND pv.color_id = iv.color_id
                 GROUP BY pv.product_id, pv.color_id, vc.color, iv.image
+            ),
+            category_info AS (
+                SELECT
+                    product_id,
+                    JSON_ARRAYAGG(
+                        JSON_OBJECT(
+                            'name', name,
+                            'parent_id', parent_id,
+                            'description', description,
+                            'slug', slug,
+                            'id', id
+                        )
+                    ) AS categories
+                FROM (
+                    SELECT DISTINCT
+                        pc.product_id,
+                        c.name,
+                        c.parent_id,
+                        c.description,
+                        c.slug,
+                        c.id
+                    FROM product_category pc
+                    LEFT JOIN categories c ON pc.category_id = c.id
+                ) AS distinct_categories
+                GROUP BY product_id
             )
             SELECT
                 p.*,
+                b.name AS brand_name,
                 JSON_ARRAYAGG(
                     JSON_OBJECT(
                         'color_id', vi.color_id,
@@ -226,9 +253,13 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                         'image', vi.image,
                         'total_quantity', vi.total_quantity
                     )
-                ) as variants
+                ) AS variants,
+                ci.categories
             FROM products p
             LEFT JOIN variant_info vi ON p.id = vi.product_id
+            LEFT JOIN category_info ci ON p.id = ci.product_id
+            LEFT JOIN product_category pc ON p.id = pc.product_id
+            LEFT JOIN brands b ON p.brand_id = b.id
             WHERE 1=1
         ";
 
@@ -251,8 +282,23 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
         if (isset($filters['status'])) {
             $query .= " AND p.status = '" . $filters['status'] . "'";
         }
+        if (!empty($filters['category_id'])) {
+            $query .= " AND pc.category_id = " . intval($filters['category_id']);
+        }
+        if (!empty($filters['color_id'])) {
+            $query .= " AND vi.color_id = " . intval($filters['color_id']);
+        }
+        if (!empty($filters['size_id'])) {
+            $query .= " AND JSON_CONTAINS(vi.sizes, JSON_OBJECT('size_id', " . intval($filters['size_id']) . "))";
+        }
+        if (!empty($filters['hagtag'])) {
+            $query .= " AND p.hagtag LIKE '%" . $filters['hagtag'] . "%'";
+        }
+        if (!empty($filters['is_deleted'])) {
+            $query .= " AND p.is_deleted = " . intval($filters['is_deleted']);
+        }
 
-        $query .= " GROUP BY p.id ORDER BY p.id";
+        $query .= " GROUP BY p.id,  ci.categories ORDER BY p.id";
 
         return $query;
     }

@@ -12,6 +12,8 @@ type Product = {
   id: number;
   name: string;
   sku: string;
+  price: number;
+  stock_quantity: number;
 };
 
 const createDiscountSchema = Joi.object({
@@ -75,7 +77,8 @@ const ProductSelectionModal = ({
 
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/products`, {
+        `${import.meta.env.VITE_API_URL}/products`,
+        {
           params: {
             name: term
           },
@@ -84,7 +87,7 @@ const ProductSelectionModal = ({
           }
         }
       );
-      setSearchResults(response.data.data.products || []);
+      setSearchResults(response.data.data || []);
     } catch (error) {
       console.error('Error searching products:', error);
       setSearchResults([]);
@@ -147,6 +150,8 @@ const ProductSelectionModal = ({
               <div className="flex flex-col">
                 <span className="text-white">{product.name}</span>
                 <span className="text-gray-400 text-sm">SKU: {product.sku}</span>
+                <span className="text-gray-400 text-sm">Price: ${product.price}</span>
+                <span className="text-gray-400 text-sm">Stock: {product.stock_quantity}</span>
               </div>
             </div>
           ))}
@@ -197,6 +202,16 @@ const CreateDiscount = () => {
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const upperValue = e.target.value.toUpperCase();
     setValue('code', upperValue);
+  };
+
+  const handlePercentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = parseFloat(e.target.value);
+    if (value > 100) {
+      value = 100;
+    } else if (value < 0) {
+      value = 0;
+    }
+    setValue('percent', value);
   };
 
   const onSubmit = async (data: FormData) => {
@@ -371,7 +386,14 @@ const CreateDiscount = () => {
               </label>
               <input
                 type="number"
+                min="0"
+                max="100"
+                step="0.01"
                 {...register('percent', { valueAsNumber: true })}
+                onChange={(e) => {
+                  register('percent').onChange(e);
+                  handlePercentChange(e);
+                }}
                 className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-gray-400 transition-all"
                 placeholder="10"
               />
@@ -414,13 +436,6 @@ const CreateDiscount = () => {
               >
                 Select Products
               </button>
-
-              <ProductSelectionModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSelectProducts={handleSelectProducts}
-                selectedProducts={selectedProducts}
-              />
             </div>
           </div>
 

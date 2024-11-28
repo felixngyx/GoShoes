@@ -1,4 +1,4 @@
-import { PencilLine, Plus, Trash2 } from 'lucide-react';
+import { PencilLine, Plus, Trash2, Eye, Upload, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { BRAND } from '../../../services/admin/brand';
 import brandService from '../../../services/admin/brand';
@@ -7,11 +7,16 @@ import { joiResolver } from '@hookform/resolvers/joi';
 import Joi from 'joi';
 import toast from 'react-hot-toast';
 import LoadingIcon from '../../../components/common/LoadingIcon';
+import { FaRegTrashAlt } from 'react-icons/fa';
+import uploadImageToCloudinary from '../../../common/uploadCloudinary';
 
 // Update schema validation
 const schema = Joi.object({
 	name: Joi.string().required().messages({
 		'string.empty': 'Brand name is required',
+	}),
+	logo_url: Joi.string().required().messages({
+		'string.empty': 'Logo is required',
 	}),
 });
 
@@ -37,6 +42,10 @@ const Brand = () => {
 	});
 
 	const [loading, setLoading] = useState<boolean>(false);
+
+	const [imageFile, setImageFile] = useState<File | string | null>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [previewImage, setPreviewImage] = useState<string | null>(null);
 
 	const fetchBrands = async () => {
 		try {
@@ -198,10 +207,11 @@ const Brand = () => {
 
 	const openEditModal = (brand: BRAND) => {
 		setEditingBrand(brand);
-		// Reset form with existing values
 		reset({
 			name: brand.name,
+			logo_url: brand.logo_url,
 		});
+		setImageFile(brand.logo_url);
 		setIsModalOpen(true);
 	};
 
@@ -237,6 +247,8 @@ const Brand = () => {
 		handleSubmit,
 		reset,
 		formState: { errors },
+		setValue,
+		clearErrors,
 	} = useForm<BRAND>({
 		resolver: joiResolver(schema),
 		defaultValues: {
@@ -244,20 +256,60 @@ const Brand = () => {
 		},
 	});
 
+	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		event.preventDefault();
+		const file = event.target.files?.[0];
+		if (file) {
+			setImageFile(file);
+			setValue('logo_url', file.name);
+			clearErrors('logo_url');
+		}
+	};
+
+	const removeImage = () => {
+		setImageFile(null);
+		setValue('logo_url', '');
+	};
+
+	const handleUploadClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		fileInputRef.current?.click();
+	};
+
+	const openPreviewModal = (imageSrc: string) => {
+		setPreviewImage(imageSrc);
+	};
+
 	const onSubmit = async (data: BRAND) => {
 		try {
 			if (editingBrand) {
 				// Handle edit
-				await brandService.update(editingBrand.id!, data);
+				setIsModalOpen(false);
+				toast.loading('Updating brand');
+				if (imageFile instanceof File) {
+					data.logo_url = await uploadImageToCloudinary(imageFile);
+				} else {
+					data.logo_url = imageFile as string;
+				}
+				await brandService.update(editingBrand.id!.toString(), data);
+				toast.dismiss();
 				toast.success('Brand updated successfully');
 			} else {
 				// Handle add
-				await brandService.create(data);
+				setIsModalOpen(false);
+				toast.loading('Processing add brand');
+				const logo = await uploadImageToCloudinary(imageFile as File);
+				await brandService.create({
+					...data,
+					logo_url: logo,
+				});
+				toast.dismiss();
 				toast.success('Brand added successfully');
 			}
-			await fetchBrands(); // Refresh the list
+			await fetchBrands();
 			closeModal();
-			reset(); // Reset form
+			reset();
 		} catch (error: any) {
 			toast.error(error.response?.data?.message || 'Something went wrong');
 		}
@@ -268,11 +320,14 @@ const Brand = () => {
 		if (editingBrand) {
 			reset({
 				name: editingBrand.name,
+				logo_url: editingBrand.logo_url,
 			});
+			setImageFile(editingBrand.logo_url);
 		} else {
 			reset({
 				name: '',
 			});
+			setImageFile(null);
 		}
 	}, [editingBrand, reset]);
 
@@ -324,10 +379,13 @@ const Brand = () => {
 									</label>
 								</div>
 							</th>
-							<th scope="col" className="px-6 py-3 w-2/3">
+							<th scope="col" className="px-6 py-3 w-2/5">
 								Name
 							</th>
-							<th scope="col" className="px-6 py-3 w-1/3">
+							<th scope="col" className="px-6 py-3 w-2/5">
+								Logo
+							</th>
+							<th scope="col" className="px-6 py-3 w-1/5">
 								Action
 							</th>
 						</tr>
@@ -375,6 +433,13 @@ const Brand = () => {
 										</div>
 									</td>
 									<td className="px-6 py-3">{brand.name}</td>
+									<td className="px-6 py-3">
+										<img
+											src={brand.logo_url}
+											alt="Brand logo"
+											className="w-10 h-10 object-cover rounded-md"
+										/>
+									</td>
 									<td className="px-6 py-3 flex items-center gap-2">
 										<button
 											className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
@@ -384,7 +449,9 @@ const Brand = () => {
 										</button>
 										<button
 											className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error"
-											onClick={() => deleteBrand(brand.id!)}
+											onClick={() =>
+												deleteBrand(brand.id!.toString())
+											}
 										>
 											<Trash2 size={16} />
 										</button>
@@ -408,18 +475,93 @@ const Brand = () => {
 						<h2 className="text-xl font-semibold mb-4">
 							{editingBrand ? 'Edit Brand' : 'Add Brand'}
 						</h2>
-						<form onSubmit={handleSubmit(onSubmit)}>
-							<input
-								type="text"
-								className="w-full p-2 border rounded mb-2"
-								placeholder="Brand name"
-								{...register('name')}
-							/>
-							{errors.name && (
-								<p className="text-red-500 text-sm mb-4">
-									{errors.name.message}
-								</p>
-							)}
+						<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+							<div>
+								<label htmlFor="name" className="text-sm font-bold">
+									Brand name
+								</label>
+								<input
+									type="text"
+									className="w-full p-2 border rounded"
+									placeholder="Brand name"
+									{...register('name')}
+								/>
+								{errors.name && (
+									<p className="text-red-500 text-sm mt-1">
+										{errors.name.message}
+									</p>
+								)}
+							</div>
+
+							<div>
+								<label htmlFor="logo_url" className="text-sm font-bold">
+									Logo
+								</label>
+								<input
+									{...register('logo_url')}
+									ref={fileInputRef}
+									type="file"
+									className="hidden"
+									onChange={handleFileChange}
+									accept="image/*"
+								/>
+
+								<div className="flex gap-2">
+									{imageFile ? (
+										<div className="relative size-[100px] group">
+											<img
+												src={
+													imageFile instanceof File
+														? URL.createObjectURL(imageFile)
+														: imageFile
+												}
+												alt="Brand logo preview"
+												className="w-full h-full object-cover rounded-md border"
+											/>
+											<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
+												<button
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+														openPreviewModal(
+															imageFile instanceof File
+																? URL.createObjectURL(imageFile)
+																: imageFile
+														);
+													}}
+												>
+													<Eye color="#fff" size={18} />
+												</button>
+												<button
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+														removeImage();
+													}}
+												>
+													<FaRegTrashAlt color="#fff" size={18} />
+												</button>
+											</div>
+										</div>
+									) : (
+										<div
+											onClick={handleUploadClick}
+											className="size-[100px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
+										>
+											<Upload />
+											<p className="text-xs text-gray-500">
+												Upload Logo
+											</p>
+										</div>
+									)}
+								</div>
+								{errors.logo_url && (
+									<p className="text-red-500 text-sm mt-1">
+										{errors.logo_url.message}
+									</p>
+								)}
+							</div>
+
 							<div className="flex justify-end gap-2">
 								<button
 									type="button"
@@ -438,6 +580,21 @@ const Brand = () => {
 						</form>
 					</div>
 				</div>
+			)}
+
+			{/* Modal xem trước ảnh */}
+			{previewImage && (
+				<dialog open className="modal">
+					<div className="modal-box">
+						<img src={previewImage} alt="Preview" className="w-full" />
+						<button
+							onClick={() => setPreviewImage(null)}
+							className="btn btn-sm absolute right-2 top-2"
+						>
+							<X size={16} />
+						</button>
+					</div>
+				</dialog>
 			)}
 		</div>
 	);

@@ -1,94 +1,107 @@
 import axiosClient from '../../apis/axiosClient';
 import { CATEGORY } from './category';
 
-export type PRODUCT = {
-	id?: number;
-	name: string;
-	description: string;
-	price: number;
-	stock_quantity: number;
-	promotional_price: number;
-	status: string;
-	sku: string;
-	hagtag: string;
-	category_ids: number[];
-	thumbnail: string;
-	brand_id: number;
-	variants: {
-		color_id: number;
-		size_id: number;
-		quantity: number;
-	}[];
-	images: string[];
-};
+// type Variant = {
+// 	color_id: number;
+// 	image: string;
+// 	variant_details: [
+// 		{
+// 			size_id: number;
+// 			quantity: number;
+// 			sku: string;
+// 		}[]
+// 	];
+// };
 
-export type PRODUCT_DETAIL = {
-	id?: number;
-	name: string;
-	description: string;
-	price: number;
-	promotional_price: number;
-	stock_quantity: number;
-	sku: string;
-	hagtag: string;
-	brand_id: number;
-	rating_count: number;
-	status: string;
-	thumbnail: string;
-	images: {
-		id?: number;
-		image_path: string;
-	}[];
-	category_ids: number[];
-	variants: {
-		color_id: number;
-		size_id: number;
-		quantity: number;
-	}[];
-};
-
-// export type PRODUCT_UPDATE = {
-// 	id?: number;
+// export type PRODUCT = {
+// 	id: number;
+// 	brand_id: number;
 // 	name: string;
 // 	description: string;
 // 	price: number;
-// 	promotional_price: number;
 // 	stock_quantity: number;
-// 	sku: string;
-// 	hagtag: string;
-// 	brand_id: number;
+// 	promotional_price: number;
 // 	status: string;
+// 	sku: string;
+// 	is_deleted: number;
+// 	rating_count: string;
+// 	slug: string;
 // 	thumbnail: string;
-// 	images: {
-// 		id?: number;
-// 		image_path: string;
-// 	}[];
-// 	category_ids: number[];
-// 	variants?: {
-// 		color_id: number;
-// 		size_id: number;
-// 		quantity: number;
-// 	}[];
+// 	hagtag: string;
+// 	created_at: string;
+// 	updated_at: string;
 // };
 
+export interface PRODUCT {
+	id?: number;
+	name: string;
+	price: number;
+	promotional_price: number;
+	status: string;
+	sku: string;
+	hagtag: string;
+	category_ids: number[];
+	brand_id: number;
+	thumbnail: string;
+	description: string;
+	stock_quantity?: number;
+	variants: {
+		color_id: number;
+		image: string;
+		variant_details: {
+			size_id: number;
+			quantity: number;
+			sku: string;
+		}[];
+	}[];
+}
+
+export interface PRODUCT_UPDATE {
+	name: string;
+	price: number;
+	promotional_price: number;
+	status: string;
+	sku: string;
+	hagtag: string;
+	categories?: number[];
+	category_ids: number[];
+	brand_id: number;
+	thumbnail: string;
+	description: string;
+	stock_quantity?: number;
+	variants: {
+		color_id: number;
+		image: string;
+		variant_details: {
+			size_id: number;
+			quantity: number;
+			sku: string;
+		}[];
+	}[];
+}
+
 const productService = {
-	getAll: (page: number = 1, limit: number = 5) => {
-		return axiosClient.get(
-			`/products?page=${page}&limit=${limit}&order_by=created_at&order=desc`
+	getAll: async (
+		page: number = 1,
+		limit: number = 100
+	): Promise<PRODUCT[]> => {
+		const res = await axiosClient.get(
+			`/products?page=${page}&perPage=${limit}`
 		);
+		return res.data.data;
 	},
-	getById: async (id: number): Promise<PRODUCT_DETAIL> => {
-		const res = await axiosClient.get(`/productDetail/${id}`);
-		return res.data.Data.product;
+	getById: async (id: number) => {
+		return await axiosClient.get(`/products/${id}`);
 	},
-	create: (data: PRODUCT) => {
-		return axiosClient.post('/products', data);
+	create: async (data: PRODUCT) => {
+		return await axiosClient.post('/products', data);
 	},
-	update: (id: number, data: PRODUCT_DETAIL) => {
-		return axiosClient.put(`/products/${id}`, data);
+	update: async (id: number, data: PRODUCT_UPDATE): Promise<PRODUCT> => {
+		return await axiosClient.put(`/products/${id}`, data);
 	},
-	delete: (id: number) => {
-		return axiosClient.delete(`/products/${id}`);
+	delete: async (id: number): Promise<PRODUCT> => {
+		const res = await axiosClient.delete(`/products/${id}`);
+		return res.data.Data;
 	},
 };
 

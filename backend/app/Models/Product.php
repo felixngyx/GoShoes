@@ -6,6 +6,7 @@ use App\Traits\QueryScopes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB; // Add this line
 
 class Product extends Model
 {
@@ -32,6 +33,7 @@ class Product extends Model
     ];
     public function categories()
     {
+
         return $this->belongsToMany(Category::class, 'product_category');
     }
 
@@ -57,6 +59,15 @@ class Product extends Model
     public function brand()
     {
         return $this->belongsTo(Brand::class);
+    }
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function getTotalRevenue()
+    {
+        return $this->orderItems()->sum(DB::raw('price * quantity'));
     }
     protected static function boot()
     {

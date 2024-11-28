@@ -1,48 +1,52 @@
 @component('mail::message')
-# Xác nhận đơn hàng #{{ $order->sku }}
+# Order Confirmation #{{ $order['sku'] ?? 'N/A' }}
 
-Cảm ơn bạn đã đặt hàng tại cửa hàng chúng tôi.
+Thank you for shopping with us!
 
-## Thông tin đơn hàng:
+## Order Details:
 
 @component('mail::table')
-| Sản phẩm | Số lượng | Giá |
-|:---------|:---------|:----|
-@foreach($order->items as $item)
-| {{ $item->product->name }} | {{ $item->quantity }} | {{ number_format($item->price) }}đ |
+| Product | Quantity | Price |
+|:--------|:---------|:------|
+@foreach(($order['items'] ?? []) as $item)
+| {{ $item['product']['name'] ?? 'Unknown Product' }} | {{ $item['quantity'] ?? 0 }} | {{ number_format($item['price'] ?? 0) }}đ |
 @endforeach
 @endcomponent
 
-**Tổng tiền hàng:** {{ number_format($order->original_total) }}đ
+**Subtotal:** {{ number_format($order['original_total'] ?? 0) }}đ
 
-@if($order->discount_amount > 0)
-**Giảm giá:** {{ number_format($order->discount_amount) }}đ
+@if(($order['discount_amount'] ?? 0) > 0)
+**Discount:** -{{ number_format($order['discount_amount']) }}đ
 @endif
 
-**Tổng thanh toán:** {{ number_format($order->total) }}đ
+**Total Amount:** {{ number_format($order['total'] ?? 0) }}đ
 
-## Thông tin giao hàng:
-Địa chỉ: {{ $order->shipping->address }}
-<br>
-Thành phố: {{ $order->shipping->city }}
+## Shipping Information:
 
-## Phương thức thanh toán:
-{{ $order->payment->method->name }}
+**Recipient:** {{ $shipping['name'] ?? 'N/A' }}
+**Phone:** {{ $shipping['phone_number'] ?? 'N/A' }}
+**Address:** {{ $shipping['address'] ?? 'N/A' }}
+**Address Details:** {{ $shipping['address_detail'] ?? 'N/A' }}
 
-@if($order->total > 0)
-    @if($order->payment->method->id === 2)
-        Vui lòng chuẩn bị số tiền {{ number_format($order->total) }}đ khi nhận hàng.
-    @elseif($order->payment->method->id === 1)
-         Vui lòng thanh toán số tiền {{ number_format($order->total) }} với {{ $order->payment->method->name }} sau 15p đặt hàng !
+## Payment Method:
+
+{{ $order['payment']['method']['name'] ?? 'Unknown Method' }}
+
+@if(($order['total'] ?? 0) > 0)
+    @if(($order['payment']['method']['id'] ?? null) === 2)
+Please prepare {{ number_format($order['total'] ?? 0) }}đ for Cash on Delivery.
+    @elseif(($order['payment']['method']['id'] ?? null) === 1)
+Please complete your payment of {{ number_format($order['total'] ?? 0) }}đ via {{ $order['payment']['method']['name'] ?? 'Online Payment' }} within 15 minutes!
     @endif
 @else
-    Đơn hàng đang trên đường đến bạn.
+Your order is on its way!
 @endif
 
+---
 
-Cảm ơn bạn đã tin tưởng chọn sản phẩm của chúng tôi!
+Thank you for choosing our products!
 
-Trân trọng,
+Best regards,
+**{{ config('app.name') }}**
 
-{{ config('app.name') }}
 @endcomponent

@@ -6,6 +6,7 @@ use App\Repositories\RepositoryInterfaces\UserRepositoryInterface as UserReposit
 use App\Services\ServiceAbstracts\User\UserServiceAbstract;
 use App\Services\ServiceInterfaces\User\UserServiceInterface;
 use Illuminate\Support\Facades\DB;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserService extends UserServiceAbstract implements UserServiceInterface
 {
@@ -38,6 +39,10 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
 
     public function updateService(array $request, int $id) : \Illuminate\Http\JsonResponse
     {
+        $admin = JWTAuth::parseToken()->authenticate();
+        if ($admin['role'] !== "super-admin" ) {
+            return response()->json(['error' => "You don't have permission for this action"], 403);
+        }
         $user = self::getUserRepository()->findById($id);
         if (!$user) {
             return response()->json([

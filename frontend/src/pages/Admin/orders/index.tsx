@@ -307,7 +307,9 @@ export default function OrderDashboard() {
             'Shipping Address': order.shipping?.shipping_detail ? 
                 (() => {
                     try {
-                        const shippingDetail = JSON.parse(order.shipping.shipping_detail);
+                        const shippingDetail = typeof order.shipping.shipping_detail === 'string' 
+                            ? JSON.parse(order.shipping.shipping_detail) 
+                            : order.shipping.shipping_detail;
                         return `${shippingDetail.address}, ${shippingDetail.address_detail}`;
                     } catch (e) {
                         return 'N/A';

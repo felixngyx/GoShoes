@@ -3,6 +3,7 @@
 use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
 // use App\Http\Controllers\API\Shipping\ShippingController;
+use App\Http\Controllers\API\ProductVariant\ProductVariantController;
 use App\Http\Controllers\API\Profile\ProfileController;
 use App\Http\Controllers\API\Wishlist\WishlistController;
 use App\Http\Controllers\API\Cart\CartController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\API\Auth\SocialAuthController\FacebookAuthController;
 use App\Http\Controllers\API\Colors\ColorController;
 use App\Http\Controllers\API\Sizes\SizeController;
 use App\Http\Controllers\API\Brands\BrandController;
+use App\Http\Controllers\API\Contact\ContactController;
 use App\Http\Controllers\API\Order\OrderController;
 use App\Http\Controllers\API\Payments\ZaloPaymentController;
 use App\Http\Controllers\API\Products\ProductController;
@@ -26,7 +28,7 @@ use App\Http\Controllers\BannerController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\Order\RefundController;
 use App\Http\Controllers\API\User\UserController;
-
+use App\Http\Controllers\API\Statistical\StatisticalController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -52,15 +54,17 @@ Route::get('/products/trashed', [ProductController::class, 'trashedProducts']);
 Route::post('/products/restore/{id}', [ProductController::class, 'restore']);
 Route::post('/restore-multiple', [ProductController::class, 'restoreMultiple']);
 Route::get('/products/{id}', [ProductController::class, 'show'])->where(['id' => '[0-9]+']);
-Route::put('/products/{id}', [ProductController::class, 'update']);
+Route::put('/products/{id}', [ProductController::class, 'updateProduct'])->where(['id' => '[0-9]+']);
 Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/productDetail/{id}', [ProductController::class, 'getDetailProduct']);
-Route::post('/products', [ProductController::class, 'store']);
+Route::post('/products', [ProductController::class, 'createProduct']);
 
 Route::get('/product/{id}', [ProductClientController::class, 'show']);
 Route::get('/product/variant/{id}/stock', [ProductController::class, 'checkStockProductVariant']);
 
+Route::post('/admin/product_variants/delete-many', [ProductVariantController::class, 'deleteMany']);
+Route::delete('/admin/product_variants/{id}', [ProductVariantController::class, 'deleteOne'])->where(['id' => '[0-9]+']);
 
 // API Color
 
@@ -109,6 +113,16 @@ Route::delete('/banners', [BannerController::class, 'destroyMultiple']);
 
 Route::get('categories', [CategoryController::class, 'index']);
 
+// thống kê
+Route::get('/revenue/today', [StatisticalController::class, 'getTodayRevenue']);
+Route::get('/revenue/monthly', [StatisticalController::class, 'getMonthlyRevenue']);
+Route::get('/revenue/top-products', [StatisticalController::class, 'getTopRevenueProducts']);
+
+//  Contact
+Route::get('/contacts', [ContactController::class, 'index']);
+Route::post('/contacts', [ContactController::class, 'store']);
+Route::get('/contacts/{id}', [ContactController::class, 'show']);
+Route::get('/delete/{id}', [ContactController::class,'destroy']);
 // This route is Public for all user change email and phone
 Route::group(['prefix' => 'profile'], function () {
     Route::post('/verify-token-change-email', [ProfileController::class, 'verifyChangeEmail']);
@@ -209,6 +223,8 @@ Route::group([
         Route::get('/', [RefundController::class, 'index']);
         Route::post('/', [RefundController::class, 'store']);
         Route::post('/approve', [RefundController::class,'approve']);
+        Route::post('/deny', [RefundController::class,'deny']);
+        Route::get('/static', [RefundController::class,'getRefundStatistics']);
         Route::get('/{id}', [RefundController::class, 'viewDetailRefundRequest']);
     });
 });

@@ -187,6 +187,16 @@ const UpdateDiscount = () => {
     }
   };
 
+  const handlePercentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = parseFloat(e.target.value);
+    if (value > 100) {
+      value = 100;
+    } else if (value < 0) {
+      value = 0;
+    }
+    setValue('percent', value);
+  };
+
   // ProductSelectionModal component
   const ProductSelectionModal = ({ 
     isOpen, 
@@ -224,7 +234,7 @@ const UpdateDiscount = () => {
               }
             }
           );
-          setSearchResults(response.data.data.products || []);
+          setSearchResults(response.data.data || []);
         } catch (error) {
           console.error('Error searching products:', error);
           setSearchResults([]);
@@ -267,7 +277,7 @@ const UpdateDiscount = () => {
               type="text"
               value={searchTerm}
               onChange={handleSearch}
-              placeholder="Enter product name..."
+              placeholder="Search products..."
               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
             />
             <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -289,6 +299,15 @@ const UpdateDiscount = () => {
                 <div className="flex flex-col">
                   <span className="text-white">{product.name}</span>
                   <span className="text-gray-400 text-sm">SKU: {product.sku}</span>
+                  <span className="text-gray-400 text-sm">Price: ${product.price}</span>
+                  <span className="text-gray-400 text-sm">
+                    {product.promotional_price && (
+                      <span className="text-green-400">
+                        Promo Price: ${product.promotional_price}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-gray-400 text-sm">Stock: {product.stock_quantity}</span>
                 </div>
               </div>
             ))}
@@ -438,8 +457,14 @@ const UpdateDiscount = () => {
               </label>
               <input
                 type="number"
+                min="0"
+                max="100"
                 step="0.01"
-                {...register('percent')}
+                {...register('percent', { valueAsNumber: true })}
+                onChange={(e) => {
+                  register('percent').onChange(e);
+                  handlePercentChange(e);
+                }}
                 className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white"
               />
               {errors.percent && (

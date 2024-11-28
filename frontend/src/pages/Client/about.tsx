@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { FaUsers, FaAward, FaTrophy } from 'react-icons/fa';
+import { motion } from "framer-motion";
+import { FaUsers, FaAward, FaTrophy } from "react-icons/fa";
 
 const AboutPage = () => {
   return (
@@ -7,7 +7,7 @@ const AboutPage = () => {
       {/* Hero Section - Gradient Background */}
       <div className="relative h-[500px] bg-gradient-to-r from-red-500 to-orange-400 rounded-b-3xl overflow-hidden">
         <div className="absolute inset-0">
-          <motion.div 
+          <motion.div
             className="flex flex-col items-center justify-center h-full text-center"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -21,17 +21,25 @@ const AboutPage = () => {
           </motion.div>
           {/* Decorative Elements */}
           <div className="absolute top-0 right-0 w-24 h-24">
-            <img src="https://png.pngtree.com/png-vector/20231230/ourmid/pngtree-dropshipping-men-hole-sole-jogging-shoes-png-image_11389148.png" alt="" className="w-full h-full object-contain" />
+            <img
+              src="https://png.pngtree.com/png-vector/20231230/ourmid/pngtree-dropshipping-men-hole-sole-jogging-shoes-png-image_11389148.png"
+              alt=""
+              className="w-full h-full object-contain"
+            />
           </div>
           <div className="absolute bottom-0 left-0">
-            <img src="https://png.pngtree.com/png-vector/20231230/ourmid/pngtree-dropshipping-men-hole-sole-jogging-shoes-png-image_11389148.png" alt="" className="w-16 h-16" />
+            <img
+              src="https://png.pngtree.com/png-vector/20231230/ourmid/pngtree-dropshipping-men-hole-sole-jogging-shoes-png-image_11389148.png"
+              alt=""
+              className="w-16 h-16"
+            />
           </div>
         </div>
       </div>
 
       {/* Stats Bar */}
-      <div className="bg-yellow-400 mx-8 -mt-10 rounded-2xl shadow-xl">
-        <div className="grid grid-cols-3 gap-4 p-6 text-center">
+      <div className="bg-yellow-400 mx-8 mt-8 rounded-2xl shadow-xl">
+        <div className="grid grid-cols-3 gap-8 p-8 text-center">
           <div>
             <h3 className="text-4xl font-black">22M+</h3>
             <p className="font-bold">USER TRUST US</p>
@@ -50,13 +58,19 @@ const AboutPage = () => {
       {/* Trending Section */}
       <div className="my-16 px-8">
         <div className="flex items-center gap-8">
-          <motion.div 
+          <motion.div
             className="flex-1"
             initial={{ x: -100, opacity: 0 }}
             whileInView={{ x: 0, opacity: 1 }}
           >
-            <h2 className="text-5xl font-black mb-4">TRENDING SHOES OF THE DAY</h2>
-            <img src="https://static.vecteezy.com/system/resources/previews/043/345/236/non_2x/the-latest-in-running-shoe-fashion-on-transparent-background-png.png" alt="Trending Sneaker" className="w-full h-auto transform -rotate-12" />
+            <h2 className="text-5xl font-black mb-4">
+              TRENDING SHOES OF THE DAY
+            </h2>
+            <img
+              src="https://static.vecteezy.com/system/resources/previews/043/345/236/non_2x/the-latest-in-running-shoe-fashion-on-transparent-background-png.png"
+              alt="Trending Sneaker"
+              className="w-full h-auto transform -rotate-12"
+            />
           </motion.div>
         </div>
       </div>
@@ -67,27 +81,32 @@ const AboutPage = () => {
         <div className="grid grid-cols-3 gap-8">
           {[
             {
-              title: 'New Advanced Filter-equipped basketball shoes',
-              image: 'https://png.pngtree.com/png-clipart/20230506/original/pngtree-sneakers-running-shoes-bright-colors-png-image_9145044.png',
-              color: 'bg-orange-400'
+              title: "New Advanced Filter-equipped basketball shoes",
+              image:
+                "https://png.pngtree.com/png-clipart/20230506/original/pngtree-sneakers-running-shoes-bright-colors-png-image_9145044.png",
+              color: "bg-orange-400",
             },
             {
-              title: 'Multi White Casual Sneakers',
-              image: '/src/images/about/goshoes_giay2.png',
-              color: 'bg-lime-400'
+              title: "Multi White Casual Sneakers",
+              image: "/src/images/about/goshoes_giay2.png",
+              color: "bg-lime-400",
             },
             {
-              title: 'Desert Blue Casual Walking',
-              image: '/src/images/about/goshoes_nike.png',
-              color: 'bg-yellow-400'
-            }
+              title: "Desert Blue Casual Walking",
+              image: "/src/images/about/goshoes_nike.png",
+              color: "bg-yellow-400",
+            },
           ].map((item, index) => (
-            <motion.div 
+            <motion.div
               key={index}
               className={`${item.color} rounded-xl p-6 aspect-square`}
               whileHover={{ scale: 1.05 }}
             >
-              <img src={item.image} alt={item.title} className="w-full h-48 object-contain mb-4" />
+              <img
+                src={item.image}
+                alt={item.title}
+                className="w-full h-48 object-contain mb-4"
+              />
               <p className="font-semibold">{item.title}</p>
               <button className="mt-4 bg-purple-600 text-white px-6 py-2 rounded-full">
                 Shop
@@ -99,11 +118,16 @@ const AboutPage = () => {
 
       {/* Categories */}
       <div className="px-8 space-y-4 mb-16">
-        {['PREMIUM COLLECTION', 'BEST ARRIVALS', 'CRAZY SHOES', 'LADIES SHOES'].map((category) => (
+        {[
+          "PREMIUM COLLECTION",
+          "BEST ARRIVALS",
+          "CRAZY SHOES",
+          "LADIES SHOES",
+        ].map((category) => (
           <motion.div
             key={category}
             className="bg-gray-100 p-4 rounded-lg font-black text-2xl cursor-pointer"
-            whileHover={{ scale: 1.02, backgroundColor: '#f3f4f6' }}
+            whileHover={{ scale: 1.02, backgroundColor: "#f3f4f6" }}
           >
             {category}
           </motion.div>

@@ -11,9 +11,12 @@ class VariantColorFactory extends Factory
 
     public function definition()
     {
+        $imageUrls = file('database/factories/test.txt', FILE_IGNORE_NEW_LINES);
+        $randomImageUrl = trim($imageUrls[array_rand($imageUrls)]);
+
         return [
             'color' => $this->faker->colorName,
-            'link_image' => $this->faker->imageUrl(),
+            'link_image' => $randomImageUrl,
         ];
     }
 

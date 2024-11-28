@@ -127,11 +127,19 @@ class ProductController extends Controller
 //            ]);
 //    }\
 
+    public function createProduct(StoreProductRequest $request) : \Illuminate\Http\JsonResponse
+    {
+        return $this->productService->createProductService($request->all());
+    }
+
+    public function updateProduct(UpdateProductRequest $request, int $id) : \Illuminate\Http\JsonResponse
+    {
+        return $this->productService->updateProductService($request->all(), $id);
+    }
+
     public function index(Request $request)
     {
-        $filters = $request->only(['id', 'brand_id', 'name', 'price_from', 'price_to', 'status']);
-        $filters['page'] = $request->get('page', 1);
-        $filters['perPage'] = $request->get('per_page', 10);
+        $filters = $request->only(['id', 'brand_id', 'name', 'price_from', 'price_to', 'status', 'category_id', 'color_id', 'size_id', 'perPage', 'page', 'hagtag']);
         return $this->productService->listProduct($filters);
     }
     public function store(StoreProductRequest $request)
@@ -166,7 +174,7 @@ class ProductController extends Controller
     {
         //
     }
-    public function update(UpdateProductRequest $request, string $id)
+    public function update(UpdateProductRequest $request, int $id)
     {
         // Xác thực dữ liệu đầu vào
         $validated = $request->validated();
