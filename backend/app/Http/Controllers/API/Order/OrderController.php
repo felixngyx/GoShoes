@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Notification;
+use App\Mail\OrderCancelled;
 
 class OrderController extends Controller
 {
@@ -261,7 +262,6 @@ class OrderController extends Controller
                         throw new \Exception("Product {$product->name} ({$variant->size->size}/{$variant->color->color}) only has {$variant->quantity} items left");
                     }
                     $price = $product->promotional_price ?? $product->price;
-
                 } else {
                     // Nếu không có biến thể, kiểm tra số lượng sản phẩm trực tiếp
                     if ($product->stock_quantity < $item['quantity']) {
@@ -365,9 +365,15 @@ class OrderController extends Controller
 
                 // Gửi email xác nhận đơn hàng
                 try {
+                    $order->load([
+                        'items.product',
+                        'items.variant.size',
+                        'items.variant.color',
+                        'shipping',
+                        'payment.method'
+                    ]);
                     $orderData = $order->toArray();
-                    $jsonOrderData = json_encode($orderData);
-                    Mail::to(auth()->user()->email)->queue(new OrderCreated($jsonOrderData));
+                    Mail::to(auth()->user()->email)->queue(new OrderCreated($orderData));
                 } catch (\Exception $e) {
                     Log::error('Email sending error: ' . $e->getMessage());
                     // Continue processing the order even if email fails
@@ -462,6 +468,13 @@ class OrderController extends Controller
 
                 // Gửi email xác nhận đơn hàng qua queue
                 try {
+                    $order->load([
+                        'items.product',
+                        'items.variant.size',
+                        'items.variant.color',
+                        'shipping',
+                        'payment.method'
+                    ]);
                     $orderData = $order->toArray();
                     $jsonOrderData = json_encode($orderData);
                     Mail::to(auth()->user()->email)->queue(new OrderCreated($jsonOrderData));
@@ -510,6 +523,13 @@ class OrderController extends Controller
 
                 // Gửi email xác nhận đơn hàng
                 try {
+                    $order->load([
+                        'items.product',
+                        'items.variant.size',
+                        'items.variant.color',
+                        'shipping',
+                        'payment.method'
+                    ]);
                     $orderData = $order->toArray();
                     $jsonOrderData = json_encode($orderData);
                     Mail::to(auth()->user()->email)->queue(new OrderCreated($jsonOrderData));
@@ -704,13 +724,34 @@ class OrderController extends Controller
                         break;
                     case 'cancelled':
                         $orderPayment->update(['status' => 'failed']);
+
+                        // Tạo thông báo
                         Notification::create([
-                            'user_id' => auth()->id(),
+                            'user_id' => $order->user_id,
                             'order_id' => $order->id,
                             'title' => 'Order Cancelled',
                             'message' => "Order #{$order->sku} has been cancelled",
                             'type' => 'order'
                         ]);
+
+                        // Gửi email thông báo hủy đơn
+                        try {
+                            $order->load([
+                                'user:id,name,email',
+                                'items.product:id,name',
+                                'items.variant.size:id,size',
+                                'items.variant.color:id,color',
+                                'payment.method:id,name'
+                            ]);
+
+                            $orderData = $order->toArray();
+                            $jsonOrderData = json_encode($orderData);
+                            Mail::to($order->user->email)
+                                ->queue(new OrderCancelled($jsonOrderData));
+                        } catch (\Exception $e) {
+                            Log::error('Email sending error: ' . $e->getMessage());
+                        }
+
                         // Hoàn trả số lượng sản phẩm và mã giảm giá nếu đơn bị hủy
                         if ($prevStatus != 'cancelled') {
                             $this->handleFailedPayment($order);
@@ -895,7 +936,7 @@ class OrderController extends Controller
                             'price' => $item->price,
                             'subtotal' => $item->quantity * $item->price,
                             'product' => [
-                                'id'=> $item->product->id,
+                                'id' => $item->product->id,
                                 'name' => $item->product->name,
                                 'thumbnail' => (string) $item->product->thumbnail,
                             ],
@@ -968,7 +1009,7 @@ class OrderController extends Controller
                     if ($discountProducts->contains('id', $product->id)) {
                         $hasValidProduct = true;
 
-                        // Xử lý giá dựa trên variant nếu có
+                        // Xử lý giá da trên variant nếu có
                         if (isset($item['variant_id'])) {
                             $variant = ProductVariant::find($item['variant_id']);
                             if ($variant) {
@@ -1002,7 +1043,6 @@ class OrderController extends Controller
                 'discount_amount' => $discountAmount,
                 'message' => 'Discount code applied successfully'
             ];
-
         } catch (\Exception $e) {
             Log::error('Lỗi xử lý mã giảm giá: ' . $e->getMessage());
             return [
@@ -1011,5 +1051,4 @@ class OrderController extends Controller
             ];
         }
     }
-
 }

@@ -17,12 +17,6 @@ const PaymentFailed = () => {
         </p>
         <div className="space-y-4">
           <Link
-            to="/checkout"
-            className="block w-full bg-indigo-600 text-white rounded-md px-4 py-2 hover:bg-indigo-700"
-          >
-            Try Again
-          </Link>
-          <Link
             to="/account/my-order"
             className="block w-full bg-gray-200 text-gray-800 rounded-md px-4 py-2 hover:bg-gray-300"
           >

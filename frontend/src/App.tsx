@@ -77,7 +77,7 @@ function App() {
           <Route path="payment-success">
             <Route index element={<PaymentSuccess />} />
           </Route>
-          <Route path="payment-failed">
+          <Route path="payment-fail">
             <Route index element={<PaymentFailed />} />
           </Route>
           <Route path="/products" element={<ProductList />} />
