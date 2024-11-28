@@ -5,7 +5,8 @@ export interface CATEGORY {
 	name: string;
 	slug: string;
 	description: string;
-	products_count: number;
+	products_count?: number;
+	parent_id?: number;
 }
 
 export interface CategoryResponse {
