@@ -17,7 +17,7 @@
             <p>Order SKU: #{{ $orderNumber }}</p>
         </div>
 
-        <p>If you have any questions about this cancellation, please don't hesitate to contact our customer service team.</p>
+        <p>If you did not cancel or have any questions about this cancellation, please contact our customer service team.</p>
         <p>Mail Contact : customersupport@goshoes.com</p>
         <p>Best regards,<br>
         GoShoes Team</p>
