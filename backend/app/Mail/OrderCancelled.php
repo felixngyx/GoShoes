@@ -13,14 +13,12 @@ class OrderCancelled extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /**
-     * Create a new message instance.
-     */
-    public function __construct()
-    {
-        //
-    }
+    private $order;
 
+    public function __construct($order)
+    {
+        $this->order = $order;
+    }
     /**
      * Get the message envelope.
      */
@@ -36,8 +34,20 @@ class OrderCancelled extends Mailable
      */
     public function content(): Content
     {
+        $customerName = 'Customer';
+        $orderNumber = '';
+    
+        if (is_array($this->order) && isset($this->order['user']) && is_array($this->order['user'])) {
+            $customerName = $this->order['user']['name'] ?? 'Customer';
+            $orderNumber = $this->order['sku'] ?? '';
+        }
+    
         return new Content(
-            view: 'view.name',
+            view: 'mail.order-cancelled',
+            with: [
+                'customerName' => $customerName,
+                'orderNumber' => $orderNumber,
+            ],
         );
     }
 
@@ -51,3 +61,5 @@ class OrderCancelled extends Mailable
         return [];
     }
 }
+
+
