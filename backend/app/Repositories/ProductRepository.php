@@ -195,73 +195,79 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     private function getBaseQuery($filters = [])
     {
         $query = "
-           WITH variant_info AS (
-                SELECT
-                    pv.product_id,
-                    pv.color_id,
-                    vc.color,
-                    JSON_ARRAYAGG(
-                        JSON_OBJECT(
-                            'product_variant_id', pv.id,
-                            'size_id', pv.size_id,
-                            'size', vs.size,
-                            'quantity', pv.quantity
-                        )
-                    ) AS sizes,
-                    iv.image,
-                    SUM(pv.quantity) AS total_quantity
-                FROM product_variants pv
-                LEFT JOIN variant_colors vc ON pv.color_id = vc.id
-                LEFT JOIN variant_sizes vs ON pv.size_id = vs.id
-                LEFT JOIN image_variants iv ON pv.product_id = iv.product_id
-                    AND pv.color_id = iv.color_id
-                GROUP BY pv.product_id, pv.color_id, vc.color, iv.image
-            ),
-            category_info AS (
-                SELECT
-                    product_id,
-                    JSON_ARRAYAGG(
-                        JSON_OBJECT(
-                            'name', name,
-                            'parent_id', parent_id,
-                            'description', description,
-                            'slug', slug,
-                            'id', id
-                        )
-                    ) AS categories
-                FROM (
-                    SELECT DISTINCT
-                        pc.product_id,
-                        c.name,
-                        c.parent_id,
-                        c.description,
-                        c.slug,
-                        c.id
-                    FROM product_category pc
-                    LEFT JOIN categories c ON pc.category_id = c.id
-                ) AS distinct_categories
-                GROUP BY product_id
+    WITH distinct_variants AS (
+    SELECT DISTINCT
+        pv.product_id,
+        pv.color_id,
+        pv.id AS product_variant_id,
+        pv.size_id,
+        vs.size,
+        pv.quantity,
+        vc.color,
+        iv.image
+    FROM product_variants pv
+    LEFT JOIN variant_colors vc ON pv.color_id = vc.id
+    LEFT JOIN variant_sizes vs ON pv.size_id = vs.id
+    LEFT JOIN image_variants iv ON pv.product_id = iv.product_id
+        AND pv.color_id = iv.color_id
+),
+variant_info AS (
+    SELECT
+        dv.product_id,
+        dv.color_id,
+        dv.color,
+        JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'product_variant_id', dv.product_variant_id,
+                'size_id', dv.size_id,
+                'size', dv.size,
+                'quantity', dv.quantity
             )
-            SELECT
-                p.*,
-                b.name AS brand_name,
-                JSON_ARRAYAGG(
-                    JSON_OBJECT(
-                        'color_id', vi.color_id,
-                        'color', vi.color,
-                        'sizes', vi.sizes,
-                        'image', vi.image,
-                        'total_quantity', vi.total_quantity
-                    )
-                ) AS variants,
-                ci.categories
-            FROM products p
-            LEFT JOIN variant_info vi ON p.id = vi.product_id
-            LEFT JOIN category_info ci ON p.id = ci.product_id
-            LEFT JOIN product_category pc ON p.id = pc.product_id
-            LEFT JOIN brands b ON p.brand_id = b.id
-            WHERE 1=1
-        ";
+        ) AS sizes,
+        MAX(dv.image) AS image, -- Chọn 1 hình đại diện
+        SUM(dv.quantity) AS total_quantity
+    FROM distinct_variants dv
+    GROUP BY dv.product_id, dv.color_id, dv.color
+),
+category_info AS (
+    SELECT
+        pc.product_id,
+        JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'name', c.name,
+                'parent_id', c.parent_id,
+                'description', c.description,
+                'slug', c.slug,
+                'id', c.id
+            )
+        ) AS categories
+    FROM product_category pc
+    LEFT JOIN categories c ON pc.category_id = c.id
+    GROUP BY pc.product_id
+)
+SELECT
+    p.*,
+    p.description,
+    b.name AS brand_name,
+    COALESCE(
+        JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'color_id', vi.color_id,
+                'color', vi.color,
+                'sizes', vi.sizes,
+                'image', vi.image,
+                'total_quantity', vi.total_quantity
+            )
+        ),
+        JSON_ARRAY()
+    ) AS variants,
+    ci.categories
+FROM products p
+LEFT JOIN variant_info vi ON p.id = vi.product_id
+LEFT JOIN category_info ci ON p.id = ci.product_id
+LEFT JOIN brands b ON p.brand_id = b.id
+WHERE 1 = 1
+    ";
 
         // Thêm các điều kiện lọc
         if (!empty($filters['id'])) {
@@ -298,8 +304,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             $query .= " AND p.is_deleted = " . intval($filters['is_deleted']);
         }
 
-        $query .= " GROUP BY p.id,  ci.categories ORDER BY p.id";
-
+        $query .= " GROUP BY p.id, b.name, ci.categories ORDER BY p.id";
         return $query;
     }
 
