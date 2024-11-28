@@ -42,24 +42,12 @@ const Sidebar = () => {
 					<FaMapMarkedAlt /> Address
 				</Link>
 				<Link
-					to="/account/payment"
-					className={`flex items-center gap-4 ${isActive('payment')}`}
-				>
-					<FaCreditCard /> Payment
-				</Link>
-				<Link
 					to="/account/notifications"
 					className={`flex items-center gap-4 ${isActive(
 						'notifications'
 					)}`}
 				>
 					<FaBell /> Notifications
-				</Link>
-				<Link
-					to="/account/security"
-					className={`flex items-center gap-4 ${isActive('security')}`}
-				>
-					<FaLock /> Security
 				</Link>
 				<Link
 					to="/account/delete"

@@ -724,7 +724,6 @@ class OrderController extends Controller
                         break;
                     case 'cancelled':
                         $orderPayment->update(['status' => 'failed']);
-
                         // Tạo thông báo
                         Notification::create([
                             'user_id' => $order->user_id,
@@ -745,9 +744,9 @@ class OrderController extends Controller
                             ]);
 
                             $orderData = $order->toArray();
-                            $jsonOrderData = json_encode($orderData);
+                           
                             Mail::to($order->user->email)
-                                ->queue(new OrderCancelled($jsonOrderData));
+                                ->queue(new OrderCancelled($orderData));
                         } catch (\Exception $e) {
                             Log::error('Email sending error: ' . $e->getMessage());
                         }
