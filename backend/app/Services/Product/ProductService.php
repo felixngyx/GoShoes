@@ -64,7 +64,7 @@ class ProductService implements ProductServiceInterface
     {
         return response()->json([
             'success' => true,
-            'data' => $this->productRepository->listProduct($request, $request['page'], $request['perPage']),
+            'data' => $this->productRepository->listProduct($request, $request['page'] ?? 1, $request['perPage'] ?? 10),
         ]);
     }
 
