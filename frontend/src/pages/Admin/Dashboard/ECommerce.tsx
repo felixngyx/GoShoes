@@ -4,12 +4,7 @@ import ChartOne from '../../../components/admin/Charts/ChartOne';
 import ChartTwo from '../../../components/admin/Charts/ChartTwo';
 import { useEffect, useState } from 'react';
 import axiosClient from '../../../apis/axiosClient';
-import {
-	ShoppingCart,
-	DollarSign,
-	Package,
-	Users
-} from 'lucide-react';
+import { ShoppingCart, DollarSign, Package, Users } from 'lucide-react';
 
 interface MonthlyRevenue {
 	month: number;
@@ -22,9 +17,10 @@ interface TopProduct {
 	total_revenue: number;
 }
 
-
 const ECommerce: React.FC = () => {
-	const [currentFilter, setCurrentFilter] = useState<'today' | 'monthly' | 'yearly' | 'all'>('all');
+	const [currentFilter, setCurrentFilter] = useState<
+		'today' | 'monthly' | 'yearly' | 'all'
+	>('all');
 	const [statistics, setStatistics] = useState({
 		todayRevenue: 0,
 		totalRevenue: 0,
@@ -35,7 +31,7 @@ const ECommerce: React.FC = () => {
 		topProducts: [] as TopProduct[],
 		approvedPercentage: 0,
 		pendingPercentage: 0,
-		rejectedPercentage: 0
+		rejectedPercentage: 0,
 	});
 
 	useEffect(() => {
@@ -47,12 +43,12 @@ const ECommerce: React.FC = () => {
 		try {
 			const [monthlyRes, topProductsRes] = await Promise.all([
 				axiosClient.get('/revenue/monthly', {
-					params: { filter: currentFilter }
+					params: { filter: currentFilter },
 				}),
-				axiosClient.get('/revenue/top-products')
+				axiosClient.get('/revenue/top-products'),
 			]);
 
-			setStatistics(prev => ({
+			setStatistics((prev) => ({
 				...prev,
 				todayRevenue: monthlyRes.data.overview.today_revenue || 0,
 				totalRevenue: monthlyRes.data.overview.total_revenue || 0,
@@ -60,7 +56,7 @@ const ECommerce: React.FC = () => {
 				totalUsers: monthlyRes.data.overview.total_users || 0,
 				totalOrders: monthlyRes.data.overview.total_orders || 0,
 				monthlyRevenue: monthlyRes.data.revenue || [],
-				topProducts: topProductsRes.data.top_products || []
+				topProducts: topProductsRes.data.top_products || [],
 			}));
 		} catch (error) {
 			console.error('Error loading statistics:', error);
@@ -70,12 +66,11 @@ const ECommerce: React.FC = () => {
 	const fetchRefundStatistics = async () => {
 		try {
 			const response = await axiosClient.get('/refunds/static');
-			console.log(response.data);
-			setStatistics(prev => ({
+			setStatistics((prev) => ({
 				...prev,
-				approvedPercentage: response.data.statistics.approved_percentage ,
+				approvedPercentage: response.data.statistics.approved_percentage,
 				pendingPercentage: response.data.statistics.pending_percentage,
-				rejectedPercentage: response.data.statistics.rejected_percentage
+				rejectedPercentage: response.data.statistics.rejected_percentage,
 			}));
 		} catch (error) {
 			console.error('Error loading refund statistics:', error);
@@ -85,7 +80,7 @@ const ECommerce: React.FC = () => {
 	const formatCurrency = (amount: number) => {
 		return new Intl.NumberFormat('vi-VN', {
 			style: 'currency',
-			currency: 'VND'
+			currency: 'VND',
 		}).format(amount);
 	};
 
@@ -98,7 +93,10 @@ const ECommerce: React.FC = () => {
 					rate="0.43%"
 					levelUp
 				>
-					<ShoppingCart className="fill-primary dark:fill-white" size={22} />
+					<ShoppingCart
+						className="fill-primary dark:fill-white"
+						size={22}
+					/>
 				</CardDataStats>
 
 				<CardDataStats
@@ -137,9 +135,9 @@ const ECommerce: React.FC = () => {
 				/>
 
 				<ChartTwo
-					data={statistics.topProducts.map(item => ({
+					data={statistics.topProducts.map((item) => ({
 						name: item.name,
-						total_revenue: item.total_revenue
+						total_revenue: item.total_revenue,
 					}))}
 				/>
 			</div>
@@ -168,7 +166,18 @@ const ECommerce: React.FC = () => {
 								</p>
 							</div>
 							<div className="rounded-full bg-green-100 p-2.5 dark:bg-green-900/20">
-								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className="text-green-600"
+								>
 									<path d="M20 13c0 5-3.5 7.5-7 8h-4c-3.5-0.5-7-3-7-8 0-2.5 2-5 5-5" />
 									<path d="M12 16v-4" />
 									<path d="M12 8h.01" />
@@ -188,7 +197,18 @@ const ECommerce: React.FC = () => {
 								</p>
 							</div>
 							<div className="rounded-full bg-yellow-100 p-2.5 dark:bg-yellow-900/20">
-								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-600">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className="text-yellow-600"
+								>
 									<path d="M12 2v10l4 4" />
 									<circle cx="12" cy="14" r="8" />
 								</svg>
@@ -207,7 +227,18 @@ const ECommerce: React.FC = () => {
 								</p>
 							</div>
 							<div className="rounded-full bg-red-100 p-2.5 dark:bg-red-900/20">
-								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className="text-red-600"
+								>
 									<path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
 									<path d="M5 7l1-1h12l1 1v12l-1 1H6l-1-1V7z" />
 								</svg>

@@ -401,12 +401,23 @@ const AddProduct = () => {
 			setLoading(true);
 			const thumbnailName = await uploadImageToCloudinary(thumbnailFile!);
 
+			// Tính tổng stock_quantity từ tất cả các variant
+			// const totalStockQuantity = data.variants.reduce((total, variant) => {
+			// 	return (
+			// 		total +
+			// 		variant.variant_details.reduce((variantTotal, detail) => {
+			// 			return variantTotal + (Number(detail.quantity) || 0);
+			// 		}, 0)
+			// 	);
+			// }, 0);
+
 			const formattedData = {
 				...data,
 				is_deleted: false,
 				slug: generateSlug(data.name),
 				thumbnail: thumbnailName,
 				description: description,
+				// stock_quantity: totalStockQuantity,
 				variants: await Promise.all(
 					data.variants.map(async (variant, index) => {
 						const imageUrls = await Promise.all(
@@ -445,8 +456,6 @@ const AddProduct = () => {
 					})
 				),
 			};
-
-			formattedData.stock_quantity = stockQuantity;
 
 			console.log('Formatted submit data:', formattedData);
 			const response = await productService.create(formattedData);

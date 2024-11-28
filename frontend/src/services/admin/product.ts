@@ -81,11 +81,13 @@ export interface PRODUCT_UPDATE {
 }
 
 const productService = {
-	getAll: async (page: number = 1, limit: number = 5): Promise<PRODUCT[]> => {
+	getAll: async (
+		page: number = 1,
+		limit: number = 100
+	): Promise<PRODUCT[]> => {
 		const res = await axiosClient.get(
-			`/products?page=${page}&per_page=${limit}`
+			`/products?page=${page}&perPage=${limit}`
 		);
-		console.log('res----------', res);
 		return res.data.data;
 	},
 	getById: async (id: number) => {

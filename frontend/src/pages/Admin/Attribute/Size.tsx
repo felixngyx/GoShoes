@@ -177,6 +177,8 @@ const Size = () => {
 	// Add submit handler
 	const onSubmit = async (data: SizeType) => {
 		try {
+			setIsModalOpen(false);
+			toast.loading(`${editingSize ? 'Updating' : 'Adding'} size`);
 			if (editingSize) {
 				// Handle edit
 				await updateSize(editingSize, data);
@@ -184,8 +186,9 @@ const Size = () => {
 				// Handle add
 				await createSize(data);
 			}
+			toast.dismiss();
+			toast.success(`${editingSize ? 'Update' : 'Add'} size successfully`);
 			await fetchSize(); // Refresh the list
-			closeModal();
 			reset(); // Reset form
 		} catch (error: any) {
 			toast.error(error.response?.data?.message || 'Something went wrong');
