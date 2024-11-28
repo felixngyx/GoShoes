@@ -4,9 +4,7 @@ import { Status } from '.';
 import categoryService, { CATEGORY } from '../../../services/admin/category';
 import sizeService, { SIZE } from '../../../services/admin/size';
 import brandService, { BRAND } from '../../../services/admin/brand';
-import productService, {
-	PRODUCT_UPLOAD,
-} from '../../../services/admin/product';
+import productService, { PRODUCT } from '../../../services/admin/product';
 import toast from 'react-hot-toast';
 import Joi from 'joi';
 import { joiResolver } from '@hookform/resolvers/joi';
@@ -17,6 +15,7 @@ import colorService from '../../../services/admin/color';
 import { Eye, TrashIcon, Logs, Upload, X, ArrowLeft } from 'lucide-react';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import RichTextEditor from '../../../components/admin/RichTextEditor';
+import generateSlug from '../../../common/generateSlug';
 
 // Add form validation schema
 const productSchema = Joi.object({
@@ -81,12 +80,11 @@ const productSchema = Joi.object({
 					'number.base': 'Please select a color',
 					'any.invalid': 'Please select a color',
 				}),
-				image_variant: Joi.string().required().messages({
+				image: Joi.string().required().messages({
 					'string.empty': 'Variant image cannot be empty',
 					'any.required': 'Variant image is required',
 				}),
-				sku: Joi.string().allow('').optional(),
-				size: Joi.array()
+				variant_details: Joi.array()
 					.items(
 						Joi.object({
 							size_id: Joi.number().min(1).required().messages({
@@ -99,6 +97,7 @@ const productSchema = Joi.object({
 								'number.min': 'Quantity must be greater than 0',
 								'any.required': 'Quantity is required',
 							}),
+							sku: Joi.string().allow('').optional(),
 						})
 					)
 					.min(1)
@@ -123,6 +122,7 @@ const productSchema = Joi.object({
 type VariantSize = {
 	size_id: number;
 	quantity: number;
+	sku: string;
 };
 
 const AddProduct = () => {
@@ -146,18 +146,18 @@ const AddProduct = () => {
 		clearErrors,
 		setValue,
 		formState: { errors },
-	} = useForm<PRODUCT_UPLOAD>({
+	} = useForm<PRODUCT>({
 		resolver: joiResolver(productSchema),
 		defaultValues: {
 			variants: [
 				{
 					color_id: 0,
-					image_variant: '',
-					sku: '',
-					size: [
+					image: '',
+					variant_details: [
 						{
 							size_id: 0,
 							quantity: 0,
+							sku: '',
 						},
 					],
 				},
@@ -219,7 +219,7 @@ const AddProduct = () => {
 
 				// Khởi tạo variantSizes cho variant mặc định
 				setVariantSizes({
-					0: [{ size_id: 0, quantity: 0 }],
+					0: [{ size_id: 0, quantity: 0, sku: '' }],
 				});
 			} catch (error) {
 				console.error('Error:', error);
@@ -273,12 +273,12 @@ const AddProduct = () => {
 	const addVariant = () => {
 		append({
 			color_id: 0,
-			image_variant: '',
-			sku: '',
-			size: [
+			image: '',
+			variant_details: [
 				{
 					size_id: 0,
 					quantity: 0,
+					sku: '',
 				},
 			],
 		});
@@ -288,7 +288,7 @@ const AddProduct = () => {
 		// Khởi tạo state cho variant mới với giá trị mặc định
 		setVariantSizes((prev) => ({
 			...prev,
-			[newIndex]: [{ size_id: 0, quantity: 0 }],
+			[newIndex]: [{ size_id: 0, quantity: 0, sku: '' }],
 		}));
 
 		// Khởi tạo previousValues cho variant mới
@@ -387,43 +387,77 @@ const AddProduct = () => {
 		remove(index);
 	};
 
-	const onSubmit = async (data: PRODUCT_UPLOAD) => {
+	// Hàm để tạo SKU cho variant
+	const generateVariantSKU = (
+		productSKU: string,
+		colorName: string,
+		size: string
+	) => {
+		return `${productSKU}-${colorName}-${size}`;
+	};
+
+	const onSubmit = async (data: PRODUCT) => {
 		try {
 			setLoading(true);
+			const thumbnailName = await uploadImageToCloudinary(thumbnailFile!);
 
-			const thumbnailName = thumbnailFile?.name || '';
-
-			// Xử lý variants để format image_variant thành chuỗi
 			const formattedData = {
 				...data,
+				is_deleted: false,
+				slug: generateSlug(data.name),
 				thumbnail: thumbnailName,
 				description: description,
-				variants: data.variants.map((variant, index) => {
-					const imageNames =
-						variantImageFiles[index]
-							?.map((file) => file.name)
-							.join(', ') || '';
+				variants: await Promise.all(
+					data.variants.map(async (variant, index) => {
+						const imageUrls = await Promise.all(
+							(variantImageFiles[index] || []).map(async (file) => {
+								const uploadedUrl = await uploadImageToCloudinary(file);
+								return uploadedUrl;
+							})
+						);
 
-					return {
-						...variant,
-						image_variant: imageNames,
-					};
-				}),
+						const color = colors.find((c) => c.id === variant.color_id);
+						const colorName = color ? color.color : '';
+
+						return {
+							...variant,
+							variant_details: variant.variant_details.map((detail) => {
+								// Tìm size name cho từng variant detail
+								const size = sizes.find(
+									(s) => Number(s.id) === Number(detail.size_id)
+								);
+								const sizeName = size ? size.size : '';
+
+								// Tạo SKU riêng cho từng combination của color và size
+								const variantSKU = generateVariantSKU(
+									data.sku,
+									colorName,
+									sizeName
+								);
+
+								return {
+									...detail,
+									sku: variantSKU,
+								};
+							}),
+							image: imageUrls.join(', '),
+						};
+					})
+				),
 			};
 
-			// Tính toán stock_quantity từ tổng số lượng các variant
 			formattedData.stock_quantity = stockQuantity;
 
 			console.log('Formatted submit data:', formattedData);
-
-			// TODO: Gọi API để tạo sản phẩm
-			// await productService.create(formattedData);
-
-			// toast.success('Tạo sản phẩm thành công!');
-			// navigate('/admin/products');
-		} catch (error) {
+			const response = await productService.create(formattedData);
+			console.log('Response:', response);
+			if (response.status === 201) {
+				toast.success('Create product successfully');
+				navigate('/admin/product');
+			}
+		} catch (error: any) {
 			console.error('Error submitting form:', error);
-			toast.error('Có lỗi xảy ra khi tạo sản phẩm');
+			toast.error(error.response.data.message);
 		} finally {
 			setLoading(false);
 		}
@@ -458,11 +492,12 @@ const AddProduct = () => {
 		const newSize: VariantSize = {
 			size_id: 0,
 			quantity: 0,
+			sku: '',
 		};
 
 		// Lấy giá trị hiện tại từ form thay vì fields
-		const currentValues =
-			control._formValues.variants[variantIndex].size || [];
+		const currentValues: VariantSize[] =
+			control._formValues.variants[variantIndex].variant_details || [];
 
 		setVariantSizes((prev) => ({
 			...prev,
@@ -470,19 +505,22 @@ const AddProduct = () => {
 		}));
 
 		// Cập nhật form với giá trị hiện tại + size mới
-		setValue(`variants.${variantIndex}.size`, [...currentValues, newSize]);
+		setValue(`variants.${variantIndex}.variant_details`, [
+			...currentValues,
+			newSize,
+		]);
 	};
 
 	// Hàm xử lý xóa size
 	const handleRemoveSize = (variantIndex: number, sizeIndex: number) => {
 		// Lấy giá trị hiện tại của variant sizes từ form
 		const currentVariant = control._formValues.variants[variantIndex];
-		const sizeToRemove = currentVariant.size[sizeIndex];
+		const sizeToRemove = currentVariant.variant_details[sizeIndex];
 
 		// Trừ đi số lượng của size bị xóa khỏi tổng stock quantity
 		setStockQuantity((prev) => prev - (Number(sizeToRemove.quantity) || 0));
 
-		const updatedSizes = currentVariant.size.filter(
+		const updatedSizes = currentVariant.variant_details.filter(
 			(_: VariantSize, idx: number) => idx !== sizeIndex
 		);
 
@@ -493,7 +531,7 @@ const AddProduct = () => {
 		}));
 
 		// Cập nhật giá trị trong form
-		setValue(`variants.${variantIndex}.size`, updatedSizes);
+		setValue(`variants.${variantIndex}.variant_details`, updatedSizes);
 	};
 
 	// Thêm hàm kiểm tra size đã được chọn chưa
@@ -503,7 +541,7 @@ const AddProduct = () => {
 		currentSizeIndex: number
 	) => {
 		const variant = control._formValues.variants[variantIndex];
-		return variant.size.some(
+		return variant.variant_details.some(
 			(size: VariantSize, index: number) =>
 				index !== currentSizeIndex &&
 				Number(size.size_id) === Number(sizeId)
@@ -526,10 +564,10 @@ const AddProduct = () => {
 
 			// Cập nhật giá trị cho form
 			setValue(
-				`variants.${variantIndex}.image_variant`,
+				`variants.${variantIndex}.image`,
 				filesArray[0].name // Tạm thời lấy tên file đu tiên
 			);
-			clearErrors(`variants.${variantIndex}.image_variant`);
+			clearErrors(`variants.${variantIndex}.image`);
 		}
 	};
 
@@ -545,10 +583,10 @@ const AddProduct = () => {
 
 			// Cập nhật lại giá trị form nếu không còn ảnh nào
 			if (newFiles[variantIndex].length === 0) {
-				setValue(`variants.${variantIndex}.image_variant`, '');
+				setValue(`variants.${variantIndex}.image`, '');
 			} else {
 				setValue(
-					`variants.${variantIndex}.image_variant`,
+					`variants.${variantIndex}.image`,
 					newFiles[variantIndex][0].name
 				);
 			}
@@ -1022,12 +1060,9 @@ const AddProduct = () => {
 											<span className="label-text font-bold">
 												Images
 											</span>
-											{errors.variants?.[index]?.image_variant && (
+											{errors.variants?.[index]?.image && (
 												<span className="label-text text-red-500 text-xs ms-2">
-													{
-														errors.variants[index].image_variant
-															?.message
-													}
+													{errors.variants[index].image?.message}
 												</span>
 											)}
 										</div>
@@ -1109,11 +1144,12 @@ const AddProduct = () => {
 										<span className="label-text font-bold">
 											Size and Quantity
 										</span>
-										{errors.variants?.[index]?.size && (
+										{errors.variants?.[index]?.variant_details && (
 											<span className="label-text text-red-500 text-xs ms-2">
-												{errors.variants[index].size.root
+												{errors.variants[index].variant_details.root
 													?.message ||
-													errors.variants[index].size?.message}
+													errors.variants[index].variant_details
+														?.message}
 											</span>
 										)}
 									</div>
@@ -1128,7 +1164,7 @@ const AddProduct = () => {
 														<select
 															className="select select-bordered select-sm"
 															{...register(
-																`variants.${index}.size.${sizeIndex}.size_id`
+																`variants.${index}.variant_details.${sizeIndex}.size_id`
 															)}
 														>
 															<option value="0">
@@ -1158,10 +1194,10 @@ const AddProduct = () => {
 															placeholder="Quantity"
 															className="input input-bordered input-sm w-full"
 															{...register(
-																`variants.${index}.size.${sizeIndex}.quantity`
+																`variants.${index}.variant_details.${sizeIndex}.quantity`
 															)}
 															onChange={(e) => {
-																const inputPath = `variants.${index}.size.${sizeIndex}.quantity`;
+																const inputPath = `variants.${index}.variant_details.${sizeIndex}.quantity`;
 																const newValue =
 																	Number(e.target.value) || 0;
 																const oldValue =
@@ -1195,25 +1231,25 @@ const AddProduct = () => {
 															/>
 														</button>
 													</div>
-													{errors.variants?.[index]?.size?.[
-														sizeIndex
-													]?.size_id && (
+													{errors.variants?.[index]
+														?.variant_details?.[sizeIndex]
+														?.size_id && (
 														<span className="label-text text-red-500 text-xs ms-2">
 															{
-																errors.variants[index].size[
-																	sizeIndex
-																]?.size_id?.message
+																errors.variants[index]
+																	.variant_details[sizeIndex]
+																	?.size_id?.message
 															}
 														</span>
 													)}
-													{errors.variants?.[index]?.size?.[
-														sizeIndex
-													]?.quantity && (
+													{errors.variants?.[index]
+														?.variant_details?.[sizeIndex]
+														?.quantity && (
 														<span className="label-text text-red-500 text-xs ms-2">
 															{
-																errors.variants[index].size[
-																	sizeIndex
-																]?.quantity?.message
+																errors.variants[index]
+																	.variant_details[sizeIndex]
+																	?.quantity?.message
 															}
 														</span>
 													)}

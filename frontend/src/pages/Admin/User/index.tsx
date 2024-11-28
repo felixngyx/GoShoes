@@ -5,20 +5,34 @@ import { User as UserType } from '../../../services/admin/user';
 import { Link } from 'react-router-dom';
 import { TrashIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import LoadingIcon from '../../../components/common/LoadingIcon';
 
 const User = () => {
 	const [users, setUsers] = useState<UserType[]>([]);
 	const [loading, setLoading] = useState(false);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [itemsPerPage] = useState(5);
+	const [totalPages, setTotalPages] = useState(0);
 
 	const fetchUsers = async () => {
 		try {
 			const response = await userService.getAll();
-			console.log(response);
-			setUsers(response);
+			const user = Array.isArray(response)
+				? response
+				: (Object.values(response) as UserType[]);
+			setUsers(user);
+			setTotalPages(Math.ceil(user.length / itemsPerPage));
 		} catch (error) {
 			console.error('Error fetching users:', error);
 		}
 	};
+
+	const getCurrentUsers = () => {
+		const indexOfLastItem = currentPage * itemsPerPage;
+		const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+		return users.slice(indexOfFirstItem, indexOfLastItem);
+	};
+
 	useEffect(() => {
 		setLoading(true);
 		fetchUsers();
@@ -46,7 +60,7 @@ const User = () => {
 				User List
 			</h4>
 
-			{/* <div className="relative overflow-x-auto border border-stroke">
+			<div className="relative overflow-x-auto border border-stroke">
 				<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 					<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
 						<tr>
@@ -95,11 +109,15 @@ const User = () => {
 						{loading ? (
 							<tr>
 								<td colSpan={5} className="text-center py-4">
-									Đang tải...
+									<LoadingIcon
+										type="spinner"
+										color="primary"
+										size="md"
+									/>
 								</td>
 							</tr>
 						) : (
-							users.map((user) => (
+							getCurrentUsers().map((user) => (
 								<tr
 									key={user.id}
 									className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
@@ -154,13 +172,53 @@ const User = () => {
 						)}
 					</tbody>
 				</table>
-			</div> */}
+			</div>
 			<div className="join ms-auto">
-				<button className="join-item btn btn-sm">1</button>
-				<button className="join-item btn btn-sm">2</button>
-				<button className="join-item btn btn-sm btn-disabled">...</button>
-				<button className="join-item btn btn-sm">99</button>
-				<button className="join-item btn btn-sm">100</button>
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === 1 ? 'btn-disabled' : ''
+					}`}
+					onClick={() => setCurrentPage(1)}
+				>
+					«
+				</button>
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === 1 ? 'btn-disabled' : ''
+					}`}
+					onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+				>
+					‹
+				</button>
+				{[...Array(totalPages)].map((_, index) => (
+					<button
+						key={index + 1}
+						className={`join-item btn btn-sm ${
+							currentPage === index + 1 ? 'btn-active' : ''
+						}`}
+						onClick={() => setCurrentPage(index + 1)}
+					>
+						{index + 1}
+					</button>
+				))}
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === totalPages ? 'btn-disabled' : ''
+					}`}
+					onClick={() =>
+						setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+					}
+				>
+					›
+				</button>
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === totalPages ? 'btn-disabled' : ''
+					}`}
+					onClick={() => setCurrentPage(totalPages)}
+				>
+					»
+				</button>
 			</div>
 		</div>
 	);

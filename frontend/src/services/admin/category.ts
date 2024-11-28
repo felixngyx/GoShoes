@@ -1,8 +1,10 @@
 import axiosClient from '../../apis/axiosClient';
 
 export interface CATEGORY {
-	id: number;
+	id?: number;
 	name: string;
+	slug: string;
+	description: string;
 	products_count: number;
 }
 
