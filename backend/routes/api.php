@@ -219,6 +219,8 @@ Route::group([
         Route::get('/', [RefundController::class, 'index']);
         Route::post('/', [RefundController::class, 'store']);
         Route::post('/approve', [RefundController::class,'approve']);
+        Route::post('/deny', [RefundController::class,'deny']);
+        Route::get('/static', [RefundController::class,'getRefundStatistics']);
         Route::get('/{id}', [RefundController::class, 'viewDetailRefundRequest']);
     });
 });
