@@ -65,37 +65,39 @@ const CheckoutPage = () => {
         total: cartOrderSummary?.total || 0,
       };
     } else if (buyAgainItems?.length > 0) {
-      // Thêm xử lý cho buyAgainItems
+      console.log('Buy Again Items:', buyAgainItems);
       return {
-        items: buyAgainItems.map((item: {
-          id: number;
-          name: string;
-          price: number;
-          quantity: number;
-          thumbnail: string;
-          total: number;
-          product_variant: any;
-        }) => ({
-          id: item.id,
-          name: item.name,
-          price: Number(item.price),
-          quantity: item.quantity,
-          thumbnail: item.thumbnail,
-          total: item.total,
-          product_variant: item.product_variant,
-          // Thêm các trường variant nếu có
-          variant: item.product_variant ? {
-            id: item.product_variant.variant_id,
-            size: {
-              size: item.product_variant.size?.size
+        items: buyAgainItems.map((item: any) => {
+          console.log('Processing item:', item);
+          return {
+            id: item.id,
+            name: item.name,
+            price: Number(item.price),
+            quantity: item.quantity,
+            thumbnail: item.thumbnail,
+            total: item.total,
+            product_variant: {
+              variant_id: item.product_variant?.variant_id,
+              size: item.product_variant?.size,
+              color: item.product_variant?.color,
+              size_id: item.product_variant?.size_id,
+              color_id: item.product_variant?.color_id
             },
-            color: {
-              color: item.product_variant.color?.color
+            variant: {
+              id: item.product_variant?.variant_id,
+              size: {
+                size: item.product_variant?.size_id,
+                size_name: item.product_variant?.size
+              },
+              color: {
+                color_id: item.product_variant?.color_id,
+                color_name: item.product_variant?.color
+              }
             }
-          } : null,
-        })),
+          };
+        }),
         subtotal: buyAgainItems.reduce((sum: number, item) => sum + item.total, 0),
-        total: buyAgainItems.reduce((sum: number, item) => sum + item.total, 0),
+        total: buyAgainItems.reduce((sum: number, item) => sum + item.total, 0)
       };
     } else {
       return {
@@ -265,8 +267,8 @@ const CheckoutPage = () => {
       const items = orderState.items.map(item => ({
         product_id: Number(item.id || item.product_id),
         quantity: Number(item.quantity),
-        ...(item.variant?.id || item.product_variant?.id) && {
-          variant_id: Number(item.variant?.id || item.product_variant?.id)
+        ...(item.variant?.id || item.product_variant?.variant_id) && {
+          variant_id: Number(item.variant?.id || item.product_variant?.variant_id)
         }
       }));
 
@@ -432,7 +434,7 @@ const CheckoutPage = () => {
     setDiscountInfo(null);
   };
 
-  // Sửa lại phần hiển thị discount
+  // Sửa lại phần hiển th discount
   const calculateDiscount = () => {
     if (discountInfo?.discount_info) {
       const percent = parseFloat(discountInfo.discount_info.percent);
@@ -607,7 +609,7 @@ const CheckoutPage = () => {
       {/* Thêm PageTitle component */}
       <PageTitle title={pageTitle} />
       
-      {/* Chỉ hiện modal khi không đang loading v�� thỏa điều kiện */}
+      {/* Chỉ hiện modal khi không đang loading v thỏa điều kiện */}
       {!isLoadingAddress && showAddressForm && <AddressFormModal />}
       {!isLoadingAddress && showAddressSelection && !showAddressForm && (
         <AddressSelectionModal />
@@ -624,15 +626,17 @@ const CheckoutPage = () => {
               {orderState.items.map((item: any) => (
                 <div key={item.variant?.id || item.id} className="flex gap-4 border-b pb-4">
                   <img
-                    src={item.thumbnail || item.product_variant?.image_variant}
+                    src={item.thumbnail}
                     className="w-24 h-24 object-cover rounded"
                   />
                   <div className="flex-1">
                     <h3 className="font-medium">{item.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      Size: {item.variant?.size?.size}<br />
-                      Color: {item.variant?.color?.color}
-                    </p>
+                    {(item.variant || item.product_variant) && (
+                      <p className="text-sm text-gray-500">
+                        Size: {item.variant?.size?.size_name || item.product_variant?.size}<br />
+                        Color: {item.variant?.color?.color_name || item.product_variant?.color}
+                      </p>
+                    )}
                     <div className="flex justify-between items-center mt-2">
                       <div className="flex items-center space-x-2">
                         <button
@@ -888,10 +892,13 @@ const CheckoutPage = () => {
                   >
                     <span>
                       {item.quantity}x {item.name}
-                      {(item.size || item.color) && (
+                      {(item.variant || item.product_variant) && (
                         <span className="text-gray-500">
                           {" "}
-                          ({[item.color, item.size].filter(Boolean).join("/")})
+                          ({[
+                            item.variant?.color?.color_name || item.product_variant?.color,
+                            item.variant?.size?.size_name || item.product_variant?.size
+                          ].filter(Boolean).join("/")})
                         </span>
                       )}
                     </span>
