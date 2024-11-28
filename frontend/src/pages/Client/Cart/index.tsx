@@ -191,7 +191,7 @@ const Cart = () => {
       name: item.product_variant.product.name,
       price: Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price),
       quantity: item.quantity,
-      thumbnail: item.product_variant.image_variants.image.split(", ")[0],
+      thumbnail: item.product_variant.image_variants?.image?.split(", ")[0] || "",
       variant: {
         id: item.product_variant.id,
         size: {
@@ -274,10 +274,9 @@ const Cart = () => {
               <div className="space-y-4">
                 <AnimatePresence>
                   {cartItemsWithSelected.map((item: any) => {
-                    // Tách mảng image_variants
-                    const images =
-                      item.product_variant.image_variants.image.split(", ");
-                    const firstImage = images[0]; // Lấy ảnh đầu tiên
+                    // Thêm kiểm tra null safety khi tách mảng image_variants
+                    const images = item.product_variant.image_variants?.image?.split(", ") || [];
+                    const firstImage = images[0] || ""; // Thêm giá trị mặc định
 
                     return (
                       <motion.div
