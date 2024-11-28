@@ -1,14 +1,14 @@
 import axiosClient from '../../apis/axiosClient';
 
 export interface BRAND {
-	id: number;
+	id?: number;
 	name: string;
-	slug: string;
+	slug?: string;
 	logo_url: string;
-	created_at: string;
-	updated_at: string;
-	products_count: number;
-	average_rating: string;
+	created_at?: string;
+	updated_at?: string;
+	products_count?: number;
+	average_rating?: string;
 }
 
 export interface BrandResponse {
@@ -23,8 +23,8 @@ export interface BrandResponse {
 			last_page: number;
 			from: number;
 			to: number;
-		}
-	}
+		};
+	};
 }
 
 const brandService = {
