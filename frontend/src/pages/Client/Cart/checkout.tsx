@@ -45,10 +45,18 @@ const CheckoutPage = () => {
             price: buyNowProduct.price,
             quantity: buyNowProduct.quantity,
             thumbnail: buyNowProduct.thumbnail,
-            variant: buyNowProduct.variant,
+            variant: {
+              id: buyNowProduct.variant?.variant_id,
+              size: {
+                size: buyNowProduct.variant?.size?.size,
+                size_name: buyNowProduct.variant?.size?.size
+              },
+              color: {
+                color_id: buyNowProduct.variant?.color?.color_id,
+                color_name: buyNowProduct.variant?.color?.color
+              }
+            },
             total: buyNowProduct.total,
-            size: buyNowProduct.variant?.size?.size,
-            color: buyNowProduct.variant?.color?.color,
           },
         ],
         subtotal: buyNowProduct.total,
@@ -532,7 +540,7 @@ const CheckoutPage = () => {
                         );
                         toast.success("Default address updated successfully");
                         setShowAddressSelection(false);
-                        window.location.reload(); // Reload để cập nhật địa chỉ mới
+                        window.location.reload(); // Reload để cập nhật địa ch�� mới
                       } catch (error) {
                         toast.error("Failed to update default address");
                       }
@@ -633,8 +641,8 @@ const CheckoutPage = () => {
                     <h3 className="font-medium">{item.name}</h3>
                     {(item.variant || item.product_variant) && (
                       <p className="text-sm text-gray-500">
-                        Size: {item.variant?.size?.size_name || item.product_variant?.size}<br />
-                        Color: {item.variant?.color?.color_name || item.product_variant?.color}
+                        Size: {item.variant?.size?.size_name || item.variant?.size?.size || item.product_variant?.size}<br />
+                        Color: {item.variant?.color?.color_name || item.variant?.color?.color || item.product_variant?.color}
                       </p>
                     )}
                     <div className="flex justify-between items-center mt-2">
