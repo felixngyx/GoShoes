@@ -35,11 +35,23 @@ class ProductVariantFactory extends Factory
         ];
     }
 
-    public function upsertProductVariants(int $count)
+    public function upsertProductVariants(int $productCount)
     {
         $variants = [];
-        for ($i = 0; $i < $count; $i++) {
-            $variants[] = $this->definition();
+        for ($i = 0; $i < $productCount; $i++) {
+            $product_id = $this->ids[array_rand($this->ids)];
+            $color_id = $this->colors[array_rand($this->colors)];
+
+            // Tạo variant cho mỗi size
+            foreach ($this->sizes as $size_id) {
+                $variants[] = [
+                    'product_id' => $product_id,
+                    'color_id' => $color_id,
+                    'size_id' => $size_id,
+                    'quantity' => rand(10, 100),
+                    'sku' => $this->faker->unique()->randomNumber(8),
+                ];
+            }
         }
 
         ProductVariant::upsert($variants, ['product_id', 'color_id', 'size_id'], ['quantity']);

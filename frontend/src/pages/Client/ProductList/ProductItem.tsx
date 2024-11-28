@@ -182,12 +182,14 @@ const ProductItems = ({
         </div>
         <div className="flex items-center justify-center gap-2 mt-1 mb-3">
           <p className="text-primary text-lg font-semibold">
-            {formatVNCurrency(product.promotional_price)} ₫
+            {formatVNCurrency(Number(product.promotional_price))}
           </p>
           <p className="text-[#9098B1] text-sm font-medium line-through">
-            {formatVNCurrency(product.price)} ₫
+            {formatVNCurrency(Number(product.price))}
           </p>
-          <p className="text-[#E71D36] text-sm font-semibold">-10%</p>
+          <p className="text-[#E71D36] text-sm font-semibold">
+            {Math.round(((Number(product.price) - Number(product.promotional_price)) / Number(product.price)) * 100)}%
+          </p>
         </div>
       </div>
 
