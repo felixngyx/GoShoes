@@ -4,13 +4,9 @@ import { useForm } from 'react-hook-form';
 import { joiResolver } from '@hookform/resolvers/joi';
 import Joi from 'joi';
 import toast from 'react-hot-toast';
-import categoryService from '../../../services/admin/category';
+import categoryService, { CATEGORY } from '../../../services/admin/category';
 import LoadingIcon from '../../../components/common/LoadingIcon';
-
-type CATEGORY = {
-	id?: number;
-	name: string;
-};
+import generateSlug from '../../../common/generateSlug';
 
 type PaginationType = {
 	page: number;
@@ -21,6 +17,9 @@ type PaginationType = {
 const schema = Joi.object({
 	name: Joi.string().required().messages({
 		'string.empty': 'Category name is required',
+	}),
+	description: Joi.string().required().messages({
+		'string.empty': 'Description is required',
 	}),
 });
 
@@ -39,6 +38,7 @@ const Category = () => {
 	});
 
 	const [loading, setLoading] = useState<boolean>(false);
+	const [isPageLoading, setIsPageLoading] = useState<boolean>(false);
 
 	const {
 		register,
@@ -54,7 +54,7 @@ const Category = () => {
 
 	const fetchCategories = async () => {
 		try {
-			setLoading(true);
+			setIsPageLoading(true);
 			const res = await categoryService.getAll(
 				pagination.page,
 				Number(pagination.limit)
@@ -71,7 +71,7 @@ const Category = () => {
 			console.error('Error fetching categories:', error);
 			toast.error('Không thể tải danh sách danh mục');
 		} finally {
-			setLoading(false);
+			setIsPageLoading(false);
 		}
 	};
 
@@ -89,18 +89,23 @@ const Category = () => {
 
 	const onSubmit = async (data: CATEGORY) => {
 		try {
+			setLoading(true);
 			if (editingCategory) {
+				data.slug = generateSlug(data.name);
 				await categoryService.update(Number(editingCategory.id!), data);
 				toast.success('Category updated successfully');
 			} else {
+				data.slug = generateSlug(data.name);
 				await categoryService.create(data);
 				toast.success('Category added successfully');
 			}
-			await fetchCategories();
 			closeModal();
+			await fetchCategories();
 			reset();
 		} catch (error: any) {
 			toast.error(error.response?.data?.message || 'Something went wrong');
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -313,7 +318,7 @@ const Category = () => {
 						</tr>
 					</thead>
 					<tbody className="z-0 h-full">
-						{loading ? (
+						{isPageLoading ? (
 							<tr>
 								<td colSpan={3} className="h-24">
 									<div className="flex items-center justify-center h-full">
@@ -388,18 +393,43 @@ const Category = () => {
 							{editingCategory ? 'Edit Category' : 'Add Category'}
 						</h2>
 						<form onSubmit={handleSubmit(onSubmit)}>
-							<input
-								type="text"
-								className="w-full p-2 border rounded mb-2"
-								placeholder="Category name"
-								{...register('name')}
-							/>
-							{errors.name && (
-								<p className="text-red-500 text-sm mb-4">
-									{errors.name.message}
-								</p>
-							)}
-							<div className="flex justify-end gap-2">
+							<label className="form-control">
+								<div className="label">
+									<span className="label-text font-semibold">
+										Name
+									</span>
+								</div>
+								<input
+									type="text"
+									className="input input-bordered w-full"
+									placeholder="Category name"
+									{...register('name')}
+								/>
+								{errors.name && (
+									<small className="text-red-500">
+										{errors.name.message}
+									</small>
+								)}
+							</label>
+							<label className="form-control mt-4">
+								<div className="label">
+									<span className="label-text font-semibold">
+										Description
+									</span>
+								</div>
+								<textarea
+									className="textarea textarea-bordered w-full"
+									placeholder="Description"
+									{...register('description')}
+								></textarea>
+								{errors.description && (
+									<small className="text-red-500">
+										{errors.description.message}
+									</small>
+								)}
+							</label>
+
+							<div className="flex justify-end gap-2 mt-4">
 								<button
 									type="button"
 									className="btn btn-sm bg-gray-200 hover:bg-gray-300 text-gray-800"
@@ -408,10 +438,21 @@ const Category = () => {
 									Cancel
 								</button>
 								<button
+									disabled={loading}
 									type="submit"
 									className="btn btn-sm bg-blue-500 hover:bg-blue-600 text-white"
 								>
-									{editingCategory ? 'Save Changes' : 'Add Category'}
+									{loading ? (
+										<LoadingIcon
+											type="spinner"
+											size="sm"
+											color="info"
+										/>
+									) : editingCategory ? (
+										'Save Changes'
+									) : (
+										'Add Category'
+									)}
 								</button>
 							</div>
 						</form>

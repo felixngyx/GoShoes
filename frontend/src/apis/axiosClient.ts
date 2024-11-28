@@ -11,8 +11,6 @@ const axiosClient = axios.create({
 	},
 });
 
-
-
 axiosClient.interceptors.request.use(
 	async (config) => {
 		const token = Cookies.get('access_token');
@@ -32,7 +30,6 @@ axiosClient.interceptors.response.use(
 		return response;
 	},
 	async (error) => {
-		// console.log(error.response.status);
 		const pathname = window.location.pathname;
 
 		// Bỏ qua kiểm tra cho các trang public
@@ -66,6 +63,8 @@ axiosClient.interceptors.response.use(
 						Authorization: `Bearer ${refreshToken}`,
 					},
 				});
+				// console.log('refresh token', refreshToken);
+				// console.log(response);
 				const data = await response.json();
 				Cookies.set('access_token', data.access_token);
 				return axiosClient(originalRequest);
