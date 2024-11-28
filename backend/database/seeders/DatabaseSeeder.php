@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
         \App\Models\ImageVariant::factory()->upsertImageVariants(300);
         \App\Models\ProductVariant::factory()->upsertProductVariants(100);
         \App\Models\VariantSize::factory()->upsertVariantSizes(30);
+        \App\Models\PostCategory::factory()->count(10)->create();
+        \App\Models\Post::factory()->count(50)->create();
 
         // git
     }
