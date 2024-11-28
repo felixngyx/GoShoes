@@ -179,9 +179,7 @@ const ProductDetail = () => {
     if (!product?.variants) return [];
     
     try {
-      return Array.isArray(product.variants) 
-        ? product.variants 
-        : JSON.parse(product.variants);
+      return JSON.parse(product.variants);
     } catch {
       return [];
     }
@@ -189,27 +187,13 @@ const ProductDetail = () => {
 
   // Xử lý uniqueColors an toàn hơn
   const uniqueColors = useMemo(() => {
-    return Array.from(
-      new Map(
-        parsedVariants
-          .filter((variant: any) => variant?.color_id != null)
-          .map((variant: any) => {
-            const variantImage = variant.image || '';
-            const images = variantImage.includes(',') 
-              ? variantImage.split(',').map((img: string) => img.trim())
-              : [variantImage];
-            
-            return [
-              variant.color_id,
-              {
-                color: variant.color || {},
-                image: images,
-                id: variant.color_id,
-              },
-            ];
-          })
-      ).values()
-    );
+    return parsedVariants.map((variant: any) => ({
+      id: variant.color_id,
+      color: variant.color,
+      image: variant.image ? variant.image.split(',')[0].trim() : null,
+      allImages: variant.image ? variant.image.split(',').map((img: string) => img.trim()) : [],
+      sizes: variant.sizes
+    }));
   }, [parsedVariants]);
 
   // Xử lý selectedColor và images
@@ -261,28 +245,24 @@ const ProductDetail = () => {
 
   // Xử lý color change
   const handleColorChange = (colorId: number, imageUrl: string) => {
-    if (!imageUrl) {
-      setSelectedThumbnail(product?.thumbnail || '');
-      setAllImages([product?.thumbnail || '']);
-      return;
-    }
-
     setSelectedColor(colorId);
-    setSelectedThumbnail(imageUrl);
     
     const selectedVariant = parsedVariants.find(
-      (variant: any) => variant.color?.id === colorId
+      (variant: any) => variant.color_id === colorId
     );
 
-    if (selectedVariant?.image) {
-      const images = selectedVariant.image.includes(',')
+    if (selectedVariant) {
+      const images = selectedVariant.image 
         ? selectedVariant.image.split(',').map((img: string) => img.trim())
-        : [selectedVariant.image];
+        : [product?.thumbnail];
+        
+      setSelectedThumbnail(imageUrl || product?.thumbnail);
       setAllImages(images);
-    }
 
-    setSelectedSize(null);
-    setAvailableQuantity(0);
+      // Reset size selection
+      setSelectedSize(null);
+      setAvailableQuantity(0);
+    }
   };
 
   const handleAdd = () => {
@@ -677,28 +657,26 @@ const ProductDetail = () => {
             <h3 className="mb-2 text-lg font-semibold">Color:</h3>
             <div className="flex flex-wrap gap-3">
               {uniqueColors.length > 0 ? (
-                uniqueColors.map((variant: any) => (
+                uniqueColors.map((colorInfo: any) => (
                   <button
-                    key={variant.id}
-                    onClick={() => handleColorChange(variant.id, variant.image?.[0] || '')}
+                    key={colorInfo.id}
+                    onClick={() => handleColorChange(colorInfo.id, colorInfo.image || product?.thumbnail)}
                     className={`flex items-center gap-3 px-4 py-2 border rounded-md text-sm font-medium transition-all ${
-                      selectedColor === variant.id
+                      selectedColor === colorInfo.id
                         ? "bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary"
                         : "bg-white text-gray-700 border-gray-300 hover:border-theme-color-primary"
                     }`}
                   >
                     <img
                       className="w-8 h-8 rounded-full border border-gray-300 object-cover"
-                      src={variant.image?.[0] || product?.thumbnail || ''}
-                      alt={variant.color?.color || 'Product color'}
+                      src={colorInfo.image || product?.thumbnail}
+                      alt={colorInfo.color}
                     />
-                    <span>{variant.color?.color || 'N/A'}</span>
+                    <span>{colorInfo.color}</span>
                   </button>
                 ))
               ) : (
-                <p className="text-gray-500 text-sm italic">
-                  No colors available
-                </p>
+                <p className="text-gray-500 text-sm italic">No colors available</p>
               )}
             </div>
           </div>
