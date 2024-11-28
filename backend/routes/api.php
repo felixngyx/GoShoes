@@ -119,6 +119,7 @@ Route::get('/revenue/top-products', [StatisticalController::class, 'getTopRevenu
 Route::get('/contacts', [ContactController::class, 'index']);
 Route::post('/contacts', [ContactController::class, 'store']);
 Route::get('/contacts/{id}', [ContactController::class, 'show']);
+Route::get('/delete/{id}', [ContactController::class,'destroy']);
 // This route is Public for all user change email and phone
 Route::group(['prefix' => 'profile'], function () {
     Route::post('/verify-token-change-email', [ProfileController::class, 'verifyChangeEmail']);
