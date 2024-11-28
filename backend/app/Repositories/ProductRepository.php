@@ -195,27 +195,39 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     private function getBaseQuery($filters = [])
     {
         $query = "
-           WITH variant_info AS (
-                SELECT
+          WITH distinct_variants AS (
+                SELECT DISTINCT
                     pv.product_id,
                     pv.color_id,
+                    pv.id AS product_variant_id,
+                    pv.size_id,
+                    vs.size,
+                    pv.quantity,
                     vc.color,
-                    JSON_ARRAYAGG(
-                        JSON_OBJECT(
-                            'product_variant_id', pv.id,
-                            'size_id', pv.size_id,
-                            'size', vs.size,
-                            'quantity', pv.quantity
-                        )
-                    ) AS sizes,
-                    iv.image,
-                    SUM(pv.quantity) AS total_quantity
+                    iv.image
                 FROM product_variants pv
                 LEFT JOIN variant_colors vc ON pv.color_id = vc.id
                 LEFT JOIN variant_sizes vs ON pv.size_id = vs.id
                 LEFT JOIN image_variants iv ON pv.product_id = iv.product_id
                     AND pv.color_id = iv.color_id
-                GROUP BY pv.product_id, pv.color_id, vc.color, iv.image
+            ),
+            variant_info AS (
+                SELECT
+                    dv.product_id,
+                    dv.color_id,
+                    dv.color,
+                    JSON_ARRAYAGG(
+                        JSON_OBJECT(
+                            'product_variant_id', dv.product_variant_id,
+                            'size_id', dv.size_id,
+                            'size', dv.size,
+                            'quantity', dv.quantity
+                        )
+                    ) AS sizes,
+                    MAX(dv.image) AS image, -- Lấy 1 hình ảnh duy nhất
+                    SUM(dv.quantity) AS total_quantity
+                FROM distinct_variants dv
+                GROUP BY dv.product_id, dv.color_id, dv.color
             ),
             category_info AS (
                 SELECT
@@ -258,9 +270,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             FROM products p
             LEFT JOIN variant_info vi ON p.id = vi.product_id
             LEFT JOIN category_info ci ON p.id = ci.product_id
-            LEFT JOIN product_category pc ON p.id = pc.product_id
             LEFT JOIN brands b ON p.brand_id = b.id
-            WHERE 1=1
         ";
 
         // Thêm các điều kiện lọc
@@ -298,7 +308,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             $query .= " AND p.is_deleted = " . intval($filters['is_deleted']);
         }
 
-        $query .= " GROUP BY p.id,  ci.categories ORDER BY p.id";
+        $query .= " GROUP BY p.id, b.name, ci.categories ORDER BY p.id";
 
         return $query;
     }
