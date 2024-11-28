@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { FaShoppingCart } from "react-icons/fa";
 import { IoMdAdd, IoMdRemove } from "react-icons/io";
@@ -174,47 +174,116 @@ const ProductDetail = () => {
   const { handleAddToCartDetail } = useCart();
   const [allImages, setAllImages] = useState<string[]>([]);
 
+  // Xử lý variants an toàn hơn
+  const parsedVariants = useMemo(() => {
+    if (!product?.variants) return [];
+    
+    try {
+      return Array.isArray(product.variants) 
+        ? product.variants 
+        : JSON.parse(product.variants);
+    } catch {
+      return [];
+    }
+  }, [product?.variants]);
+
+  // Xử lý uniqueColors an toàn hơn
+  const uniqueColors = useMemo(() => {
+    return Array.from(
+      new Map(
+        parsedVariants
+          .filter((variant: any) => variant?.color_id != null)
+          .map((variant: any) => {
+            const variantImage = variant.image || '';
+            const images = variantImage.includes(',') 
+              ? variantImage.split(',').map((img: string) => img.trim())
+              : [variantImage];
+            
+            return [
+              variant.color_id,
+              {
+                color: variant.color || {},
+                image: images,
+                id: variant.color_id,
+              },
+            ];
+          })
+      ).values()
+    );
+  }, [parsedVariants]);
+
+  // Xử lý selectedColor và images
   useEffect(() => {
-    if (product) {
-      const parsedVariants = Array.isArray(product?.variants)
-        ? product.variants
-        : product?.variants
-        ? JSON.parse(product.variants)
-        : [];
+    if (!product) return;
 
-      if (!selectedColor && parsedVariants.length > 0) {
-        const firstColorId = parsedVariants[0].color_id;
-        setSelectedColor(firstColorId);
-        return;
-      }
+    const variants = parsedVariants;
+    
+    if (!selectedColor && variants.length > 0) {
+      const firstColorId = variants[0]?.color_id;
+      setSelectedColor(firstColorId);
+      return;
+    }
 
-      if (selectedColor) {
-        const selectedVariant = parsedVariants.find(
-          (variant: any) => variant.color_id === selectedColor
-        );
+    if (selectedColor) {
+      const selectedVariant = variants.find(
+        (variant: any) => variant.color_id === selectedColor
+      );
 
-        if (selectedVariant) {
-          const images = selectedVariant.image.split(",");
-          setSelectedThumbnail(images[0]);
-          setAllImages(images);
-        }
-
-        const availableSize = selectedVariant?.sizes.find(
-          (size: any) => size.quantity > 0
-        );
-
-        if (availableSize) {
-          setSelectedSize(availableSize.size);
-          setAvailableQuantity(availableSize.quantity);
-        } else {
-          setSelectedSize(null);
-          setAvailableQuantity(0);
-        }
+      if (selectedVariant?.image) {
+        const images = selectedVariant.image.includes(',')
+          ? selectedVariant.image.split(',').map((img: string) => img.trim())
+          : [selectedVariant.image];
+        
+        setSelectedThumbnail(images[0] || product.thumbnail);
+        setAllImages(images);
       } else {
         setSelectedThumbnail(product.thumbnail);
+        setAllImages([product.thumbnail]);
       }
+
+      // Xử lý sizes
+      const availableSize = selectedVariant?.sizes?.find(
+        (size: any) => size?.quantity > 0
+      );
+
+      if (availableSize) {
+        setSelectedSize(availableSize.size);
+        setAvailableQuantity(availableSize.quantity);
+      } else {
+        setSelectedSize(null);
+        setAvailableQuantity(0);
+      }
+    } else {
+      setSelectedThumbnail(product.thumbnail);
+      setAllImages([product.thumbnail]);
     }
-  }, [product, selectedColor]);
+  }, [product, selectedColor, parsedVariants]);
+
+  // Xử lý color change
+  const handleColorChange = (colorId: number, imageUrl: string) => {
+    if (!imageUrl) {
+      setSelectedThumbnail(product?.thumbnail || '');
+      setAllImages([product?.thumbnail || '']);
+      return;
+    }
+
+    setSelectedColor(colorId);
+    setSelectedThumbnail(imageUrl);
+    
+    const selectedVariant = parsedVariants.find(
+      (variant: any) => variant.color?.id === colorId
+    );
+
+    if (selectedVariant?.image) {
+      const images = selectedVariant.image.includes(',')
+        ? selectedVariant.image.split(',').map((img: string) => img.trim())
+        : [selectedVariant.image];
+      setAllImages(images);
+    }
+
+    setSelectedSize(null);
+    setAvailableQuantity(0);
+  };
 
   const handleAdd = () => {
     if (!accessToken) {
@@ -304,60 +373,16 @@ const ProductDetail = () => {
     }
   };
 
-  const handleColorChange = (colorId: number, imageUrl: string) => {
-    if (imageUrl) {
-      setSelectedThumbnail(imageUrl);
-    }
-    setSelectedColor(colorId);
-    setSelectedSize(null);
-    setAvailableQuantity(0);
-
-    const parsedVariants = Array.isArray(product?.variants)
-      ? product.variants
-      : product?.variants
-      ? JSON.parse(product.variants)
-      : [];
-
-    const selectedVariant = parsedVariants.find(
-      (variant: any) => variant.color.id === colorId
-    );
-
-    if (selectedVariant) {
-      const images = selectedVariant.image.split(",");
-      setAllImages(images);
-
-      const availableSize = selectedVariant.sizes.find(
-        (size: any) => size.quantity > 0
-      );
-
-      if (availableSize) {
-        setSelectedSize(availableSize.size);
-        setAvailableQuantity(availableSize.quantity);
-      } else {
-        setSelectedSize(null);
-        setAvailableQuantity(0);
-      }
-    } else {
-      setSelectedThumbnail(product.thumbnail);
-    }
-  };
-
   const handleSizeChange = (size: string) => {
     const selectedVariant = parsedVariants
       .find((variant: any) => variant.color_id === selectedColor)
-      ?.sizes.find((s: any) => s.size === size);
+      .sizes.find((s: any) => s.size === size);
 
     if (selectedVariant) {
       setSelectedSize(size);
       setAvailableQuantity(selectedVariant.quantity);
     }
   };
-
-  const parsedVariants = Array.isArray(product?.variants)
-    ? product.variants
-    : product?.variants
-    ? JSON.parse(product.variants)
-    : [];
 
   const uniqueSizes = selectedColor
     ? Array.from(
@@ -390,23 +415,6 @@ const ProductDetail = () => {
         .map((value: any) => value)
         .sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
     : [];
-
-  const uniqueColors = Array.from(
-    new Map(
-      parsedVariants
-        .map((variant: any) => [
-          variant.color_id,
-          {
-            color: variant.color,
-            image: variant.image.includes(",")
-              ? variant.image.split(",").join(", ")
-              : variant.image,
-            id: variant.color_id,
-          },
-        ])
-        .filter(([colorId]: any) => colorId !== null)
-    ).values()
-  );
 
   const handleQuantityChange = (value: number) => {
     const newQuantity = quantity + value;
@@ -672,9 +680,7 @@ const ProductDetail = () => {
                 uniqueColors.map((variant: any) => (
                   <button
                     key={variant.id}
-                    onClick={() =>
-                      handleColorChange(variant.id, variant.image.split(",")[0])
-                    }
+                    onClick={() => handleColorChange(variant.id, variant.image?.[0] || '')}
                     className={`flex items-center gap-3 px-4 py-2 border rounded-md text-sm font-medium transition-all ${
                       selectedColor === variant.id
                         ? "bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary"
@@ -683,10 +689,10 @@ const ProductDetail = () => {
                   >
                     <img
                       className="w-8 h-8 rounded-full border border-gray-300 object-cover"
-                      src={variant.image.split(",")[0]} // Chỉ lấy ảnh đầu tiên để hiển thị
-                      alt={variant.color}
+                      src={variant.image?.[0] || product?.thumbnail || ''}
+                      alt={variant.color?.color || 'Product color'}
                     />
-                    <span>{variant.color}</span>
+                    <span>{variant.color?.color || 'N/A'}</span>
                   </button>
                 ))
               ) : (
