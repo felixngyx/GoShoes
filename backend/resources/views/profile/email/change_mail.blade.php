@@ -45,7 +45,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>Verify Your Email Address</h1>
+        <h1>Verify Change Your Email Address</h1>
     </div>
     <div class="content">
         <p>You send request want to change your email. Please click this button if it's you send request</p>
