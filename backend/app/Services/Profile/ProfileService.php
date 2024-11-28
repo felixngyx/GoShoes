@@ -7,6 +7,7 @@ use App\Repositories\RepositoryInterfaces\UserRepositoryInterface as UserReposit
 use App\Services\ServiceInterfaces\Token\TokenServiceInterface as TokenService;
 use App\Services\ServiceInterfaces\Verify\VerifyServiceInterface as VerifyService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ProfileService implements ProfileServiceInterface
@@ -124,16 +125,37 @@ class ProfileService implements ProfileServiceInterface
     public function changeDetailRequest(array $request) : \Illuminate\Http\JsonResponse
     {
         $user = JWTAuth::parseToken()->authenticate();
+        DB::beginTransaction();
         try {
-            $verify = self::getVerifyService()->generateLinkVerification($user, $request['type']);
+            $verificationLink = self::getVerifyService()->generateLinkVerification($user, $request['type']);
+
+            if ($request['type'] === 'change-email') {
+                Mail::to($user->email)->send(new \App\Mail\ChangeMail($verificationLink));
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'link' => $verificationLink,
+                    ],
+                    'message' => 'Email verification link sent',
+                ]);
+            } else if ($request['type'] === 'change-phone') {
+                Mail::to($user->email)->send(new \App\Mail\ChangePhone($verificationLink));
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'link' => $verificationLink,
+                    ],
+                    'message' => 'Phone verification link sent',
+                ]);
+            }
             return response()->json([
-                'success' => true,
-                'data' => [
-                    'link' => $verify,
-                ],
-                'message' => 'Email verification link sent',
-            ]);
+                'success' => false,
+                'message' => 'Invalid type',
+            ], 400);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
