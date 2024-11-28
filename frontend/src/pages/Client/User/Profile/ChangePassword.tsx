@@ -1,94 +1,179 @@
 import React, { useState, useEffect } from 'react';
-import useProfile from '../../../../hooks/client/useProfile';
+import usePass from '../../../../hooks/client/usePass';
+import Cookies from 'js-cookie';
 import toast from 'react-hot-toast';
 
 interface ChangePasswordFormProps {
-  email: string; // Email được truyền từ ProfileForm
+  email: string;
 }
 
 const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ email }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
-  // Destructure các hàm từ hook
+  const [error, setError] = useState('');
+  const [token, setToken] = useState<string | null>(null); // Lưu token xác minh
+  
   const {
-    handleSendResetPasswordRequest,
-    isSendingResetPassword,
+    handleResetPassword,
+    handleVerifyResetToken,
+    handleSendResetPasswordRequest, // Hàm gửi yêu cầu reset mật khẩu
     isResettingPassword,
-  } = useProfile();
+    isVerifyingResetToken,
+    isSendingResetPassword,
+  } = usePass();
 
-  // Hàm xử lý gửi yêu cầu reset mật khẩu
-  const handleSendResetRequest = () => {
+  // Hàm gửi yêu cầu reset mật khẩu
+  const handleSendResetPasswordRequestAction = async () => {
     if (!email) {
-      toast.error('Email không hợp lệ!');
+      toast.error('Email not found!');
       return;
     }
-    handleSendResetPasswordRequest(email); // Gửi yêu cầu reset mật khẩu tới email
+
+    try {
+      await handleSendResetPasswordRequest(email);
+      toast.success('Password reset request sent to your email!');
+    } catch (error) {
+      console.error('Error during password reset request:', error);
+      toast.error('Failed to send reset password request');
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Kiểm tra mật khẩu mới và xác nhận mật khẩu có khớp không
-    if (newPassword !== confirmPassword) {
-      toast.error('Mật khẩu xác nhận không khớp!');
+  // Hàm xác minh token
+  const handleVerifyToken = async () => {
+    if (!token) {
+      toast.error('Token is required');
       return;
     }
 
-    // Gửi yêu cầu reset mật khẩu
-    handleSendResetRequest();
+    try {
+      // Gửi yêu cầu xác minh token với trường type là "reset-password"
+      await handleVerifyResetToken({ token, type: 'reset-password' });
+      toast.success('Token verified successfully!');
+    } catch (error) {
+      console.error('Error during token verification:', error);
+      toast.error('Failed to verify token');
+    }
+  };
 
-    toast.success('Yêu cầu thay đổi mật khẩu đã được gửi!');
+  // Hàm reset mật khẩu
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Kiểm tra xem mật khẩu và xác nhận mật khẩu có khớp không
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match!');
+      return;
+    }
+
+    // Xóa lỗi nếu hợp lệ
+    setError('');
+
+    if (!token) {
+      toast.error('Token not verified');
+      return;
+    }
+
+    try {
+      // Gửi yêu cầu reset password
+      await handleResetPassword(token, newPassword, confirmPassword);
+      toast.success('Password updated successfully!');
+      console.log('Payload being sent:', { token, password: newPassword, password_confirmation: confirmPassword });
+
+      // Reset lại form sau khi thành công
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      console.error('Error during password update:', error);
+      toast.error(error.response?.data?.message || 'Failed to update password!');
+    }
   };
 
   useEffect(() => {
     if (!email) {
-      toast.error('Không tìm thấy email!');
+      toast.error('Email not found!');
     }
   }, [email]);
 
   return (
     <div className="p-5 rounded-lg border border-gray-200 shadow-lg col-span-2">
-      <form className="grid grid-cols-2 gap-x-5 gap-y-2" onSubmit={handleSubmit}>
-        {/* Mật khẩu mới */}
-        <label className="form-control col-span-1">
-          <div className="label">
-            <span className="label-text font-medium text-base">New Password</span>
-          </div>
-          <input
-            type="password"
-            placeholder="Enter your new password"
-            className="input input-bordered w-full"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-          />
-        </label>
+      <h1 className="text-2xl font-semibold mb-5">Change Password</h1>
+      
+      {/* Step 1: Gửi yêu cầu reset mật khẩu */}
+      {!token && !isSendingResetPassword && (
+        <div className="mb-4">
+          <button
+            onClick={handleSendResetPasswordRequestAction}
+            className="btn btn-block text-white bg-[#40BFFF] hover:bg-[#259CFA]"
+          >
+            Send Password Reset Request
+          </button>
+        </div>
+      )}
 
-        {/* Xác nhận mật khẩu mới */}
-        <label className="form-control col-span-1">
-          <div className="label">
-            <span className="label-text font-medium text-base">Confirm Password</span>
-          </div>
-          <input
-            type="password"
-            placeholder="Confirm your new password"
-            className="input input-bordered w-full"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-        </label>
+      {/* Step 2: Xác minh token */}
+      {token && !isVerifyingResetToken && (
+        <div className="mb-4">
+          <button
+            onClick={handleVerifyToken}
+            className="btn btn-block text-white bg-[#40BFFF] hover:bg-[#259CFA]"
+          >
+            Verify Token
+          </button>
+        </div>
+      )}
 
-        {/* Nút cập nhật */}
-        <button
-          type="submit"
-          className="btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] col-span-2 mt-5"
-          disabled={isSendingResetPassword || isResettingPassword}
-        >
-          {isSendingResetPassword || isResettingPassword ? 'Processing...' : 'Update Password'}
-        </button>
-      </form>
+      {/* Step 3: Reset mật khẩu */}
+      {token && (
+        <form className="grid grid-cols-1 gap-y-5" onSubmit={handleSubmit}>
+          {/* Input New Password */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text font-medium">New Password</span>
+            </label>
+            <input
+              type="password"
+              placeholder="Enter your new password"
+              className={`input input-bordered w-full ${
+                error && 'border-red-500 focus:border-red-500'
+              }`}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Input Confirm Password */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text font-medium">Confirm Password</span>
+            </label>
+            <input
+              type="password"
+              placeholder="Confirm your new password"
+              className={`input input-bordered w-full ${
+                error && 'border-red-500 focus:border-red-500'
+              }`}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Hiển thị lỗi nếu có */}
+          {error && <span className="text-red-500 text-sm">{error}</span>}
+
+          {/* Button Submit */}
+          <button
+            type="submit"
+            className={`btn btn-block text-white ${
+              isResettingPassword ? 'bg-[#259CFA] cursor-not-allowed' : 'bg-[#40BFFF] hover:bg-[#259CFA]'
+            } mt-5`}
+            disabled={isResettingPassword || !token}
+          >
+            {isResettingPassword ? 'Updating...' : 'Update Password'}
+          </button>
+        </form>
+      )}
     </div>
   );
 };

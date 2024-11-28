@@ -6,10 +6,7 @@ import {
   sendEmailChangeRequest,
   verifyTokenChangeEmail,
   sendPhoneChangeRequest,
-  verifyTokenChangePhone,
-  sendResetPasswordRequest,
-  verifyTokenForResetPassword,
-  resetPassword
+  verifyTokenChangePhone
 } from "../../services/client/profile";
 import { ProfileParams, Profile } from '../../types/client/profile';
 import { useShipping } from './useShipping';
@@ -158,71 +155,6 @@ const useProfile = () => {
   // Xử lý địa chỉ
   const { selectedLocation, handleLocationSelect, handleEdit, showPopup, setShowPopup, editAddress } = useShipping();
 
-  // ========================= Xử lý mật khẩu =========================
-
-  // Gửi yêu cầu reset mật khẩu
-  const { mutate: sendResetPasswordMutation, isLoading: isSendingResetPassword } = useMutation({
-    mutationFn: sendResetPasswordRequest,
-    onSuccess: () => {
-      toast.success('Password reset request has been sent. Please check your email.');
-    },
-    onError: (error: any) => {
-      console.error('Error while sending reset password request:', error);
-      toast.error('Failed to send password reset request');
-    },
-  });
-
-  // Xác minh token reset mật khẩu
-  const { mutate: verifyResetTokenMutation, isLoading: isVerifyingResetToken } = useMutation({
-    mutationFn: verifyTokenForResetPassword,
-    onSuccess: () => {
-      toast.success('Verification token successful');
-    },
-    onError: (error: any) => {
-      console.error('Error while verifying reset password token:', error);
-      toast.error('Failed to verify reset password token');
-    },
-  });
-
-  // Đặt lại mật khẩu mới
-  const { mutate: resetPasswordMutation, isLoading: isResettingPassword } = useMutation({
-    mutationFn: resetPassword,
-    onSuccess: () => {
-      toast.success('Password reset successful');
-    },
-    onError: (error: any) => {
-      console.error('Error while resetting password:', error);
-      toast.error('Failed to reset password');
-    },
-  });
-
-  // Hàm xử lý gửi yêu cầu reset mật khẩu
-  const handleSendResetPasswordRequest = (email: string) => {
-    if (!email) {
-      toast.error('Email cannot be empty');
-      return;
-    }
-    sendResetPasswordMutation({ email });
-  };
-
-  // Hàm xử lý xác minh token reset mật khẩu
-  const handleVerifyResetToken = (token: string) => {
-    if (!token) {
-      toast.error('Token cannot be empty');
-      return;
-    }
-    verifyResetTokenMutation({ token, type: 'reset-password' });
-  };
-
-  // Hàm xử lý đặt lại mật khẩu mới
-  const handleResetPassword = (token: string, password: string, password_confirmation: string) => {
-    if (!password || password !== password_confirmation) {
-      toast.error('Password and confirmation password do not match');
-      return;
-    }
-    resetPasswordMutation({ token, password, password_confirmation });
-  };
-
   return {
     profile,
     isLoading,
@@ -233,16 +165,6 @@ const useProfile = () => {
     handleVerifyTokenChangeEmail,
     handleSendPhoneChangeRequest,
     handleVerifyTokenChangePhone,
-    handleSendResetPasswordRequest,
-    handleVerifyResetToken,
-    handleResetPassword,
-    isSendingEmail,
-    isVerifyingToken,
-    isSendingPhone,
-    isVerifyingPhoneToken,
-    isSendingResetPassword,
-    isVerifyingResetToken,
-    isResettingPassword,
     selectedLocation,
     handleLocationSelect,
     handleEdit,
