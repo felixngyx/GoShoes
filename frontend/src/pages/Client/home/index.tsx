@@ -231,8 +231,7 @@ const Homepage = () => {
               Free Shipping
             </p>
             <p className="text-black text-md font-medium">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam,
-              minima!
+             Free shipping on all order and return
             </p>
           </div>
           <div className="max-w-[200px] text-center">
@@ -241,8 +240,7 @@ const Homepage = () => {
               100% Refund
             </p>
             <p className="text-black text-md font-medium">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam,
-              minima!
+            We offer 100% refund on all order
             </p>
           </div>
           <div className="max-w-[200px] text-center">
@@ -255,8 +253,7 @@ const Homepage = () => {
               Support 24/7
             </p>
             <p className="text-black text-md font-medium">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam,
-              minima!
+              We support 24/7 for all customer
             </p>
           </div>
         </div>

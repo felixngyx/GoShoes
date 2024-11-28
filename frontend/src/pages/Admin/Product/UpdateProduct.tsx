@@ -127,7 +127,7 @@ type VariantSize = {
 
 const UpdateProduct = () => {
 	const { id } = useParams();
-	const [product, setProduct] = useState<PRODUCT | null>(null);
+	// const [product, setProduct] = useState<PRODUCT | null>(null);
 	const [categories, setCategories] = useState<CATEGORY[]>([]);
 	const [sizes, setSizes] = useState<SIZE[]>([]);
 	const [brands, setBrands] = useState<BRAND[]>([]);
@@ -220,6 +220,8 @@ const UpdateProduct = () => {
 					category_ids: resProduct.data.data.categories,
 					variants: JSON.parse(resProduct.data.data.variants),
 				};
+
+				console.log('productData----------', productData);
 
 				// Set form values
 				setValue('name', productData.name);
@@ -314,7 +316,6 @@ const UpdateProduct = () => {
 				setSizes(resSize.data?.sizes?.data || []);
 				setBrands(resBrand.data?.data?.brands || []);
 				setColors(resColor.data?.clors?.data || []);
-				setProduct(productData);
 
 				productData.variants.forEach((variant: any) => {
 					variant.sizes.forEach((detail: any, sizeIndex: number) => {
@@ -559,15 +560,15 @@ const UpdateProduct = () => {
 			formattedData.stock_quantity = stockQuantity;
 
 			console.log('Formatted submit data:', formattedData);
-			const response = await productService.update(
-				Number(id),
-				formattedData
-			);
-			console.log('Response:', response);
-			if (response.status.toString() === '200') {
-				toast.success('Update product successfully!');
-				navigate('/admin/product');
-			}
+			// const response = await productService.update(
+			// 	Number(id),
+			// 	formattedData
+			// );
+			// console.log('Response:', response);
+			// if (response.status.toString() === '200') {
+			// 	toast.success('Update product successfully!');
+			// 	navigate('/admin/product');
+			// }
 		} catch (error: any) {
 			console.error('Error submitting form:', error);
 			toast.error(error.response.data.message);
