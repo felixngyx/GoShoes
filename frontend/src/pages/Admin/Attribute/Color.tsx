@@ -82,17 +82,17 @@ const Color = () => {
 
 	const onSubmit = async (data: COLOR) => {
 		setLoading(true);
+		toast.loading(`${editingColor ? 'Updating' : 'Adding'} color`);
 		if (editingColor) {
 			try {
+				setIsModalOpen(false);
 				if (imageFile instanceof File) {
 					data.link_image = await uploadImageToCloudinary(imageFile);
 				} else {
 					data.link_image = imageFile as string;
 				}
-				setIsModalOpen(false);
 				const res = await colorService.update(Number(editingColor), data);
 				if (res.status === 200) {
-					toast.success('Color updated successfully');
 					fetchColor();
 				}
 			} catch (error: any) {
@@ -104,14 +104,13 @@ const Color = () => {
 			}
 		} else {
 			try {
+				setIsModalOpen(false);
 				const image = await uploadImageToCloudinary(imageFile as File);
 				const res = await colorService.create({
 					...data,
 					link_image: image,
 				});
-				setIsModalOpen(false);
 				if (res.status === 201) {
-					toast.success('Color created successfully');
 					fetchColor();
 				}
 			} catch (error: any) {
@@ -122,6 +121,8 @@ const Color = () => {
 				setLoading(false);
 			}
 		}
+		toast.dismiss();
+		toast.success(`${editingColor ? 'Update' : 'Add'} color successfully`);
 	};
 
 	const deleteColor = async (id: number) => {
@@ -420,7 +421,7 @@ const Color = () => {
 										<img
 											src={color.link_image}
 											alt={color.color}
-											className="w-10 h-10 object-cover"
+											className="w-10 h-10 object-cover rounded-full"
 										/>
 									</td>
 									<td className="px-6 py-3 flex items-center gap-2">
@@ -457,6 +458,9 @@ const Color = () => {
 						</h2>
 						<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 							<div>
+								<label htmlFor="color" className="text-sm font-medium">
+									Color name
+								</label>
 								<input
 									type="text"
 									className="w-full p-2 border rounded"
@@ -471,6 +475,12 @@ const Color = () => {
 							</div>
 
 							<div>
+								<label
+									htmlFor="link_image"
+									className="text-sm font-medium"
+								>
+									Image
+								</label>
 								<input
 									{...register('link_image')}
 									ref={fileInputRef}
@@ -492,7 +502,7 @@ const Color = () => {
 												alt="Color preview"
 												className="w-full h-full object-cover rounded-md border"
 											/>
-											<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
+											<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
 												<button
 													onClick={(e) => {
 														e.preventDefault();
@@ -503,9 +513,9 @@ const Color = () => {
 																: imageFile
 														);
 													}}
-													className="btn btn-xs btn-circle btn-ghost"
+													className=""
 												>
-													<Eye color="#fff" size={16} />
+													<Eye color="#fff" size={18} />
 												</button>
 												<button
 													onClick={(e) => {
@@ -513,9 +523,9 @@ const Color = () => {
 														e.stopPropagation();
 														removeImage();
 													}}
-													className="btn btn-xs btn-circle"
+													className=""
 												>
-													<FaRegTrashAlt color="#fff" size={16} />
+													<FaRegTrashAlt color="#fff" size={18} />
 												</button>
 											</div>
 										</div>
@@ -564,9 +574,9 @@ const Color = () => {
 						<img src={previewImage} alt="Preview" className="w-full" />
 						<button
 							onClick={() => setPreviewImage(null)}
-							className="btn btn-sm btn-circle absolute right-2 top-2"
+							className="btn btn-sm absolute right-2 top-2"
 						>
-							<X />
+							<X size={16} />
 						</button>
 					</div>
 				</dialog>

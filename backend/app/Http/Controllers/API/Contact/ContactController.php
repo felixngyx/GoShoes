@@ -14,7 +14,7 @@ class ContactController extends Controller
      */
     public function index()
     {
-        $contacts = Contact::select('id', 'full_name', 'email', 'subject')->get();
+        $contacts = Contact::select('id', 'full_name', 'email', 'subject','message')->get();
         if (!$contacts) {
             return response()->json([
                 'success' => false,
@@ -101,6 +101,13 @@ class ContactController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $contact = Contact::find($id);
+        if (!$contact) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Liên hệ không tồn tại'
+            ], 404);
+        }
+        $contact->delete();
     }
 }

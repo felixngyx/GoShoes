@@ -84,8 +84,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
     // Gọi hàm cập nhật profile
     handleUpdateProfile(updatedData);
 
-    // Hiển thị thông báo thành công
-    toast.success('Thông tin đã được cập nhật');
   };
 
   return (

@@ -1,5 +1,5 @@
 @component('mail::message')
-# Order Confirmation #{{ $order->sku }}
+# Order Confirmation #{{ $order['sku'] ?? 'N/A' }}
 
 Thank you for shopping with us!
 
@@ -8,18 +8,18 @@ Thank you for shopping with us!
 @component('mail::table')
 | Product | Quantity | Price |
 |:--------|:---------|:------|
-@foreach($order->items as $item)
-| {{ $item->product->name }} | {{ $item->quantity }} | {{ number_format($item->price) }}đ |
+@foreach(($order['items'] ?? []) as $item)
+| {{ $item['product']['name'] ?? 'Unknown Product' }} | {{ $item['quantity'] ?? 0 }} | {{ number_format($item['price'] ?? 0) }}đ |
 @endforeach
 @endcomponent
 
-**Subtotal:** {{ number_format($order->original_total) }}đ
+**Subtotal:** {{ number_format($order['original_total'] ?? 0) }}đ
 
-@if($order->discount_amount > 0)
-**Discount:** -{{ number_format($order->discount_amount) }}đ
+@if(($order['discount_amount'] ?? 0) > 0)
+**Discount:** -{{ number_format($order['discount_amount']) }}đ
 @endif
 
-**Total Amount:** {{ number_format($order->total) }}đ
+**Total Amount:** {{ number_format($order['total'] ?? 0) }}đ
 
 ## Shipping Information:
 
@@ -30,13 +30,13 @@ Thank you for shopping with us!
 
 ## Payment Method:
 
-{{ $order->payment->method->name }}
+{{ $order['payment']['method']['name'] ?? 'Unknown Method' }}
 
-@if($order->total > 0)
-    @if($order->payment->method->id === 2)
-Please prepare {{ number_format($order->total) }}đ for Cash on Delivery.
-    @elseif($order->payment->method->id === 1)
-Please complete your payment of {{ number_format($order->total) }}đ via {{ $order->payment->method->name }} within 15 minutes!
+@if(($order['total'] ?? 0) > 0)
+    @if(($order['payment']['method']['id'] ?? null) === 2)
+Please prepare {{ number_format($order['total'] ?? 0) }}đ for Cash on Delivery.
+    @elseif(($order['payment']['method']['id'] ?? null) === 1)
+Please complete your payment of {{ number_format($order['total'] ?? 0) }}đ via {{ $order['payment']['method']['name'] ?? 'Online Payment' }} within 15 minutes!
     @endif
 @else
 Your order is on its way!

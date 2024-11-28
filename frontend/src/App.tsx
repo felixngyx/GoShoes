@@ -60,6 +60,7 @@ import Post from "./pages/Admin/Post";
 import UpdatePost from "./pages/Admin/Post/update";
 import PaymentSuccess from "./pages/Client/PaymentSuccess";
 import PaymentFailed from "./pages/Client/PaymentFailed";
+import ContactList from "./pages/Admin/Contact";
 
 function App() {
   const { pathname } = useLocation();
@@ -77,7 +78,7 @@ function App() {
           <Route path="payment-success">
             <Route index element={<PaymentSuccess />} />
           </Route>
-          <Route path="payment-failed">
+          <Route path="payment-fail">
             <Route index element={<PaymentFailed />} />
           </Route>
           <Route path="/products" element={<ProductList />} />
@@ -162,6 +163,9 @@ function App() {
             <Route index element={<Post />}></Route>
             <Route path="create" element={<CreatePost />}></Route>
             <Route path="update/:id" element={<UpdatePost />}></Route>
+          </Route>
+          <Route path="contact">
+            <Route index element={<ContactList />} />
           </Route>
 
           <Route

@@ -186,38 +186,29 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
-    if (!isAnyItemSelected) return;
-
-    const selectedItems = cartItemsWithSelected
-      .filter((item: any) => item.selected)
-      .map((item: any) => {
-        const images = item.product_variant.image_variants.image.split(", ");
-        const firstImage = images[0];
-
-        return {
-          id: item.product_variant.product_id,
-          name: item.product_variant.product.name,
-          price:
-            parseFloat(item.product_variant.product.promotional_price) ||
-            parseFloat(item.product_variant.product.price),
-          quantity: item.quantity,
-          thumbnail: firstImage,
-          variant: {
-            id: item.product_variant.id,
-            size: {
-              size: item.product_variant.size.size
-            },
-            color: {
-              color: item.product_variant.color.color
-            }
-          },
-          total: item.totalPrice,
-        };
-      });
+    const cartItemsForCheckout = cartItemsWithSelected.map(item => ({
+      id: item.product_variant.product_id,
+      name: item.product_variant.product.name,
+      price: Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price),
+      quantity: item.quantity,
+      thumbnail: item.product_variant.image_variants?.image?.split(", ")[0] || "",
+      variant: {
+        id: item.product_variant.id,
+        size: {
+          size: item.product_variant.size.size,
+          size_name: item.product_variant.size.size_name || item.product_variant.size.size
+        },
+        color: {
+          color_id: item.product_variant.color.id,
+          color_name: item.product_variant.color.color_name || item.product_variant.color.color
+        }
+      },
+      total: Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price) * item.quantity
+    }));
 
     navigate("/checkout", {
       state: {
-        cartItems: selectedItems,
+        cartItems: cartItemsForCheckout,
         orderSummary: {
           subtotal: orderSummary.subtotal,
           total: orderSummary.total,
@@ -283,10 +274,9 @@ const Cart = () => {
               <div className="space-y-4">
                 <AnimatePresence>
                   {cartItemsWithSelected.map((item: any) => {
-                    // Tách mảng image_variants
-                    const images =
-                      item.product_variant.image_variants.image.split(", ");
-                    const firstImage = images[0]; // Lấy ảnh đầu tiên
+                    // Thêm kiểm tra null safety khi tách mảng image_variants
+                    const images = item.product_variant.image_variants?.image?.split(", ") || [];
+                    const firstImage = images[0] || ""; // Thêm giá trị mặc định
 
                     return (
                       <motion.div

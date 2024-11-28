@@ -12,16 +12,19 @@ class VariantSizeFactory extends Factory
     public function definition()
     {
         return [
-            'size' => $this->faker->word,
+            'size' =>  $this->faker->numberBetween(30, 60),
         ];
     }
 
     public function upsertVariantSizes(int $count)
     {
-        $sizes = [];
-        for ($i = 0; $i < $count; $i++) {
-            $sizes[] = $this->definition();
-        }
+        $sizes = collect(range(30, 60))
+            ->shuffle()
+            ->take($count)
+            ->map(function ($size) {
+                return ['size' => $size];
+            })
+            ->toArray();
 
         VariantSize::upsert($sizes, ['size']);
     }

@@ -25,8 +25,8 @@ export const getProductById = async (id: number) => {
 
 export const getAllRelatedProducts = async (id: number) => {
   try {
-    const response = await axiosClient.get(`/products/${id}`);
-    return response.data.Data?.relatedProducts;
+    const response = await axiosClient.get(`/products?brand_id=${id}`);
+    return response.data.data;
   } catch (error) {
     console.error("An error occurred:", error);
     return [];

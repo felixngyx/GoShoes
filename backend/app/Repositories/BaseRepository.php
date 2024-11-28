@@ -6,6 +6,7 @@ use App\Repositories\RepositoryAbstracts\BaseRepositoryAbstract;
 use App\Repositories\RepositoryInterfaces\BaseRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Redis;
+use Monolog\Logger;
 
 class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInterface
 {
@@ -135,5 +136,22 @@ class BaseRepository extends BaseRepositoryAbstract implements BaseRepositoryInt
     public function updateMany(array $data, int $id)
     {
         return $this->model->whereIn('id', $id)->update($data);
+    }
+
+    public function getByListId(array $ids)
+    {
+        return $this->model->whereIn('id', $ids);
+    }
+
+    public function forceDeleteMany(array $ids)
+    {
+        foreach ($ids as $id) {
+            $this->forceDelete((int)$id);
+        }
+    }
+
+    public function forceDeleteOne(int $id)
+    {
+        return $this->forceDelete($id);
     }
 }

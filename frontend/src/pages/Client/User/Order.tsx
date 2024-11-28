@@ -277,7 +277,7 @@ export default function OrderList(): JSX.Element {
   const handleBuyAgain = async (order: Order) => {
     try {
       if (!order.items || order.items.length === 0) {
-        throw new Error("No items in order");
+        throw new Error("Không có sản phẩm trong đơn hàng");
       }
 
       const itemsWithCurrentPrice = await Promise.all(
@@ -293,45 +293,67 @@ export default function OrderList(): JSX.Element {
             );
 
             const currentProduct = response.data.data;
+            console.log('Current Product:', currentProduct);
+            console.log('Item Variant:', item.variant);
 
             if (!currentProduct) {
-              throw new Error(`Product ${item.product.name} no longer exists`);
+              throw new Error(`Sản phẩm ${item.product.name} không còn tồn tại`);
             }
 
             if (currentProduct.status !== "public") {
-              throw new Error(`Product ${item.product.name} is currently unavailable`);
+              throw new Error(`Sản phẩm ${item.product.name} hiện không khả dụng`);
             }
 
             let currentPrice = currentProduct.promotional_price || currentProduct.price;
 
             if (item.variant) {
               const variants = JSON.parse(currentProduct.variants);
+              console.log('Parsed Variants:', variants);
               
               if (!variants || variants.length === 0) {
                 throw new Error(
-                  `Product ${item.product.name} has no variants available`
+                  `Sản phẩm ${item.product.name} không có biến thể`
                 );
               }
 
-              const currentVariant = variants.find(
-                (v) => v.variant_id === item.variant.id
-              );
+              // Tìm variant phù hợp dựa trên tên màu
+              const currentVariant = variants.find(v => {
+                console.log('Comparing:', {
+                  'variant color': v.color,
+                  'requested color': item.variant.color,
+                  'has matching size': v.sizes.some(s => Number(s.size_id) === Number(item.variant.size_id))
+                });
+                
+                return v.color === item.variant.color;
+              });
 
               if (!currentVariant) {
                 throw new Error(
-                  `Variant of product ${item.product.name} no longer exists`
+                  `Biến thể màu '${item.variant.color}' của sản phẩm ${item.product.name} không còn tồn tại`
                 );
               }
 
-              if (currentVariant.total_quantity === 0) {
+              const matchingSize = currentVariant.sizes.find(s => 
+                s.size === item.variant.size  // So sánh theo tên size thay vì size_id
+              );
+
+              console.log('Found Matching Size:', matchingSize);
+
+              if (!matchingSize) {
                 throw new Error(
-                  `Variant of product ${item.product.name} is out of stock`
+                  `Size '${item.variant.size}' của sản phẩm ${item.product.name} không còn tồn tại`
                 );
               }
 
-              if (currentVariant.total_quantity < item.quantity) {
+              if (matchingSize.quantity === 0) {
                 throw new Error(
-                  `Only ${currentVariant.total_quantity} items left for variant of ${item.product.name}`
+                  `Biến thể của sản phẩm ${item.product.name} đã hết hàng`
+                );
+              }
+
+              if (matchingSize.quantity < item.quantity) {
+                throw new Error(
+                  `Chỉ còn ${matchingSize.quantity} sản phẩm cho biến thể của ${item.product.name}`
                 );
               }
 
@@ -342,21 +364,24 @@ export default function OrderList(): JSX.Element {
                 thumbnail: currentProduct.thumbnail,
                 price: Number(currentPrice),
                 total: Number(currentPrice) * item.quantity,
-                stock_quantity: currentVariant.total_quantity,
+                stock_quantity: matchingSize.quantity,
                 product_variant: {
-                  variant_id: currentVariant.variant_id,
-                  size_id: currentVariant.size_id,
-                  color_id: currentVariant.color_id,
+                  variant_id: matchingSize.product_variant_id,
+                  size_id: matchingSize.size_id,
+                  color_id: matchingSize.color_id,
+                  size: item.variant.size,
+                  color: item.variant.color
                 },
               };
             } else {
+              // Xử lý sản phẩm không có variant
               if (currentProduct.stock_quantity === 0) {
-                throw new Error(`Product ${item.product.name} is out of stock`);
+                throw new Error(`Sản phẩm ${item.product.name} đã hết hàng`);
               }
 
               if (currentProduct.stock_quantity < item.quantity) {
                 throw new Error(
-                  `Only ${currentProduct.stock_quantity} items left for ${item.product.name}`
+                  `Chỉ còn ${currentProduct.stock_quantity} sản phẩm ${item.product.name}`
                 );
               }
 
@@ -371,8 +396,9 @@ export default function OrderList(): JSX.Element {
               };
             }
           } catch (error: any) {
+            console.error('Error processing item:', error);
             throw new Error(
-              error.message || `Unable to get information for product ${item.product.name}`
+              error.message || `Không thể lấy thông tin sản phẩm ${item.product.name}`
             );
           }
         })
@@ -396,8 +422,8 @@ export default function OrderList(): JSX.Element {
         },
       });
     } catch (error: any) {
-      console.error("Error handling buy again:", error);
-      toast.error(error.message || "Unable to process buy again request. Please try again later.");
+      console.error("Lỗi khi xử lý mua lại:", error);
+      toast.error(error.message || "Không thể xử lý yêu cầu mua lại. Vui lòng thử lại sau.");
     }
   };
 

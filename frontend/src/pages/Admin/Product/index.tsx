@@ -8,6 +8,7 @@ import LoadingTable from '../LoadingTable';
 import { toast } from 'react-hot-toast';
 import Pagination from '../../../components/admin/Pagination';
 import { Link } from 'react-router-dom';
+import { formatVNCurrency } from '../../../common/formatVNCurrency';
 
 export enum Status {
 	PUBLIC = 'public',
@@ -39,13 +40,14 @@ const Product = () => {
 	const [productData, setProductData] = useState<PRODUCT[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [page, setPage] = useState(1);
-	const [limit] = useState(10);
+	const [limit] = useState(100);
 	const [totalPages, setTotalPages] = useState(0);
 
 	const fetchProducts = async () => {
 		try {
 			setLoading(true);
 			const res = await productService.getAll(page, limit);
+			console.log(res);
 			setProductData(res);
 			const totalPages = Math.ceil(res.length / limit);
 			setTotalPages(totalPages);
@@ -227,22 +229,24 @@ const Product = () => {
 										</div>
 									</td>
 									<td className="px-6 py-3 font-semibold">
-										{product.price} ₫
+										{formatVNCurrency(Number(product.price))}
 									</td>
 									<td className="px-6 py-3 font-semibold">
-										{product.promotional_price} ₫
+										{formatVNCurrency(
+											Number(product.promotional_price)
+										)}
 									</td>
 									<td className="px-6 py-3">
 										{product.stock_quantity}
 									</td>
 									<td className="px-6 py-3">
 										<div
-											className={`badge text-white badge-${
+											className={`badge text-white bg-${
 												product.status === Status.PUBLIC
 													? 'success'
 													: product.status === Status.UNPUBLIC
 													? 'warning'
-													: 'error'
+													: 'red-500'
 											}`}
 										>
 											{product.status}
