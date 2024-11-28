@@ -190,8 +190,9 @@ class ProductService implements ProductServiceInterface
             }, $request['variants']));
 
             self::getProductVariantService()->createMany($allVariantDetails);
-
-            $product->stock_quantity = self::getProductVariantService()->getStockQuantityByProduct((int)$product->id);
+            $stock_quantity = self::getProductVariantService()->getStockQuantityByProduct($productId);
+            $this->productRepository->update(['stock_quantity' => $stock_quantity], $productId);
+            $product->stock_quantity = $stock_quantity;
             DB::commit();
             return response()->json([
                 'success' => true,
