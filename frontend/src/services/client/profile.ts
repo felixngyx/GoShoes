@@ -1,7 +1,6 @@
 import { Profile, ProfileParams } from '../../types/client/profile'; 
 import { profileUpdateSchema } from '../../pages/Client/User/Schema/profileSchema';
 import axiosClient from '../../apis/axiosClient';
-import * as Joi from 'joi'; // Import Joi để xác thực mật khẩu
 
 // Các interface liên quan
 export interface VerifyEmailChangeRequest {
