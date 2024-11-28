@@ -3,6 +3,7 @@
 use App\Events\NewOrderCreated;
 use App\Http\Controllers\API\Auth\AuthController;
 // use App\Http\Controllers\API\Shipping\ShippingController;
+use App\Http\Controllers\API\ProductVariant\ProductVariantController;
 use App\Http\Controllers\API\Profile\ProfileController;
 use App\Http\Controllers\API\Wishlist\WishlistController;
 use App\Http\Controllers\API\Cart\CartController;
@@ -62,6 +63,8 @@ Route::post('/products', [ProductController::class, 'createProduct']);
 Route::get('/product/{id}', [ProductClientController::class, 'show']);
 Route::get('/product/variant/{id}/stock', [ProductController::class, 'checkStockProductVariant']);
 
+Route::post('/admin/product_variants/delete-many', [ProductVariantController::class, 'deleteMany']);
+Route::delete('/admin/product_variants/{id}', [ProductVariantController::class, 'deleteOne'])->where(['id' => '[0-9]+']);
 
 // API Color
 
@@ -110,12 +113,12 @@ Route::delete('/banners', [BannerController::class, 'destroyMultiple']);
 
 Route::get('categories', [CategoryController::class, 'index']);
 
-// thống kê 
+// thống kê
 Route::get('/revenue/today', [StatisticalController::class, 'getTodayRevenue']);
 Route::get('/revenue/monthly', [StatisticalController::class, 'getMonthlyRevenue']);
 Route::get('/revenue/top-products', [StatisticalController::class, 'getTopRevenueProducts']);
 
-//  Contact 
+//  Contact
 Route::get('/contacts', [ContactController::class, 'index']);
 Route::post('/contacts', [ContactController::class, 'store']);
 Route::get('/contacts/{id}', [ContactController::class, 'show']);

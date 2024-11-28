@@ -11,4 +11,13 @@ class ProductVariantService extends ProductVariantServiceAbstract implements Pro
     {
         return self::getRepository()->getStockQuantityByProduct($productId);
     }
+
+    public function deleteService(int $productVariantId)
+    {
+        self::forceDeleteOne($productVariantId);
+        return response()->json([
+            'success' => true,
+            'message' => 'Product variant deleted successfully'
+        ], 200);
+    }
 }

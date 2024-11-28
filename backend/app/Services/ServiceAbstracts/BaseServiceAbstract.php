@@ -73,4 +73,19 @@ abstract class BaseServiceAbstract
     {
         return self::getRepository()->findById($id);
     }
+
+    public function deleteMany(array $ids)
+    {
+        return self::getRepository()->deleteMany($ids);
+    }
+
+    public function forceDeleteMany(array $ids)
+    {
+        return self::getRepository()->forceDeleteMany($ids);
+    }
+
+    public static function forceDeleteOne(int $id)
+    {
+        return self::getRepository()->forceDeleteOne($id);
+    }
 }

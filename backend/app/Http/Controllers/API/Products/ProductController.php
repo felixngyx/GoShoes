@@ -139,9 +139,7 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['id', 'brand_id', 'name', 'price_from', 'price_to', 'status', 'category_id', 'color_id', 'size_id']);
-        $filters['page'] = $request->get('page', 1);
-        $filters['perPage'] = $request->get('per_page', 10);
+        $filters = $request->only(['id', 'brand_id', 'name', 'price_from', 'price_to', 'status', 'category_id', 'color_id', 'size_id', 'perPage', 'page', 'hagtag']);
         return $this->productService->listProduct($filters);
     }
     public function store(StoreProductRequest $request)
