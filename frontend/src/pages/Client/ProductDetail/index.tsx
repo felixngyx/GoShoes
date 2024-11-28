@@ -576,14 +576,16 @@ const ProductDetail = () => {
             </span>
             <span className="text-xs text-[#40BFFF]">Submit a review</span>
           </div>
-          <div className="flex items-center gap-3">
-            <p className="text-2xl font-bold text-[#40BFFF]">
-              {formatVNCurrency(Number(product.promotional_price))}
+          <div className="flex items-center gap-2 mt-1 mb-3">
+            <p className="text-primary text-lg font-semibold">
+              {formatVNCurrency(Number(product?.promotional_price))}
             </p>
-            <span className="text-[#9098B1] text-sm line-through">
-              {formatVNCurrency(Number(product.price))}
-            </span>
-            <span className="text-[#FB7181] text-sm font-bold">24% Off</span>
+            <p className="text-[#9098B1] text-sm font-medium line-through">
+              {formatVNCurrency(Number(product?.price))}
+            </p>
+            <p className="text-[#E71D36] text-sm font-semibold">
+              {Math.round(((Number(product?.price) - Number(product?.promotional_price)) / Number(product?.price)) * 100)}%
+            </p>
           </div>
 
           <hr className="my-4" />

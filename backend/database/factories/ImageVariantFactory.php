@@ -22,10 +22,18 @@ class ImageVariantFactory extends Factory
     }
     public function definition()
     {
+        $imageUrls = file('database/factories/test.txt', FILE_IGNORE_NEW_LINES);
+        $randomImages = [];
+
+        // Lấy 3 ảnh ngẫu nhiên
+        for ($i = 0; $i < 3; $i++) {
+            $randomImages[] = trim($imageUrls[array_rand($imageUrls)]);
+        }
+
         return [
             'product_id' => $this->ids[array_rand($this->ids)],
             'color_id' => $this->colors[array_rand($this->colors)],
-            'image' => 'image1, image2, image3',
+            'image' => implode(', ', $randomImages),
         ];
     }
 
