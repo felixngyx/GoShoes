@@ -16,7 +16,7 @@
             <h3>Order Details:</h3>
             <p>Order SKU: #{{ $orderNumber }}</p>
         </div>
-
+        <p>Our support team will contact you shortly regarding the refund process for your cancelled order.</p>
         <p>If you did not cancel or have any questions about this cancellation, please contact our customer service team.</p>
         <p>Mail Contact : customersupport@goshoes.com</p>
         <p>Best regards,<br>
