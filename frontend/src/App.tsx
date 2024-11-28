@@ -5,7 +5,7 @@ import SignUp from "./pages/Client/SignUp";
 import ProductList from "./pages/Client/ProductList";
 import ProductDetail from "./pages/Client/ProductDetail";
 import Account from "./pages/Client/User/Account";
-import Profile from "./pages/Client/User/Profile";
+import Profile from "./pages/Client/User/Profile/Profile";
 import DefaultLayout from "./layout/DefaultLayout";
 import PageTitle from "./components/admin/PageTitle";
 import ECommerce from "./pages/Admin/Dashboard/ECommerce";
@@ -58,6 +58,8 @@ import NewsPageDetail from "./pages/Client/News/NewsPageDetail";
 import CreatePost from "./pages/Admin/Post/create";
 import Post from "./pages/Admin/Post";
 import UpdatePost from "./pages/Admin/Post/update";
+import PaymentSuccess from "./pages/Client/PaymentSuccess";
+import PaymentFailed from "./pages/Client/PaymentFailed";
 
 function App() {
   const { pathname } = useLocation();
@@ -72,6 +74,12 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Homepage />} />
+          <Route path="payment-success">
+            <Route index element={<PaymentSuccess />} />
+          </Route>
+          <Route path="payment-fail">
+            <Route index element={<PaymentFailed />} />
+          </Route>
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route

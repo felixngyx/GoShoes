@@ -31,6 +31,7 @@ import { toast } from "react-hot-toast";
 import { format } from "date-fns";
 import { Upload, X } from "lucide-react";
 import DialogReview from "../../../components/client/DialogReview";
+import { CheckCircle } from 'lucide-react';
 
 const tabs: Tab[] = [
   { id: "all", label: "ALL", color: "text-red-500" },
@@ -185,7 +186,13 @@ export default function OrderList(): JSX.Element {
       setOpenDialog({ type: "", orderId: null });
       // Refresh data
       refetch();
-      toast.success("Order cancelled successfully");
+      
+      // Thay đổi toast thành Modal thông báo
+      setOpenDialog({
+        type: "cancel-success",
+        orderId: null
+      });
+      
     } catch (error: any) {
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
@@ -197,7 +204,7 @@ export default function OrderList(): JSX.Element {
 
   const handleRefundRequest = async (orderId: string): Promise<void> => {
     try {
-      // Upload ảnh l��n Cloudinary trước
+      // Upload ảnh ln Cloudinary trước
       const uploadedImages = await Promise.all(
         refundForm.images.map(async (image) => {
           const imageFormData = new FormData();
@@ -1063,6 +1070,32 @@ export default function OrderList(): JSX.Element {
             color="primary"
           >
             Pay Now
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openDialog.type === "cancel-success"}
+        onClose={() => setOpenDialog({ type: "", orderId: null })}
+      >
+        <DialogTitle>
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-6 w-6 text-green-500" />
+            Order Cancelled Successfully
+          </div>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Your order has been cancelled. Our customer service team will contact you shortly to confirm the cancellation.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setOpenDialog({ type: "", orderId: null })}
+            variant="contained"
+            color="primary"
+          >
+            Got it
           </Button>
         </DialogActions>
       </Dialog>

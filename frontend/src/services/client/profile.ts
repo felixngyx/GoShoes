@@ -1,30 +1,179 @@
+import { Profile, ProfileParams } from '../../types/client/profile'; 
+import { profileUpdateSchema } from '../../pages/Client/User/Schema/profileSchema';
 import axiosClient from '../../apis/axiosClient';
+import * as Joi from 'joi'; // Import Joi để xác thực mật khẩu
 
-export interface ProfileParams {
-	name: string;
-	email: string;
-	phone: string;
-	address: string;
+// Các interface liên quan
+export interface VerifyEmailChangeRequest {
+  token: string;
+  email: string;
 }
 
-// Lấy thông tin profile người dùng
-export const getProfile = async () => {
-	try {
-		const response = await axiosClient.get('/user');
-		return response.data;
-	} catch (error) {
-		console.error('Lỗi khi lấy thông tin profile:', error);
-		throw error;
-	}
+export interface VerifyPhoneChangeRequest {
+  token: string;
+  phone: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordParams {
+  token: string;
+  password: string;
+  password_confirmation: string;
+}
+
+export interface VerifyTokenRequest {
+  token: string;
+  type: 'reset-password';
+}
+
+// =================== API XỬ LÝ MẬT KHẨU ===================
+
+// Gửi yêu cầu reset mật khẩu
+export const sendResetPasswordRequest = async (params: ResetPasswordRequest): Promise<void> => {
+  try {
+    const response = await axiosClient.post('/profile/reset-password-request', params);
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Gửi yêu cầu reset mật khẩu thất bại');
+    }
+  } catch (error) {
+    console.error('Error while sending reset password request:', error);
+    throw error;
+  }
 };
 
-// Cập nhật thông tin profile người dùng
-export const updateProfile = async (params: ProfileParams) => {
-	try {
-		const response = await axiosClient.put('/user', params);
-		return response.data;
-	} catch (error) {
-		console.error('Lỗi khi cập nhật thông tin profile:', error);
-		throw error;
-	}
+// Xác minh token reset mật khẩu
+export const verifyTokenForResetPassword = async (params: VerifyTokenRequest): Promise<void> => {
+  try {
+    const response = await axiosClient.post('/profile/verify-token', params);
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Xác minh token thất bại');
+    }
+  } catch (error) {
+    console.error('Error while verifying reset password token:', error);
+    throw error;
+  }
+};
+
+// Đặt lại mật khẩu mới
+export const resetPassword = async (params: ResetPasswordParams): Promise<void> => {
+  try {
+    const response = await axiosClient.post('/profile/reset-password', params);
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Đặt lại mật khẩu thất bại');
+    }
+  } catch (error) {
+    console.error('Error while resetting password:', error);
+    throw error;
+  }
+};
+
+// =================== API XỬ LÝ EMAIL & SĐT ===================
+
+// Gửi yêu cầu thay đổi email
+export const sendEmailChangeRequest = async (): Promise<void> => {
+  try {
+    const response = await axiosClient.post('/profile/change-detail-request', {
+      type: 'change-email',
+    });
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Gửi yêu cầu thay đổi email thất bại');
+    }
+  } catch (error) {
+    console.error('Error while sending email change request:', error);
+    throw error;
+  }
+};
+
+// Gửi yêu cầu thay đổi số điện thoại
+export const sendPhoneChangeRequest = async (): Promise<void> => {
+  try {
+    const response = await axiosClient.post('/profile/change-detail-request', {
+      type: 'change-phone',
+    });
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Gửi yêu cầu thay đổi số điện thoại thất bại');
+    }
+  } catch (error) {
+    console.error('Error while sending phone change request:', error);
+    throw error;
+  }
+};
+
+// Xác minh token thay đổi email
+export const verifyTokenChangeEmail = async (
+  params: VerifyEmailChangeRequest
+): Promise<void> => {
+  try {
+    const response = await axiosClient.post('/profile/verify-token-change-email', params);
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Xác minh token thay đổi email thất bại');
+    }
+  } catch (error) {
+    console.error('Error while verifying email change token:', error);
+    throw error;
+  }
+};
+
+// Xác minh token thay đổi số điện thoại
+export const verifyTokenChangePhone = async (
+  params: VerifyPhoneChangeRequest
+): Promise<void> => {
+  try {
+    const response = await axiosClient.post('/profile/verify-token-change-phone', params);
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Xác minh token thay đổi số điện thoại thất bại');
+    }
+  } catch (error) {
+    console.error('Error while verifying phone change token:', error);
+    throw error;
+  }
+};
+
+// =================== API XỬ LÝ HỒ SƠ ===================
+
+// Hàm lấy thông tin hồ sơ người dùng
+export const getProfile = async (): Promise<Profile> => {
+  try {
+    const response = await axiosClient.get('/profile');
+    if (response.data.success) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Lấy thông tin profile thất bại');
+    }
+  } catch (error) {
+    console.error('Error while fetching profile:', error);
+    throw error;
+  }
+};
+
+// Hàm cập nhật thông tin hồ sơ người dùng
+export const updateProfile = async (params: ProfileParams): Promise<Profile> => {
+  const { error } = profileUpdateSchema.validate(params, { abortEarly: false });
+
+  if (error) {
+    console.error('Validation errors:', error.details);
+    throw new Error(error.details.map((err: any) => err.message).join(', '));
+  }
+
+  try {
+    const response = await axiosClient.put('/profile/update', params);
+
+    if (response.data.success) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Cập nhật thông tin profile thất bại');
+    }
+  } catch (error) {
+    throw error;
+  }
 };

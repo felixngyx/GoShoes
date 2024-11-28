@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -100,10 +100,15 @@ const RefundDetail = () => {
 
   const handleDecline = async () => {
     try {
+      const body = {
+        id: refund?.id,
+        order_id: refund?.order_id,
+      };
       const token = Cookies.get('access_token');
-      await axiosInstance.put(`/refunds/${id}/decline`, {}, {
+      await axiosInstance.post(`/refunds/deny`, body, {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
       window.location.reload();
