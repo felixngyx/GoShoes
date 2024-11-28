@@ -47,7 +47,6 @@ const Product = () => {
 		try {
 			setLoading(true);
 			const res = await productService.getAll(page, limit);
-			console.log(res);
 			setProductData(res);
 			const totalPages = Math.ceil(res.length / limit);
 			setTotalPages(totalPages);

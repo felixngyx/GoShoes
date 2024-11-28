@@ -308,18 +308,10 @@ const AddProduct = () => {
 		const currentVariant = control._formValues.variants[index];
 
 		// Cập nhật stockQuantity bằng cách trừ đi tất cả quantity trong variant bị xóa
-		if (currentVariant?.size) {
-			currentVariant.size.forEach((_: VariantSize, sizeIndex: number) => {
-				const inputPath = `variants.${index}.size.${sizeIndex}.quantity`;
-				const quantityToRemove = previousValues[inputPath] || 0;
-				setStockQuantity((prev) => prev - quantityToRemove);
-
-				// Xóa previous values cho variant này
-				setPreviousValues((prev) => {
-					const newPrev = { ...prev };
-					delete newPrev[inputPath];
-					return newPrev;
-				});
+		if (currentVariant?.variant_details) {
+			currentVariant.variant_details.forEach((detail: VariantSize) => {
+				const quantity = Number(detail.quantity) || 0;
+				setStockQuantity((prev) => prev - quantity);
 			});
 		}
 

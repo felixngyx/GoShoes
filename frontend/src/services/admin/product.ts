@@ -52,6 +52,31 @@ export interface PRODUCT {
 			size_id: number;
 			quantity: number;
 			sku: string;
+			product_variant_id?: number;
+		}[];
+	}[];
+}
+
+export interface PRODUCT_DETAIL {
+	id?: number;
+	name: string;
+	price: number;
+	promotional_price: number;
+	status: string;
+	sku: string;
+	hagtag: string;
+	category_ids: number[];
+	brand_id: number;
+	thumbnail: string;
+	description: string;
+	stock_quantity?: number;
+	variants: {
+		color_id: number;
+		image: string;
+		sizes: {
+			size_id: number;
+			quantity: number;
+			product_variant_id?: number;
 		}[];
 	}[];
 }
@@ -76,6 +101,7 @@ export interface PRODUCT_UPDATE {
 			size_id: number;
 			quantity: number;
 			sku: string;
+			product_variant_id?: number;
 		}[];
 	}[];
 }
