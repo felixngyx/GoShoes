@@ -55,6 +55,7 @@ import ProductListBrand from "./pages/Client/Brand/ProductListBrand";
 import ProductListCate from "./pages/Client/Category/ProductListCate";
 import NewsPage from "./pages/Client/News";
 import NewsPageDetail from "./pages/Client/News/NewsPageDetail";
+import VerifyEmailPage from "./pages/Client/User/VerityEmailPage";
 
 function App() {
   const { pathname } = useLocation();
@@ -114,6 +115,7 @@ function App() {
         </Route>
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route
           path="/admin"
           element={
