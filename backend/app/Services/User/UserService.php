@@ -69,7 +69,10 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
                 'email' => $request['email'] ?? $user->email,
                 'phone' => $request['phone'] ?? $user->phone,
                 'is_deleted' => $request['is_deleted'] ?? $user->is_deleted,
-                'avt' => $request['avt'] ?? $user->avt
+                'avt' => $request['avt'] ?? $user->avt,
+                'bio' => $request['bio'] ?? $user->bio,
+                'birth_date' => $request['birth_date'] ?? $user->birth_date,
+                'gender' => $request['gender'] ?? $user['gender'],
             ];
             if (isset($request['role'])) {
                 $data['role'] = $request['role'];
