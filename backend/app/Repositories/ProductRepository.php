@@ -196,7 +196,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     public function find($id)
     {
         $results = $this->listProduct(['id' => $id]);
-        return $results[0] ?? null;
+        return $results['products'][0] ?? null;
     }
 
     public function checkStockProductVariant($id)
