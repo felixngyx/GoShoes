@@ -76,7 +76,9 @@ class ReviewController extends Controller
     public function productReviews($productId)
     {
         try {
-            $reviews = $this->reviewService->getProductReviews($productId);
+            $reviews = $this->reviewService->getProductReviews(
+                (int) $productId
+            );
             return response()->json([
                 'success' => true,
                 'data' => $reviews

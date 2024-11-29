@@ -157,7 +157,7 @@ const ProductDetail = () => {
     queryKey: ["PRODUCT_KEY", id],
     queryFn: async () => await getProductById(Number(id)),
   });
-
+  console.log(product);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(
     null

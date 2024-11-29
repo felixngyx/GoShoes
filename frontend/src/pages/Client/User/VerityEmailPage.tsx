@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import usePass from '../../../hooks/client/usePass';
 import Footer from '../../../components/client/Footer';
 import Navbar from '../../../components/client/Navbar';
+import { toast } from 'react-toastify';
 
 const VerifyEmailPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const type = searchParams.get('type');
@@ -38,8 +40,10 @@ const VerifyEmailPage: React.FC = () => {
 
     try {
       await handleResetPassword(token, newPassword, confirmPassword);
-      console.log('Password updated successfully');
+      toast.success('Mật khẩu đã được cập nhật thành công!');
+      navigate('/');
     } catch (error) {
+      toast.error('Không thể cập nhật mật khẩu. Vui lòng thử lại!');
       console.error('Failed to update password');
     }
   };
