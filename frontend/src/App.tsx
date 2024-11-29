@@ -55,7 +55,13 @@ import ProductListBrand from "./pages/Client/Brand/ProductListBrand";
 import ProductListCate from "./pages/Client/Category/ProductListCate";
 import NewsPage from "./pages/Client/News";
 import NewsPageDetail from "./pages/Client/News/NewsPageDetail";
+import PaymentSuccess from "./pages/Client/PaymentSuccess";
+import PaymentFailed from "./pages/Client/PaymentFailed";
 import VerifyEmailPage from "./pages/Client/User/VerityEmailPage";
+import Post from "./pages/Admin/Post";
+import CreatePost from "./pages/Admin/Post/create";
+import UpdatePost from "./pages/Admin/Post/update";
+import ContactList from "./pages/Admin/Contact";
 
 function App() {
   const { pathname } = useLocation();
@@ -70,6 +76,12 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Homepage />} />
+          <Route path="payment-success">
+            <Route index element={<PaymentSuccess />} />
+          </Route>
+          <Route path="payment-fail">
+            <Route index element={<PaymentFailed />} />
+          </Route>
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route
@@ -148,6 +160,14 @@ function App() {
             <Route index element={<DiscountPage />}></Route>
             <Route path="create" element={<CreateDiscount />}></Route>
             <Route path="update/:id" element={<UpdateDiscount />}></Route>
+          </Route>
+          <Route path="post">
+            <Route index element={<Post />}></Route>
+            <Route path="create" element={<CreatePost />}></Route>
+            <Route path="update/:id" element={<UpdatePost />}></Route>
+          </Route>
+          <Route path="contact">
+            <Route index element={<ContactList />} />
           </Route>
 
           <Route

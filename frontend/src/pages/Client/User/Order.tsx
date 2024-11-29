@@ -31,6 +31,7 @@ import { toast } from "react-hot-toast";
 import { format } from "date-fns";
 import { Upload, X } from "lucide-react";
 import DialogReview from "../../../components/client/DialogReview";
+import { CheckCircle } from 'lucide-react';
 
 const tabs: Tab[] = [
   { id: "all", label: "ALL", color: "text-red-500" },
@@ -185,7 +186,13 @@ export default function OrderList(): JSX.Element {
       setOpenDialog({ type: "", orderId: null });
       // Refresh data
       refetch();
-      toast.success("Order cancelled successfully");
+      
+      // Thay đổi toast thành Modal thông báo
+      setOpenDialog({
+        type: "cancel-success",
+        orderId: null
+      });
+      
     } catch (error: any) {
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
@@ -197,7 +204,7 @@ export default function OrderList(): JSX.Element {
 
   const handleRefundRequest = async (orderId: string): Promise<void> => {
     try {
-      // Upload ảnh lên Cloudinary trước
+      // Upload ảnh ln Cloudinary trước
       const uploadedImages = await Promise.all(
         refundForm.images.map(async (image) => {
           const imageFormData = new FormData();
@@ -270,7 +277,7 @@ export default function OrderList(): JSX.Element {
   const handleBuyAgain = async (order: Order) => {
     try {
       if (!order.items || order.items.length === 0) {
-        throw new Error("No items in order");
+        throw new Error("Không có sản phẩm trong đơn hàng");
       }
 
       const itemsWithCurrentPrice = await Promise.all(
@@ -285,45 +292,68 @@ export default function OrderList(): JSX.Element {
               }
             );
 
-            const currentProduct = response.data.Data.product;
+            const currentProduct = response.data.data;
+            console.log('Current Product:', currentProduct);
+            console.log('Item Variant:', item.variant);
 
             if (!currentProduct) {
-              throw new Error(`Product ${item.product.name} no longer exists`);
+              throw new Error(`Sản phẩm ${item.product.name} không còn tồn tại`);
             }
 
             if (currentProduct.status !== "public") {
-              throw new Error(`Product ${item.product.name} is currently unavailable`);
+              throw new Error(`Sản phẩm ${item.product.name} hiện không khả dụng`);
             }
 
             let currentPrice = currentProduct.promotional_price || currentProduct.price;
 
             if (item.variant) {
-              if (!currentProduct.variants || currentProduct.variants.length === 0) {
+              const variants = JSON.parse(currentProduct.variants);
+              console.log('Parsed Variants:', variants);
+              
+              if (!variants || variants.length === 0) {
                 throw new Error(
-                  `Product ${item.product.name} has no variants available`
+                  `Sản phẩm ${item.product.name} không có biến thể`
                 );
               }
 
-              const currentVariant = currentProduct.variants.find(
-                (v) => 
-                  v.variant_id === item.variant.id
-              );
+              // Tìm variant phù hợp dựa trên tên màu
+              const currentVariant = variants.find(v => {
+                console.log('Comparing:', {
+                  'variant color': v.color,
+                  'requested color': item.variant.color,
+                  'has matching size': v.sizes.some(s => Number(s.size_id) === Number(item.variant.size_id))
+                });
+                
+                return v.color === item.variant.color;
+              });
 
               if (!currentVariant) {
                 throw new Error(
-                  `Variant of product ${item.product.name} no longer exists`
+                  `Biến thể màu '${item.variant.color}' của sản phẩm ${item.product.name} không còn tồn tại`
                 );
               }
 
-              if (currentVariant.quantity === 0) {
+              const matchingSize = currentVariant.sizes.find(s => 
+                s.size === item.variant.size  // So sánh theo tên size thay vì size_id
+              );
+
+              console.log('Found Matching Size:', matchingSize);
+
+              if (!matchingSize) {
                 throw new Error(
-                  `Variant of product ${item.product.name} is out of stock`
+                  `Size '${item.variant.size}' của sản phẩm ${item.product.name} không còn tồn tại`
                 );
               }
 
-              if (currentVariant.quantity < item.quantity) {
+              if (matchingSize.quantity === 0) {
                 throw new Error(
-                  `Only ${currentVariant.quantity} items left for variant of ${item.product.name}`
+                  `Biến thể của sản phẩm ${item.product.name} đã hết hàng`
+                );
+              }
+
+              if (matchingSize.quantity < item.quantity) {
+                throw new Error(
+                  `Chỉ còn ${matchingSize.quantity} sản phẩm cho biến thể của ${item.product.name}`
                 );
               }
 
@@ -334,21 +364,24 @@ export default function OrderList(): JSX.Element {
                 thumbnail: currentProduct.thumbnail,
                 price: Number(currentPrice),
                 total: Number(currentPrice) * item.quantity,
-                stock_quantity: currentVariant.quantity,
+                stock_quantity: matchingSize.quantity,
                 product_variant: {
-                  variant_id: currentVariant.variant_id,
-                  size_id: currentVariant.size_id,
-                  color_id: currentVariant.color_id,
+                  variant_id: matchingSize.product_variant_id,
+                  size_id: matchingSize.size_id,
+                  color_id: matchingSize.color_id,
+                  size: item.variant.size,
+                  color: item.variant.color
                 },
               };
             } else {
+              // Xử lý sản phẩm không có variant
               if (currentProduct.stock_quantity === 0) {
-                throw new Error(`Product ${item.product.name} is out of stock`);
+                throw new Error(`Sản phẩm ${item.product.name} đã hết hàng`);
               }
 
               if (currentProduct.stock_quantity < item.quantity) {
                 throw new Error(
-                  `Only ${currentProduct.stock_quantity} items left for ${item.product.name}`
+                  `Chỉ còn ${currentProduct.stock_quantity} sản phẩm ${item.product.name}`
                 );
               }
 
@@ -363,8 +396,9 @@ export default function OrderList(): JSX.Element {
               };
             }
           } catch (error: any) {
+            console.error('Error processing item:', error);
             throw new Error(
-              error.message || `Unable to get information for product ${item.product.name}`
+              error.message || `Không thể lấy thông tin sản phẩm ${item.product.name}`
             );
           }
         })
@@ -388,8 +422,8 @@ export default function OrderList(): JSX.Element {
         },
       });
     } catch (error: any) {
-      console.error("Error handling buy again:", error);
-      toast.error(error.message || "Unable to process buy again request. Please try again later.");
+      console.error("Lỗi khi xử lý mua lại:", error);
+      toast.error(error.message || "Không thể xử lý yêu cầu mua lại. Vui lòng thử lại sau.");
     }
   };
 
@@ -510,22 +544,6 @@ export default function OrderList(): JSX.Element {
           </div>
         );
 
-      case "expired":
-        return (
-          <div className="space-x-2">
-            {viewDetailsButton}
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => renewPaymentLink(order.id)}
-              color="primary"
-              disabled={isRenewing === order.id}
-            >
-              {isRenewing === order.id ? "Renewing..." : "Renew Link"}
-            </Button>
-          </div>
-        );
-
       case "processing":
         return (
           <div className="space-x-2">
@@ -539,6 +557,25 @@ export default function OrderList(): JSX.Element {
               }
             >
               Cancel Order
+            </Button>
+          </div>
+        );
+
+      case "expired":
+        if (order.status === "completed") {
+          return viewDetailsButton;
+        }
+        return (
+          <div className="space-x-2">
+            {viewDetailsButton}
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => renewPaymentLink(order.id)}
+              color="primary"
+              disabled={isRenewing === order.id}
+            >
+              {isRenewing === order.id ? "Renewing..." : "Renew Link"}
             </Button>
           </div>
         );
@@ -1059,6 +1096,32 @@ export default function OrderList(): JSX.Element {
             color="primary"
           >
             Pay Now
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openDialog.type === "cancel-success"}
+        onClose={() => setOpenDialog({ type: "", orderId: null })}
+      >
+        <DialogTitle>
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-6 w-6 text-green-500" />
+            Order Cancelled Successfully
+          </div>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Your order has been cancelled. Our customer service team will contact you shortly to confirm the cancellation.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setOpenDialog({ type: "", orderId: null })}
+            variant="contained"
+            color="primary"
+          >
+            Got it
           </Button>
         </DialogActions>
       </Dialog>

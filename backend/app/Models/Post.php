@@ -28,6 +28,11 @@ class Post extends Model
 
         static::creating(function ($post) {
             $post->slug = Str::slug($post->title);
+            if ($post->scheduled_at) {
+                $post->published_at = null;
+            } else {
+                $post->published_at = now();
+            }
         });
 
         static::updating(function ($post) {

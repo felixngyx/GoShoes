@@ -15,7 +15,7 @@ return new class extends Migration
             $table->index(["product_id", "color_id", "size_id"]);
             $table->unique(["product_id", "color_id", "size_id"]);
             $table->index(["product_id", "color_id"]);
-            $table->foreign(["product_id", "color_id"])->references(["product_id", "color_id"])->on("image_variants")->onDelete("cascade");
+            $table->foreign(["product_id", "color_id"])->references(["product_id", "color_id"])->on("image_variants");
             $table->string("sku", 191)->unique()->index();
         });
     }

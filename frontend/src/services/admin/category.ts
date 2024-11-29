@@ -1,8 +1,10 @@
 import axiosClient from '../../apis/axiosClient';
 
 export interface CATEGORY {
-	id: number;
+	id?: number;
 	name: string;
+	slug: string;
+	description: string;
 	products_count: number;
 }
 
@@ -26,12 +28,14 @@ export interface CategoryResponse {
 			label: string;
 			active: boolean;
 		}[];
-	}
+	};
 }
 
 const categoryService = {
 	getAll: (page: number = 1, limit: number = 15) => {
-		return axiosClient.get<CategoryResponse>(`/categories?page=${page}&limit=${limit}`);
+		return axiosClient.get<CategoryResponse>(
+			`/categories?page=${page}&limit=${limit}`
+		);
 	},
 	create: (data: Partial<CATEGORY>) => {
 		return axiosClient.post('/categories', data);

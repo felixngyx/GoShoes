@@ -2,198 +2,215 @@ import { ApexOptions } from 'apexcharts';
 import React, { useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 
-const options: ApexOptions = {
-  legend: {
-    show: false,
-    position: 'top',
-    horizontalAlign: 'left',
-  },
-  colors: ['#3C50E0', '#80CAEE'],
-  chart: {
-    fontFamily: 'Satoshi, sans-serif',
-    height: 335,
-    type: 'area',
-    dropShadow: {
-      enabled: true,
-      color: '#623CEA14',
-      top: 10,
-      blur: 4,
-      left: 0,
-      opacity: 0.1,
-    },
-
-    toolbar: {
-      show: false,
-    },
-  },
-  responsive: [
-    {
-      breakpoint: 1024,
-      options: {
-        chart: {
-          height: 300,
-        },
-      },
-    },
-    {
-      breakpoint: 1366,
-      options: {
-        chart: {
-          height: 350,
-        },
-      },
-    },
-  ],
-  stroke: {
-    width: [2, 2],
-    curve: 'straight',
-  },
-  // labels: {
-  //   show: false,
-  //   position: "top",
-  // },
-  grid: {
-    xaxis: {
-      lines: {
-        show: true,
-      },
-    },
-    yaxis: {
-      lines: {
-        show: true,
-      },
-    },
-  },
-  dataLabels: {
-    enabled: false,
-  },
-  markers: {
-    size: 4,
-    colors: '#fff',
-    strokeColors: ['#3056D3', '#80CAEE'],
-    strokeWidth: 3,
-    strokeOpacity: 0.9,
-    strokeDashArray: 0,
-    fillOpacity: 1,
-    discrete: [],
-    hover: {
-      size: undefined,
-      sizeOffset: 5,
-    },
-  },
-  xaxis: {
-    type: 'category',
-    categories: [
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-    ],
-    axisBorder: {
-      show: false,
-    },
-    axisTicks: {
-      show: false,
-    },
-  },
-  yaxis: {
-    title: {
-      style: {
-        fontSize: '0px',
-      },
-    },
-    min: 0,
-    max: 100,
-  },
-};
-
-interface ChartOneState {
-  series: {
-    name: string;
-    data: number[];
-  }[];
+interface ChartOneProps {
+	data: {
+		month: string;
+		revenue: number;
+	}[];
+	onFilterChange: (filter: string) => void;
+	currentFilter: string;
 }
 
-const ChartOne: React.FC = () => {
-  const [state, setState] = useState<ChartOneState>({
-    series: [
-      {
-        name: 'Product One',
-        data: [23, 11, 22, 27, 13, 22, 37, 21, 44, 22, 30, 45],
-      },
+const ChartOne: React.FC<ChartOneProps> = ({
+	data,
+	onFilterChange,
+	currentFilter,
+}) => {
+	const formatChartData = (rawData: any[]) => {
+		switch (currentFilter) {
+			case 'today':
+				return rawData.map((item) => ({
+					month: new Date(item.date).getHours() + ':00',
+					revenue: item.revenue,
+				}));
 
-      {
-        name: 'Product Two',
-        data: [30, 25, 36, 30, 45, 35, 64, 52, 59, 36, 39, 51],
-      },
-    ],
-  });
+			case 'monthly':
+				return rawData.map((item) => ({
+					month: `Day ${new Date(item.date).getDate()}`,
+					revenue: item.revenue,
+				}));
 
-  const handleReset = () => {
-    setState((prevState) => ({
-      ...prevState,
-    }));
-  };
-  handleReset;
+			case 'yearly':
+				return rawData.map((item) => ({
+					month: `Month ${item.month}`,
+					revenue: item.revenue,
+				}));
 
-  return (
-    <div className="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-8">
-      <div className="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
-        <div className="flex w-full flex-wrap gap-3 sm:gap-5">
-          <div className="flex min-w-47.5">
-            <span className="mt-1 mr-2 flex h-4 w-full max-w-4 items-center justify-center rounded-full border border-primary">
-              <span className="block h-2.5 w-full max-w-2.5 rounded-full bg-primary"></span>
-            </span>
-            <div className="w-full">
-              <p className="font-semibold text-primary">Total Revenue</p>
-              <p className="text-sm font-medium">12.04.2022 - 12.05.2022</p>
-            </div>
-          </div>
-          <div className="flex min-w-47.5">
-            <span className="mt-1 mr-2 flex h-4 w-full max-w-4 items-center justify-center rounded-full border border-secondary">
-              <span className="block h-2.5 w-full max-w-2.5 rounded-full bg-secondary"></span>
-            </span>
-            <div className="w-full">
-              <p className="font-semibold text-secondary">Total Sales</p>
-              <p className="text-sm font-medium">12.04.2022 - 12.05.2022</p>
-            </div>
-          </div>
-        </div>
-        <div className="flex w-full max-w-45 justify-end">
-          <div className="inline-flex items-center rounded-md bg-whiter p-1.5 dark:bg-meta-4">
-            <button className="rounded bg-white py-1 px-3 text-xs font-medium text-black shadow-card hover:bg-white hover:shadow-card dark:bg-boxdark dark:text-white dark:hover:bg-boxdark">
-              Day
-            </button>
-            <button className="rounded py-1 px-3 text-xs font-medium text-black hover:bg-white hover:shadow-card dark:text-white dark:hover:bg-boxdark">
-              Week
-            </button>
-            <button className="rounded py-1 px-3 text-xs font-medium text-black hover:bg-white hover:shadow-card dark:text-white dark:hover:bg-boxdark">
-              Month
-            </button>
-          </div>
-        </div>
-      </div>
+			default:
+				return rawData.map((item) => ({
+					month: `${item.month}/${item.year}`,
+					revenue: item.revenue,
+				}));
+		}
+	};
 
-      <div>
-        <div id="chartOne" className="-ml-5">
-          <ReactApexChart
-            options={options}
-            series={state.series}
-            type="area"
-            height={350}
-          />
-        </div>
-      </div>
-    </div>
-  );
+	const formattedData = formatChartData(data);
+
+	const options: ApexOptions = {
+		chart: {
+			type: 'bar',
+			height: 350,
+			toolbar: {
+				show: false,
+			},
+			zoom: {
+				enabled: false,
+			},
+			foreColor: '#A0AEC0',
+			background: 'transparent',
+		},
+		plotOptions: {
+			bar: {
+				borderRadius: 4,
+				columnWidth: '40%',
+				colors: {
+					ranges: [
+						{
+							from: 0,
+							to: Number.MAX_SAFE_INTEGER,
+							color: '#3C50E0',
+						},
+					],
+				},
+			},
+		},
+		colors: ['#3C50E0'],
+		dataLabels: {
+			enabled: false,
+		},
+		grid: {
+			borderColor: '#535A6C',
+			xaxis: {
+				lines: {
+					show: true,
+				},
+			},
+			yaxis: {
+				lines: {
+					show: true,
+				},
+			},
+		},
+		stroke: {
+			show: true,
+			width: 2,
+			colors: ['transparent'],
+		},
+		tooltip: {
+			theme: 'dark',
+			y: {
+				formatter: (value) => {
+					return new Intl.NumberFormat('vi-VN', {
+						style: 'currency',
+						currency: 'VND',
+					}).format(value);
+				},
+			},
+		},
+		xaxis: {
+			categories: formattedData.map((item) => item.month),
+			axisBorder: {
+				show: false,
+			},
+			axisTicks: {
+				show: false,
+			},
+		},
+		yaxis: {
+			labels: {
+				formatter: (value) => {
+					return new Intl.NumberFormat('vi-VN', {
+						style: 'currency',
+						currency: 'VND',
+						notation: 'compact',
+						maximumFractionDigits: 1,
+					}).format(value);
+				},
+			},
+		},
+		title: {
+			text: 'Revenue',
+			align: 'left',
+			style: {
+				fontSize: '16px',
+				fontWeight: 600,
+				color: '#fff',
+			},
+		},
+	};
+
+	const series = [
+		{
+			name: 'Revenue',
+			data: formattedData.map((item) => item.revenue),
+		},
+	];
+
+	const filterButtons = [
+		{ value: 'today', label: 'Today' },
+		{ value: 'monthly', label: 'This Month' },
+		{ value: 'yearly', label: 'This Year' },
+		{ value: 'all', label: 'All Time' },
+	] as const;
+
+	return (
+		<div className="col-span-12 rounded-sm border border-stroke bg-navy-800 px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-8">
+			<div className="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap mb-4">
+				<div className="flex w-full flex-wrap gap-3 sm:gap-5">
+					<div className="flex min-w-47.5">
+						<span className="mt-1 mr-2 flex h-4 w-full max-w-4 items-center justify-center rounded-full border border-primary">
+							<span className="block h-2.5 w-full max-w-2.5 rounded-full bg-primary"></span>
+						</span>
+						<div className="w-full">
+							<p className="font-semibold text-primary">Revenue</p>
+						</div>
+					</div>
+				</div>
+
+				<div className="flex gap-2">
+					{filterButtons.map(({ value, label }) => (
+						<button
+							key={value}
+							onClick={() => onFilterChange(value)}
+							className={`px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium
+                ${
+							currentFilter === value
+								? 'bg-primary text-white shadow-lg'
+								: 'bg-navy-700 text-gray-300 hover:bg-navy-600'
+						}`}
+						>
+							{label}
+						</button>
+					))}
+				</div>
+			</div>
+
+			<div>
+				<div id="chartOne" className="-ml-5">
+					<ReactApexChart
+						options={{
+							...options,
+							title: {
+								...options.title,
+								text: `Revenue ${
+									currentFilter === 'today'
+										? 'Today'
+										: currentFilter === 'monthly'
+										? 'This Month'
+										: currentFilter === 'yearly'
+										? 'This Year'
+										: 'All Time'
+								}`,
+							},
+						}}
+						series={series}
+						type="bar"
+						height={350}
+					/>
+				</div>
+			</div>
+		</div>
+	);
 };
 
 export default ChartOne;

@@ -2,10 +2,10 @@
 
 namespace App\Repositories;
 
-use App\Repositories\RepositoryInterfaces\CategoryRepositoryInterface;
 use App\Models\ImageVariant;
+use App\Repositories\RepositoryInterfaces\ImageVariantRepositoryInterface;
 
-class ImageVariantRepository extends BaseRepository implements CategoryRepositoryInterface
+class ImageVariantRepository extends BaseRepository implements ImageVariantRepositoryInterface
 {
     public function __construct(ImageVariant $imageVariant)
     {

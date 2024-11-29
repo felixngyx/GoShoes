@@ -12,33 +12,31 @@ import { Link } from "react-router-dom";
 import { formatVNCurrency } from "../../../common/formatVNCurrency";
 
 interface RelatedProductProps {
-  id: number; // Đảm bảo id là một số
+  id: number; // Brand ID
+  productId: number; // Product ID
 }
 
-const RelatedProduct: React.FC<RelatedProductProps> = ({ id }) => {
+const RelatedProduct: React.FC<RelatedProductProps> = ({ id, productId }) => {
   const {
     data: relatedProducts = [],
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["PRODUCTS_KEY", id],
+    queryKey: ["RELATED_PRODUCTS_KEY", id],
     queryFn: async () => await getAllRelatedProducts(id),
     enabled: !!id,
   });
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const itemsToShow = 4; // Số sản phẩm hiển thị mỗi lần
+  const itemsToShow = 4;
 
   const handlePrev = () => {
-    setCurrentIndex(
-      (prev) => Math.max(prev - itemsToShow, 0) // Đảm bảo không xuống dưới 0
-    );
+    setCurrentIndex((prev) => Math.max(prev - itemsToShow, 0));
   };
 
   const handleNext = () => {
-    setCurrentIndex(
-      (prev) =>
-        Math.min(prev + itemsToShow, relatedProducts.length - itemsToShow) // Không vượt quá tổng số sản phẩm
+    setCurrentIndex((prev) =>
+      Math.min(prev + itemsToShow, relatedProducts.length - itemsToShow)
     );
   };
 
@@ -58,6 +56,11 @@ const RelatedProduct: React.FC<RelatedProductProps> = ({ id }) => {
     );
   };
 
+  // Lọc sản phẩm để loại bỏ sản phẩm hiện tại
+  const filteredProducts = relatedProducts.filter(
+    (product: IProduct) => product.id !== productId
+  );
+
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error loading related products</div>;
 
@@ -71,7 +74,7 @@ const RelatedProduct: React.FC<RelatedProductProps> = ({ id }) => {
             transform: `translateX(-${(currentIndex * 100) / itemsToShow}%)`,
           }}
         >
-          {relatedProducts?.map((product: IProduct) => (
+          {filteredProducts.map((product: IProduct) => (
             <div key={product.id} className="min-w-[25%] p-2">
               <div className="space-y-4 border rounded-sm">
                 <div className="flex flex-col gap-2">

@@ -5,9 +5,11 @@ import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { IoCart, IoHeartOutline } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
 import useCart from "../../hooks/client/useCart";
+import useWishlist from "../../hooks/client/useWhishList";
 import { getAllProducts } from "../../services/client/product";
 import { IProduct } from "../../types/client/products/products";
-import useWishlist from "../../hooks/client/useWhishList";
+import toast from "react-hot-toast";
+import { formatVNCurrency } from '../../common/formatVNCurrency';
 
 const ProductCardSkeleton = () => {
   return (
@@ -72,40 +74,50 @@ const ProductCard = () => {
 
   const addCart = () => {
     if (selectedSize && selectedColor) {
-      const variant = selectedProduct?.variants.find(
-        (v: any) => v.size === selectedSize && v.color === selectedColor
+      const variants = parseVariants(selectedProduct?.variants);
+      const selectedVariant = variants.find(
+        (variant: any) => variant.color === selectedColor
       );
-      if (variant) {
-        const productVariantId = variant.id;
-        const quantity = 1;
-        handleAddToCart(productVariantId, quantity);
-        setSelectedProduct(null);
+
+      if (selectedVariant) {
+        const selectedSizeObj = selectedVariant.sizes.find(
+          (sizeObj: any) => sizeObj.size === selectedSize
+        );
+
+        if (selectedSizeObj && selectedSizeObj.quantity > 0) {
+          const productVariantId = selectedSizeObj.product_variant_id;
+          const quantity = 1;
+
+          handleAddToCart(productVariantId, quantity);
+          setSelectedProduct(null);
+          setSelectedSize(null);
+          setSelectedColor(null);
+        } else {
+          toast.error("Size hoặc sản phẩm không khả dụng.");
+        }
+      } else {
+        toast.error("Không tìm thấy màu được chọn.");
       }
+    } else {
+      toast.error("Hãy chọn kích thước và màu trước khi thêm vào giỏ hàng.");
     }
   };
 
-  const uniqueSizes = products?.flatMap((product: any) =>
-    product.variants
-      ? product.variants
-          .filter((variant: any) => variant.size && variant.color)
-          .map((variant: any) => ({
-            size: variant.size,
-            color: variant.color,
-            quantity: variant.quantity,
-          }))
-      : []
-  );
-
-  const uniqueSizesWithoutDuplicates = uniqueSizes?.length
-    ? [...new Map(uniqueSizes.map((item: any) => [item.size, item])).values()]
-    : [];
-
-  const handleSizeChange = (size: string) => {
-    setSelectedSize(size);
+  const parseVariants = (variants: string | any[]) => {
+    try {
+      return Array.isArray(variants) ? variants : JSON.parse(variants);
+    } catch (error) {
+      console.error("Error parsing variants:", error);
+      return [];
+    }
   };
 
-  const handleColorSelect = (color: string) => {
-    setSelectedColor(color);
+  const getVariantsForColor = (color: string) => {
+    if (!selectedProduct) return [];
+
+    return parseVariants(selectedProduct.variants)
+      .filter((variant: any) => variant.color === color)
+      .flatMap((variant: any) => variant.sizes);
   };
 
   const closeModal = () => {
@@ -185,12 +197,14 @@ const ProductCard = () => {
           </div>
           <div className="flex items-center justify-center gap-2 mt-1 mb-3">
             <p className="text-primary text-lg font-semibold">
-              {product.promotional_price} ₫
+              {formatVNCurrency(Number(product.promotional_price))}
             </p>
             <p className="text-[#9098B1] text-sm font-medium line-through">
-              {product.price} ₫
+              {formatVNCurrency(Number(product.price))}
             </p>
-            <p className="text-[#E71D36] text-sm font-semibold">-10%</p>
+            <p className="text-[#E71D36] text-sm font-semibold">
+              {Math.round(((Number(product.price) - Number(product.promotional_price)) / Number(product.price)) * 100)}%
+            </p>
           </div>
         </div>
       ))}
@@ -204,63 +218,51 @@ const ProductCard = () => {
               </h3>
               <p className="mt-2">Select size and color:</p>
               <div className="flex flex-col gap-6 mt-4">
-                {/* Size selection */}
                 <div>
                   <h4 className="text-lg font-semibold mb-2">Size:</h4>
                   <div className="flex flex-wrap gap-2">
-                    {uniqueSizesWithoutDuplicates?.map((sizeInfo: any) => {
-                      const sizeVariant = products
-                        ?.find((product: any) =>
-                          product.variants?.some(
-                            (variant: any) =>
-                              variant.size === sizeInfo.size &&
-                              variant.color === selectedColor
-                          )
-                        )
-                        ?.variants?.find(
-                          (variant: any) =>
-                            variant.size === sizeInfo.size &&
-                            variant.color === selectedColor
+                    {getVariantsForColor(selectedColor)
+                      .sort((a: any, b: any) => a.size - b.size)
+                      .map((variant: any) => {
+                        const isSizeAvailable = variant.quantity > 0;
+                        const isSelected = selectedSize === variant.size;
+
+                        return (
+                          <button
+                            key={variant.size}
+                            className={`px-8 py-2 text-center text-sm font-medium border rounded-md transition ${
+                              isSelected
+                                ? "border-theme-color-primary ring-2 ring-theme-color-primary"
+                                : "bg-white text-gray-700 border-gray-300"
+                            } ${
+                              !isSizeAvailable
+                                ? "cursor-not-allowed opacity-50 line-through"
+                                : "hover:border-theme-color-primary"
+                            }`}
+                            onClick={() => {
+                              if (isSizeAvailable) {
+                                setSelectedSize(variant.size);
+                              }
+                            }}
+                            disabled={!isSizeAvailable}
+                          >
+                            {variant.size}
+                          </button>
                         );
-
-                      // Kiểm tra xem variant có tồn tại và có quantity hay không
-                      const isSelected = selectedSize === sizeInfo.size;
-                      const isDisabled = sizeVariant?.quantity === 0;
-
-                      return (
-                        <button
-                          key={sizeInfo.size}
-                          onClick={() =>
-                            !isDisabled && handleSizeChange(sizeInfo.size)
-                          }
-                          className={`px-8 py-2 text-center text-sm font-medium border rounded-md ${
-                            isSelected
-                              ? "border-theme-color-primary ring-2 ring-theme-color-primary"
-                              : "bg-white text-gray-700 border-gray-300"
-                          } ${
-                            isDisabled
-                              ? "cursor-not-allowed opacity-50 line-through"
-                              : "focus:outline-none focus:ring-2 focus:ring-theme-color-primary"
-                          }`}
-                          disabled={isDisabled}
-                        >
-                          {sizeInfo.size}
-                        </button>
-                      );
-                    })}
+                      })}
                   </div>
                 </div>
 
-                {/* Color selection */}
                 <div>
                   <h4 className="text-lg font-semibold mb-2">Color:</h4>
                   <div className="flex flex-wrap gap-2">
-                    {selectedProduct?.variants
-                      .map((variant) => variant.color)
+                    {parseVariants(selectedProduct.variants)
+                      .map((variant: any) => variant.color)
                       .filter(
-                        (value, index, self) => self.indexOf(value) === index
-                      ) // Get unique colors
-                      .map((color) => {
+                        (value: string, index: number, self: string[]) =>
+                          self.indexOf(value) === index
+                      )
+                      .map((color: string) => {
                         const isSelected = selectedColor === color;
                         return (
                           <button
@@ -270,7 +272,7 @@ const ProductCard = () => {
                                 ? "bg-theme-color-primary outline-none ring-2"
                                 : ""
                             }`}
-                            onClick={() => handleColorSelect(color)}
+                            onClick={() => setSelectedColor(color)}
                           >
                             {color}
                           </button>
@@ -301,27 +303,23 @@ const ProductCard = () => {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
           <div className="modal modal-open">
             <div className="modal-box relative">
-              <h2 className="text-2xl font-semibold text-center mb-4">
-                You need to login
-              </h2>
-              <p className="text-center mb-4">
-                Please login to add items to your cart.
-              </p>
-              <div className="flex justify-center gap-4">
+              <h3 className="font-bold text-xl">You need to sign in</h3>
+              <p className="mt-2">Please sign in to add items to your cart.</p>
+              <div className="mt-4 flex justify-end gap-4">
+                <button
+                  className="btn bg-gray-300 text-black"
+                  onClick={closeModal}
+                >
+                  Close
+                </button>
                 <button
                   className="btn bg-blue-500 text-white"
                   onClick={handleLoginNow}
                 >
                   Login Now
-                </button>
-                <button
-                  className="btn bg-gray-300 text-black"
-                  onClick={closeModal}
-                >
-                  Cancel
                 </button>
               </div>
             </div>

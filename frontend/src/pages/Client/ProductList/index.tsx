@@ -111,6 +111,77 @@ const ProductList = () => {
     setShowCount(Number(e.target.value));
   };
 
+  // Thêm state cho phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
+
+  // Tính toán sản phẩm cho trang hiện tại
+  const getCurrentPageItems = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredProducts.slice(startIndex, endIndex);
+  };
+
+  // Tính tổng số trang
+  const totalPages = Math.ceil((filteredProducts?.length || 0) / itemsPerPage);
+
+  // Component phân trang
+  const renderPagination = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    return (
+      <div className="join mx-auto mt-8">
+        <button
+          className="join-item btn"
+          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+          disabled={currentPage === 1}
+        >
+          «
+        </button>
+        
+        {startPage > 1 && (
+          <>
+            <button className="join-item btn" onClick={() => setCurrentPage(1)}>1</button>
+            {startPage > 2 && <button className="join-item btn btn-disabled">...</button>}
+          </>
+        )}
+        
+        {Array.from({length: endPage - startPage + 1}, (_, i) => startPage + i).map(page => (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`join-item btn ${currentPage === page ? 'btn-active' : ''}`}
+          >
+            {page}
+          </button>
+        ))}
+        
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <button className="join-item btn btn-disabled">...</button>}
+            <button className="join-item btn" onClick={() => setCurrentPage(totalPages)}>{totalPages}</button>
+          </>
+        )}
+        
+        <button
+          className="join-item btn"
+          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+          disabled={currentPage === totalPages}
+        >
+          »
+        </button>
+      </div>
+    );
+  };
+
   return (
     <>
       <Breadcrumb
@@ -305,9 +376,9 @@ const ProductList = () => {
                     )
                   )}
               </>
-            ) : filteredProducts.length > 0 ? (
-              // Hiển thị danh sách sản phẩm nếu có
-              filteredProducts.map((product) =>
+            ) : getCurrentPageItems().length > 0 ? (
+              // Render sản phẩm của trang hiện tại
+              getCurrentPageItems().map((product) =>
                 layout === "grid" ? (
                   <ProductItems
                     key={product.id}
@@ -351,9 +422,9 @@ const ProductList = () => {
                         )
                       )}
                   </>
-                ) : filteredProducts.length > 0 ? (
-                  // Hiển thị danh sách sản phẩm nếu có
-                  filteredProducts.map((product) =>
+                ) : getCurrentPageItems().length > 0 ? (
+                  // Render sản phẩm của trang hiện tại
+                  getCurrentPageItems().map((product) =>
                     layout === "grid" ? (
                       <ProductItems
                         key={product.id}
@@ -375,13 +446,8 @@ const ProductList = () => {
             )}
           </div>
 
-          <div className="join mx-auto">
-            <button className="join-item btn">1</button>
-            <button className="join-item btn">2</button>
-            <button className="join-item btn btn-disabled">...</button>
-            <button className="join-item btn">99</button>
-            <button className="join-item btn">100</button>
-          </div>
+          {/* Hiển thị phân trang */}
+          {totalPages > 1 && renderPagination()}
         </div>
       </div>
     </>

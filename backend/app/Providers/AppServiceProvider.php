@@ -26,7 +26,6 @@ class AppServiceProvider extends ServiceProvider
         'App\Services\ServiceInterfaces\User\UserServiceInterface' => 'App\Services\User\UserService',
         'App\Services\ServiceInterfaces\Auth\AuthServiceInterface' => 'App\Services\Auth\AuthService',
         'App\Services\ServiceInterfaces\Verify\VerifyServiceInterface' => 'App\Services\Verify\VerifyService',
-        'App\Services\ServiceInterfaces\PasswordChangeHistory\PasswordChangeHistoryServiceInterface' => 'App\Services\PasswordChangeHistory\PasswordChangeHistoryService',
         'App\Services\ServiceInterfaces\Category\CategoryServiceInterface' => 'App\Services\Category\CategoryService',
         'App\Services\ServiceInterfaces\Token\TokenServiceInterface' => 'App\Services\Token\TokenService',
         'App\Services\ServiceInterfaces\Cart\CartServiceInterface' => 'App\Services\Cart\CartService',
@@ -35,6 +34,9 @@ class AppServiceProvider extends ServiceProvider
         'App\Services\ServiceInterfaces\Shipping\ShippingServiceInterface' => 'App\Services\Shipping\ShippingService',
         'App\Services\ServiceInterfaces\Profile\ProfileServiceInterface' => 'App\Services\Profile\ProfileService',
         'App\Services\ServiceInterfaces\Product\ProductServiceInterface' => 'App\Services\Product\ProductService',
+        'App\Services\ServiceInterfaces\ImageVariant\ImageVariantServiceInterface' => 'App\Services\ImageVariant\ImageVariantService',
+        'App\Services\ServiceInterfaces\BaseServiceInterface' => 'App\Services\BaseService',
+        'App\Services\ServiceInterfaces\ProductVariant\ProductVariantServiceInterface' => 'App\Services\ProductVariant\ProductVariantService',
     ];
     /**
      * Register any application services.
