@@ -8,9 +8,10 @@ import Cookies from 'js-cookie';
 const VerifyEmail = () => {
 	const [searchParams] = useSearchParams();
 	const token = searchParams.get('token');
-	const [isLoading, setIsLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(true);
 	const [status, setStatus] = useState(true);
 	const navigate = useNavigate();
+	const access_token = Cookies.get('access_token');
 
 	const requestSendEmail = async () => {
 		try {
@@ -26,15 +27,13 @@ const VerifyEmail = () => {
 	};
 
 	useEffect(() => {
-		const access_token = Cookies.get('access_token');
-		if (!access_token) {
-			navigate('/signin');
-			toast.error('Please login to continue');
-			return;
-		} else {
-			(async () => {
+		(async () => {
+			if (!access_token) {
+				navigate('/signin');
+				toast.error('Please login to continue');
+				return;
+			} else {
 				try {
-					setIsLoading(true);
 					const res = await axiosClient.post('/auth/register-verify', {
 						token,
 					});
@@ -45,9 +44,9 @@ const VerifyEmail = () => {
 				} finally {
 					setIsLoading(false);
 				}
-			})();
-		}
-	}, [token]);
+			}
+		})();
+	}, []);
 
 	return (
 		<>

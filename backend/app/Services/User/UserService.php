@@ -29,27 +29,39 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
 
 
 
-    public function all() : \Illuminate\Http\JsonResponse
+    public function all(int $page = 1, int $perPage = 10) : \Illuminate\Http\JsonResponse
     {
+        $users = self::getUserRepository()->paginate($perPage, ['*'], 'page', $page);
         return response()->json([
             'success' => true,
-            'data' => self::getUserRepository()->all()
+            'data' => $users->items(),
+            'total_pages' => $users->lastPage(),
+            'current_page' => $users->currentPage(),
+            'total_items' => $users->total()
         ]);
     }
 
     public function updateService(array $request, int $id) : \Illuminate\Http\JsonResponse
     {
         $admin = JWTAuth::parseToken()->authenticate();
-        if ($admin['role'] !== "super-admin" ) {
-            return response()->json(['error' => "You don't have permission for this action"], 403);
-        }
         $user = self::getUserRepository()->findById($id);
+
         if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'User not found'
             ], 404);
         }
+
+        if ($admin['role'] === "admin") {
+            if (isset($request['role'])) {
+                return response()->json(['error' => "You don't have permission to update the role"], 403);
+            }
+            if ($user->role === "admin") {
+                return response()->json(['error' => "You don't have permission to update another admin's data"], 403);
+            }
+        }
+
         DB::beginTransaction();
         try {
             $data = [
@@ -57,8 +69,14 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
                 'email' => $request['email'] ?? $user->email,
                 'phone' => $request['phone'] ?? $user->phone,
                 'is_deleted' => $request['is_deleted'] ?? $user->is_deleted,
-                'avt' => $request['avt'] ?? $user->avt
+                'avt' => $request['avt'] ?? $user->avt,
+                'bio' => $request['bio'] ?? $user->bio,
+                'birth_date' => $request['birth_date'] ?? $user->birth_date,
+                'gender' => $request['gender'] ?? $user['gender'],
             ];
+            if (isset($request['role'])) {
+                $data['role'] = $request['role'];
+            }
             $result = self::getUserRepository()->update($data, $id);
 
             DB::commit();
@@ -66,7 +84,7 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
                 'success' => true,
                 'message' => 'User updated successfully',
             ]);
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -74,7 +92,6 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
             ], $e->getCode());
         }
     }
-
     public function deleteService(int $id) : \Illuminate\Http\JsonResponse
     {
         $user = self::getUserRepository()->findById($id);

@@ -24,7 +24,7 @@ class UpdateProfileRequest extends FormRequest
         return [
             'name' => 'string|max:191',
             'bio' => 'string|max:191',
-            'birth_date' => 'date|date_format:Y-m-d|before:today',
+            'birth_date' => 'date|date_format:Y-m-d|after:today',
             'gender' => 'string|in:male,female,other',
             'avt' => 'string'
         ];

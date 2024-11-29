@@ -104,4 +104,8 @@ class NotificationController extends Controller
             'message' => 'Notification deleted'
         ]);
     }
+    function getNotificationUserTracking(){
+        $notifications = Notification::where('user_id', auth()->id())->where('type', 'notificationUserTracking')->get();
+        return response()->json($notifications);
+    }
 }

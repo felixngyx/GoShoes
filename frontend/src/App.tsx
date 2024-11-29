@@ -55,13 +55,15 @@ import ProductListBrand from './pages/Client/Brand/ProductListBrand';
 import ProductListCate from './pages/Client/Category/ProductListCate';
 import NewsPage from './pages/Client/News';
 import NewsPageDetail from './pages/Client/News/NewsPageDetail';
-import CreatePost from './pages/Admin/Post/create';
-import Post from './pages/Admin/Post';
-import UpdatePost from './pages/Admin/Post/update';
 import PaymentSuccess from './pages/Client/PaymentSuccess';
 import PaymentFailed from './pages/Client/PaymentFailed';
-import ContactList from './pages/Admin/Contact';
+import VerifyEmailPage from './pages/Client/User/VerityEmailPage';
 import VerifyEmail from './pages/Client/SignUp/VerifyEmail';
+import Post from './pages/Admin/Post';
+import CreatePost from './pages/Admin/Post/create';
+import UpdatePost from './pages/Admin/Post/update';
+import ContactList from './pages/Admin/Contact';
+import NotificationPage from './pages/Client/User/Notification';
 
 function App() {
 	const { pathname } = useLocation();
@@ -113,6 +115,7 @@ function App() {
 						<Route path="my-order/:id" element={<OrderDetail />} />
 						<Route path="my-address" element={<Address />} />
 						<Route path="whish-list" element={<Wishlist />} />
+						<Route path="notifications" element={<NotificationPage />} />
 					</Route>
 					<Route path="/about-us" element={<AboutPage />} />
 					<Route path="/news" element={<NewsPage />} />
@@ -123,8 +126,8 @@ function App() {
 					<Route path="/category/:id" element={<ProductListCate />} />
 					<Route path="/contact" element={<ContactUs />} />
 					<Route path="/reset-password" element={<ResetPassword />} />
-					<Route path="/verify-email" element={<VerifyEmail />} />
 					<Route path="/forget-password" element={<ForgetPassword />} />
+					<Route path="/verify-email" element={<VerifyEmail />} />
 				</Route>
 				<Route path="/signin" element={<SignIn />} />
 				<Route path="/signup" element={<SignUp />} />

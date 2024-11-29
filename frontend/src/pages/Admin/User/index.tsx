@@ -57,7 +57,8 @@ const User = () => {
 		toast.loading('Updating role...');
 		setLoadingUpdate(true);
 		const role = e.target.value;
-		await userService.update(id, { admin: role });
+		await userService.update(id, { role: role as 'user' | 'admin' });
+		fetchUsers();
 		setLoadingUpdate(false);
 		toast.dismiss();
 		toast.success('Update role success');

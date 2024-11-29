@@ -1,4 +1,4 @@
-import { Profile, ProfileParams } from '../../types/client/profile'; 
+import { Profile, ProfileParams } from '../../types/client/profile';
 import { profileUpdateSchema } from '../../pages/Client/User/Schema/profileSchema';
 import axiosClient from '../../apis/axiosClient';
 
@@ -48,15 +48,22 @@ export const sendResetPasswordRequest = async (params: ResetPasswordRequest): Pr
 export const verifyTokenForResetPassword = async (params: VerifyTokenRequest): Promise<void> => {
   try {
     const response = await axiosClient.post('/profile/verify-token', params);
-
     if (!response.data.success) {
-      throw new Error(response.data.message || 'Xác minh token thất bại');
+      throw new Error(response.data.message || 'Verification failed');
     }
-  } catch (error) {
-    console.error('Error while verifying reset password token:', error);
+  } catch (error: any) {
+    if (error.response) {
+    } else if (error.request) {
+      // Không nhận được phản hồi từ server
+      console.error('No response from server:', error.request);
+    } else {
+      // Lỗi khác
+      console.error('Error:', error.message);
+    }
     throw error;
   }
 };
+
 
 // Đặt lại mật khẩu mới
 export const resetPassword = async (params: ResetPasswordParams): Promise<void> => {
