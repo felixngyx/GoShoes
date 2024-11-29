@@ -29,11 +29,15 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
 
 
 
-    public function all() : \Illuminate\Http\JsonResponse
+    public function all(int $page = 1, int $perPage = 10) : \Illuminate\Http\JsonResponse
     {
+        $users = self::getUserRepository()->paginate($perPage, ['*'], 'page', $page);
         return response()->json([
             'success' => true,
-            'data' => self::getUserRepository()->all()
+            'data' => $users->items(),
+            'total_pages' => $users->lastPage(),
+            'current_page' => $users->currentPage(),
+            'total_items' => $users->total()
         ]);
     }
 
