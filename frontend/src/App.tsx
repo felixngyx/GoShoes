@@ -55,11 +55,12 @@ import ProductListBrand from "./pages/Client/Brand/ProductListBrand";
 import ProductListCate from "./pages/Client/Category/ProductListCate";
 import NewsPage from "./pages/Client/News";
 import NewsPageDetail from "./pages/Client/News/NewsPageDetail";
-import CreatePost from "./pages/Admin/Post/create";
-import Post from "./pages/Admin/Post";
-import UpdatePost from "./pages/Admin/Post/update";
 import PaymentSuccess from "./pages/Client/PaymentSuccess";
 import PaymentFailed from "./pages/Client/PaymentFailed";
+import VerifyEmailPage from "./pages/Client/User/VerityEmailPage";
+import Post from "./pages/Admin/Post";
+import CreatePost from "./pages/Admin/Post/create";
+import UpdatePost from "./pages/Admin/Post/update";
 import ContactList from "./pages/Admin/Contact";
 import NotificationPage from "./pages/Client/User/Notification";
 
@@ -128,6 +129,7 @@ function App() {
         </Route>
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route
           path="/admin"
           element={

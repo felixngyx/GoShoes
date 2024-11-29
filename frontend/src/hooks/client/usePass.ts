@@ -1,21 +1,26 @@
 import { useMutation } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 import {
   sendResetPasswordRequest,
   verifyTokenForResetPassword,
   resetPassword,
 } from '../../services/client/profile';
 
+// Helper function to validate email format
+const isValidEmail = (email: string) => {
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return regex.test(email);
+};
+
 const usePass = () => {
   // Gửi yêu cầu reset mật khẩu
   const { mutate: sendResetPasswordMutation, isLoading: isSendingResetPassword } = useMutation({
     mutationFn: sendResetPasswordRequest,
     onSuccess: () => {
-      toast.success('Password reset request has been sent. Please check your email.');
+      console.log('Password reset request has been sent. Please check your email.');
     },
     onError: (error: any) => {
-      console.error('Error while sending reset password request:', error);
-      toast.error('Failed to send password reset request');
+      const errorMessage = error?.response?.data?.message || 'Failed to send password reset request';
+      console.error('Error while sending reset password request:', errorMessage);
     },
   });
 
@@ -24,13 +29,19 @@ const usePass = () => {
     mutationFn: verifyTokenForResetPassword,
     onSuccess: (data) => {
       if (data) {
-        // Lưu token vào cookie hoặc xử lý logic thành công tại đây
-        toast.success('Verification token successful');
+        console.log('Verification token successful:', data);
       }
     },
     onError: (error: any) => {
-      console.error('Error while verifying reset password token:', error);
-      toast.error('Failed to verify reset password token');
+      if (error?.message === 'Network Error') {
+        console.error('Network error occurred:', error);
+        if (!window.isNetworkErrorShown) {
+          console.error('Network error, please check your connection');
+          window.isNetworkErrorShown = true; // Đánh dấu lỗi đã được hiển thị
+        }
+      } else {
+        const errorMessage = error?.response?.data?.message || 'Verification failed';
+      }
     },
   });
 
@@ -38,27 +49,32 @@ const usePass = () => {
   const { mutate: resetPasswordMutation, isLoading: isResettingPassword } = useMutation({
     mutationFn: resetPassword,
     onSuccess: () => {
-      toast.success('Password reset successful');
+      console.log('Password reset successful');
     },
     onError: (error: any) => {
-      console.error('Error while resetting password:', error);
-      toast.error('Failed to reset password');
+      const errorMessage = error?.response?.data?.message || 'Failed to reset password';
+      console.error('Error while resetting password:', errorMessage);
     },
   });
 
   // Hàm xử lý gửi yêu cầu reset mật khẩu
   const handleSendResetPasswordRequest = (email: string) => {
     if (!email) {
-      toast.error('Email cannot be empty');
+      console.error('Email cannot be empty');
       return;
     }
+    if (!isValidEmail(email)) {
+      console.error('Invalid email format');
+      return;
+    }
+    console.log('Sending reset password request for email:', email);
     sendResetPasswordMutation({ email });
   };
 
   // Hàm xử lý xác minh token reset mật khẩu
   const handleVerifyResetToken = (token: string) => {
     if (!token) {
-      toast.error('Token cannot be empty');
+      console.error('Token cannot be empty');
       return;
     }
     verifyResetTokenMutation({ token, type: 'reset-password' });
@@ -67,9 +83,10 @@ const usePass = () => {
   // Hàm xử lý đặt lại mật khẩu mới
   const handleResetPassword = (token: string, password: string, password_confirmation: string) => {
     if (!password || password !== password_confirmation) {
-      toast.error('Password and confirmation password do not match');
+      console.error('Password and confirmation password do not match');
       return;
     }
+    console.log('Resetting password with token:', token);
     resetPasswordMutation({ token, password, password_confirmation });
   };
 
