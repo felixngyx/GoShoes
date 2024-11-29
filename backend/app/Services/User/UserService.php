@@ -40,16 +40,24 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
     public function updateService(array $request, int $id) : \Illuminate\Http\JsonResponse
     {
         $admin = JWTAuth::parseToken()->authenticate();
-        if ($admin['role'] !== "super-admin" ) {
-            return response()->json(['error' => "You don't have permission for this action"], 403);
-        }
         $user = self::getUserRepository()->findById($id);
+
         if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'User not found'
             ], 404);
         }
+
+        if ($admin['role'] === "admin") {
+            if (isset($request['role'])) {
+                return response()->json(['error' => "You don't have permission to update the role"], 403);
+            }
+            if ($user->role === "admin") {
+                return response()->json(['error' => "You don't have permission to update another admin's data"], 403);
+            }
+        }
+
         DB::beginTransaction();
         try {
             $data = [
@@ -59,6 +67,9 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
                 'is_deleted' => $request['is_deleted'] ?? $user->is_deleted,
                 'avt' => $request['avt'] ?? $user->avt
             ];
+            if (isset($request['role'])) {
+                $data['role'] = $request['role'];
+            }
             $result = self::getUserRepository()->update($data, $id);
 
             DB::commit();
@@ -66,7 +77,7 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
                 'success' => true,
                 'message' => 'User updated successfully',
             ]);
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -74,7 +85,6 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
             ], $e->getCode());
         }
     }
-
     public function deleteService(int $id) : \Illuminate\Http\JsonResponse
     {
         $user = self::getUserRepository()->findById($id);
