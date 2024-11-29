@@ -36,6 +36,8 @@ const CheckoutPage = () => {
 
   // Tính toán thông tin đơn hàng
   const orderDetails = useMemo(() => {
+    const buyNowProductId = buyNowProduct?.variant?.id;
+    console.log('Buy Now Product:', buyNowProductId);
     if (buyNowProduct) {
       return {
         items: [
@@ -46,7 +48,7 @@ const CheckoutPage = () => {
             quantity: buyNowProduct.quantity,
             thumbnail: buyNowProduct.thumbnail,
             variant: {
-              id: buyNowProduct.variant?.variant_id,
+              id: buyNowProduct.variant?.id,
               size: {
                 size: buyNowProduct.variant?.size?.size,
                 size_name: buyNowProduct.variant?.size?.size
@@ -279,6 +281,23 @@ const CheckoutPage = () => {
           variant_id: Number(item.variant?.id || item.product_variant?.variant_id)
         }
       }));
+
+      // Thêm điều kiện để xử lý buy now
+      if (buyNowState) {
+        const existingItemIndex = items.findIndex(item => item.product_id === Number(buyNowState.id));
+
+        if (existingItemIndex > -1) {
+          // Nếu sản phẩm đã tồn tại, cập nhật số lượng
+          items[existingItemIndex].quantity += Number(buyNowState.quantity);
+        } else {
+          // Nếu sản phẩm chưa tồn tại, thêm mới
+          items.push({
+            product_id: Number(buyNowState.id),
+            quantity: Number(buyNowState.quantity),
+            variant_id: Number(buyNowState.variant?.variant_id) // Thêm variant_id cho buy now
+          });
+        }
+      }
 
       // Tạo request body và chuyển thành JSON string
       const requestData = JSON.stringify({
@@ -540,7 +559,7 @@ const CheckoutPage = () => {
                         );
                         toast.success("Default address updated successfully");
                         setShowAddressSelection(false);
-                        window.location.reload(); // Reload để cập nhật địa ch�� mới
+                        window.location.reload(); // Reload để cập nhật địa ch mới
                       } catch (error) {
                         toast.error("Failed to update default address");
                       }
