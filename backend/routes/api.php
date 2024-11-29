@@ -217,6 +217,7 @@ Route::group([
         Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
         Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
         Route::delete('/{id}', [NotificationController::class, 'destroy']);
+        Route::get('/user-tracking', [NotificationController::class, 'getNotificationUserTracking']);
     });
 
     Route::prefix('refunds')->group(function () {

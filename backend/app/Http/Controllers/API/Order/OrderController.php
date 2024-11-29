@@ -329,6 +329,11 @@ class OrderController extends Controller
                     'amount' => 0
                 ]);
 
+                Log::info('Item data before creating OrderItem:', [
+                    'variant_id' => isset($item['variant_id']) ? $item['variant_id'] : 'null',
+                    'product_id' => $item['product_id']
+                ]);
+
                 // Tạo order items và cập nhật tồn kho
                 foreach ($items as $item) {
                     OrderItem::create([
@@ -721,6 +726,13 @@ class OrderController extends Controller
                             'message' => "Order #{$order->sku} has been completed",
                             'type' => 'order'
                         ]);
+                        Notification::create([
+                            'user_id' => $order->user_id,
+                            'order_id' => $order->id,
+                            'title' => 'Order Completed',
+                            'message' => "Order #{$order->sku} has been completed",
+                            'type' => 'notificationUserTracking'
+                        ]);
                         break;
                     case 'cancelled':
                         $orderPayment->update(['status' => 'failed']);
@@ -731,6 +743,13 @@ class OrderController extends Controller
                             'title' => 'Order Cancelled',
                             'message' => "Order #{$order->sku} has been cancelled",
                             'type' => 'order'
+                        ]);
+                        Notification::create([
+                            'user_id' => $order->user_id,
+                            'order_id' => $order->id,
+                            'title' => 'Order Cancelled',
+                            'message' => "Order #{$order->sku} has been cancelled",
+                            'type' => 'notificationUserTracking'
                         ]);
 
                         // Gửi email thông báo hủy đơn
@@ -744,7 +763,7 @@ class OrderController extends Controller
                             ]);
 
                             $orderData = $order->toArray();
-                           
+
                             Mail::to($order->user->email)
                                 ->queue(new OrderCancelled($orderData));
                         } catch (\Exception $e) {
@@ -765,6 +784,13 @@ class OrderController extends Controller
                             'message' => "Order #{$order->sku} has been expired",
                             'type' => 'order'
                         ]);
+                        Notification::create([
+                            'user_id' => $order->user_id,
+                            'order_id' => $order->id,
+                            'title' => 'Order Expired',
+                            'message' => "Order #{$order->sku} has been expired",
+                            'type' => 'notificationUserTracking'
+                        ]);
                         if ($prevStatus != 'expired' && $prevStatus != 'cancelled') {
                             $this->handleFailedPayment($order);
                         }
@@ -777,6 +803,13 @@ class OrderController extends Controller
                             'title' => 'Order Shipping',
                             'message' => "Order #{$order->sku} is shipping",
                             'type' => 'order'
+                        ]);
+                        Notification::create([
+                            'user_id' => $order->user_id,
+                            'order_id' => $order->id,
+                            'title' => 'Order Shipping',
+                            'message' => "Order #{$order->sku} is shipping",
+                            'type' => 'notificationUserTracking'
                         ]);
                         break;
                     default:

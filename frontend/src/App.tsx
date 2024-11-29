@@ -61,6 +61,7 @@ import UpdatePost from "./pages/Admin/Post/update";
 import PaymentSuccess from "./pages/Client/PaymentSuccess";
 import PaymentFailed from "./pages/Client/PaymentFailed";
 import ContactList from "./pages/Admin/Contact";
+import NotificationPage from "./pages/Client/User/Notification";
 
 function App() {
   const { pathname } = useLocation();
@@ -112,6 +113,7 @@ function App() {
             <Route path="my-order/:id" element={<OrderDetail />} />
             <Route path="my-address" element={<Address />} />
             <Route path="whish-list" element={<Wishlist />} />
+            <Route path="notifications" element={<NotificationPage />} />
           </Route>
           <Route path="/about-us" element={<AboutPage />} />
           <Route path="/news" element={<NewsPage />} />
