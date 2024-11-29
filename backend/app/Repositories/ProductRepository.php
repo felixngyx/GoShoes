@@ -28,13 +28,26 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     {
         $query = $this->getBaseQuery($filters);
 
-        // Thêm phân trang
+        // Get total items count
+        $totalItems = count(DB::select($query));
+
+        // Add pagination
         if ($page && $perPage) {
             $offset = ($page - 1) * $perPage;
             $query .= " LIMIT $perPage OFFSET $offset";
         }
 
-        return DB::select($query);
+        $products = DB::select($query);
+
+        // Calculate total pages
+        $totalPages = ceil($totalItems / $perPage);
+
+        return [
+            'products' => $products,
+            'total_pages' => $totalPages,
+            'current_page' => $page,
+            'total_items' => $totalItems
+        ];
     }
 
     public function createProduct(array $data)
@@ -301,7 +314,7 @@ WHERE 1 = 1
             $query .= " AND p.hagtag LIKE '%" . $filters['hagtag'] . "%'";
         }
         if (!empty($filters['is_deleted'])) {
-            $query .= " AND p.is_deleted = " . intval($filters['is_deleted']);
+            $query .= " AND p.is_deleted = " . boolval($filters['is_deleted']);
         }
 
         $query .= " GROUP BY p.id, b.name, ci.categories ORDER BY p.id";

@@ -62,9 +62,17 @@ class ProductService implements ProductServiceInterface
 
     public function listProduct(array $request) : \Illuminate\Http\JsonResponse
     {
+        $page = $request['page'] ?? 1;
+        $perPage = $request['perPage'] ?? 10;
+
+        $result = $this->productRepository->listProduct($request, $page, $perPage);
+
         return response()->json([
             'success' => true,
-            'data' => $this->productRepository->listProduct($request, $request['page'] ?? 1, $request['perPage'] ?? 10),
+            'data' => $result['products'],
+            'total_pages' => $result['total_pages'],
+            'current_page' => $result['current_page'],
+            'total_items' => $result['total_items']
         ]);
     }
 
