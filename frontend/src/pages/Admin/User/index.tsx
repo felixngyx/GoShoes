@@ -15,13 +15,22 @@ const User = () => {
 	const [itemsPerPage] = useState(5);
 	const [totalPages, setTotalPages] = useState(0);
 	const [previewUser, setPreviewUser] = useState<UserType | null>(null);
+	const [loadingUpdate, setLoadingUpdate] = useState(false);
 
 	const fetchUsers = async () => {
 		try {
 			const response = await userService.getAll();
-			const user = Array.isArray(response)
+			let user = Array.isArray(response)
 				? response
 				: (Object.values(response) as UserType[]);
+
+			user.sort((a, b) => {
+				if (a.role === 'super-admin') return -1;
+				if (b.role === 'super-admin') return 1;
+				if (a.role === 'admin') return -1;
+				if (b.role === 'admin') return 1;
+				return 0;
+			});
 			setUsers(user);
 			setTotalPages(Math.ceil(user.length / itemsPerPage));
 		} catch (error) {
@@ -40,6 +49,19 @@ const User = () => {
 		fetchUsers();
 		setLoading(false);
 	}, []);
+
+	const handleRoleChange = async (
+		e: React.ChangeEvent<HTMLSelectElement>,
+		id: number
+	) => {
+		toast.loading('Updating role...');
+		setLoadingUpdate(true);
+		const role = e.target.value;
+		await userService.update(id, { admin: role });
+		setLoadingUpdate(false);
+		toast.dismiss();
+		toast.success('Update role success');
+	};
 
 	const handleDelete = async (id: number) => {
 		if (confirm('Are you sure you want to delete this user?')) {
@@ -155,7 +177,8 @@ const User = () => {
 													? 'select-disabled text-info'
 													: ''
 											}`}
-											// onChange={(e) => handleRoleChange(e, user.id!)}
+											disabled={loadingUpdate}
+											onChange={(e) => handleRoleChange(e, user.id!)}
 										>
 											{user.role === 'super-admin' && (
 												<option value="super-admin" disabled>

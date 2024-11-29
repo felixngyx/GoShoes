@@ -43,6 +43,7 @@ export interface PRODUCT {
 	category_ids: number[];
 	brand_id: number;
 	thumbnail: string;
+	updated_at?: string;
 	description: string;
 	stock_quantity?: number;
 	variants: {
