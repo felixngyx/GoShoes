@@ -126,6 +126,7 @@ type VariantSize = {
 	size_id: number;
 	quantity: number;
 	sku: string;
+	product_variant_id?: number;
 };
 
 const UpdateProduct = () => {
@@ -235,7 +236,6 @@ const UpdateProduct = () => {
 				};
 
 				setProduct(productDetailData);
-				console.log('product----------', productData);
 
 				console.log('productData----------', productData);
 
@@ -281,6 +281,13 @@ const UpdateProduct = () => {
 
 				setValue('variants', formattedVariants);
 
+				formattedVariants.forEach((variant: any, index: number) => {
+					setVariantSizes((prev) => ({
+						...prev,
+						[index]: variant.variant_details,
+					}));
+				});
+
 				// Set color search terms
 				const colorTermsMap: { [key: number]: string } = {};
 				formattedVariants.forEach((variant: any, index: number) => {
@@ -292,19 +299,6 @@ const UpdateProduct = () => {
 					}
 				});
 				setColorSearchTerms(colorTermsMap);
-
-				productData.variants.forEach((variant: any, index: number) => {
-					variant.sizes.forEach((detail: any) => {
-						handleAddSize(index, detail.size_id, detail.quantity);
-					});
-				});
-
-				// Set variant sizes
-				// const variantSizesMap: { [key: number]: VariantSize[] } = {};
-				// productData.variants.forEach((variant: any, index: number) => {
-				// 	variantSizesMap[index] = variant.variant_details;
-				// });
-				// setVariantSizes(variantSizesMap);
 
 				// Calculate and set stock quantity
 				const totalQuantity = productData.variants.reduce(
@@ -423,18 +417,9 @@ const UpdateProduct = () => {
 		const currentVariant = control._formValues.variants[index];
 
 		// Cập nhật stockQuantity bằng cách trừ đi tất cả quantity trong variant bị xóa
-		if (currentVariant?.size) {
-			currentVariant.size.forEach((_: VariantSize, sizeIndex: number) => {
-				const inputPath = `variants.${index}.size.${sizeIndex}.quantity`;
-				const quantityToRemove = previousValues[inputPath] || 0;
-				setStockQuantity((prev) => prev - quantityToRemove);
-
-				// Xóa previous values cho variant này
-				setPreviousValues((prev) => {
-					const newPrev = { ...prev };
-					delete newPrev[inputPath];
-					return newPrev;
-				});
+		if (currentVariant?.variant_details) {
+			currentVariant.variant_details.forEach((detail: VariantSize) => {
+				setStockQuantity((prev) => prev - (detail.quantity || 0));
 			});
 		}
 
@@ -627,9 +612,12 @@ const UpdateProduct = () => {
 			sku: '',
 		};
 
-		// Lấy giá trị hiện tại từ form thay vì fields
-		const currentValues: VariantSize[] =
-			control._formValues.variants[variantIndex].sizes || [];
+		// Lấy giá trị hiện tại từ variant_details thay vì sizes
+		const currentValues =
+			control._formValues.variants[variantIndex].variant_details || [];
+
+		// Cập nhật stockQuantity khi thêm size mới
+		setStockQuantity((prev) => prev + newSize.quantity);
 
 		setVariantSizes((prev) => ({
 			...prev,

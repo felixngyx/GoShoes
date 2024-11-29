@@ -23,6 +23,7 @@ export type User = {
 export type User_Update = {
 	admin?: string;
 	is_deleted?: 0 | 1;
+	role?: 'admin' | 'user';
 };
 
 const userService = {
