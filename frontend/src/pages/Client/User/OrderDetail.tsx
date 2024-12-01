@@ -199,7 +199,7 @@ const OrderDetail = () => {
                 </div>
                 <div className="flex justify-center text-gray-800 md:justify-start items-center space-x-4 py-4 border-b border-gray-200 w-full">
                   <p className="text-sm leading-5">
-                    Address: {JSON.parse(orderData.shipping.shipping_detail).address_detail}, {JSON.parse(orderData.shipping.shipping_detail).address}
+                    Address: {orderData.shipping.shipping_detail.address_detail}, {orderData.shipping.shipping_detail.address}
                   </p>
                 </div>
                 <div className="flex justify-center text-gray-800 md:justify-start items-center space-x-4 py-4 border-b border-gray-200 w-full">
