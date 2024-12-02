@@ -9,7 +9,13 @@ import ProductCard from "../ProductCard";
 import { useNavigate } from "react-router-dom";
 
 // Component Modal
-const EmailSubscribeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+const EmailSubscribeModal = ({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -23,9 +29,9 @@ const EmailSubscribeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     setIsLoading(true);
     try {
       const response = await axiosClient.post("/subscribe", {
-        email: email
+        email: email,
       });
-      
+
       if (response.data.success) {
         toast.success("Successfully subscribed to notifications!");
         onClose();
@@ -43,24 +49,38 @@ const EmailSubscribeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="fixed inset-0 bg-black opacity-30" onClick={onClose}></div>
-        
+        <div
+          className="fixed inset-0 bg-black opacity-30"
+          onClick={onClose}
+        ></div>
+
         <div className="relative bg-white rounded-lg p-8 max-w-md w-full">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
           >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
 
           <h3 className="text-2xl font-bold text-gray-900 mb-4">
             Subscribe to Newsletter
           </h3>
-          
+
           <p className="text-gray-600 mb-6">
-            Enter your email to receive notifications about our latest promotions and updates
+            Enter your email to receive notifications about our latest
+            promotions and updates
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,7 +97,7 @@ const EmailSubscribeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 We'll never share your email with anyone else.
               </p>
             </div>
-            
+
             <button
               type="submit"
               disabled={isLoading}
@@ -105,7 +125,7 @@ const EmailSubscribeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 const Homepage = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   return (
     <>
       {/* Banner */}
@@ -162,7 +182,7 @@ const Homepage = () => {
               Subscribe us to receive discount code
             </p>
           </div>
-          <button 
+          <button
             onClick={() => setIsModalOpen(true)}
             className="bg-black text-white text-xl font-bold px-10 py-2 rounded-none hover:bg-gray-800 transition duration-200"
           >
@@ -172,9 +192,9 @@ const Homepage = () => {
       </div>
 
       {/* Modal */}
-      <EmailSubscribeModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <EmailSubscribeModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
       />
 
       {/* Latest Product */}
@@ -185,11 +205,14 @@ const Homepage = () => {
         <div className="grid grid-cols-4 gap-10 mt-10">
           <ProductCard />
         </div>
-        <button onClick={() => navigate("/products")} className="w-full">
-          <p className="text-center text-[#40BFFF] cursor-pointer underline text-xl font-bold mt-10">
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={() => navigate("/products")}
+            className="py-2 px-4 text-center bg-[#40BFFF] text-white font-bold rounded-lg hover:bg-[#3397cc] transition duration-300"
+          >
             View All
-          </p>
-        </button>
+          </button>
+        </div>
       </div>
 
       {/* Category */}
@@ -231,7 +254,7 @@ const Homepage = () => {
               Free Shipping
             </p>
             <p className="text-black text-md font-medium">
-             Free shipping on all order and return
+              Free shipping on all order and return
             </p>
           </div>
           <div className="max-w-[200px] text-center">
@@ -240,7 +263,7 @@ const Homepage = () => {
               100% Refund
             </p>
             <p className="text-black text-md font-medium">
-            We offer 100% refund on all order
+              We offer 100% refund on all order
             </p>
           </div>
           <div className="max-w-[200px] text-center">
