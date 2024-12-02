@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API\User;
 
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Services\ServiceInterfaces\User\UserServiceInterface as UserService;
+use Illuminate\Http\Request;
+
 class UserController
 {
     private static $userService;
@@ -29,9 +31,9 @@ class UserController
         self::$userService = $userService;
     }
 
-    public function index() : \Illuminate\Http\JsonResponse
+    public function index(Request $request) : \Illuminate\Http\JsonResponse
     {
-        return self::getUserService()->all();
+        return self::getUserService()->all($request->only(['page', 'perPage']));
     }
 
     public function update(UpdateUserRequest $request, int $id) : \Illuminate\Http\JsonResponse
