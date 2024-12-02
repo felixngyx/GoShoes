@@ -447,7 +447,7 @@ class OrderController extends Controller
                     $variant->decrement('quantity', $item['quantity']);
                 } else {
                     $product = $item['product'];
-                    // Kiểm tra lại lần cuối để đảm bảo số lượng vẫn đủ
+                    // Kiểm tra lại lần cu��i để đảm bảo số lượng vẫn đủ
                     if ($product->stock_quantity < $item['quantity']) {
                         throw new \Exception("Sản phẩm {$product->name} đã hết hàng trong quá trình xử lý");
                     }
@@ -836,13 +836,14 @@ class OrderController extends Controller
             DB::beginTransaction();
 
             // Tìm đơn hàng của user hiện tại
-            $order = Order::when(!auth()->user()->role == 'admin' || !auth()->user()->role == 'super-admin', function ($query) {
-                $query->where('user_id', auth()->id());
-            })
+            $order = Order::with(['items.product', 'items.variant'])
+                ->when(!auth()->user()->role == 'admin' || !auth()->user()->role == 'super-admin', function ($query) {
+                    $query->where('user_id', auth()->id());
+                })
                 ->where('id', $id)
                 ->firstOrFail();
 
-            // Kiểm tra trạng thái đơn hàng - mở rộng các trạng thái hợp lệ
+            // Kiểm tra trạng thái đơn hàng
             $validStatuses = ['failed', 'cancelled', 'expired'];
             if (!in_array($order->status, $validStatuses)) {
                 throw new \Exception('This order is not supported to renew payment link');
@@ -854,21 +855,28 @@ class OrderController extends Controller
                 throw new \Exception('This order is not supported to renew payment link');
             }
 
+            // Kiểm tra số lượng tồn kho cho từng sản phẩm
+            foreach ($order->items as $item) {
+                if ($item->variant_id) {
+                    $variant = ProductVariant::lockForUpdate()->find($item->variant_id);
+                    if (!$variant || $variant->quantity < $item->quantity) {
+                        throw new \Exception("Product {$item->product->name} ({$variant->size->size}/{$variant->color->color}) only has {$variant->quantity} items left");
+                    }
+                } else {
+                    $product = Product::lockForUpdate()->find($item->product_id);
+                    if (!$product || $product->stock_quantity < $item->quantity) {
+                        throw new \Exception("Product {$product->name} only has {$product->stock_quantity} items left");
+                    }
+                }
+            }
+
             // Tạo SKU mới cho giao dịch mới
             $newSku = $this->generateSKU();
-
-            // Lưu SKU cũ vào trường meta hoặc log nếu cần thiết
             $oldSku = $order->sku;
             Log::info("Renewing payment for order: Old SKU: {$oldSku}, New SKU: {$newSku}");
 
-            // Cp nhật SKU mới cho đơn hàng
+            // Cập nhật SKU mới cho đơn hàng
             $order->update(['sku' => $newSku]);
-
-            // Khởi tạo request cho ZaloPay với số tiền đã được chuyển đổi sang xu
-            $paymentRequest = new Request([
-                'order_id' => $newSku,
-                'amount' => $order->total * 100,
-            ]);
 
             // Khởi tạo thanh toán ZaloPay mới
             $paymentResponse = $this->initiatePayment($order);
@@ -879,11 +887,23 @@ class OrderController extends Controller
                 // Cập nhật URL thanh toán mới và trạng thái
                 $payment->update([
                     'url' => $payment_url,
-                    'status' => 'pending'
+                    'status' => 'pending',
+                    'app_trans_id' => $paymentResponse['app_trans_id'] ?? null
                 ]);
 
                 // Cập nhật trạng thái đơn hàng
                 $order->update(['status' => 'pending']);
+
+                // Cập nhật số lượng tồn kho
+                foreach ($order->items as $item) {
+                    if ($item->variant_id) {
+                        $variant = ProductVariant::find($item->variant_id);
+                        $variant->decrement('quantity', $item->quantity);
+                        $item->product->decrement('stock_quantity', $item->quantity);
+                    } else {
+                        $item->product->decrement('stock_quantity', $item->quantity);
+                    }
+                }
 
                 DB::commit();
 
