@@ -73,4 +73,9 @@ class DiscountRepository
             return $discount->delete();
         });
     }
+
+    public function getRandomDiscount(){
+        $rand = $this->model->where('percent', '<', 80)->inRandomOrder()->take(3)->with('products')->get();
+        return $rand;
+    }
 }
