@@ -30,7 +30,7 @@ class ChangeMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Verify your change phone request',
+            subject: 'Verify your change mail request',
         );
     }
 
@@ -40,7 +40,7 @@ class ChangeMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'profile.email.change_phone',
+            view: 'profile.email.change_mail',
             with: [
                 'verificationLink' => $this->verificationLink
             ]
