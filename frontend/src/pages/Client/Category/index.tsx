@@ -10,7 +10,7 @@ const CategoryPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currrentPage, setCurrrentPage] = useState(1);
   const { data: categoryData, refetch } = useQuery({
-    queryKey: ["CATEGORIES"],
+    queryKey: ["CATEGORIES", currrentPage],
     queryFn: async () => await getAllCategories(12, currrentPage),
   });
 
@@ -20,9 +20,7 @@ const CategoryPage: React.FC = () => {
   );
 
   const totalPages = categoryData?.last_page || 1;
-  useEffect(() => {
-    refetch();
-  }, [currrentPage]);
+
   return (
     <>
       <Breadcrumb

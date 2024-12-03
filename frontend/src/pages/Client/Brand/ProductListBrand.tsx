@@ -30,7 +30,7 @@ const ProductListBrand = () => {
 
   const { data: brandsData = [] } = useQuery({
     queryKey: ["BRANDS_KEY"],
-    queryFn: async () => await getAllBrands(100, 1),
+    queryFn: () => getAllBrands(100, 1),
   });
 
   const brands = Array.isArray(brandsData?.brands) ? brandsData.brands : [];

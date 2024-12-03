@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaSearch, FaStar, FaTh, FaBars } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import Breadcrumb from "../../../components/client/Breadcrumb";
-import { useQuery } from "@tanstack/react-query";
+import { QueryClient, useQuery } from "@tanstack/react-query";
 import { getAllBrands } from "../../../services/client/brand";
 import { Brand } from "../../../types/client/brands";
 import Pagination from "../ProductList/Pagination";
@@ -18,9 +18,11 @@ const BrandPage: React.FC = () => {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["BRAND_KEY"],
-    queryFn: async () => await getAllBrands(itemsToShow, currrentPage),
+    queryKey: ["BRAND_KEY", currrentPage, itemsToShow],
+    queryFn: () => getAllBrands(itemsToShow, currrentPage),
   });
+
+  const queryClient = new QueryClient();
 
   const brands = Array.isArray(brandsData?.brands) ? brandsData.brands : [];
 
@@ -34,6 +36,7 @@ const BrandPage: React.FC = () => {
 
   const handleItemsToShow = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setItemsToShow(Number(e.target.value));
+    queryClient.invalidateQueries({ queryKey: ["BRAND_KEY"] });
   };
 
   const filteredBrands = brands.filter((brand: any) =>
@@ -51,10 +54,6 @@ const BrandPage: React.FC = () => {
   });
 
   const totalPages = brandsData?.pagination.last_page || 1;
-
-  useEffect(() => {
-    refetch();
-  }, [itemsToShow, currrentPage]);
 
   if (isLoading) return <div>Đang tải...</div>;
 
