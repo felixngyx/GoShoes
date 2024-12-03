@@ -237,8 +237,6 @@ const UpdateProduct = () => {
 
 				setProduct(productDetailData);
 
-				console.log('productData----------', productData);
-
 				// Set form values
 				setValue('name', productData.name);
 				setValue('price', Number(productData.price));
@@ -441,7 +439,9 @@ const UpdateProduct = () => {
 		setPreviousValues((prev) => {
 			const newPrev: { [key: string]: number } = {};
 			Object.entries(prev).forEach(([key, value]) => {
-				const match = key.match(/variants\.(\d+)\.size\.(\d+)\.quantity/);
+				const match = key.match(
+					/variants\.(\d+)\.variant_details\.(\d+)\.quantity/
+				);
 				if (match) {
 					const variantIndex = parseInt(match[1]);
 					const sizeIndex = match[2];
@@ -449,7 +449,9 @@ const UpdateProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${variantIndex - 1}.size.${sizeIndex}.quantity`
+							`variants.${
+								variantIndex - 1
+							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
 				}
@@ -558,7 +560,6 @@ const UpdateProduct = () => {
 
 			formattedData.stock_quantity = stockQuantity;
 
-			console.log('Formatted submit data:', formattedData);
 			const response = await productService.update(
 				Number(id),
 				formattedData
@@ -638,7 +639,30 @@ const UpdateProduct = () => {
 		const sizeToRemove = currentVariant.variant_details[sizeIndex];
 
 		// Trừ đi số lượng của size bị xóa khỏi tổng stock quantity
-		setStockQuantity((prev) => prev - (Number(sizeToRemove.quantity) || 0));
+		const quantityToRemove = Number(sizeToRemove.quantity) || 0;
+		setStockQuantity((prev) => prev - quantityToRemove);
+
+		// Xóa giá trị quantity cũ khỏi previousValues và cập nhật lại index cho các size còn lại
+		setPreviousValues((prev) => {
+			const newPrev = { ...prev };
+			// Xóa giá trị của size bị xóa
+			delete newPrev[
+				`variants.${variantIndex}.variant_details.${sizeIndex}.quantity`
+			];
+
+			// Cập nhật lại index cho các size phía sau
+			const remainingSizes = currentVariant.variant_details.length;
+			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
+				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${
+					i - 1
+				}.quantity`;
+				newPrev[newKey] = newPrev[oldKey];
+				delete newPrev[oldKey];
+			}
+
+			return newPrev;
+		});
 
 		const updatedSizes = currentVariant.variant_details.filter(
 			(_: VariantSize, idx: number) => idx !== sizeIndex

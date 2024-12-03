@@ -2,53 +2,36 @@ import { useEffect, useState } from 'react';
 import { FaRegEye, FaSort } from 'react-icons/fa';
 import userService from '../../../services/admin/user';
 import { User as UserType } from '../../../services/admin/user';
-import { Link } from 'react-router-dom';
-import { Eye, TrashIcon } from 'lucide-react';
+import { Eye, RotateCcw, TrashIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import { X } from 'lucide-react';
+import Pagination from '../../../components/admin/Pagination';
 
 const User = () => {
 	const [users, setUsers] = useState<UserType[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
-	const [itemsPerPage] = useState(5);
 	const [totalPages, setTotalPages] = useState(0);
 	const [previewUser, setPreviewUser] = useState<UserType | null>(null);
 	const [loadingUpdate, setLoadingUpdate] = useState(false);
 
 	const fetchUsers = async () => {
 		try {
-			const response = await userService.getAll();
-			let user = Array.isArray(response)
-				? response
-				: (Object.values(response) as UserType[]);
-
-			user.sort((a, b) => {
-				if (a.role === 'super-admin') return -1;
-				if (b.role === 'super-admin') return 1;
-				if (a.role === 'admin') return -1;
-				if (b.role === 'admin') return 1;
-				return 0;
-			});
-			setUsers(user);
-			setTotalPages(Math.ceil(user.length / itemsPerPage));
+			const response = await userService.getAll(currentPage, 10);
+			console.log('Users----------', response.data.data);
+			setUsers(response.data.data);
+			setTotalPages(response.data.total_pages);
 		} catch (error) {
 			console.error('Error fetching users:', error);
 		}
-	};
-
-	const getCurrentUsers = () => {
-		const indexOfLastItem = currentPage * itemsPerPage;
-		const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-		return users.slice(indexOfFirstItem, indexOfLastItem);
 	};
 
 	useEffect(() => {
 		setLoading(true);
 		fetchUsers();
 		setLoading(false);
-	}, []);
+	}, [currentPage]);
 
 	const handleRoleChange = async (
 		e: React.ChangeEvent<HTMLSelectElement>,
@@ -75,6 +58,38 @@ const User = () => {
 				console.error('Error deleting user:', error);
 			} finally {
 				setLoading(false);
+			}
+		}
+	};
+
+	const updateStatus = async (id: number, status: boolean) => {
+		if (!status) {
+			if (confirm('Are you sure you want to restore this user?')) {
+				try {
+					setLoading(true);
+					await userService.update(id, {
+						is_deleted: status,
+					});
+					fetchUsers();
+					toast.success('Restore user success');
+				} catch (error) {
+					console.error('Error restoring user:', error);
+				} finally {
+					setLoading(false);
+				}
+			}
+		} else {
+			if (confirm('Are you sure you want to delete this user?')) {
+				try {
+					setLoading(true);
+					await userService.delete(id);
+					fetchUsers();
+					toast.success('Delete user success');
+				} catch (error) {
+					console.error('Error deleting user:', error);
+				} finally {
+					setLoading(false);
+				}
 			}
 		}
 	};
@@ -150,7 +165,7 @@ const User = () => {
 								</td>
 							</tr>
 						) : (
-							getCurrentUsers().map((user) => (
+							users.map((user) => (
 								<tr
 									key={user.id}
 									className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
@@ -225,11 +240,25 @@ const User = () => {
 														color="primary"
 													/>
 												</button>
-												<TrashIcon
-													color="red"
-													className="w-5 h-5 cursor-pointer"
-													onClick={() => handleDelete(user.id!)}
-												/>
+												{user.is_deleted ? (
+													<RotateCcw
+														size={20}
+														className="cursor-pointer"
+														color="#40bfff"
+														onClick={() =>
+															updateStatus(user.id!, false)
+														}
+													/>
+												) : (
+													<TrashIcon
+														size={20}
+														className="cursor-pointer"
+														color="red"
+														onClick={() =>
+															updateStatus(user.id!, true)
+														}
+													/>
+												)}
 											</div>
 										)}
 									</td>
@@ -239,53 +268,11 @@ const User = () => {
 					</tbody>
 				</table>
 			</div>
-			<div className="join ms-auto">
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === 1 ? 'btn-disabled' : ''
-					}`}
-					onClick={() => setCurrentPage(1)}
-				>
-					«
-				</button>
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === 1 ? 'btn-disabled' : ''
-					}`}
-					onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-				>
-					‹
-				</button>
-				{[...Array(totalPages)].map((_, index) => (
-					<button
-						key={index + 1}
-						className={`join-item btn btn-sm ${
-							currentPage === index + 1 ? 'btn-active' : ''
-						}`}
-						onClick={() => setCurrentPage(index + 1)}
-					>
-						{index + 1}
-					</button>
-				))}
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === totalPages ? 'btn-disabled' : ''
-					}`}
-					onClick={() =>
-						setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-					}
-				>
-					›
-				</button>
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === totalPages ? 'btn-disabled' : ''
-					}`}
-					onClick={() => setCurrentPage(totalPages)}
-				>
-					»
-				</button>
-			</div>
+			<Pagination
+				currentPage={currentPage}
+				totalPages={totalPages}
+				onPageChange={setCurrentPage}
+			/>
 			{previewUser && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 					<div className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/2">
