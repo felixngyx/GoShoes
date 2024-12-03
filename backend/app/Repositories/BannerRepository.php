@@ -12,12 +12,12 @@ class BannerRepository implements BannerRepositoryInterface
 {
     public function getAll()
     {
-        return Banner::with('images')->get();
+        return Banner::get();
     }
 
     public function getById($id)
     {
-        return Banner::with('images')->find($id);
+        return Banner::find($id);
     }
 
     public function create(array $data)
@@ -41,7 +41,7 @@ class BannerRepository implements BannerRepositoryInterface
                         'title' => $imageData['title'] ?? null,
                         'section' => $imageData['section'],
                         'url' => $imageData['url'] ?? null
-                        
+
                     ]);
                 }
             }
@@ -82,10 +82,10 @@ class BannerRepository implements BannerRepositoryInterface
             if (isset($data['images']) && is_array($data['images'])) {
                 // Lấy các ID ảnh mới
                 $newImageIds = collect($data['images'])->pluck('id')->filter()->toArray();
-    
+
                 // Xóa ảnh không có trong danh sách mới
                 $banner->images()->whereNotIn('id', $newImageIds)->delete();
-    
+
                 foreach ($data['images'] as $imageData) {
                     if (isset($imageData['id'])) {
                         // Cập nhật ảnh hiện có

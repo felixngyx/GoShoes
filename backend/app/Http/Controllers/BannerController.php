@@ -19,7 +19,7 @@ class BannerController extends Controller
     {
         try {
             $banners = $this->bannerService->getAllBanners();
-            return response()->json(['success' => true, 'message' => 'Lấy danh sách banners thành công.', 'data' => $banners]);
+            return response()->json(['success' => true, 'message' => 'Get all Banner successfully!', 'data' => $banners]);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => 'Không thể lấy danh sách banners.', 'error' => $e->getMessage()], 500);
         }
