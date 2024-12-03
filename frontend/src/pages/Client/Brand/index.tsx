@@ -54,8 +54,8 @@ const BrandPage: React.FC = () => {
     <>
       <Breadcrumb
         items={[
-          { name: "Home", link: "/" },
-          { name: "Brand", link: "/brand" },
+          { name: "Home", link: "" },
+          { name: "Brand", link: "brand" },
         ]}
       />
       <div className="container mx-auto px-4 lg:px-16 py-8">

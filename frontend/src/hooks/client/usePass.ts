@@ -16,7 +16,6 @@ const usePass = () => {
   const { mutate: sendResetPasswordMutation, isLoading: isSendingResetPassword } = useMutation({
     mutationFn: sendResetPasswordRequest,
     onSuccess: () => {
-      console.log('Password reset request has been sent. Please check your email.');
     },
     onError: (error: any) => {
       const errorMessage = error?.response?.data?.message || 'Failed to send password reset request';
@@ -67,7 +66,6 @@ const usePass = () => {
       console.error('Invalid email format');
       return;
     }
-    console.log('Sending reset password request for email:', email);
     sendResetPasswordMutation({ email });
   };
 

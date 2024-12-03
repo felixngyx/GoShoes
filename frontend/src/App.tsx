@@ -57,7 +57,6 @@ import NewsPage from './pages/Client/News';
 import NewsPageDetail from './pages/Client/News/NewsPageDetail';
 import PaymentSuccess from './pages/Client/PaymentSuccess';
 import PaymentFailed from './pages/Client/PaymentFailed';
-import VerifyEmailPage from './pages/Client/User/VerityEmailPage';
 import VerifyEmail from './pages/Client/SignUp/VerifyEmail';
 import Post from './pages/Admin/Post';
 import CreatePost from './pages/Admin/Post/create';

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { getAllNews } from "../../../services/client/news";
 import { News } from "../../../types/client/news";
 import parse from 'html-react-parser';
+import Breadcrumb from "../../../components/client/Breadcrumb";
 
 // Thêm hàm helper để lọc nội dung text
 const stripHtml = (html: string) => {
@@ -148,6 +149,13 @@ const NewsPage = () => {
   }
 
   return (
+    <>
+     <Breadcrumb
+        items={[
+          { name: "Home", link: "" },
+          { name: "News", link: "news" },
+        ]}
+      />
     <div className="container mx-auto px-4 py-8">
       <section className="text-gray-700 body-font">
         <div className="container mx-auto max-w-7xl">
@@ -240,6 +248,7 @@ const NewsPage = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

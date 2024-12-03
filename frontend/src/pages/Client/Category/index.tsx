@@ -22,8 +22,8 @@ const CategoryPage: React.FC = () => {
     <>
       <Breadcrumb
         items={[
-          { name: "Home", link: "/" },
-          { name: "Category", link: "/category" },
+          { name: "Home", link: "" },
+          { name: "Category", link: "category" },
         ]}
       />
       <div className="container mx-auto px-4 py-8 bg-white text-black">
