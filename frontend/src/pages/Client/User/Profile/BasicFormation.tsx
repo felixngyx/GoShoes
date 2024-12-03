@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { joiResolver } from '@hookform/resolvers/joi';
 import { profileUpdateSchema } from '../Schema/profileSchema';
 import { ProfileParams } from '../../../../types/client/profile';
-import toast from 'react-hot-toast';
 
 interface ProfileFormProps {
   profile: any;
@@ -24,13 +23,19 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
   handleUpdateProfile,
   handleLocationSelect,
   handleSendEmailChangeRequest,
-  handleVerifyTokenChangePhone,
   handleSendPhoneChangeRequest,
   handleVerifyTokenChangeEmail,
-  isSendingPhone,
-  isVerifyingPhoneToken,
 }) => {
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProfileParams>({
+  const [emailToChange, setEmailToChange] = useState<string | null>(null);
+  const [phoneToChange, setPhoneToChange] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm<ProfileParams>({
     resolver: joiResolver(profileUpdateSchema),
     defaultValues: {
       name: profile?.name || '',
@@ -46,7 +51,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 
   const watchEmail = watch('email');
   const watchPhone = watch('phone');
-  
+
   useEffect(() => {
     if (profile) {
       setValue('name', profile.name);
@@ -61,7 +66,16 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
     if (selectedLocation) {
       setValue('address', selectedLocation.shipping_detail.address);
     }
-  }, [profile, selectedLocation, setValue]);
+
+    // Nếu có email/phone đang chờ thay đổi, hiển thị lại
+    if (emailToChange) {
+      setValue('email', emailToChange);
+    }
+
+    if (phoneToChange) {
+      setValue('phone', phoneToChange);
+    }
+  }, [profile, selectedLocation, emailToChange, phoneToChange, setValue]);
 
   const onSubmit = async (data: ProfileParams) => {
     const updatedData: ProfileParams = {
@@ -69,21 +83,22 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
       address: selectedLocation?.shipping_detail?.address,
     };
 
-    // Nếu email thay đổi, gửi yêu cầu thay đổi email
-    if (watchEmail !== profile?.email) {
+    // Nếu email thay đổi và không rỗng, gửi yêu cầu thay đổi email
+    if (watchEmail.trim() !== profile?.email?.trim() && watchEmail.trim() !== '') {
       updatedData.email = watchEmail;
       handleSendEmailChangeRequest(watchEmail); // Gửi yêu cầu thay đổi email
+      setEmailToChange(watchEmail); // Lưu email đang thay đổi
     }
 
-    // Nếu số điện thoại thay đổi, gửi yêu cầu thay đổi số điện thoại
-    if (watchPhone !== profile?.phone) {
+    // Nếu số điện thoại thay đổi và không rỗng, gửi yêu cầu thay đổi số điện thoại
+    if (watchPhone.trim() !== profile?.phone?.trim() && watchPhone.trim() !== '') {
       updatedData.phone = watchPhone;
       handleSendPhoneChangeRequest(); // Gửi yêu cầu thay đổi số điện thoại
+      setPhoneToChange(watchPhone); // Lưu số điện thoại đang thay đổi
     }
 
     // Gọi hàm cập nhật profile
     handleUpdateProfile(updatedData);
-
   };
 
   return (
@@ -171,7 +186,10 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           {errors.bio && <p className="text-red-500">{errors.bio?.message}</p>}
         </label>
 
-        <button type="submit" className="btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] col-span-2 mt-5">
+        <button
+          type="submit"
+          className="btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] col-span-2 mt-5"
+        >
           Update
         </button>
       </form>
