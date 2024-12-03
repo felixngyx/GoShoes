@@ -26,12 +26,11 @@ const ProductListBrand = () => {
     queryFn: async () => await getProductByBrandId(Number(id), page, perPage),
   });
 
-  // Gắn product và products
   const products = response.data || [];
 
   const { data: brandsData = [] } = useQuery({
     queryKey: ["BRANDS_KEY"],
-    queryFn: () => getAllBrands(100, 1),
+    queryFn: async () => await getAllBrands(100, 1),
   });
 
   const brands = Array.isArray(brandsData?.brands) ? brandsData.brands : [];
@@ -108,7 +107,7 @@ const ProductListBrand = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Brand List - New Section */}
-      <div className="relative z" ref={dropdownRef}>
+      <div className="relative mb-4" ref={dropdownRef}>
         {/* Tiêu đề Button */}
         <label
           tabIndex={0}
