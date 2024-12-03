@@ -1,7 +1,6 @@
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { IoCart, IoHeartOutline } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
-import { IProduct } from "../../../types/client/products/products";
 import useCart from "../../../hooks/client/useCart";
 import Cookies from "js-cookie";
 import { useState } from "react";
@@ -154,6 +153,15 @@ const ProductItems = ({
             src={product.thumbnail}
             alt={product.name}
           />
+
+          <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
+            {Math.round(
+              ((Number(product.price) - Number(product.promotional_price)) /
+                Number(product.price)) *
+                100
+            )}
+            %
+          </p>
           <div className="absolute hidden group-hover:flex w-full h-full top-0 left-0 bg-opacity-70 bg-gray-50 justify-center items-center gap-8 z-10">
             <IoHeartOutline
               onClick={() => handleAddToWishlist(product.id)}
@@ -167,9 +175,6 @@ const ProductItems = ({
               size={52}
               color="#40BFFF"
             />
-          </div>
-          <div className="absolute top-2 left-2 text-white font-semibold bg-red-500 px-2 rounded-md text-sm shadow-md">
-            HOT
           </div>
         </div>
         <Link to={`/products/${product.id}`}>
@@ -186,9 +191,6 @@ const ProductItems = ({
           </p>
           <p className="text-[#9098B1] text-sm font-medium line-through">
             {formatVNCurrency(Number(product.price))}
-          </p>
-          <p className="text-[#E71D36] text-sm font-semibold">
-            {Math.round(((Number(product.price) - Number(product.promotional_price)) / Number(product.price)) * 100)}%
           </p>
         </div>
       </div>

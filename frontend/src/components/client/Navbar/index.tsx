@@ -13,6 +13,9 @@ import { RootState } from "../../../store/index";
 import { IProduct } from "../../../types/client/products/products";
 import { IoCart, IoHeartOutline } from "react-icons/io5";
 import useCart from "../../../hooks/client/useCart";
+import { formatVNCurrency } from "../../../common/formatVNCurrency";
+import useWishlist from "../../../hooks/client/useWhishList";
+import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -81,6 +84,98 @@ const Navbar = () => {
 
     fetchProducts();
   }, [debouncedSearchTerm]);
+
+  const Navigate = useNavigate();
+  const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const { handleAddToCart } = useCart();
+  const [showModal, setShowModal] = useState(false);
+  const { handleAddToWishlist } = useWishlist();
+
+  const handleCheckAdd = (product: IProduct) => {
+    if (!accessToken) {
+      setShowModal(true);
+      return;
+    }
+    setSelectedProduct(product);
+  };
+
+  const addCart = () => {
+    if (selectedSize && selectedColor) {
+      const variants = parseVariants(selectedProduct?.variants || []);
+      const selectedVariant = variants.find(
+        (variant: any) => variant.color === selectedColor
+      );
+
+      if (selectedVariant) {
+        const selectedSizeObj = selectedVariant.sizes.find(
+          (sizeObj: any) => sizeObj.size === selectedSize
+        );
+
+        if (selectedSizeObj && selectedSizeObj.quantity > 0) {
+          const productVariantId = selectedSizeObj.product_variant_id;
+          const quantity = 1;
+
+          handleAddToCart(productVariantId, quantity);
+          setSelectedProduct(null);
+          setSelectedSize(null);
+          setSelectedColor(null);
+        } else {
+          toast.error("Size hoặc sản phẩm không khả dụng.");
+        }
+      } else {
+        toast.error("Không tìm thấy màu được chọn.");
+      }
+    } else {
+      toast.error("Hãy chọn kích thước và màu trước khi thêm vào giỏ hàng.");
+    }
+  };
+
+  const parseVariants = (variants: string | any[]) => {
+    try {
+      return Array.isArray(variants) ? variants : JSON.parse(variants);
+    } catch (error) {
+      console.error("Error parsing variants:", error);
+      return [];
+    }
+  };
+
+  const getVariantsForColor = (color: string) => {
+    if (!selectedProduct) return [];
+
+    return parseVariants(selectedProduct.variants)
+      .filter((variant: any) => variant.color === color)
+      .flatMap((variant: any) => variant.sizes);
+  };
+
+  const closeModal = () => {
+    setSelectedProduct(null);
+    setSelectedSize(null);
+    setSelectedColor(null);
+    setShowModal(false);
+  };
+
+  const handleLoginNow = () => {
+    navigate("/signin");
+    closeModal();
+  };
+
+  const RatingStars = ({ rating }: { rating: number }) => {
+    return (
+      <div className="flex items-center">
+        {[...Array(5)].map((_, index) => (
+          <span key={index}>
+            {index < Math.floor(rating) ? (
+              <AiFillStar className="text-yellow-400 text-xs" />
+            ) : (
+              <AiOutlineStar className="text-yellow-400 text-xs" />
+            )}
+          </span>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -166,13 +261,14 @@ const Navbar = () => {
                             <UserRound size={18} /> Account
                           </Link>
                         </li>
-                        {(user.role === "admin" || user.role === "super-admin") && (
+                        {(user.role === "admin" ||
+                          user.role === "super-admin") && (
                           <li>
                             <Link
                               to="/admin"
                               className="flex items-center w-full gap-2 p-2 rounded-lg hover:bg-gray-200"
                             >
-                              <MdDashboard/> Admin Dashboard
+                              <MdDashboard /> Admin Dashboard
                             </Link>
                           </li>
                         )}
@@ -184,7 +280,6 @@ const Navbar = () => {
                             <LogOut size={18} /> Logout
                           </button>
                         </li>
-
                       </>
                     ) : (
                       <>
@@ -204,11 +299,9 @@ const Navbar = () => {
                             <SquarePen size={18} /> Sign Up
                           </Link>
                         </li>
-
                       </>
                     )}
                   </ul>
-
                 </div>
               </div>
             </div>
@@ -299,13 +392,25 @@ const Navbar = () => {
                               alt={product.name}
                               className="w-full h-40 object-cover transition-transform duration-300 transform group-hover:scale-105"
                             />
+                            {/* Phần giảm giá sẽ được đặt ở góc trên bên phải của thumbnail */}
+                            <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
+                              {Math.round(
+                                ((Number(product.price) -
+                                  Number(product.promotional_price)) /
+                                  Number(product.price)) *
+                                  100
+                              )}
+                              %
+                            </p>
                             <div className="absolute hidden group-hover:flex w-full h-full top-0 left-0 bg-opacity-70 bg-gray-50 justify-center items-center gap-4 z-10">
                               <IoHeartOutline
+                                onClick={() => handleAddToWishlist(product.id)}
                                 className="cursor-pointer p-2 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
                                 size={32}
                                 color="#40BFFF"
                               />
                               <IoCart
+                                onClick={() => handleCheckAdd(product)}
                                 className="cursor-pointer p-2 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
                                 size={32}
                                 color="#40BFFF"
@@ -319,13 +424,29 @@ const Navbar = () => {
                                 {product.name}
                               </h3>
                             </Link>
-                            <p className="text-gray-600 text-sm">
+
+                            {/* Đặt rating ở dưới tên sản phẩm */}
+                            <div className="flex flex-row items-center justify-start gap-1 mt-1">
+                              <RatingStars rating={product.rating_count} />
+                            </div>
+
+                            <p className="text-gray-600 text-sm mt-1">
                               {product.categories}
                             </p>
+
                             <div className="flex justify-between items-center mt-2">
-                              <p className="font-bold text-blue-600 text-xl">
-                                {product.promotional_price}₫
-                              </p>
+                              <div className="flex items-center space-x-2">
+                                {/* Giá khuyến mãi với kích thước nhỏ hơn */}
+                                <p className="font-bold text-blue-600 text-lg">
+                                  {formatVNCurrency(
+                                    Number(product.promotional_price)
+                                  )}
+                                </p>
+                                {/* Giá cũ có gạch ngang */}
+                                <p className="text-gray-500 text-xs line-through">
+                                  {formatVNCurrency(Number(product.price))}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -340,6 +461,125 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="modal modal-open">
+            <div className="modal-box relative">
+              <h3 className="font-bold text-xl text-blue-500">
+                {selectedProduct.name}
+              </h3>
+              <p className="mt-2">Select size and color:</p>
+              <div className="flex flex-col gap-6 mt-4">
+                <div>
+                  <h4 className="text-lg font-semibold mb-2">Size:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedColor &&
+                      getVariantsForColor(selectedColor)
+                        .sort((a: any, b: any) => a.size - b.size)
+                        .map((variant: any) => {
+                          const isSizeAvailable = variant.quantity > 0;
+                          const isSelected = selectedSize === variant.size;
+
+                          return (
+                            <button
+                              key={variant.size}
+                              className={`px-8 py-2 text-center text-sm font-medium border rounded-md transition ${
+                                isSelected
+                                  ? "border-theme-color-primary ring-2 ring-theme-color-primary"
+                                  : "bg-white text-gray-700 border-gray-300"
+                              } ${
+                                !isSizeAvailable
+                                  ? "cursor-not-allowed opacity-50 line-through"
+                                  : "hover:border-theme-color-primary"
+                              }`}
+                              onClick={() => {
+                                if (isSizeAvailable) {
+                                  setSelectedSize(variant.size);
+                                }
+                              }}
+                              disabled={!isSizeAvailable}
+                            >
+                              {variant.size}
+                            </button>
+                          );
+                        })}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-lg font-semibold mb-2">Color:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {parseVariants(selectedProduct.variants)
+                      .map((variant: any) => variant.color)
+                      .filter(
+                        (value: string, index: number, self: string[]) =>
+                          self.indexOf(value) === index
+                      )
+                      .map((color: string) => {
+                        const isSelected = selectedColor === color;
+                        return (
+                          <button
+                            key={color}
+                            className={`px-6 py-2 border rounded-md hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary flex items-center gap-2 ${
+                              isSelected
+                                ? "bg-theme-color-primary outline-none ring-2"
+                                : ""
+                            }`}
+                            onClick={() => setSelectedColor(color)}
+                          >
+                            {color}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex justify-end gap-4">
+                <button
+                  className="btn bg-gray-300 text-black"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn bg-blue-500 text-white"
+                  onClick={addCart}
+                  disabled={!selectedSize || !selectedColor}
+                >
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="modal modal-open">
+            <div className="modal-box relative">
+              <h3 className="font-bold text-xl">You need to sign in</h3>
+              <p className="mt-2">Please sign in to add items to your cart.</p>
+              <div className="mt-4 flex justify-end gap-4">
+                <button
+                  className="btn bg-gray-300 text-black"
+                  onClick={closeModal}
+                >
+                  Close
+                </button>
+                <button
+                  className="btn bg-blue-500 text-white"
+                  onClick={handleLoginNow}
+                >
+                  Login Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
