@@ -57,7 +57,6 @@ import NewsPage from './pages/Client/News';
 import NewsPageDetail from './pages/Client/News/NewsPageDetail';
 import PaymentSuccess from './pages/Client/PaymentSuccess';
 import PaymentFailed from './pages/Client/PaymentFailed';
-import VerifyEmailPage from './pages/Client/User/VerityEmailPage';
 import VerifyEmail from './pages/Client/SignUp/VerifyEmail';
 import Post from './pages/Admin/Post';
 import CreatePost from './pages/Admin/Post/create';
@@ -65,6 +64,7 @@ import UpdatePost from './pages/Admin/Post/update';
 import ContactList from './pages/Admin/Contact';
 import NotificationPage from './pages/Client/User/Notification';
 import DiscountChatWidget from './components/client/DiscountWiget';
+import BannerPage from './pages/Admin/Banner';
 
 
 function App() {
@@ -176,6 +176,9 @@ function App() {
 					</Route>
 					<Route path="contact">
 						<Route index element={<ContactList />} />
+					</Route>
+					<Route path="banner">
+						<Route index element={<BannerPage/>}></Route>
 					</Route>
 
 					<Route

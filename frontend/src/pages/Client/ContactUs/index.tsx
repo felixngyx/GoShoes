@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Phone, Mail, MapPin, Clock, Send } from 'lucide-react'; // Adjust the path as necessary
 import Joi from 'joi';
 import axiosClient from '../../../apis/axiosClient';
+import Breadcrumb from '../../../components/client/Breadcrumb';
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -69,6 +70,13 @@ const ContactUs = () => {
   };
 
   return (
+    <>
+     <Breadcrumb
+        items={[
+          { name: "Home", link: "" },
+          { name: "Contact", link: "contact" },
+        ]}
+      />
     <div className="min-h-screen bg-base-200 py-12 px-4">
       {/* Hero Section */}
       <div className="container mx-auto">
@@ -245,6 +253,7 @@ const ContactUs = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

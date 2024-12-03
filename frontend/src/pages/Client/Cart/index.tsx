@@ -13,6 +13,7 @@ import useCart from "../../../hooks/client/useCart";
 import toast from "react-hot-toast";
 import { removeFromCart } from "../../../hooks/client/cartSlice";
 import { useDispatch } from "react-redux";
+import Breadcrumb from "../../../components/client/Breadcrumb";
 
 const CartSkeleton = () => {
   return (
@@ -227,6 +228,13 @@ const Cart = () => {
   if (isLoading) return <CartSkeleton />;
 
   return (
+    <>
+       <Breadcrumb
+        items={[
+          { name: "Home", link: "" },
+          { name: "Cart", link: "cart" },
+        ]}
+      />
     <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
@@ -424,6 +432,7 @@ const Cart = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

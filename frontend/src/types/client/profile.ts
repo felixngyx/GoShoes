@@ -2,7 +2,7 @@
 export interface Profile {
   name: string;
   email: string;
-  phone: string | null;
+  phone: string ;
   role: string;
   bio: string;
   birth_date: string;
