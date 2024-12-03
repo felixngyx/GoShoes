@@ -4,7 +4,10 @@ import { Status } from '.';
 import categoryService, { CATEGORY } from '../../../services/admin/category';
 import sizeService, { SIZE } from '../../../services/admin/size';
 import brandService, { BRAND } from '../../../services/admin/brand';
-import productService, { PRODUCT } from '../../../services/admin/product';
+import productService, {
+	PRODUCT,
+	PRODUCT_DETAIL,
+} from '../../../services/admin/product';
 import toast from 'react-hot-toast';
 import Joi from 'joi';
 import { joiResolver } from '@hookform/resolvers/joi';
@@ -123,11 +126,12 @@ type VariantSize = {
 	size_id: number;
 	quantity: number;
 	sku: string;
+	product_variant_id?: number;
 };
 
 const UpdateProduct = () => {
 	const { id } = useParams();
-	// const [product, setProduct] = useState<PRODUCT | null>(null);
+	const [product, setProduct] = useState<PRODUCT_DETAIL | null>(null);
 	const [categories, setCategories] = useState<CATEGORY[]>([]);
 	const [sizes, setSizes] = useState<SIZE[]>([]);
 	const [brands, setBrands] = useState<BRAND[]>([]);
@@ -215,22 +219,37 @@ const UpdateProduct = () => {
 						productService.getById(Number(id)),
 					]);
 
+				setCategories(resCategory.data?.categories?.data || []);
+				setSizes(resSize.data?.sizes?.data || []);
+				setBrands(resBrand.data?.data?.brands || []);
+				setColors(resColor.data?.clors?.data || []);
+
 				const productData: PRODUCT = {
 					...resProduct.data.data,
 					category_ids: resProduct.data.data.categories,
 					variants: JSON.parse(resProduct.data.data.variants),
 				};
 
+				const productDetailData: PRODUCT_DETAIL = {
+					...productData,
+					variants: JSON.parse(resProduct.data.data.variants),
+				};
+
+				setProduct(productDetailData);
+
 				console.log('productData----------', productData);
 
 				// Set form values
 				setValue('name', productData.name);
-				setValue('price', productData.price);
-				setValue('promotional_price', productData.promotional_price);
+				setValue('price', Number(productData.price));
+				setValue(
+					'promotional_price',
+					Number(productData.promotional_price)
+				);
 				setValue('status', productData.status);
 				setValue('sku', productData.sku);
 				setValue('hagtag', productData.hagtag);
-				setValue('brand_id', productData.brand_id);
+				setValue('brand_id', Number(productData.brand_id));
 				setValue('thumbnail', productData.thumbnail);
 				setValue('description', productData.description);
 
@@ -256,21 +275,18 @@ const UpdateProduct = () => {
 					(variant: any) => ({
 						color_id: variant.color_id,
 						image: variant.image,
-						variant_details: variant.variant_details,
+						variant_details: variant.sizes,
 					})
 				);
 
 				setValue('variants', formattedVariants);
 
-				// Set variant images
-				const variantImagesMap: { [key: number]: (File | string)[] } = {};
 				formattedVariants.forEach((variant: any, index: number) => {
-					const images = variant.image
-						.split(',')
-						.map((img: string) => img.trim());
-					variantImagesMap[index] = images;
+					setVariantSizes((prev) => ({
+						...prev,
+						[index]: variant.variant_details,
+					}));
 				});
-				setVariantImageFiles(variantImagesMap);
 
 				// Set color search terms
 				const colorTermsMap: { [key: number]: string } = {};
@@ -283,13 +299,6 @@ const UpdateProduct = () => {
 					}
 				});
 				setColorSearchTerms(colorTermsMap);
-
-				// Set variant sizes
-				const variantSizesMap: { [key: number]: VariantSize[] } = {};
-				productData.variants.forEach((variant: any, index: number) => {
-					variantSizesMap[index] = variant.variant_details;
-				});
-				setVariantSizes(variantSizesMap);
 
 				// Calculate and set stock quantity
 				const totalQuantity = productData.variants.reduce(
@@ -307,24 +316,23 @@ const UpdateProduct = () => {
 				);
 				setStockQuantity(totalQuantity);
 
+				// Set variant images
+				const variantImagesMap: { [key: number]: (File | string)[] } = {};
+				productData.variants.forEach((variant: any, index: number) => {
+					const images = variant.image
+						.split(',')
+						.map((img: string) => img.trim());
+					variantImagesMap[index] = images;
+				});
+				setVariantImageFiles(variantImagesMap);
+
 				// Set previous values for quantity tracking
 				const prevValues: { [key: string]: number } = {};
 
 				setPreviousValues(prevValues);
-
-				setCategories(resCategory.data?.categories?.data || []);
-				setSizes(resSize.data?.sizes?.data || []);
-				setBrands(resBrand.data?.data?.brands || []);
-				setColors(resColor.data?.clors?.data || []);
-
-				productData.variants.forEach((variant: any) => {
-					variant.sizes.forEach((detail: any, sizeIndex: number) => {
-						handleAddSize(sizeIndex, detail.size_id, detail.quantity);
-					});
-				});
 			} catch (error) {
-				console.error('Error:', error);
-				toast.error('Lỗi khi tải dữ liệu');
+				console.error('Error fetching product data---------------:', error);
+				toast.error('Error fetching product data');
 			} finally {
 				setLoadingData(false);
 			}
@@ -409,18 +417,9 @@ const UpdateProduct = () => {
 		const currentVariant = control._formValues.variants[index];
 
 		// Cập nhật stockQuantity bằng cách trừ đi tất cả quantity trong variant bị xóa
-		if (currentVariant?.size) {
-			currentVariant.size.forEach((_: VariantSize, sizeIndex: number) => {
-				const inputPath = `variants.${index}.size.${sizeIndex}.quantity`;
-				const quantityToRemove = previousValues[inputPath] || 0;
-				setStockQuantity((prev) => prev - quantityToRemove);
-
-				// Xóa previous values cho variant này
-				setPreviousValues((prev) => {
-					const newPrev = { ...prev };
-					delete newPrev[inputPath];
-					return newPrev;
-				});
+		if (currentVariant?.variant_details) {
+			currentVariant.variant_details.forEach((detail: VariantSize) => {
+				setStockQuantity((prev) => prev - (detail.quantity || 0));
 			});
 		}
 
@@ -560,15 +559,15 @@ const UpdateProduct = () => {
 			formattedData.stock_quantity = stockQuantity;
 
 			console.log('Formatted submit data:', formattedData);
-			// const response = await productService.update(
-			// 	Number(id),
-			// 	formattedData
-			// );
-			// console.log('Response:', response);
-			// if (response.status.toString() === '200') {
-			// 	toast.success('Update product successfully!');
-			// 	navigate('/admin/product');
-			// }
+			const response = await productService.update(
+				Number(id),
+				formattedData
+			);
+			console.log('Response:', response);
+			if (response.status.toString() === '201') {
+				toast.success('Update product successfully!');
+				navigate('/admin/product');
+			}
 		} catch (error: any) {
 			console.error('Error submitting form:', error);
 			toast.error(error.response.data.message);
@@ -613,9 +612,12 @@ const UpdateProduct = () => {
 			sku: '',
 		};
 
-		// Lấy giá trị hiện tại từ form thay vì fields
-		const currentValues: VariantSize[] =
+		// Lấy giá trị hiện tại từ variant_details thay vì sizes
+		const currentValues =
 			control._formValues.variants[variantIndex].variant_details || [];
+
+		// Cập nhật stockQuantity khi thêm size mới
+		setStockQuantity((prev) => prev + newSize.quantity);
 
 		setVariantSizes((prev) => ({
 			...prev,
@@ -1126,6 +1128,10 @@ const UpdateProduct = () => {
 										<div className="w-full">
 											<input
 												tabIndex={0}
+												disabled={
+													!!product?.variants?.[index]?.sizes?.[0]
+														?.product_variant_id
+												}
 												role="button"
 												type="text"
 												placeholder="Select color"
@@ -1401,14 +1407,17 @@ const UpdateProduct = () => {
 										</button>
 									</div>
 								</div>
-								<button
-									type="button"
-									onClick={() => removeVariant(index)}
-									className="btn bg-red-500	 btn-sm col-span-3 text-white"
-								>
-									<TrashIcon size={16} color="white" />
-									Delete Variant
-								</button>
+								{!product?.variants?.[index]?.sizes?.[0]
+									?.product_variant_id && (
+									<button
+										type="button"
+										onClick={() => removeVariant(index)}
+										className="btn bg-red-500	 btn-sm col-span-3 text-white"
+									>
+										<TrashIcon size={16} color="white" /> Delete
+										Variant
+									</button>
+								)}
 							</div>
 						))}
 

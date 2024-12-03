@@ -158,27 +158,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           {errors.birth_date && <p className="text-red-500">{errors.birth_date?.message}</p>}
         </label>
 
-        {/* Address */}
-        <label className="form-control col-span-2 sm:col-span-1">
-          <div className="label">
-            <span className="label-text font-medium text-base">Address</span>
-          </div>
-          <input
-            type="text"
-            placeholder="Address"
-            className="input input-bordered w-full"
-            value={selectedLocation?.shipping_detail?.address || ''}
-            disabled
-          />
-          <button
-            type="button"
-            onClick={handleLocationSelect}
-            className="btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] mt-2"
-          >
-            Select Address
-          </button>
-        </label>
-
         {/* Bio */}
         <label className="form-control col-span-2">
           <div className="label">

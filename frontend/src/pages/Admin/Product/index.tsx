@@ -39,23 +39,32 @@ const Product = () => {
 	const [selectedItems, setSelectedItems] = useState<number[]>([]); // State for individual selections
 	const [productData, setProductData] = useState<PRODUCT[]>([]);
 	const [loading, setLoading] = useState(false);
-	const [page, setPage] = useState(1);
-	const [limit] = useState(100);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [itemsPerPage] = useState(10);
 	const [totalPages, setTotalPages] = useState(0);
 
 	const fetchProducts = async () => {
 		try {
 			setLoading(true);
-			const res = await productService.getAll(page, limit);
-			console.log(res);
+			const res = await productService.getAll(1, 1000);
+			res.sort((a, b) => {
+				const dateA = new Date(a.updated_at as string).getTime();
+				const dateB = new Date(b.updated_at as string).getTime();
+				return dateB - dateA; // Sắp xếp giảm dần (mới nhất lên đầu)
+			});
 			setProductData(res);
-			const totalPages = Math.ceil(res.length / limit);
-			setTotalPages(totalPages);
+			setTotalPages(Math.ceil(res.length / itemsPerPage));
 		} catch (error) {
 			console.error(error);
 		} finally {
 			setLoading(false);
 		}
+	};
+
+	const getCurrentProducts = () => {
+		const indexOfLastItem = currentPage * itemsPerPage;
+		const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+		return productData.slice(indexOfFirstItem, indexOfLastItem);
 	};
 
 	const deleteProduct = async (id: number) => {
@@ -72,7 +81,7 @@ const Product = () => {
 
 	useEffect(() => {
 		fetchProducts();
-	}, [page, limit]);
+	}, [currentPage, itemsPerPage]);
 
 	const handleSelectAll = () => {
 		if (selectAll) {
@@ -92,7 +101,48 @@ const Product = () => {
 	};
 
 	const handlePageChange = (newPage: number) => {
-		setPage(newPage);
+		setCurrentPage(newPage);
+	};
+
+	const getPageNumbers = () => {
+		const pageNumbers = [];
+		const maxVisiblePages = 5; // Số trang hiển thị tối đa (không tính first/last page)
+
+		if (totalPages <= maxVisiblePages + 2) {
+			// Hiển thị tất cả các trang nếu tổng số trang nhỏ hơn hoặc bằng maxVisiblePages + 2
+			for (let i = 1; i <= totalPages; i++) {
+				pageNumbers.push(i);
+			}
+		} else {
+			// Luôn hiển thị trang đầu
+			pageNumbers.push(1);
+
+			if (currentPage <= 3) {
+				// Nếu đang ở gần trang đầu
+				for (let i = 2; i <= 4; i++) {
+					pageNumbers.push(i);
+				}
+				pageNumbers.push('...');
+				pageNumbers.push(totalPages);
+			} else if (currentPage >= totalPages - 2) {
+				// Nếu đang ở gần trang cuối
+				pageNumbers.push('...');
+				for (let i = totalPages - 3; i < totalPages; i++) {
+					pageNumbers.push(i);
+				}
+				pageNumbers.push(totalPages);
+			} else {
+				// Ở giữa
+				pageNumbers.push('...');
+				for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+					pageNumbers.push(i);
+				}
+				pageNumbers.push('...');
+				pageNumbers.push(totalPages);
+			}
+		}
+
+		return pageNumbers;
 	};
 
 	return (
@@ -192,10 +242,10 @@ const Product = () => {
 						{loading ? (
 							<LoadingTable />
 						) : (
-							productData.map((product, key) => (
+							getCurrentProducts().map((product, key) => (
 								<tr
 									className={`bg-white dark:bg-slate-800 ${
-										key !== productData.length - 1
+										key !== getCurrentProducts().length - 1
 											? 'border-b border-stroke'
 											: ''
 									}`}
@@ -278,11 +328,62 @@ const Product = () => {
 				</table>
 			</div>
 
-			<Pagination
-				currentPage={page}
-				totalPages={totalPages}
-				onPageChange={handlePageChange}
-			/>
+			<div className="join ms-auto">
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === 1 ? 'btn-disabled' : ''
+					}`}
+					onClick={() => setCurrentPage(1)}
+				>
+					«
+				</button>
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === 1 ? 'btn-disabled' : ''
+					}`}
+					onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+				>
+					‹
+				</button>
+				{getPageNumbers().map((pageNumber, index) =>
+					pageNumber === '...' ? (
+						<button
+							key={`ellipsis-${index}`}
+							className="join-item btn btn-sm btn-disabled"
+						>
+							...
+						</button>
+					) : (
+						<button
+							key={pageNumber}
+							className={`join-item btn btn-sm ${
+								currentPage === pageNumber ? 'btn-active' : ''
+							}`}
+							onClick={() => setCurrentPage(Number(pageNumber))}
+						>
+							{pageNumber}
+						</button>
+					)
+				)}
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === totalPages ? 'btn-disabled' : ''
+					}`}
+					onClick={() =>
+						setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+					}
+				>
+					›
+				</button>
+				<button
+					className={`join-item btn btn-sm ${
+						currentPage === totalPages ? 'btn-disabled' : ''
+					}`}
+					onClick={() => setCurrentPage(totalPages)}
+				>
+					»
+				</button>
+			</div>
 		</div>
 	);
 };

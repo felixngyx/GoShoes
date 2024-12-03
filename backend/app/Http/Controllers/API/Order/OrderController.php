@@ -329,6 +329,11 @@ class OrderController extends Controller
                     'amount' => 0
                 ]);
 
+                Log::info('Item data before creating OrderItem:', [
+                    'variant_id' => isset($item['variant_id']) ? $item['variant_id'] : 'null',
+                    'product_id' => $item['product_id']
+                ]);
+
                 // Tạo order items và cập nhật tồn kho
                 foreach ($items as $item) {
                     OrderItem::create([
@@ -442,7 +447,7 @@ class OrderController extends Controller
                     $variant->decrement('quantity', $item['quantity']);
                 } else {
                     $product = $item['product'];
-                    // Kiểm tra lại lần cuối để đảm bảo số lượng vẫn đủ
+                    // Kiểm tra lại lần cu��i để đảm bảo số lượng vẫn đủ
                     if ($product->stock_quantity < $item['quantity']) {
                         throw new \Exception("Sản phẩm {$product->name} đã hết hàng trong quá trình xử lý");
                     }
@@ -721,6 +726,13 @@ class OrderController extends Controller
                             'message' => "Order #{$order->sku} has been completed",
                             'type' => 'order'
                         ]);
+                        Notification::create([
+                            'user_id' => $order->user_id,
+                            'order_id' => $order->id,
+                            'title' => 'Order Completed',
+                            'message' => "Order #{$order->sku} has been completed",
+                            'type' => 'notificationUserTracking'
+                        ]);
                         break;
                     case 'cancelled':
                         $orderPayment->update(['status' => 'failed']);
@@ -731,6 +743,13 @@ class OrderController extends Controller
                             'title' => 'Order Cancelled',
                             'message' => "Order #{$order->sku} has been cancelled",
                             'type' => 'order'
+                        ]);
+                        Notification::create([
+                            'user_id' => $order->user_id,
+                            'order_id' => $order->id,
+                            'title' => 'Order Cancelled',
+                            'message' => "Order #{$order->sku} has been cancelled",
+                            'type' => 'notificationUserTracking'
                         ]);
 
                         // Gửi email thông báo hủy đơn
@@ -744,7 +763,7 @@ class OrderController extends Controller
                             ]);
 
                             $orderData = $order->toArray();
-                           
+
                             Mail::to($order->user->email)
                                 ->queue(new OrderCancelled($orderData));
                         } catch (\Exception $e) {
@@ -765,6 +784,13 @@ class OrderController extends Controller
                             'message' => "Order #{$order->sku} has been expired",
                             'type' => 'order'
                         ]);
+                        Notification::create([
+                            'user_id' => $order->user_id,
+                            'order_id' => $order->id,
+                            'title' => 'Order Expired',
+                            'message' => "Order #{$order->sku} has been expired",
+                            'type' => 'notificationUserTracking'
+                        ]);
                         if ($prevStatus != 'expired' && $prevStatus != 'cancelled') {
                             $this->handleFailedPayment($order);
                         }
@@ -777,6 +803,13 @@ class OrderController extends Controller
                             'title' => 'Order Shipping',
                             'message' => "Order #{$order->sku} is shipping",
                             'type' => 'order'
+                        ]);
+                        Notification::create([
+                            'user_id' => $order->user_id,
+                            'order_id' => $order->id,
+                            'title' => 'Order Shipping',
+                            'message' => "Order #{$order->sku} is shipping",
+                            'type' => 'notificationUserTracking'
                         ]);
                         break;
                     default:
@@ -803,13 +836,14 @@ class OrderController extends Controller
             DB::beginTransaction();
 
             // Tìm đơn hàng của user hiện tại
-            $order = Order::when(!auth()->user()->role == 'admin' || !auth()->user()->role == 'super-admin', function ($query) {
-                $query->where('user_id', auth()->id());
-            })
+            $order = Order::with(['items.product', 'items.variant'])
+                ->when(!auth()->user()->role == 'admin' || !auth()->user()->role == 'super-admin', function ($query) {
+                    $query->where('user_id', auth()->id());
+                })
                 ->where('id', $id)
                 ->firstOrFail();
 
-            // Kiểm tra trạng thái đơn hàng - mở rộng các trạng thái hợp lệ
+            // Kiểm tra trạng thái đơn hàng
             $validStatuses = ['failed', 'cancelled', 'expired'];
             if (!in_array($order->status, $validStatuses)) {
                 throw new \Exception('This order is not supported to renew payment link');
@@ -821,21 +855,28 @@ class OrderController extends Controller
                 throw new \Exception('This order is not supported to renew payment link');
             }
 
+            // Kiểm tra số lượng tồn kho cho từng sản phẩm
+            foreach ($order->items as $item) {
+                if ($item->variant_id) {
+                    $variant = ProductVariant::lockForUpdate()->find($item->variant_id);
+                    if (!$variant || $variant->quantity < $item->quantity) {
+                        throw new \Exception("Product {$item->product->name} ({$variant->size->size}/{$variant->color->color}) only has {$variant->quantity} items left");
+                    }
+                } else {
+                    $product = Product::lockForUpdate()->find($item->product_id);
+                    if (!$product || $product->stock_quantity < $item->quantity) {
+                        throw new \Exception("Product {$product->name} only has {$product->stock_quantity} items left");
+                    }
+                }
+            }
+
             // Tạo SKU mới cho giao dịch mới
             $newSku = $this->generateSKU();
-
-            // Lưu SKU cũ vào trường meta hoặc log nếu cần thiết
             $oldSku = $order->sku;
             Log::info("Renewing payment for order: Old SKU: {$oldSku}, New SKU: {$newSku}");
 
-            // Cp nhật SKU mới cho đơn hàng
+            // Cập nhật SKU mới cho đơn hàng
             $order->update(['sku' => $newSku]);
-
-            // Khởi tạo request cho ZaloPay với số tiền đã được chuyển đổi sang xu
-            $paymentRequest = new Request([
-                'order_id' => $newSku,
-                'amount' => $order->total * 100,
-            ]);
 
             // Khởi tạo thanh toán ZaloPay mới
             $paymentResponse = $this->initiatePayment($order);
@@ -846,11 +887,23 @@ class OrderController extends Controller
                 // Cập nhật URL thanh toán mới và trạng thái
                 $payment->update([
                     'url' => $payment_url,
-                    'status' => 'pending'
+                    'status' => 'pending',
+                    'app_trans_id' => $paymentResponse['app_trans_id'] ?? null
                 ]);
 
                 // Cập nhật trạng thái đơn hàng
                 $order->update(['status' => 'pending']);
+
+                // Cập nhật số lượng tồn kho
+                foreach ($order->items as $item) {
+                    if ($item->variant_id) {
+                        $variant = ProductVariant::find($item->variant_id);
+                        $variant->decrement('quantity', $item->quantity);
+                        $item->product->decrement('stock_quantity', $item->quantity);
+                    } else {
+                        $item->product->decrement('stock_quantity', $item->quantity);
+                    }
+                }
 
                 DB::commit();
 

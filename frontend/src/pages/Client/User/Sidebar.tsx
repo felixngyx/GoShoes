@@ -50,12 +50,6 @@ const Sidebar = () => {
 					<FaBell /> Notifications
 				</Link>
 				<Link
-					to="/account/delete"
-					className={`flex items-center gap-4 ${isActive('delete')}`}
-				>
-					<FaTrash /> Delete account
-				</Link>
-				<Link
 					to="/account/whish-list"
 					className={`flex items-center gap-4 ${isActive('wishlist')}`}
 				>

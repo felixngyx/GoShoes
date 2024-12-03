@@ -26,7 +26,10 @@ class UpdateUserRequest extends FormRequest
             'email' => 'email|unique:users,email,'.$this->id.'|max:191',
             'phone' => 'regex:/^([0-9\s\-\+\(\)]*)$/|min:10|unique:users,phone,'.$this->id,
             'is_deleted' => 'boolean',
-            'avt' => 'string'
+            'avt' => 'string',
+            'bio' => 'string',
+            'birth_date' => 'date|date_format:Y-m-d|after:today',
+            'gender' => 'string|in:male,female,other',
         ];
     }
 

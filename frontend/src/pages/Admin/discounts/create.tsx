@@ -231,7 +231,7 @@ const CreateDiscount = () => {
         description: data.description.trim(),
         valid_from: formatDate(data.valid_from),
         valid_to: formatDate(data.valid_to),
-        min_order_amount: min_order_amount, // Số thập phân với 2 chữ số sau dấu phẩy
+        min_order_amount: min_order_amount, // S��� thập phân với 2 chữ số sau dấu phẩy
         usage_limit: usage_limit,
         percent: percent, // Số thập phân với 2 chữ số sau dấu phẩy
         product_ids: data.product_ids || []
@@ -273,6 +273,13 @@ const CreateDiscount = () => {
         <FiChevronRight className="h-4 w-4" />
         <span className="text-white">Create Discount</span>
       </div>
+
+      <ProductSelectionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSelectProducts={handleSelectProducts}
+        selectedProducts={selectedProducts}
+      />
 
       <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl px-8 py-10 mx-auto">
         <h1 className="text-3xl font-bold text-white flex items-center mb-6">

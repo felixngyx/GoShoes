@@ -1,51 +1,74 @@
 import Slider from "@mui/material/Slider";
 import { useQuery } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
-import { FaBars, FaTh } from "react-icons/fa";
+import { FaArrowDown, FaBars, FaTh } from "react-icons/fa";
 import Banner from "../../../components/client/Banner";
 import Breadcrumb from "../../../components/client/Breadcrumb";
 import { filterProduct } from "../../../services/client/filterPrice";
 import { IProduct } from "../../../types/client/products/products";
 import ProductCardList from "./ProductCardList";
 import ProductItems from "./ProductItem";
+import Pagination from "./Pagination";
+import { getAllBrands } from "../../../services/client/brand";
+import { getAllSizes } from "../../../services/client/product";
 
 const ProductList = () => {
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
-  const [showCount, setShowCount] = useState(9);
+  const [perPage, setPerPage] = useState(9);
+  const [page, setPage] = useState(1);
   const [sortByName, setSortByName] = useState<"asc" | "desc" | undefined>();
   const [sortByPrice, setSortByPrice] = useState<"asc" | "desc" | undefined>();
   const [sortByRating, setSortByRating] = useState<
     "asc" | "desc" | undefined
   >();
+  const [selectedSize, setSelectedSize] = useState<number | number>(0);
+  const [selectedBrand, setSelectedBrand] = useState<number | number>(0);
 
-  const { data: products, refetch } = useQuery<IProduct[]>({
+  // api products
+  const {
+    data: products,
+    isLoading,
+    refetch,
+  } = useQuery<IProduct[]>({
     queryKey: [
       "PRODUCT_KEY",
       priceRange,
-      showCount,
+      page,
+      perPage,
+      selectedBrand,
+      selectedSize,
       sortByName,
       sortByPrice,
       sortByRating,
     ],
-    queryFn: () => filterProduct(priceRange[0], priceRange[1], showCount),
+    queryFn: () =>
+      filterProduct(
+        priceRange[0],
+        priceRange[1],
+        page,
+        perPage,
+        selectedBrand,
+        selectedSize,
+        sortByName,
+        sortByPrice,
+        sortByRating
+      ),
     staleTime: 2,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
   });
 
-  const parsePrice = (price: string) => {
+  console.log("1", products);
+
+  const parsePrice = (price: string | undefined) => {
+    if (!price) return 0;
     return parseFloat(price.replace(/\./g, "").replace(",", "."));
   };
 
   const filteredProducts = useMemo(() => {
-    let filteredData = [...(products || [])];
+    let filteredData = [...(products?.data || [])];
 
-    // Lọc theo giá
-    filteredData = filteredData.filter((product: any) => {
-      const productPrice = parsePrice(product.promotional_price);
-      return productPrice >= priceRange[0] && productPrice <= priceRange[1];
-    });
     // Sắp xếp theo tên
     if (sortByName) {
       filteredData.sort((a, b) =>
@@ -75,11 +98,27 @@ const ProductList = () => {
     }
 
     return filteredData;
-  }, [products, priceRange, sortByName, sortByPrice, sortByRating]);
+  }, [
+    products,
+    priceRange,
+    sortByName,
+    sortByPrice,
+    sortByRating,
+    selectedBrand,
+    selectedSize,
+  ]);
 
   useEffect(() => {
     refetch();
-  }, [sortByName, priceRange, sortByPrice, sortByRating]);
+  }, [
+    priceRange,
+    products,
+    selectedBrand,
+    selectedSize,
+    sortByName,
+    sortByPrice,
+    sortByRating,
+  ]);
 
   const formatPrice = (price: number) => {
     if (price < 1000000) return (price / 1000).toFixed(0) + " K";
@@ -89,98 +128,65 @@ const ProductList = () => {
   const handlePriceChange = (event: Event, newValue: number | number[]) => {
     if (Array.isArray(newValue)) {
       setPriceRange(newValue as [number, number]);
+      setPage(0);
+      setPage(1);
     }
   };
 
-  const [isLoading, setIsLoading] = useState(true);
+  // useEffect(() => {
+  //   const loadData = async () => {
+  //     setIsLoading(true);
+  //     setIsLoading(false);
+  //   };
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      setIsLoading(false);
-    };
-
-    loadData();
-  }, [priceRange, products]);
+  //   loadData();
+  // }, [priceRange, products]);
 
   const handlePriceChangeCommitted = () => {
     refetch();
   };
 
   const handleShowCountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setShowCount(Number(e.target.value));
+    setPerPage(Number(e.target.value));
   };
 
-  // Thêm state cho phân trang
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 9;
+  const totalPages = products?.total_pages || 1;
 
-  // Tính toán sản phẩm cho trang hiện tại
-  const getCurrentPageItems = () => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredProducts.slice(startIndex, endIndex);
+  const handleSizeClick = (sizeId: number) => {
+    setSelectedSize(sizeId); // Set the selected size
+    setPage(1);
   };
 
-  // Tính tổng số trang
-  const totalPages = Math.ceil((filteredProducts?.length || 0) / itemsPerPage);
-
-  // Component phân trang
-  const renderPagination = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    return (
-      <div className="join mx-auto mt-8">
-        <button
-          className="join-item btn"
-          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-          disabled={currentPage === 1}
-        >
-          «
-        </button>
-        
-        {startPage > 1 && (
-          <>
-            <button className="join-item btn" onClick={() => setCurrentPage(1)}>1</button>
-            {startPage > 2 && <button className="join-item btn btn-disabled">...</button>}
-          </>
-        )}
-        
-        {Array.from({length: endPage - startPage + 1}, (_, i) => startPage + i).map(page => (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`join-item btn ${currentPage === page ? 'btn-active' : ''}`}
-          >
-            {page}
-          </button>
-        ))}
-        
-        {endPage < totalPages && (
-          <>
-            {endPage < totalPages - 1 && <button className="join-item btn btn-disabled">...</button>}
-            <button className="join-item btn" onClick={() => setCurrentPage(totalPages)}>{totalPages}</button>
-          </>
-        )}
-        
-        <button
-          className="join-item btn"
-          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-          disabled={currentPage === totalPages}
-        >
-          »
-        </button>
-      </div>
-    );
+  const handleBrandClick = (brandId: number) => {
+    setSelectedBrand(brandId); // Set the selected brand
+    setPage(1);
   };
+
+  // api brands
+  const { data: brandsData } = useQuery({
+    queryKey: ["BRAND_KEY"],
+    queryFn: getAllBrands,
+  });
+  const brands = Array.isArray(brandsData) ? brandsData : [];
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Hiển thị tối đa 6 thương hiệu đầu tiên
+  const brandsToDisplay = isExpanded ? brands : brands.slice(0, 6);
+  // api sizes
+  const { data: sizesData } = useQuery({
+    queryKey: ["SIZE_KEY"],
+    queryFn: getAllSizes,
+  });
+
+  // Loại bỏ các giá trị trùng lặp và sắp xếp theo size tăng dần
+  const uniqueSortedSizes = Array.from(
+    new Set(sizesData?.map((size: any) => size.size))
+  )
+    .map((size) => {
+      // Tìm object tương ứng với size duy nhất
+      return sizesData.find((item: any) => item.size === size);
+    })
+    .sort((a, b) => a.size - b.size);
 
   return (
     <>
@@ -256,36 +262,72 @@ const ProductList = () => {
           </div>
 
           {/* Size */}
-          <div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2">
+          <div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2 relative">
             <h2 className="text-xl font-semibold capitalize">SIZE</h2>
+            <button
+              onClick={() => handleSizeClick(0)} // Gọi hàm để reset size
+              className="absolute top-2 right-2 text-sm text-gray-500 hover:text-blue-600 transition-all"
+            >
+              Reset
+            </button>
             <div className="flex flex-wrap gap-2">
-              {[37, 38, 39, 40, 41, 42, 43].map((size) => (
-                <button
-                  key={size}
-                  className="btn btn-sm text-black bg-white rounded-full capitalize"
-                >
-                  {size}
-                </button>
-              ))}
+              {uniqueSortedSizes?.map((size: any) => {
+                const isSelected = size.id === selectedSize;
+                return (
+                  <button
+                    key={size.id}
+                    onClick={() => handleSizeClick(size.id)} // Gọi hàm khi click
+                    className={`flex justify-center items-center p-4 w-14 border rounded-md cursor-pointer hover:bg-blue-100 hover:text-blue-600 transition-all ${
+                      isSelected
+                        ? "bg-blue-100 text-blue-600 border-blue-600"
+                        : ""
+                    }`}
+                  >
+                    <span className="text-sm capitalize">{size.size}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Brand */}
-          <div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2">
+          <div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2 relative">
             <h2 className="text-xl font-semibold capitalize">BRAND</h2>
+            <button
+              onClick={() => handleBrandClick(0)} // Gọi hàm để reset brand
+              className="absolute top-2 right-2 text-sm text-gray-500 hover:text-blue-600 transition-all"
+            >
+              Reset
+            </button>
             <ul className="flex flex-col gap-3">
-              {["Nike", "Adidas", "Puma", "All Starts", "Air Jordan"].map(
-                (brand) => (
-                  <li key={brand} className="flex justify-between">
-                    <p className="text-sm capitalize">{brand}</p>
-                    <p className="text-sm text-gray-500">10</p>
+              {brandsToDisplay.map((brand: any) => {
+                const isSelected = brand.id === selectedBrand;
+                return (
+                  <li
+                    key={brand.id}
+                    onClick={() => handleBrandClick(brand.id)} // Gọi hàm khi click
+                    className={`flex justify-between p-2 rounded-md cursor-pointer hover:bg-blue-100 hover:text-blue-600 transition-all ${
+                      isSelected ? "bg-blue-100 text-blue-600" : ""
+                    }`}
+                  >
+                    <p className="text-sm capitalize">{brand.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {brand.products_count}
+                    </p>
                   </li>
-                )
-              )}
+                );
+              })}
             </ul>
-          </div>
 
-          <button className="btn rounded-none text-md">More</button>
+            {!isExpanded && (
+              <button
+                onClick={() => setIsExpanded(true)}
+                className="btn w-full text-[#449ef1aa]"
+              >
+                More
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="col-span-9 flex flex-col gap-10">
@@ -324,25 +366,35 @@ const ProductList = () => {
             <div>
               <select
                 className="select select-bordered bg-white text-gray-800"
-                value={showCount}
+                value={perPage}
                 onChange={handleShowCountChange}
               >
-                <option value={12}>Show 12</option>
-                <option value={24}>Show 24</option>
-                <option value={36}>Show 36</option>
+                <option value={9}>Show 9</option>
+                <option value={15}>Show 15</option>
               </select>
             </div>
 
             {/* Layout Buttons */}
-            <div className=" items-center space-x-2 ml-auto">
+            <div className="items-center space-x-2 ml-auto">
+              {/* Button Grid Layout */}
               <button
-                className="btn btn-square bg-[#40BFFF] text-white"
+                className={`btn btn-square ${
+                  layout === "grid"
+                    ? "bg-[#40BFFF] text-white"
+                    : "bg-white text-gray-800 border border-gray-300"
+                }`}
                 onClick={() => setLayout("grid")}
               >
                 <FaTh />
               </button>
+
+              {/* Button List Layout */}
               <button
-                className="btn btn-square bg-white text-gray-800 border border-gray-300"
+                className={`btn btn-square ${
+                  layout === "list"
+                    ? "bg-[#40BFFF] text-white"
+                    : "bg-white text-gray-800 border border-gray-300"
+                }`}
                 onClick={() => setLayout("list")}
               >
                 <FaBars />
@@ -358,7 +410,7 @@ const ProductList = () => {
           >
             {isLoading ? (
               <>
-                {Array(9)
+                {Array(filteredProducts.length || 9) // Hoặc một giá trị cố định nếu muốn
                   .fill(null)
                   .map((_, index) =>
                     layout === "grid" ? (
@@ -376,9 +428,8 @@ const ProductList = () => {
                     )
                   )}
               </>
-            ) : getCurrentPageItems().length > 0 ? (
-              // Render sản phẩm của trang hiện tại
-              getCurrentPageItems().map((product) =>
+            ) : filteredProducts.length > 0 ? (
+              filteredProducts.map((product) =>
                 layout === "grid" ? (
                   <ProductItems
                     key={product.id}
@@ -394,60 +445,20 @@ const ProductList = () => {
                 )
               )
             ) : (
-              // Hiển thị thông báo khi không có sản phẩm nào
-              <div
-                className={`grid ${
-                  layout === "grid" ? "grid-cols-3" : "grid-cols-1"
-                } gap-5`}
-              >
-                {isLoading ? (
-                  // Hiển thị skeleton loading khi đang tải hoặc lọc
-
-                  <>
-                    {Array(9)
-                      .fill(null)
-                      .map((_, index) =>
-                        layout === "grid" ? (
-                          <ProductItems
-                            key={index}
-                            product={null}
-                            isLoading={true}
-                          />
-                        ) : (
-                          <ProductCardList
-                            key={index}
-                            product={null}
-                            isLoading={true}
-                          />
-                        )
-                      )}
-                  </>
-                ) : getCurrentPageItems().length > 0 ? (
-                  // Render sản phẩm của trang hiện tại
-                  getCurrentPageItems().map((product) =>
-                    layout === "grid" ? (
-                      <ProductItems
-                        key={product.id}
-                        product={product}
-                        isLoading={false}
-                      />
-                    ) : (
-                      <ProductCardList
-                        key={product.id}
-                        product={product}
-                        isLoading={false}
-                      />
-                    )
-                  )
-                ) : (
-                  <span className="loading loading-dots loading-sm"></span>
-                )}
+              <div className="col-span-full text-center">
+                <p>There are no products</p>
               </div>
             )}
           </div>
 
-          {/* Hiển thị phân trang */}
-          {totalPages > 1 && renderPagination()}
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={(newPage: number) => {
+              setPage(newPage);
+              refetch();
+            }}
+          />
         </div>
       </div>
     </>

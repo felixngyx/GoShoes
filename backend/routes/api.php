@@ -132,6 +132,8 @@ Route::group(['prefix' => 'profile'], function () {
     Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
 });
 
+Route::get('/randdis',[DiscountController::class,'getRandDiscount']);
+
 // This route is Authenticated
 Route::group([
     'middleware' => 'jwt.auth',
@@ -217,6 +219,7 @@ Route::group([
         Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
         Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
         Route::delete('/{id}', [NotificationController::class, 'destroy']);
+        Route::get('/user-tracking', [NotificationController::class, 'getNotificationUserTracking']);
     });
 
     Route::prefix('refunds')->group(function () {
