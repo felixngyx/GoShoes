@@ -64,6 +64,7 @@ import UpdatePost from './pages/Admin/Post/update';
 import ContactList from './pages/Admin/Contact';
 import NotificationPage from './pages/Client/User/Notification';
 import DiscountChatWidget from './components/client/DiscountWiget';
+import BannerPage from './pages/Admin/Banner';
 
 
 function App() {
@@ -175,6 +176,9 @@ function App() {
 					</Route>
 					<Route path="contact">
 						<Route index element={<ContactList />} />
+					</Route>
+					<Route path="banner">
+						<Route index element={<BannerPage/>}></Route>
 					</Route>
 
 					<Route

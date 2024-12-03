@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\Banner;
 
 use App\Http\Controllers\Controller;
+use App\Models\Banner;
 use Illuminate\Http\Request;
 
 class BannerController extends Controller
@@ -12,7 +13,7 @@ class BannerController extends Controller
      */
     public function index()
     {
-        //
+
     }
 
     /**
