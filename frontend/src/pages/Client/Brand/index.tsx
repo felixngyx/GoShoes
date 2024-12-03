@@ -19,7 +19,7 @@ const BrandPage: React.FC = () => {
     refetch,
   } = useQuery({
     queryKey: ["BRAND_KEY"],
-    queryFn: () => getAllBrands(itemsToShow, currrentPage),
+    queryFn: async () => await getAllBrands(itemsToShow, currrentPage),
   });
 
   const brands = Array.isArray(brandsData?.brands) ? brandsData.brands : [];

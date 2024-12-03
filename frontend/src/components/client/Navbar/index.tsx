@@ -416,7 +416,7 @@ const Navbar = () => {
                             alt={product.name}
                             className="w-full h-40 object-cover transition-transform duration-300 transform group-hover:scale-105"
                           />
-                          {/* Phần giảm giá sẽ được đặt ở góc trên bên phải của thumbnail */}
+
                           <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
                             {Math.round(
                               ((Number(product.price) -
@@ -449,7 +449,6 @@ const Navbar = () => {
                             </h3>
                           </Link>
 
-                          {/* Đặt rating ở dưới tên sản phẩm */}
                           <div className="flex flex-row items-center justify-start gap-1 mt-1">
                             <RatingStars rating={product.rating_count} />
                           </div>
@@ -460,13 +459,12 @@ const Navbar = () => {
 
                           <div className="flex justify-between items-center mt-2">
                             <div className="flex items-center space-x-2">
-                              {/* Giá khuyến mãi với kích thước nhỏ hơn */}
                               <p className="font-bold text-blue-600 text-lg">
                                 {formatVNCurrency(
                                   Number(product.promotional_price)
                                 )}
                               </p>
-                              {/* Giá cũ có gạch ngang */}
+
                               <p className="text-gray-500 text-xs line-through">
                                 {formatVNCurrency(Number(product.price))}
                               </p>
