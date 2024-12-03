@@ -64,6 +64,8 @@ import CreatePost from './pages/Admin/Post/create';
 import UpdatePost from './pages/Admin/Post/update';
 import ContactList from './pages/Admin/Contact';
 import NotificationPage from './pages/Client/User/Notification';
+import DiscountChatWidget from './components/client/DiscountWiget';
+
 
 function App() {
 	const { pathname } = useLocation();
@@ -273,6 +275,7 @@ function App() {
 			</Routes>
 			<Toaster position="top-right" reverseOrder={false} />
 			{!isAdminPage && <ChatUI />}
+			{!isAdminPage && <DiscountChatWidget />}
 		</>
 	);
 }

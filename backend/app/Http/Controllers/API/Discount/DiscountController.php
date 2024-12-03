@@ -254,4 +254,15 @@ class DiscountController extends Controller
         }
     }
 
+    public function getRandDiscount()
+    {
+        $discount = $this->discountService->getDiscountRadomes();
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'discount' => $discount
+            ]
+        ], 200);
+    }
+
 }

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { FaUser } from "react-icons/fa";
 import { IoSearch } from "react-icons/io5";
-import { MdOutlineShoppingCart } from "react-icons/md";
+import { MdDashboard, MdOutlineShoppingCart } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { getProductsByName } from "../../../services/client/product";
@@ -166,6 +166,16 @@ const Navbar = () => {
                             <UserRound size={18} /> Account
                           </Link>
                         </li>
+                        {(user.role === "admin" || user.role === "super-admin") && (
+                          <li>
+                            <Link
+                              to="/admin"
+                              className="flex items-center w-full gap-2 p-2 rounded-lg hover:bg-gray-200"
+                            >
+                              <MdDashboard/> Admin Dashboard
+                            </Link>
+                          </li>
+                        )}
                         <li>
                           <button
                             onClick={logoutHandler}
@@ -174,6 +184,7 @@ const Navbar = () => {
                             <LogOut size={18} /> Logout
                           </button>
                         </li>
+
                       </>
                     ) : (
                       <>
@@ -193,9 +204,11 @@ const Navbar = () => {
                             <SquarePen size={18} /> Sign Up
                           </Link>
                         </li>
+
                       </>
                     )}
                   </ul>
+
                 </div>
               </div>
             </div>
