@@ -178,4 +178,9 @@ class DiscountService
     {
         return Discount::with('products')->findOrFail($id);
     }
+
+    public function getDiscountRadomes(){
+        $discount = $this->discountRepository->getRandomDiscount();
+        return $discount;
+    }
 }

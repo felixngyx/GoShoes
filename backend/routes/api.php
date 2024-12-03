@@ -132,6 +132,8 @@ Route::group(['prefix' => 'profile'], function () {
     Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
 });
 
+Route::get('/randdis',[DiscountController::class,'getRandDiscount']);
+
 // This route is Authenticated
 Route::group([
     'middleware' => 'jwt.auth',

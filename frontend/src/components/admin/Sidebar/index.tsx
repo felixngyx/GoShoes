@@ -1,5 +1,5 @@
 import { FaUser } from 'react-icons/fa';
-import { Box, Boxes, ContactRound, Newspaper, TicketPercent } from 'lucide-react';
+import { Box, Boxes, ContactRound, Image, Newspaper, TicketPercent } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import Logo from '../../../images/logo/logo.svg';
@@ -323,6 +323,18 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 								>
 									<ContactRound size={18} />
 									Contact
+								</NavLink>
+							</li>
+							<li>
+								<NavLink
+									to="/admin/banner"
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+										pathname.includes('banner') &&
+										'bg-graydark dark:bg-meta-4'
+									}`}
+								>
+									<Image size={18} />
+									Banner
 								</NavLink>
 							</li>
 

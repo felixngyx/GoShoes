@@ -50,7 +50,7 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
 
   // Parse shipping_detail từ string sang object
   const shippingDetail = order.shipping?.shipping_detail 
-    ? JSON.parse(order.shipping.shipping_detail)
+    ? order.shipping.shipping_detail
     : null;
 
   return (
