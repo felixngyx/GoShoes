@@ -37,7 +37,7 @@ const CheckoutPage = () => {
   // Tính toán thông tin đơn hàng
   const orderDetails = useMemo(() => {
     const buyNowProductId = buyNowProduct?.variant?.id;
-    console.log('Buy Now Product:', buyNowProductId);
+    console.log("Buy Now Product:", buyNowProductId);
     if (buyNowProduct) {
       return {
         items: [
@@ -51,12 +51,12 @@ const CheckoutPage = () => {
               id: buyNowProduct.variant?.id,
               size: {
                 size: buyNowProduct.variant?.size?.size,
-                size_name: buyNowProduct.variant?.size?.size
+                size_name: buyNowProduct.variant?.size?.size,
               },
               color: {
                 color_id: buyNowProduct.variant?.color?.color_id,
-                color_name: buyNowProduct.variant?.color?.color
-              }
+                color_name: buyNowProduct.variant?.color?.color,
+              },
             },
             total: buyNowProduct.total,
           },
@@ -75,10 +75,10 @@ const CheckoutPage = () => {
         total: cartOrderSummary?.total || 0,
       };
     } else if (buyAgainItems?.length > 0) {
-      console.log('Buy Again Items:', buyAgainItems);
+      console.log("Buy Again Items:", buyAgainItems);
       return {
         items: buyAgainItems.map((item: any) => {
-          console.log('Processing item:', item);
+          console.log("Processing item:", item);
           return {
             id: item.id,
             name: item.name,
@@ -91,23 +91,26 @@ const CheckoutPage = () => {
               size: item.product_variant?.size,
               color: item.product_variant?.color,
               size_id: item.product_variant?.size_id,
-              color_id: item.product_variant?.color_id
+              color_id: item.product_variant?.color_id,
             },
             variant: {
               id: item.product_variant?.variant_id,
               size: {
                 size: item.product_variant?.size_id,
-                size_name: item.product_variant?.size
+                size_name: item.product_variant?.size,
               },
               color: {
                 color_id: item.product_variant?.color_id,
-                color_name: item.product_variant?.color
-              }
-            }
+                color_name: item.product_variant?.color,
+              },
+            },
           };
         }),
-        subtotal: buyAgainItems.reduce((sum: number, item) => sum + item.total, 0),
-        total: buyAgainItems.reduce((sum: number, item) => sum + item.total, 0)
+        subtotal: buyAgainItems.reduce(
+          (sum: number, item) => sum + item.total,
+          0
+        ),
+        total: buyAgainItems.reduce((sum: number, item) => sum + item.total, 0),
       };
     } else {
       return {
@@ -149,13 +152,18 @@ const CheckoutPage = () => {
     if (orderState.items.length === 1) {
       return `Checkout | ${orderState.items[0].name}`;
     } else if (orderState.items.length > 1) {
-      return `Checkout | ${orderState.items[0].name} and ${orderState.items.length - 1} other items`;
+      return `Checkout | ${orderState.items[0].name} and ${
+        orderState.items.length - 1
+      } other items`;
     }
     return "Checkout";
   }, [orderState.items]);
 
   // Cập nhật hàm handleQuantityChange
-  const handleQuantityChange = async (variantId: number, newQuantity: number) => {
+  const handleQuantityChange = async (
+    variantId: number,
+    newQuantity: number
+  ) => {
     if (newQuantity < 1) return;
 
     let newSubtotal = 0;
@@ -217,7 +225,9 @@ const CheckoutPage = () => {
           {
             code: discountCode,
             total_amount: newSubtotal,
-            product_ids: orderState.items.map((item) => item.id || item.product_id),
+            product_ids: orderState.items.map(
+              (item) => item.id || item.product_id
+            ),
           },
           {
             headers: {
@@ -274,17 +284,21 @@ const CheckoutPage = () => {
       }
 
       // Tạo mảng items theo đúng format
-      const items = orderState.items.map(item => ({
+      const items = orderState.items.map((item) => ({
         product_id: Number(item.id || item.product_id),
         quantity: Number(item.quantity),
-        ...(item.variant?.id || item.product_variant?.variant_id) && {
-          variant_id: Number(item.variant?.id || item.product_variant?.variant_id)
-        }
+        ...((item.variant?.id || item.product_variant?.variant_id) && {
+          variant_id: Number(
+            item.variant?.id || item.product_variant?.variant_id
+          ),
+        }),
       }));
 
       // Thêm điều kiện để xử lý buy now
       if (buyNowState) {
-        const existingItemIndex = items.findIndex(item => item.product_id === Number(buyNowState.id));
+        const existingItemIndex = items.findIndex(
+          (item) => item.product_id === Number(buyNowState.id)
+        );
 
         if (existingItemIndex > -1) {
           // Nếu sản phẩm đã tồn tại, cập nhật số lượng
@@ -294,7 +308,7 @@ const CheckoutPage = () => {
           items.push({
             product_id: Number(buyNowState.id),
             quantity: Number(buyNowState.quantity),
-            variant_id: Number(buyNowState.variant?.variant_id) // Thêm variant_id cho buy now
+            variant_id: Number(buyNowState.variant?.variant_id), // Thêm variant_id cho buy now
           });
         }
       }
@@ -305,40 +319,44 @@ const CheckoutPage = () => {
         shipping_id: Number(defaultAddress.id),
         payment_method_id: Number(paymentMethod),
         ...(discountInfo?.discount_info?.code && {
-          discount_code: discountInfo.discount_info.code
-        })
+          discount_code: discountInfo.discount_info.code,
+        }),
       });
 
       // Log để kiểm tra
-      console.log('Request Data:', requestData);
+      console.log("Request Data:", requestData);
 
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/orders`,
         requestData,
         {
           headers: {
-            'Authorization': `Bearer ${Cookies.get("access_token")}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${Cookies.get("access_token")}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 
       // Xử lý response thành công
-      if (paymentMethod === 1) { // ZaloPay
+      if (paymentMethod === 1) {
+        // ZaloPay
         const finalAmount = orderState.subtotal - calculateDiscount();
         if (finalAmount > 0 && response.data.payment_url) {
           // Add confirmation before redirecting
           const willRedirect = window.confirm(
             "You will be redirected to ZaloPay payment page. Do you want to continue?"
           );
-          
+
           if (willRedirect) {
             window.location.href = response.data.payment_url;
           } else {
             // If user declines, redirect to orders page
             navigate("/account/my-order", {
               replace: true,
-              state: { message: "Order created! Please complete payment within 24 hours." },
+              state: {
+                message:
+                  "Order created! Please complete payment within 24 hours.",
+              },
             });
           }
         } else {
@@ -347,7 +365,8 @@ const CheckoutPage = () => {
             state: { message: "Order placed successfully!" },
           });
         }
-      } else { // COD
+      } else {
+        // COD
         navigate("/account/my-order", {
           replace: true,
           state: { message: "Order placed successfully!" },
@@ -360,20 +379,27 @@ const CheckoutPage = () => {
       // Xử lý lỗi từ backend
       if (error.response?.data?.message) {
         const errorMessage = error.response.data.message;
-        
+
         // Xử lý các trường hợp lỗi cụ thể
-        if (errorMessage.includes("không đủ") || errorMessage.includes("còn") || errorMessage.includes("hết hàng")) {
+        if (
+          errorMessage.includes("không đủ") ||
+          errorMessage.includes("còn") ||
+          errorMessage.includes("hết hàng")
+        ) {
           const productName = errorMessage.match(/'([^']+)'/)?.[1] || "Product";
           const requestedItem = orderState.items.find(
-            item => item.name === productName || item.product?.name === productName
+            (item) =>
+              item.name === productName || item.product?.name === productName
           );
 
-          const size = requestedItem?.size || 
-                      requestedItem?.variant?.size?.size || 
-                      requestedItem?.product_variant?.size?.size;
-          const color = requestedItem?.color || 
-                       requestedItem?.variant?.color?.color || 
-                       requestedItem?.product_variant?.color?.color;
+          const size =
+            requestedItem?.size ||
+            requestedItem?.variant?.size?.size ||
+            requestedItem?.product_variant?.size?.size;
+          const color =
+            requestedItem?.color ||
+            requestedItem?.variant?.color?.color ||
+            requestedItem?.product_variant?.color?.color;
 
           const variantInfo = size && color ? ` (${color}/${size})` : "";
           const message = `${productName}${variantInfo} is out of stock`;
@@ -516,7 +542,7 @@ const CheckoutPage = () => {
             Please select a default shipping address to continue with your
             order.
           </p>
-          
+
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
             {address.map((item: any, index: number) => (
               <div
@@ -632,10 +658,10 @@ const CheckoutPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
+    <div className="max-w-7xl mx-auto lg:px-0 sm:px-6 mb-6">
       {/* Thêm PageTitle component */}
       <PageTitle title={pageTitle} />
-      
+
       {/* Chỉ hiện modal khi không đang loading v thỏa điều kiện */}
       {!isLoadingAddress && showAddressForm && <AddressFormModal />}
       {!isLoadingAddress && showAddressSelection && !showAddressForm && (
@@ -651,7 +677,10 @@ const CheckoutPage = () => {
             {/* Hiển thị danh sách sản phẩm */}
             <div className="space-y-4">
               {orderState.items.map((item: any) => (
-                <div key={item.variant?.id || item.id} className="flex gap-4 border-b pb-4">
+                <div
+                  key={item.variant?.id || item.id}
+                  className="flex gap-4 border-b pb-4"
+                >
                   <img
                     src={item.thumbnail}
                     className="w-24 h-24 object-cover rounded"
@@ -660,8 +689,15 @@ const CheckoutPage = () => {
                     <h3 className="font-medium">{item.name}</h3>
                     {(item.variant || item.product_variant) && (
                       <p className="text-sm text-gray-500">
-                        Size: {item.variant?.size?.size_name || item.variant?.size?.size || item.product_variant?.size}<br />
-                        Color: {item.variant?.color?.color_name || item.variant?.color?.color || item.product_variant?.color}
+                        Size:{" "}
+                        {item.variant?.size?.size_name ||
+                          item.variant?.size?.size ||
+                          item.product_variant?.size}
+                        <br />
+                        Color:{" "}
+                        {item.variant?.color?.color_name ||
+                          item.variant?.color?.color ||
+                          item.product_variant?.color}
                       </p>
                     )}
                     <div className="flex justify-between items-center mt-2">
@@ -693,7 +729,9 @@ const CheckoutPage = () => {
                         </button>
                       </div>
                       <span className="font-medium">
-                        {formatVND(item.price * quantities[item.variant?.id || item.id])}
+                        {formatVND(
+                          item.price * quantities[item.variant?.id || item.id]
+                        )}
                       </span>
                     </div>
                   </div>
@@ -922,10 +960,16 @@ const CheckoutPage = () => {
                       {(item.variant || item.product_variant) && (
                         <span className="text-gray-500">
                           {" "}
-                          ({[
-                            item.variant?.color?.color_name || item.product_variant?.color,
-                            item.variant?.size?.size_name || item.product_variant?.size
-                          ].filter(Boolean).join("/")})
+                          (
+                          {[
+                            item.variant?.color?.color_name ||
+                              item.product_variant?.color,
+                            item.variant?.size?.size_name ||
+                              item.product_variant?.size,
+                          ]
+                            .filter(Boolean)
+                            .join("/")}
+                          )
                         </span>
                       )}
                     </span>

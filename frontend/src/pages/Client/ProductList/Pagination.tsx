@@ -26,9 +26,8 @@ const Pagination: React.FC<PaginationProps> = ({
 
   const renderPageNumbers = () => {
     const pageNumbers: JSX.Element[] = [];
-    const range = 2; // Số trang trước và sau trang hiện tại
+    const range = 2;
 
-    // Nếu tổng số trang ít hơn hoặc bằng 5, hiển thị tất cả
     if (totalPages <= 5) {
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(
@@ -52,7 +51,7 @@ const Pagination: React.FC<PaginationProps> = ({
           <button
             key={1}
             onClick={() => handlePageClick(1)}
-            className="px-4 py-2 mx-1 rounded-md text-sm bg-white text-blue-500"
+            className="px-4 py-2 mx-1 rounded-md text-sm border bg-white text-blue-500"
           >
             1
           </button>
@@ -77,7 +76,7 @@ const Pagination: React.FC<PaginationProps> = ({
             className={`px-4 py-2 mx-1 rounded-md text-sm ${
               i === currentPage
                 ? "bg-blue-500 text-white"
-                : "bg-white text-blue-500 hover:bg-blue-200"
+                : "bg-white border text-blue-500 hover:bg-blue-200"
             }`}
           >
             {i}
@@ -100,7 +99,7 @@ const Pagination: React.FC<PaginationProps> = ({
           <button
             key={totalPages}
             onClick={() => handlePageClick(totalPages)}
-            className="px-4 py-2 mx-1 rounded-md text-sm bg-white text-blue-500"
+            className="px-4 py-2 mx-1 border rounded-md text-sm bg-white text-blue-500"
           >
             {totalPages}
           </button>
@@ -120,7 +119,10 @@ const Pagination: React.FC<PaginationProps> = ({
         onClick={handlePrevious}
         disabled={currentPage === 1}
       >
-        <FaChevronLeft />
+        <p className="flex justify-center items-center gap-1">
+          <FaChevronLeft size={13} />
+          Previous
+        </p>
       </button>
 
       {/* Render Page Numbers */}
@@ -136,7 +138,10 @@ const Pagination: React.FC<PaginationProps> = ({
         onClick={handleNext}
         disabled={currentPage === totalPages}
       >
-        <FaChevronRight />
+        <p className="flex justify-center items-center gap-1">
+          Next
+          <FaChevronRight size={13} />
+        </p>
       </button>
     </div>
   );
