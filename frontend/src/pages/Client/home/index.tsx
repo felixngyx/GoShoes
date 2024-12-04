@@ -248,7 +248,7 @@ const Homepage = () => {
                   transform translate-y-[100%] opacity-0 transition-all duration-300
                   group-hover:translate-y-0 group-hover:opacity-100"
                 >
-                  Shop Now
+                  Go Now
                 </p>
               </div>
             </div>
@@ -323,8 +323,8 @@ const Homepage = () => {
                 alt={banner.title}
                 className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-50"
               />
-              <div className="absolute inset-0 flex flex-col justify-between p-8">
-                <p
+              <div className="absolute inset-0 z-20 flex flex-col justify-between p-8">
+                <p 
                   className="text-white text-5xl font-extrabold 
                   transform translate-y-[-100%] opacity-0 transition-all duration-300 
                   group-hover:translate-y-0 group-hover:opacity-100"
@@ -336,14 +336,14 @@ const Homepage = () => {
                     </React.Fragment>
                   ))}
                 </p>
-                <p
+                <button
                   onClick={() => handleShopNow(banner.url)}
                   className="text-white text-xl font-bold underline cursor-pointer hover:text-gray-200
                   transform translate-y-[100%] opacity-0 transition-all duration-300
                   group-hover:translate-y-0 group-hover:opacity-100"
                 >
-                  Shop Now
-                </p>
+                  Go Now
+                </button>
               </div>
             </div>
           ))
