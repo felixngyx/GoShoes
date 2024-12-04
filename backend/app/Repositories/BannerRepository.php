@@ -73,42 +73,15 @@ class BannerRepository implements BannerRepositoryInterface
             // Cập nhật thông tin của banner
             $banner->update([
                 'title' => $data['title'] ?? $banner->title,
-                'start_date' => $data['start_date'] ?? $banner->start_date,
-                'end_date' => $data['end_date'] ?? $banner->end_date,
+                'image'=> $data['image'] ?? null,
+                'url'=> $data['url'] ?? null,
                 'active' => $data['active'] ?? $banner->active
             ]);
 
-            // Kiểm tra và xử lý các ảnh mới (thêm/xóa/cập nhật ảnh)
-            if (isset($data['images']) && is_array($data['images'])) {
-                // Lấy các ID ảnh mới
-                $newImageIds = collect($data['images'])->pluck('id')->filter()->toArray();
 
-                // Xóa ảnh không có trong danh sách mới
-                $banner->images()->whereNotIn('id', $newImageIds)->delete();
-
-                foreach ($data['images'] as $imageData) {
-                    if (isset($imageData['id'])) {
-                        // Cập nhật ảnh hiện có
-                        BannerImage::where('id', $imageData['id'])->update([
-                            'image_path' => $imageData['image_path'],
-                            'title' => $imageData['title'] ?? null,
-                            'section' => $imageData['section'],
-                            'url' => $imageData['url']
-                        ]);
-                    } else {
-                        // Thêm ảnh mới
-                        $banner->images()->create([
-                            'image_path' => $imageData['image_path'],
-                            'title' => $imageData['title'] ?? null,
-                            'section' => $imageData['section'],
-                            'url' => $imageData['url']
-                        ]);
-                    }
-                }
-            }
 
             DB::commit();
-            return $banner->load('images');  // Trả về banner cùng với ảnh
+            return $banner;  // Trả về banner cùng với ảnh
         } catch (Exception $e) {
             DB::rollBack();
             throw new Exception("Error updating banner: " . $e->getMessage());

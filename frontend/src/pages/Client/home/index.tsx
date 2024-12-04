@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import axiosClient from "../../../apis/axiosClient";
 import { FaShippingFast } from "react-icons/fa";
@@ -7,6 +7,16 @@ import { MdOutlineSupportAgent } from "react-icons/md";
 import { IoStar } from "react-icons/io5";
 import ProductCard from "../ProductCard";
 import { useNavigate } from "react-router-dom";
+import { ColorExtractor } from 'color-thief-react';
+import { motion } from "framer-motion";
+
+interface Banner {
+  id: number;
+  title: string;
+  image: string;
+  url: string;
+  position: string;
+}
 
 // Component Modal
 const EmailSubscribeModal = ({
@@ -101,9 +111,8 @@ const EmailSubscribeModal = ({
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition duration-200 ${
-                isLoading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              className={`w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition duration-200 ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
@@ -121,54 +130,130 @@ const EmailSubscribeModal = ({
   );
 };
 
+// Thêm component Skeleton
+const BannerSkeleton = ({ isLarge = false }: { isLarge?: boolean }) => (
+  <div
+    className={`${isLarge ? "col-span-2 h-[500px]" : "col-span-1 h-[240px]"}
+    relative rounded-xl overflow-hidden bg-gray-200 animate-shimmer`}
+  >
+    <div className="absolute inset-0 flex flex-col justify-between p-8">
+      <div className="w-2/3 h-8 bg-gray-300 rounded"></div>
+      <div className="w-24 h-6 bg-gray-300 rounded"></div>
+    </div>
+  </div>
+);
+
+const ImageWithFallback = ({ src, alt, ...props }) => {
+  const handleError = (e) => {
+    e.target.src = "https://res.cloudinary.com/drxguvfuq/image/upload/v1733306833/Goshoes/Green_and_Yellow_Simple_Clean_Shoes_Sale_Banner_1_azoiri.png";
+  };
+
+  return <img src={src} alt={alt} onError={handleError} {...props} />;
+};
+
 // Cập nhật component Homepage
 const Homepage = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [dominantColors, setDominantColors] = useState<{ [key: number]: string }>({});
+  useEffect(() => {
+    const fetchBanners = async () => {
+      setIsLoading(true);
+      try {
+        const response = await axiosClient.get("/banners");
+        setBanners(response.data.data);
+      } catch (error) {
+        console.error("Failed to fetch banners:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBanners();
+  }, []);
+
+  const headerBanners = banners.filter((banner) =>
+    ["home1", "home2", "home3"].includes(banner.position)
+  );
+
+  const footerBanners = banners.filter((banner) =>
+    ["home4", "home5"].includes(banner.position)
+  );
+
+  // Handler for Shop Now click
+  const handleShopNow = (url: string) => {
+    // If URL starts with '/', treat as internal route
+    if (url.startsWith("/")) {
+      navigate(url);
+    } else {
+      // External URL, open in new tab
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleColorsExtracted = (bannerID: number, colors: string[]) => {
+    setDominantColors(prev => ({
+      ...prev,
+      [bannerID]: colors[0] // Lấy màu đầu tiên (màu chủ đạo)
+    }));
+  };
 
   return (
     <>
-      {/* Banner */}
-      <div className="max-w-7xl mx-auto grid grid-cols-2 grid-rows-2 gap-10 mt-10 relative z-0 ">
-        <div className="col-span-1 row-span-2 relative z-0 rounded-xl h-fit overflow-hidden group">
-          <img
-            src="images/Banner 1.png"
-            alt="Banner"
-            className="transition-transform duration-300 transform group-hover:scale-105"
-          />
-          <p className="text-black text-5xl font-bold absolute bottom-40 left-10">
-            Stylish shoes <br /> for Women
-          </p>
-          <p className="text-black text-xl font-bold absolute bottom-20 left-10 underline cursor-pointer">
-            Shop Now
-          </p>
-        </div>
-        <div className="col-span-1 relative z-0 rounded-xl h-fit max-h-[260px] overflow-hidden group">
-          <img
-            src="images/Banner 2.png"
-            alt="Banner"
-            className="transition-transform duration-300 transform group-hover:scale-105"
-          />
-          <p className="text-white text-5xl font-bold absolute top-[50%] translate-y-[-50%] left-10">
-            Sports Wear
-          </p>
-          <p className="text-white text-xl font-bold absolute bottom-10 left-10 underline cursor-pointer">
-            Shop Now
-          </p>
-        </div>
-        <div className="col-span-1 relative z-0 rounded-xl h-fit max-h-[260px] overflow-hidden group">
-          <img
-            src="images/Banner 3.png"
-            alt="Banner"
-            className="rounded-xl h-full transition-transform duration-300 transform group-hover:scale-105"
-          />
-          <p className="text-black text-5xl font-bold absolute bottom-[50%] translate-y-[-50%] left-10">
-            Fashion Shoes
-          </p>
-          <p className="text-black text-xl font-bold absolute bottom-20 left-10 underline cursor-pointer">
-            Shop Now
-          </p>
-        </div>
+      {/* Banner Header */}
+      <div className="max-w-7xl mx-auto grid grid-cols-2 gap-6 mt-10">
+        {isLoading ? (
+          <>
+            <BannerSkeleton isLarge={true} />
+            <BannerSkeleton />
+            <BannerSkeleton />
+          </>
+        ) : (
+          headerBanners.map((banner, index) => (
+            <div
+              key={banner.id}
+              className={`
+                ${index === 0 ? "col-span-2 h-[500px]" : "col-span-1 h-[240px]"} 
+                relative z-0 rounded-xl overflow-hidden group
+                shadow-lg hover:shadow-2xl transition-all duration-300
+                border border-gray-200 hover:border-gray-300
+                transform hover:-translate-y-1
+                before:absolute before:inset-0 before:z-10 before:bg-gradient-to-t before:from-black/60 before:to-transparent before:opacity-0
+                before:transition-opacity before:duration-300 group-hover:before:opacity-100
+              `}
+            >
+              <ImageWithFallback
+                src={banner.image}
+                alt={banner.title}
+                className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-50"
+              />
+              <div className="absolute inset-0 z-20 flex flex-col justify-between p-8">
+                <p
+                  className={`text-white font-bold ${index === 0 ? 'text-5xl' : 'text-3xl'} 
+                  transform translate-y-[-100%] opacity-0 transition-all duration-300 
+                  group-hover:translate-y-0 group-hover:opacity-100`}
+                >
+                  {banner.title.split("<br />").map((line, lineIndex) => (
+                    <React.Fragment key={lineIndex}>
+                      {line}
+                      {lineIndex < banner.title.split("<br />").length - 1 && <br />}
+                    </React.Fragment>
+                  ))}
+                </p>
+                <p
+                  onClick={() => handleShopNow(banner.url)}
+                  className="text-white text-xl font-bold underline cursor-pointer hover:text-gray-200
+                  transform translate-y-[100%] opacity-0 transition-all duration-300
+                  group-hover:translate-y-0 group-hover:opacity-100"
+                >
+                  Shop Now
+                </p>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* CTA */}
@@ -215,34 +300,54 @@ const Homepage = () => {
         </div>
       </div>
 
-      {/* Category */}
+      {/* Banner Footer */}
       <div className="container max-w-7xl grid grid-cols-2 gap-10 mx-auto my-20">
-        <div className="col-span-1 relative rounded-xl overflow-hidden group">
-          <img
-            src="images/Banner 5.png"
-            alt="Category"
-            className="transition-transform duration-300 transform group-hover:scale-105"
-          />
-          <p className="text-black text-5xl font-extrabold absolute bottom-40 left-10">
-            Minimal <br /> Collection
-          </p>
-          <p className="text-black text-xl font-bold absolute bottom-20 left-10 underline cursor-pointer">
-            Shop Now
-          </p>
-        </div>
-        <div className="col-span-1 relative rounded-xl overflow-hidden group">
-          <img
-            src="images/Banner 6.png"
-            alt="Category"
-            className="transition-transform duration-300 transform group-hover:scale-105"
-          />
-          <p className="text-black text-5xl font-extrabold absolute bottom-40 left-10">
-            Sneaker
-          </p>
-          <p className="text-black text-xl font-bold absolute bottom-20 left-10 underline cursor-pointer">
-            Shop Now
-          </p>
-        </div>
+        {isLoading ? (
+          <>
+            <BannerSkeleton />
+            <BannerSkeleton />
+          </>
+        ) : (
+          footerBanners.map((banner) => (
+            <div
+              key={banner.id}
+              className="col-span-1 relative rounded-xl overflow-hidden group
+                shadow-lg hover:shadow-2xl transition-all duration-300
+                border border-gray-200 hover:border-gray-300
+                transform hover:-translate-y-1
+                before:absolute before:inset-0 before:z-10 before:bg-gradient-to-t before:from-black/60 before:to-transparent before:opacity-0
+                before:transition-opacity before:duration-300 group-hover:before:opacity-100"
+            >
+              <ImageWithFallback
+                src={banner.image}
+                alt={banner.title}
+                className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-50"
+              />
+              <div className="absolute inset-0 flex flex-col justify-between p-8">
+                <p
+                  className="text-white text-5xl font-extrabold 
+                  transform translate-y-[-100%] opacity-0 transition-all duration-300 
+                  group-hover:translate-y-0 group-hover:opacity-100"
+                >
+                  {banner.title.split("<br />").map((line, lineIndex) => (
+                    <React.Fragment key={lineIndex}>
+                      {line}
+                      {lineIndex < banner.title.split("<br />").length - 1 && <br />}
+                    </React.Fragment>
+                  ))}
+                </p>
+                <p
+                  onClick={() => handleShopNow(banner.url)}
+                  className="text-white text-xl font-bold underline cursor-pointer hover:text-gray-200
+                  transform translate-y-[100%] opacity-0 transition-all duration-300
+                  group-hover:translate-y-0 group-hover:opacity-100"
+                >
+                  Shop Now
+                </p>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Why Choose Us */}
