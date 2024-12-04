@@ -23,13 +23,18 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     public function listProduct(
         array $filters = [],
         int $page = 1,
-        int $perPage = 10
+        int $perPage = 10,
+        string $orderBy = 'created_at',
+        string $orderDirection = 'DESC'
     )
     {
         $query = $this->getBaseQuery($filters);
 
         // Get total items count
         $totalItems = count(DB::select($query));
+
+        // Add order by clause
+        $query .= " ORDER BY p." . $orderBy . " " . $orderDirection;
 
         // Add pagination
         if ($page && $perPage) {
@@ -39,6 +44,21 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
 
         $products = DB::select($query);
 
+        // Get top 6 products with most sales
+        $topProducts = Product::withSum('orderItems as total_revenue', DB::raw('price * quantity'))
+            ->withSum('orderItems as total_quantity', 'quantity')
+            ->join('order_items', 'products.id', '=', 'order_items.product_id')
+            ->groupBy('products.id', 'products.name')
+            ->orderByDesc('total_revenue')
+            ->take(6)
+            ->get([
+                'products.id',
+                'products.name',
+                'total_revenue',
+                'total_quantity'
+            ]);
+
+
         // Calculate total pages
         $totalPages = ceil($totalItems / $perPage);
 
@@ -46,7 +66,8 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             'products' => $products,
             'total_pages' => $totalPages,
             'current_page' => $page,
-            'total_items' => $totalItems
+            'total_items' => $totalItems,
+            'top_products' => $topProducts,
         ];
     }
 
@@ -318,7 +339,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             $query .= " AND p.is_deleted = " . boolval($filters['is_deleted']);
         }
 
-        $query .= " GROUP BY p.id, b.name, ci.categories ORDER BY p.id";
+        $query .= " GROUP BY p.id, b.name, ci.categories";
         return $query;
     }
 

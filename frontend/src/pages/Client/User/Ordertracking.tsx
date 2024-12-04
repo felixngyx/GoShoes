@@ -100,15 +100,15 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
                     <>
                       {/* Vertical line for mobile */}
                       <div className={`
-                        absolute h-8 w-[2px] left-6 top-12
+                        absolute h-full w-[2px] left-6 top-12
                         ${stepStatus.completed ? 'bg-green-600' : 'bg-gray-300'}
-                        sm:hidden -z-10
+                        sm:hidden
                       `} />
                       {/* Horizontal line for desktop - Adjusted width and positioning */}
                       <div className={`
-                        hidden sm:block absolute w-[calc(100%-3rem)] h-[2px]
+                        hidden sm:block absolute w-full h-[2px]
                         ${stepStatus.completed ? 'bg-green-600' : 'bg-gray-300'}
-                        top-6 left-[calc(50%+1.5rem)] -z-10
+                        top-6 left-1/2
                       `} />
                     </>
                   )}
@@ -154,3 +154,4 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
 };
 
 export default OrderTracking;
+

@@ -64,15 +64,20 @@ class ProductService implements ProductServiceInterface
     {
         $page = $request['page'] ?? 1;
         $perPage = $request['perPage'] ?? 10;
+        $orderBy = $request['orderBy'] ?? 'created_at';
+        $sortBy = $request['sortBy'] ?? 'DESC';
 
-        $result = $this->productRepository->listProduct($request, $page, $perPage);
+        $result = $this->productRepository->listProduct($request, $page, $perPage, $orderBy, $sortBy);
 
         return response()->json([
             'success' => true,
+            'orderBy' => $orderBy,
+            'sortBy' => $sortBy,
             'data' => $result['products'],
             'total_pages' => $result['total_pages'],
             'current_page' => $result['current_page'],
-            'total_items' => $result['total_items']
+            'total_items' => $result['total_items'],
+           'top_products' => $result['top_products'],
         ]);
     }
 

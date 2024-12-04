@@ -10,7 +10,9 @@ interface ProductRepositoryInterface
     public function listProduct(
         array $filters = [],
         int $page = 1,
-        int $perPage = 10
+        int $perPage = 10,
+        string $orderBy = 'createdAt',
+        string $orderDirection = 'DESC'
     );
     public function find($id);
     public function createProduct(array $data);

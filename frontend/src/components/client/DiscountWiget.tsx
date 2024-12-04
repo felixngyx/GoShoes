@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { Percent, Copy, Check, Move, AlertCircle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Percent, Copy, Check, Move, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import Draggable from 'react-draggable'
 import axiosClient from '../../apis/axiosClient'
+import { useNavigate } from 'react-router-dom'
 
 interface Discount {
     id: number
@@ -21,6 +22,7 @@ interface Discount {
 
 const DiscountChatWidget: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false)
+    const [isLotteryChecked, setIsLotteryChecked] = useState(false)
     const [copiedCode, setCopiedCode] = useState<string | null>(null)
     const [position, setPosition] = useState({ x: 20, y: 20 })
     const [discounts, setDiscounts] = useState<Discount[]>([])
@@ -28,8 +30,35 @@ const DiscountChatWidget: React.FC = () => {
     const [hoveredDiscountId, setHoveredDiscountId] = useState<number | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [expandedDiscounts, setExpandedDiscounts] = useState<number[]>([])
+    const [userIP, setUserIP] = useState<string | null>(null)
+    const [dropRate, setDropRate] = useState<number | null>(null)
 
     const nodeRef = useRef<HTMLDivElement>(null)
+    const navigate = useNavigate()
+
+    useEffect(() => {
+        const lotteryResult = localStorage.getItem('lotteryResult');
+        if (lotteryResult !== null) {
+            setIsOpen(lotteryResult === 'true');
+            setIsLotteryChecked(true);
+        } else {
+            const result = Math.random() < 0.5;
+            localStorage.setItem('lotteryResult', result.toString());
+            setIsOpen(result);
+            setIsLotteryChecked(true);
+        }
+
+        // Tạo tỷ lệ "drop" ngẫu nhiên từ 0 đến 100
+        const randomDropRate = Math.floor(Math.random() * 101);
+        setDropRate(randomDropRate);
+
+        // Lấy địa chỉ IP của người dùng
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => setUserIP(data.ip))
+            .catch(error => console.error('Error fetching IP:', error));
+    }, []);
 
     useEffect(() => {
         const fetchDiscounts = async () => {
@@ -104,6 +133,14 @@ const DiscountChatWidget: React.FC = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    const toggleProductList = (discountId: number) => {
+        setExpandedDiscounts(prev => 
+            prev.includes(discountId) 
+                ? prev.filter(id => id !== discountId)
+                : [...prev, discountId]
+        )
+    }
+
     const renderDiscountContent = () => {
         if (isLoading) {
             return (
@@ -175,8 +212,52 @@ const DiscountChatWidget: React.FC = () => {
                     {' '} to {' '}
                     {new Date(discount.valid_to).toLocaleDateString()}
                 </div>
+                {discount.products && discount.products.length > 0 && (
+                    <div className="mt-2 text-xs text-gray-600">
+                        <button 
+                            onClick={() => toggleProductList(discount.id)}
+                            className="flex items-center gap-1 font-medium hover:text-blue-600 transition-colors"
+                        >
+                            {expandedDiscounts.includes(discount.id) ? (
+                                <>
+                                    <ChevronUp size={16} />
+                                    Hide products
+                                </>
+                            ) : (
+                                <>
+                                    <ChevronDown size={16} />
+                                    Show products ({discount.products.length})
+                                </>
+                            )}
+                        </button>
+                        
+                        {expandedDiscounts.includes(discount.id) && (
+                            <motion.ul 
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="mt-2 space-y-1"
+                            >
+                                {discount.products.map((product) => (
+                                    <li 
+                                        key={product.id} 
+                                        className="ml-2 cursor-pointer text-blue-600 hover:underline"
+                                        onClick={() => navigate(`/products/${product.id}`)}
+                                    >
+                                        • {product.name}
+                                    </li>
+                                ))}
+                            </motion.ul>
+                        )}
+                    </div>
+                )}
             </motion.div>
         ))
+    }
+
+    if (!isLotteryChecked) {
+        return null;
     }
 
     return (
@@ -190,39 +271,59 @@ const DiscountChatWidget: React.FC = () => {
         >
             <div 
                 ref={nodeRef} 
-                className="fixed w-[320px] z-50 cursor-move"
+                className="fixed mt-10 w-[320px] z-50"
                 style={{
                     top: `${position.y}px`,
                     left: `${position.x}px`,
+                    cursor: isOpen ? 'move' : 'pointer'
                 }}
             >
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ 
-                        opacity: isOpen ? 1 : 0, 
-                        scale: isOpen ? 1 : 0.8 
-                    }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-white rounded-lg shadow-lg p-4 mb-4 w-80"
-                >
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-bold">Discount Codes</h2>
-                        <div 
-                            className="drag-handle cursor-move" 
-                            title="Move widget"
+                <AnimatePresence>
+                    {isOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            transition={{ 
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 30
+                            }}
+                            className="bg-white rounded-lg shadow-lg p-4 mb-4 w-80"
                         >
-                            <Move size={20} />
-                        </div>
-                    </div>
-                    
-                    <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-                        {renderDiscountContent()}
-                    </div>
-                </motion.div>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-lg font-bold">Discount Codes</h2>
+                                <div 
+                                    className="drag-handle cursor-move" 
+                                    title="Move widget"
+                                >
+                                    <Move size={20} />
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                                {renderDiscountContent()}
+                            </div>
+
+                            <div className="mt-4 text-sm text-gray-600">
+                                <p>Drop Rate: {dropRate}%</p>
+                                <p>Your IP: {userIP}</p>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    animate={{ 
+                        rotate: isOpen ? 180 : 0 
+                    }}
+                    transition={{ 
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 20
+                    }}
                     onClick={() => !isDragging && setIsOpen(!isOpen)}
                     className={`
                         bg-blue-500 text-white p-3 rounded-full shadow-lg 

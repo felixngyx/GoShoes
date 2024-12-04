@@ -122,7 +122,7 @@ Route::get('/revenue/top-products', [StatisticalController::class, 'getTopRevenu
 Route::get('/contacts', [ContactController::class, 'index']);
 Route::post('/contacts', [ContactController::class, 'store']);
 Route::get('/contacts/{id}', [ContactController::class, 'show']);
-Route::get('/delete/{id}', [ContactController::class,'destroy']);
+Route::get('/delete/{id}', [ContactController::class, 'destroy']);
 // This route is Public for all user change email and phone
 Route::group(['prefix' => 'profile'], function () {
     Route::post('/verify-token-change-email', [ProfileController::class, 'verifyChangeEmail']);
@@ -132,7 +132,7 @@ Route::group(['prefix' => 'profile'], function () {
     Route::post('/verify-token', [AuthController::class, 'verifyTokenController']);
 });
 
-Route::get('/randdis',[DiscountController::class,'getRandDiscount']);
+Route::get('/randdis', [DiscountController::class, 'getRandDiscount']);
 
 // This route is Authenticated
 Route::group([
@@ -225,12 +225,15 @@ Route::group([
     Route::prefix('refunds')->group(function () {
         Route::get('/', [RefundController::class, 'index']);
         Route::post('/', [RefundController::class, 'store']);
-        Route::post('/approve', [RefundController::class,'approve']);
-        Route::post('/deny', [RefundController::class,'deny']);
-        Route::get('/static', [RefundController::class,'getRefundStatistics']);
+        Route::post('/approve', [RefundController::class, 'approve']);
+        Route::post('/deny', [RefundController::class, 'deny']);
+        Route::get('/static', [RefundController::class, 'getRefundStatistics']);
         Route::get('/{id}', [RefundController::class, 'viewDetailRefundRequest']);
     });
+
+
 });
+
 
 // Routes cho Payment với ZaloPay
 Route::prefix('payment')->group(function () {
