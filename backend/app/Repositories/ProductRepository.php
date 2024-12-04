@@ -21,9 +21,9 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     }
 
     public function listProduct(
-        array $filters = [],
-        int $page = 1,
-        int $perPage = 10,
+        array  $filters = [],
+        int    $page = 1,
+        int    $perPage = 10,
         string $orderBy = 'created_at',
         string $orderDirection = 'DESC'
     )
@@ -44,21 +44,6 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
 
         $products = DB::select($query);
 
-        // Get top 6 products with most sales
-        $topProducts = Product::withSum('orderItems as total_revenue', DB::raw('price * quantity'))
-            ->withSum('orderItems as total_quantity', 'quantity')
-            ->join('order_items', 'products.id', '=', 'order_items.product_id')
-            ->groupBy('products.id', 'products.name')
-            ->orderByDesc('total_revenue')
-            ->take(6)
-            ->get([
-                'products.id',
-                'products.name',
-                'total_revenue',
-                'total_quantity'
-            ]);
-
-
         // Calculate total pages
         $totalPages = ceil($totalItems / $perPage);
 
@@ -67,7 +52,6 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             'total_pages' => $totalPages,
             'current_page' => $page,
             'total_items' => $totalItems,
-            'top_products' => $topProducts,
         ];
     }
 
@@ -90,10 +74,12 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     {
         return ProductImage::create($imageData);
     }
+
     public function findProductForDeletion(string $id)
     {
         return Product::find($id);
     }
+
     public function findProductWithRelations(string $id)
     {
         $product = Product::where('is_deleted', false)
@@ -109,8 +95,8 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             'id' => $product->id,
             'name' => $product->name,
             'description' => $product->description,
-            'price' => (float) $product->price,
-            'promotional_price' => (float) $product->promotional_price,
+            'price' => (float)$product->price,
+            'promotional_price' => (float)$product->promotional_price,
             'stock_quantity' => $product->stock_quantity,
             'sku' => $product->sku,
             'hagtag' => $product->hagtag,
@@ -157,8 +143,8 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 return [
                     'id' => $relatedProduct->id,
                     'name' => $relatedProduct->name,
-                    'price' => (float) $relatedProduct->price,
-                    'promotional_price' => (float) $relatedProduct->promotional_price,
+                    'price' => (float)$relatedProduct->price,
+                    'promotional_price' => (float)$relatedProduct->promotional_price,
                     'rating_count' => $relatedProduct->rating_count,
                     'stock_quantity' => $relatedProduct->stock_quantity,
                     'categories' => $relatedProduct->categories->pluck('name')->toArray(),
@@ -167,7 +153,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                     'images' => $relatedProduct->images->pluck('image_path')->toArray(),
                     'variants' => $relatedProduct->variants->map(function ($variant) {
                         return [
-                            'size' => (int) $variant->size->size,
+                            'size' => (int)$variant->size->size,
                             'color' => $variant->color->color,
                             'quantity' => $variant->quantity,
                             // 'image_variant' => $variant->image_variant
@@ -181,7 +167,9 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             'relatedProducts' => $relatedProducts
         ];
     }
-    public function findProductWithRelationsClient(string $id){
+
+    public function findProductWithRelationsClient(string $id)
+    {
         $product = Product::where('is_deleted', false)
             ->with(['variants.color', 'variants.size', 'images', 'categories:id,name', 'brand'])
             ->find($id);
@@ -195,7 +183,6 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             ->where('id', '!=', $product->id)
             ->where('is_deleted', false)
             ->limit(8)
-
             ->get();
 
 
@@ -209,6 +196,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     {
         return $product->update(['is_deleted' => 1]);
     }
+
     public function restoreProduct(Product $product)
     {
         return $product->update(['is_deleted' => 0]);
@@ -229,7 +217,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     private function getBaseQuery($filters = [])
     {
         $query = "
-                WITH distinct_variants AS (
+            WITH distinct_variants AS (
                 SELECT DISTINCT
                     pv.product_id,
                     pv.color_id,
@@ -258,12 +246,45 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                             'quantity', dv.quantity
                         )
                     ) AS sizes,
-                    MAX(dv.image) AS image, -- Chọn 1 hình đại diện
+                    MAX(dv.image) AS image,
                     SUM(dv.quantity) AS total_quantity
                 FROM distinct_variants dv
                 GROUP BY dv.product_id, dv.color_id, dv.color
             ),
-            category_info AS (
+            unique_variants AS (
+                SELECT
+                    vi.product_id,
+                    vi.color_id,
+                    vi.color,
+                    vi.sizes,
+                    vi.image,
+                    vi.total_quantity
+                FROM variant_info vi
+                GROUP BY vi.product_id, vi.color_id, vi.color
+            )
+            SELECT
+                p.*,
+                b.name AS brand_name,
+                COALESCE(
+                    JSON_ARRAYAGG(
+                        CASE
+                            WHEN uv.color_id IS NOT NULL THEN
+                                JSON_OBJECT(
+                                    'color_id', uv.color_id,
+                                    'color', uv.color,
+                                    'sizes', uv.sizes,
+                                    'image', uv.image,
+                                    'total_quantity', uv.total_quantity
+                                )
+                            ELSE NULL
+                        END
+                    ),
+                    JSON_ARRAY()
+                ) AS variants,
+                ci.categories
+            FROM products p
+            LEFT JOIN unique_variants uv ON p.id = uv.product_id
+            LEFT JOIN (
                 SELECT
                     pc.product_id,
                     JSON_ARRAYAGG(
@@ -278,33 +299,12 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 FROM product_category pc
                 LEFT JOIN categories c ON pc.category_id = c.id
                 GROUP BY pc.product_id
-            )
-            SELECT
-                p.*,
-                p.description,
-                b.name AS brand_name,
-                COALESCE(
-                    JSON_ARRAYAGG(
-                        JSON_OBJECT(
-                            'color_id', vi.color_id,
-                            'color', vi.color,
-                            'sizes', vi.sizes,
-                            'image', vi.image,
-                            'total_quantity', vi.total_quantity
-                        )
-                    ),
-                    JSON_ARRAY()
-                ) AS variants,
-                ci.categories
-            FROM products p
-            LEFT JOIN variant_info vi ON p.id = vi.product_id
-            LEFT JOIN category_info ci ON p.id = ci.product_id
+            ) ci ON p.id = ci.product_id
             LEFT JOIN brands b ON p.brand_id = b.id
-            LEFT JOIN product_category pc ON p.id = pc.product_id
             WHERE 1 = 1
-    ";
+        ";
 
-        // Thêm các điều kiện lọc
+        // Add filters
         if (!empty($filters['id'])) {
             $query .= " AND p.id = " . intval($filters['id']);
         }
@@ -342,25 +342,24 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
         $query .= " GROUP BY p.id, b.name, ci.categories";
         return $query;
     }
-
 }
 
-    // $variantDetails = $product->variants->map(function ($variant) {
-        //     return [
-        //         'id' => $variant->id,
-        //         'quantity' => $variant->quantity,
-        //         'image_variant' => $variant->image_variant, // Lấy ảnh biến thể
-        //         'color_id' => $variant->color_id,
-        //         'size_id' => $variant->size_id,
-        //         'colorDetails' => $variant->color, // Lấy tên màu sắc
-        //         'size' => $variant->size, // Lấy tên kích thước
-        //     ];
-        // });
-        // $brandName = $product->brand ? $product->brand->name : null;
+// $variantDetails = $product->variants->map(function ($variant) {
+//     return [
+//         'id' => $variant->id,
+//         'quantity' => $variant->quantity,
+//         'image_variant' => $variant->image_variant, // Lấy ảnh biến thể
+//         'color_id' => $variant->color_id,
+//         'size_id' => $variant->size_id,
+//         'colorDetails' => $variant->color, // Lấy tên màu sắc
+//         'size' => $variant->size, // Lấy tên kích thước
+//     ];
+// });
+// $brandName = $product->brand ? $product->brand->name : null;
 
-        // $categoryNames = $product->categories->pluck('name')->toArray();
-   // 'variantDetails' => $variantDetails,
-            // 'brandName' => $brandName,
-            // 'categoryNames' => $categoryNames, // Lấy tên danh mục sản phẩm
-               // return Product::with(['variants', 'images', 'categories' , 'brand'])->find($id);
-        // Truy vấn sản phẩm cùng với các quan hệ
+// $categoryNames = $product->categories->pluck('name')->toArray();
+// 'variantDetails' => $variantDetails,
+// 'brandName' => $brandName,
+// 'categoryNames' => $categoryNames, // Lấy tên danh mục sản phẩm
+// return Product::with(['variants', 'images', 'categories' , 'brand'])->find($id);
+// Truy vấn sản phẩm cùng với các quan hệ

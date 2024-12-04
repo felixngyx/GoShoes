@@ -71,13 +71,10 @@ class ProductService implements ProductServiceInterface
 
         return response()->json([
             'success' => true,
-            'orderBy' => $orderBy,
-            'sortBy' => $sortBy,
             'data' => $result['products'],
             'total_pages' => $result['total_pages'],
             'current_page' => $result['current_page'],
             'total_items' => $result['total_items'],
-           'top_products' => $result['top_products'],
         ]);
     }
 
