@@ -14,42 +14,42 @@ class BannerSeeder extends Seeder
     {
         $banners = [
             [
-                'title' => 'Banner 1',
+                'title' => 'Where Comfort Meets Courage: Your Journey Starts Here',
                 'position' => 'home1',
                 'image' => 'banner1.jpg',
                 'url' => 'https://www.google.com',
                 'active' => 1,
             ],
             [
-                'title' => 'Banner 2',
+                'title' => 'Every Step Tells A Story: Walk Your Own Path With Confidence',
                 'position' => 'home2',
                 'image' => 'banner2.jpg',
                 'url' => 'https://www.google.com',
                 'active' => 1,
             ],
             [
-                'title' => 'Banner 3',
+                'title' => 'Beyond Shoes, Beyond Limits: Redefine Your Movement',
                 'position' => 'home3',
                 'image' => 'banner3.jpg',
                 'url' => 'https://www.google.com',
                 'active' => 1,
             ],
             [
-                'title' => 'Banner 4',
+                'title' => 'Crafted for Dreamers, Designed for Achievers',
                 'position' => 'home4',
                 'image' => 'banner4.jpg',
                 'url' => 'https://www.google.com',
                 'active' => 1,
             ],
             [
-                'title' => 'Banner 5',
+                'title' => 'More Than Footwear, A Statement of Who You Are',
                 'position' => 'home5',
                 'image' => 'banner5.jpg',
                 'url' => 'https://www.google.com',
                 'active' => 1,
             ],
             [
-                'title' => 'Banner 6',
+                'title' => 'Transform Your Journey: Unbeatable Deals That Move You Forward',
                 'position' => 'all1',
                 'image' => 'banner6.jpg',
                 'url' => 'https://www.google.com',

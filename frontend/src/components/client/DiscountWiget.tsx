@@ -190,7 +190,7 @@ const DiscountChatWidget: React.FC = () => {
         >
             <div 
                 ref={nodeRef} 
-                className="fixed w-[320px] z-50 cursor-move"
+                className="fixed mt-10 w-[320px] z-50 cursor-move"
                 style={{
                     top: `${position.y}px`,
                     left: `${position.x}px`,
