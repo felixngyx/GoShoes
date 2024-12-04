@@ -18,23 +18,31 @@ const User = () => {
 	const [previewUser, setPreviewUser] = useState<UserType | null>(null);
 	const [loadingUpdate, setLoadingUpdate] = useState(false);
 	const { role } = useSelector((state: RootState) => state.client.user);
+	const [orderBy, setOrderBy] = useState('created_at');
+	const [sortBy, setSortBy] = useState('DESC');
 
 	const fetchUsers = async () => {
 		try {
-			const response = await userService.getAll(currentPage, 10);
+			setLoading(true);
+			const response = await userService.getAll(
+				currentPage,
+				10,
+				orderBy,
+				sortBy
+			);
 			console.log('Users----------', response.data.data);
 			setUsers(response.data.data);
 			setTotalPages(response.data.total_pages);
 		} catch (error) {
 			console.error('Error fetching users:', error);
+		} finally {
+			setLoading(false);
 		}
 	};
 
 	useEffect(() => {
-		setLoading(true);
 		fetchUsers();
-		setLoading(false);
-	}, [currentPage]);
+	}, [currentPage, orderBy, sortBy]);
 
 	const handleRoleChange = async (
 		e: React.ChangeEvent<HTMLSelectElement>,
@@ -50,19 +58,9 @@ const User = () => {
 		toast.success('Update role success');
 	};
 
-	const handleDelete = async (id: number) => {
-		if (confirm('Are you sure you want to delete this user?')) {
-			try {
-				setLoading(true);
-				await userService.delete(id);
-				fetchUsers();
-				toast.success('Delete user success');
-			} catch (error) {
-				console.error('Error deleting user:', error);
-			} finally {
-				setLoading(false);
-			}
-		}
+	const handleSort = (sort: string) => {
+		setOrderBy(sort);
+		setSortBy(sortBy === 'DESC' ? 'ASC' : 'DESC');
 	};
 
 	const updateStatus = async (id: number, status: boolean) => {
@@ -140,16 +138,33 @@ const User = () => {
 							<th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
 									Admin
-									<a>
+									<a
+										onClick={() => handleSort('role')}
+										className="cursor-pointer"
+									>
 										<FaSort />
 									</a>
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">Status</div>
+								<div className="flex items-center">
+									Status
+									<a
+										onClick={() => handleSort('is_deleted')}
+										className="cursor-pointer"
+									>
+										<FaSort />
+									</a>
+								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
 								Created At
+								<a
+									onClick={() => handleSort('created_at')}
+									className="cursor-pointer"
+								>
+									<FaSort />
+								</a>
 							</th>
 							<th scope="col" className="px-6 py-3">
 								Action

@@ -27,7 +27,6 @@
     "@tinymce/tinymce-react": "^5.1.1",
     "apexcharts": "^3.53.0",
     "axios": "^1.7.4",
-    "babel-polyfill": "^6.26.0",
     "class-variance-authority": "^0.7.0",
     "color-thief-react": "^2.1.0",
     "date-fns": "^4.1.0",

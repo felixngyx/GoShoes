@@ -454,9 +454,10 @@ const AddProduct = () => {
 			};
 
 			const response = await productService.create(formattedData);
+			console.log('response', response);
 			if (response.status === 201) {
 				toast.success('Create product successfully');
-				navigate('/admin/product');
+				// navigate('/admin/product');
 			}
 		} catch (error: any) {
 			console.error('Error submitting form:', error);
