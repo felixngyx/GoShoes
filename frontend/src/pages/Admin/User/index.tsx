@@ -7,6 +7,8 @@ import { toast } from 'react-hot-toast';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import { X } from 'lucide-react';
 import Pagination from '../../../components/admin/Pagination';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store';
 
 const User = () => {
 	const [users, setUsers] = useState<UserType[]>([]);
@@ -15,6 +17,7 @@ const User = () => {
 	const [totalPages, setTotalPages] = useState(0);
 	const [previewUser, setPreviewUser] = useState<UserType | null>(null);
 	const [loadingUpdate, setLoadingUpdate] = useState(false);
+	const { role } = useSelector((state: RootState) => state.client.user);
 
 	const fetchUsers = async () => {
 		try {
@@ -228,19 +231,19 @@ const User = () => {
 											: ''}
 									</td>
 									<td className="px-6 py-4">
-										{user.role !== 'super-admin' && (
-											<div className="flex items-center gap-2">
-												<button
-													className="btn btn-sm btn-ghost p-2 rounded-md hover:bg-gray-100"
-													onClick={() => openUserDetailModal(user)}
-												>
-													<FaRegEye
-														size={18}
-														className="cursor-pointer"
-														color="primary"
-													/>
-												</button>
-												{user.is_deleted ? (
+										<div className="flex items-center gap-2">
+											<button
+												className="btn btn-sm btn-ghost p-2 rounded-md hover:bg-gray-100"
+												onClick={() => openUserDetailModal(user)}
+											>
+												<FaRegEye
+													size={18}
+													className="cursor-pointer"
+													color="primary"
+												/>
+											</button>
+											{role === 'super-admin' &&
+												(user.is_deleted ? (
 													<RotateCcw
 														size={20}
 														className="cursor-pointer"
@@ -258,9 +261,8 @@ const User = () => {
 															updateStatus(user.id!, true)
 														}
 													/>
-												)}
-											</div>
-										)}
+												))}
+										</div>
 									</td>
 								</tr>
 							))
