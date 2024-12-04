@@ -19,8 +19,24 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         return $this->model->where('email', $email)->first();
     }
 
-    public function paginate(int $perPage = 10, array $columns = ['*'], string $pageName = 'page', int $page = null)
+    public function paginate(
+        int $perPage = 10,
+        array $columns = ['*'],
+        string $pageName = 'page',
+        string $keyword = null,
+        int $page = null,
+        string $orderBy = 'created_at',
+        string $sortBy = 'asc'
+    )
     {
-        return $this->model->paginate($perPage, $columns, $pageName, $page);
+        $query = $this->model->newQuery();
+
+        if ($keyword) {
+            $query->where('name', 'like', '%' . $keyword . '%')
+                ->orWhere('email', 'like', '%' . $keyword . '%');
+        }
+
+        return $query->orderBy($orderBy, $sortBy)
+            ->paginate($perPage, $columns, $pageName, $page);
     }
 }

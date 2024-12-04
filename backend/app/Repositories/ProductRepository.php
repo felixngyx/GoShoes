@@ -23,13 +23,18 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     public function listProduct(
         array $filters = [],
         int $page = 1,
-        int $perPage = 10
+        int $perPage = 10,
+        string $orderBy = 'created_at',
+        string $orderDirection = 'DESC'
     )
     {
         $query = $this->getBaseQuery($filters);
 
         // Get total items count
         $totalItems = count(DB::select($query));
+
+        // Add order by clause
+        $query .= " ORDER BY p." . $orderBy . " " . $orderDirection;
 
         // Add pagination
         if ($page && $perPage) {
@@ -334,7 +339,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             $query .= " AND p.is_deleted = " . boolval($filters['is_deleted']);
         }
 
-        $query .= " GROUP BY p.id, b.name, ci.categories ORDER BY p.id";
+        $query .= " GROUP BY p.id, b.name, ci.categories";
         return $query;
     }
 

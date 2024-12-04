@@ -31,9 +31,20 @@ class UserService extends UserServiceAbstract implements UserServiceInterface
     {
         $data = [
             'page' => $request['page'] ?? 1,
-            'perPage' => $request['perPage'] ?? 10
+            'perPage' => $request['perPage'] ?? 10,
+            'keyword' => $request['keyword'] ?? null,
+            'orderBy' => $request['orderBy'] ?? 'created_at',
+            'sortBy' => $request['sortBy'] ?? 'asc'
         ];
-        $users = self::getUserRepository()->paginate($data['perPage'], ['*'], 'page', $data['page']);
+        $users = self::getUserRepository()->paginate(
+            $data['perPage'],
+            ['*'],
+            'page',
+            $data['keyword'],
+            $data['page'],
+            $data['orderBy'],
+            $data['sortBy']
+        );
         return response()->json([
             'success' => true,
             'data' => $users->items(),

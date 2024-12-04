@@ -33,7 +33,7 @@ class UserController
 
     public function index(Request $request) : \Illuminate\Http\JsonResponse
     {
-        return self::getUserService()->all($request->only(['page', 'perPage']));
+        return self::getUserService()->all($request->only(['page', 'perPage','orderBy','sortBy', 'keyword']));
     }
 
     public function update(UpdateUserRequest $request, int $id) : \Illuminate\Http\JsonResponse
