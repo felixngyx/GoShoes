@@ -294,7 +294,7 @@ const AddProduct = () => {
 		// Khởi tạo previousValues cho variant mới
 		setPreviousValues((prev) => ({
 			...prev,
-			[`variants.${newIndex}.size.0.quantity`]: 0,
+			[`variants.${newIndex}.variant_details.0.quantity`]: 0,
 		}));
 
 		setColorSearchTerms((prev) => ({
@@ -333,7 +333,9 @@ const AddProduct = () => {
 		setPreviousValues((prev) => {
 			const newPrev: { [key: string]: number } = {};
 			Object.entries(prev).forEach(([key, value]) => {
-				const match = key.match(/variants\.(\d+)\.size\.(\d+)\.quantity/);
+				const match = key.match(
+					/variants\.(\d+)\.variant_details\.(\d+)\.quantity/
+				);
 				if (match) {
 					const variantIndex = parseInt(match[1]);
 					const sizeIndex = match[2];
@@ -341,7 +343,9 @@ const AddProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${variantIndex - 1}.size.${sizeIndex}.quantity`
+							`variants.${
+								variantIndex - 1
+							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
 				}
@@ -449,9 +453,7 @@ const AddProduct = () => {
 				),
 			};
 
-			console.log('Formatted submit data:', formattedData);
 			const response = await productService.create(formattedData);
-			console.log('Response:', response);
 			if (response.status === 201) {
 				toast.success('Create product successfully');
 				navigate('/admin/product');
@@ -496,9 +498,13 @@ const AddProduct = () => {
 			sku: '',
 		};
 
-		// Lấy giá trị hiện tại từ form thay vì fields
-		const currentValues: VariantSize[] =
-			control._formValues.variants[variantIndex].variant_details || [];
+		// Khởi tạo previousValues cho size mới với quantity = 0
+		setPreviousValues((prev) => ({
+			...prev,
+			[`variants.${variantIndex}.variant_details.${
+				variantSizes[variantIndex]?.length || 0
+			}.quantity`]: 0,
+		}));
 
 		setVariantSizes((prev) => ({
 			...prev,
@@ -506,6 +512,8 @@ const AddProduct = () => {
 		}));
 
 		// Cập nhật form với giá trị hiện tại + size mới
+		const currentValues =
+			control._formValues.variants[variantIndex].variant_details || [];
 		setValue(`variants.${variantIndex}.variant_details`, [
 			...currentValues,
 			newSize,
@@ -519,7 +527,30 @@ const AddProduct = () => {
 		const sizeToRemove = currentVariant.variant_details[sizeIndex];
 
 		// Trừ đi số lượng của size bị xóa khỏi tổng stock quantity
-		setStockQuantity((prev) => prev - (Number(sizeToRemove.quantity) || 0));
+		const quantityToRemove = Number(sizeToRemove.quantity) || 0;
+		setStockQuantity((prev) => prev - quantityToRemove);
+
+		// Xóa giá trị quantity cũ khỏi previousValues và cập nhật lại index cho các size còn lại
+		setPreviousValues((prev) => {
+			const newPrev = { ...prev };
+			// Xóa giá trị của size bị xóa
+			delete newPrev[
+				`variants.${variantIndex}.variant_details.${sizeIndex}.quantity`
+			];
+
+			// Cập nhật lại index cho các size phía sau
+			const remainingSizes = currentVariant.variant_details.length;
+			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
+				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${
+					i - 1
+				}.quantity`;
+				newPrev[newKey] = newPrev[oldKey];
+				delete newPrev[oldKey];
+			}
+
+			return newPrev;
+		});
 
 		const updatedSizes = currentVariant.variant_details.filter(
 			(_: VariantSize, idx: number) => idx !== sizeIndex

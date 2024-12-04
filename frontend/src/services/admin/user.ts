@@ -6,7 +6,7 @@ export type User = {
 	email: string;
 	phone: string;
 	password: string;
-	is_deleted: 0 | 1;
+	is_deleted: boolean;
 	auth_provider: string;
 	email_verified_at: string;
 	remember_token: string;
@@ -22,14 +22,13 @@ export type User = {
 
 export type User_Update = {
 	admin?: string;
-	is_deleted?: 0 | 1;
+	is_deleted?: boolean;
 	role?: 'admin' | 'user';
 };
 
 const userService = {
-	getAll: async (): Promise<User[]> => {
-		const response = await axiosClient.get('/admin/user');
-		return response.data.data;
+	getAll: async (page: number = 1, limit: number = 10) => {
+		return await axiosClient.get(`/admin/user?page=${page}&perPage=${limit}`);
 	},
 
 	update: (id: number, data: User_Update) => {
