@@ -39,21 +39,20 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
 
         $products = DB::select($query);
 
-        // Get top 6 products with most sales 
-        $topProductsQuery = "
-            SELECT p.id, p.name, SUM(oi.quantity) AS total_sold 
-            FROM products p 
-            JOIN order_items oi 
-            ON p.id = oi.product_id 
-            JOIN orders o 
-            ON o.id = oi.order_id 
-            WHERE o.status = 'completed' 
-            GROUP BY p.id, p.name 
-            ORDER BY total_sold 
-            DESC 
-            LIMIT 6
-            ";
-        $topProducts = DB::select($topProductsQuery);
+        // Get top 6 products with most sales
+        $topProducts = Product::withSum('orderItems as total_revenue', DB::raw('price * quantity'))
+            ->withSum('orderItems as total_quantity', 'quantity')
+            ->join('order_items', 'products.id', '=', 'order_items.product_id')
+            ->groupBy('products.id', 'products.name')
+            ->orderByDesc('total_revenue')
+            ->take(6)
+            ->get([
+                'products.id',
+                'products.name',
+                'total_revenue',
+                'total_quantity'
+            ]);
+
 
         // Calculate total pages
         $totalPages = ceil($totalItems / $perPage);
