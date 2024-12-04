@@ -47,8 +47,11 @@ const DiscountChatWidget: React.FC = () => {
             localStorage.setItem('lotteryResult', result.toString());
             setIsOpen(result);
             setIsLotteryChecked(true);
-            setDropRate(result ? 50 : 0); // Giả sử tỷ lệ là 50%
         }
+
+        // Tạo tỷ lệ "drop" ngẫu nhiên từ 0 đến 100
+        const randomDropRate = Math.floor(Math.random() * 101);
+        setDropRate(randomDropRate);
 
         // Lấy địa chỉ IP của người dùng
         fetch('https://api.ipify.org?format=json')
