@@ -59,8 +59,6 @@ const ProductList = () => {
     refetchOnMount: true,
   });
 
-  console.log("1", products);
-
   const parsePrice = (price: string | undefined) => {
     if (!price) return 0;
     return parseFloat(price.replace(/\./g, "").replace(",", "."));
@@ -165,9 +163,9 @@ const ProductList = () => {
   // api brands
   const { data: brandsData } = useQuery({
     queryKey: ["BRAND_KEY"],
-    queryFn: getAllBrands,
+    queryFn: () => getAllBrands(100, 1),
   });
-  const brands = Array.isArray(brandsData) ? brandsData : [];
+  const brands = Array.isArray(brandsData?.brands) ? brandsData.brands : [];
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Hiển thị tối đa 6 thương hiệu đầu tiên

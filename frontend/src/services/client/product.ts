@@ -56,20 +56,32 @@ export const checkStock = async (variant_id: number): Promise<number> => {
   }
 };
 
-export const getProductByBrandId = async (brandId: number) => {
+export const getProductByBrandId = async (
+  brandId: number,
+  page: number,
+  perPage: number
+) => {
   try {
-    const response = await axiosClient.get(`/products?brand_id=${brandId}`);
-    return response.data.data;
+    const response = await axiosClient.get(
+      `/products?brand_id=${brandId}&page=${page}&perPage=${perPage}`
+    );
+    return response.data;
   } catch (error) {
     console.error("Error fetching products by brand ID:", error);
     throw new Error("Failed to fetch products by brand ID");
   }
 };
 
-export const getProductByCateId = async (CateId: number) => {
+export const getProductByCateId = async (
+  CateId: number,
+  page: number,
+  perPage: number
+) => {
   try {
-    const response = await axiosClient.get(`/products?category=${CateId}`);
-    return response.data.data;
+    const response = await axiosClient.get(
+      `/products?category_id=${CateId}&page=${page}&perPage=${perPage}`
+    );
+    return response.data;
   } catch (error) {
     console.error("Error fetching products by brand ID:", error);
     throw new Error("Failed to fetch products by brand ID");

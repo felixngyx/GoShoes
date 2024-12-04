@@ -66,6 +66,12 @@ const postSchema = Joi.object({
 const FormSkeleton = () => {
   return (
     <div className="space-y-6 animate-pulse">
+      {/* Header skeleton */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="h-8 w-32 bg-white/10 rounded"></div>
+        <div className="h-10 w-20 bg-white/10 rounded"></div>
+      </div>
+
       {/* Title skeleton */}
       <div>
         <div className="h-5 w-20 bg-white/10 rounded mb-2"></div>
@@ -76,6 +82,7 @@ const FormSkeleton = () => {
       <div>
         <div className="h-5 w-20 bg-white/10 rounded mb-2"></div>
         <div className="h-48 bg-white/10 rounded"></div>
+        <div className="h-10 w-full bg-white/10 rounded mt-2"></div>
       </div>
 
       {/* Content editor skeleton */}
@@ -250,16 +257,6 @@ const UpdatePost = () => {
     <>
       <PageTitle title="Update Post | Goshoes" />
       <div className="max-w-5xl mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Update Post</h1>
-          <button
-            onClick={() => navigate('/admin/post')}
-            className="px-4 py-2 text-white bg-gray-500 hover:bg-gray-600 rounded"
-          >
-            Back
-          </button>
-        </div>
-
         {isPageLoading ? (
           <FormSkeleton />
         ) : (

@@ -48,7 +48,7 @@ const Pagination = ({
 				buttons.push(
 					<button
 						key="ellipsis-start"
-						className="join-item btn btn-sm btn-disabled"
+						className="join-item btn btn-sm bg-gray-200"
 					>
 						...
 					</button>
@@ -78,7 +78,7 @@ const Pagination = ({
 				buttons.push(
 					<button
 						key="ellipsis-end"
-						className="join-item btn btn-sm btn-disabled"
+						className="join-item btn btn-sm bg-gray-200"
 					>
 						...
 					</button>

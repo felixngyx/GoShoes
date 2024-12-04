@@ -1,9 +1,22 @@
+import React from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Cookies from "js-cookie";
 import OrderTracking from "./Ordertracking";
-import { CircularProgress, Alert } from "@mui/material";
+import {
+  CircularProgress,
+  Alert,
+  Card,
+  CardContent,
+  Typography,
+  Divider,
+  Grid,
+  Box,
+  Chip,
+} from "@mui/material";
+import { MdCalendarToday, MdEmail, MdLocationOn } from "react-icons/md";
+import { Mail, MapPin, Phone } from "lucide-react";
 
 interface OrderItem {
   quantity: number;
@@ -48,8 +61,8 @@ interface OrderData {
   items: OrderItem[];
 }
 
-const OrderDetail = () => {
-  const { id } = useParams();
+const OrderDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
 
   const {
     data: order,
@@ -72,9 +85,14 @@ const OrderDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+      >
         <CircularProgress />
-      </div>
+      </Box>
     );
   }
 
@@ -85,134 +103,226 @@ const OrderDetail = () => {
   const orderData = order.data;
 
   return (
-    <div className="col-span-9">
-      <div className="md:px-6 2xl:px-20 2xl:container 2xl:mx-auto shadow-lg border pt-9">
-        <div className="flex justify-start item-start space-y-2 flex-col">
-          <h1 className="text-3xl dark:text-white lg:text-4xl font-semibold leading-7 lg:leading-9 text-gray-800">
-            Order #{orderData.sku}
-          </h1>
-          <p className="text-base dark:text-gray-300 font-medium leading-6 text-gray-600">
-            {new Date(orderData.created_at).toLocaleDateString("vi-VN")}
-          </p>
-        </div>
+    <Box className="container mx-auto py-8 px-4">
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="flex-start"
+            mb={2}
+          >
+            <Box>
+              <Typography variant="h5" component="h1" gutterBottom>
+                Order #{orderData.sku}
+              </Typography>
+              <Box display="flex" alignItems="center">
+                <MdCalendarToday fontSize="small" sx={{ mr: 1 }} />
+                <Typography variant="body2" color="text.secondary">
+                  {new Date(orderData.created_at).toLocaleDateString("vi-VN")}
+                </Typography>
+              </Box>
+            </Box>
+            <Chip
+              label={
+                orderData.payment.status.charAt(0).toUpperCase() +
+                orderData.payment.status.slice(1)
+              }
+              color={
+                orderData.payment.status === "paid" ? "success" : "default"
+              }
+            />
+          </Box>
+          <OrderTracking
+            status={orderData.status}
+            paymentStatus={orderData.payment.status}
+            paymentMethod={orderData.payment.method}
+          />
+        </CardContent>
+      </Card>
 
-        <OrderTracking
-          status={orderData.status}
-          paymentStatus={orderData.payment.status}
-          paymentMethod={orderData.payment.method}
-        />
-
-        <div className="mt-10 flex flex-col xl:flex-row jusitfy-center items-stretch w-full space-y-4 md:space-y-6 xl:space-y-0 pb-10">
-          {/* Danh sách sản phẩm */}
-          <div className="flex flex-col justify-start items-start w-full space-y-4 md:space-y-6 xl:space-y-8">
-            <div className="flex flex-col justify-start items-start bg-gray-50 px-4 py-4 ml--4 w-full">
-              <p className="text-lg md:text-xl font-semibold leading-6 xl:leading-5 text-gray-800">
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
                 Order Items
-              </p>
-              {orderData.items.map((item, index) => (
-                <div
-                  key={index}
-                  className="mt-4 md:mt-6 flex flex-col md:flex-row justify-start items-start md:items-center md:space-x-6 xl:space-x-8 w-full"
-                >
-                  <div className="pb-4 md:pb-8 w-full md:w-40">
-                    <img
-                      className="w-full hidden md:block"
-                      src={item.product.thumbnail}
-                      alt={item.product.name}
-                    />
-                  </div>
-                  <div className="border-b border-gray-200 md:flex-row flex-col flex justify-between items-start w-full pb-8 space-y-4 md:space-y-0">
-                    <div className="w-full flex flex-col justify-start items-start space-y-8">
-                      <h3 className="text-xl xl:text-2xl font-semibold leading-6 text-gray-800">
+              </Typography>
+              <Box sx={{ maxHeight: 400, overflowY: "auto", pr: 2 }}>
+                {orderData.items.map((item, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      display: "flex",
+                      mb: 3,
+                      pb: 3,
+                      borderBottom:
+                        index !== orderData.items.length - 1
+                          ? "1px solid #e0e0e0"
+                          : "none",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        flexShrink: 0,
+                        width: 80,
+                        height: 80,
+                        borderRadius: 1,
+                        overflow: "hidden",
+                        mr: 2,
+                      }}
+                    >
+                      <img
+                        src={item.product.thumbnail}
+                        alt={item.product.name}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="subtitle1" noWrap>
                         {item.product.name}
-                      </h3>
+                      </Typography>
                       {item.variant && (
-                        <div className="flex justify-start items-start flex-col space-y-2">
-                          <p className="text-sm leading-none text-gray-800">
-                            <span className="text-gray-300">Size: </span>{" "}
-                            {item.variant.size}
-                          </p>
-                          <p className="text-sm leading-none text-gray-800">
-                            <span className="text-gray-300">Color: </span>{" "}
-                            {item.variant.color}
-                          </p>
-                        </div>
+                        <Box mt={1}>
+                          <Typography variant="body2" color="text.secondary">
+                            Size: {item.variant.size}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Color: {item.variant.color}
+                          </Typography>
+                        </Box>
                       )}
-                    </div>
-                    <div className="flex justify-between space-x-8 items-start w-full">
-                      <p className="text-base xl:text-lg leading-6">
-                        {new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                        }).format(Number(item.price))}
-                      </p>
-                      <p className="text-base xl:text-lg leading-6 text-gray-800">
-                        x{item.quantity}
-                      </p>
-                      <p className="text-base xl:text-lg font-semibold leading-6 text-gray-800">
-                        {new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                        }).format(item.subtotal)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* Tổng tiền */}
-            <div className="flex justify-center flex-col md:flex-row items-stretch w-full space-y-4 md:space-y-0 md:space-x-6 xl:space-x-8">
-              <div className="flex flex-col px-4 py-6 md:p-6 xl:p-8 w-full bg-gray-50 space-y-6">
-                <h3 className="text-xl font-semibold leading-5 text-gray-800">
-                  Summary
-                </h3>
-                <div className="flex justify-between items-center w-full">
-                  <p className="text-base font-semibold leading-4 text-gray-800">
-                    Total
-                  </p>
-                  <p className="text-base font-semibold leading-4 text-gray-600">
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(Number(orderData.total))}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Thông tin khách hàng */}
-          <div className="bg-gray-50 w-full xl:w-96 flex justify-between items-center md:items-start px-4 py-6 md:p-6 xl:p-8 flex-col">
-            <h3 className="text-xl font-semibold leading-5 text-gray-800">
-              Customer
-            </h3>
-            <div className="flex flex-col md:flex-row xl:flex-col justify-start items-stretch h-full w-full md:space-x-6 lg:space-x-8 xl:space-x-0">
-              <div className="flex flex-col justify-start items-start flex-shrink-0">
-                <div className="flex justify-center w-full md:justify-start items-center space-x-4 py-8 border-b border-gray-200">
-                  <div className="flex justify-start items-start flex-col space-y-2">
-                    <p className="text-base font-semibold leading-4 text-left text-gray-800">
-                      {orderData.customer.name}
-                    </p>
-                    <p className="text-sm leading-5 text-gray-600">
-                      {orderData.customer.email || "Không có email"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex justify-center text-gray-800 md:justify-start items-center space-x-4 py-4 border-b border-gray-200 w-full">
-                  <p className="text-sm leading-5">
-                    Address: {orderData.shipping.shipping_detail.address_detail}, {orderData.shipping.shipping_detail.address}
-                  </p>
-                </div>
-                <div className="flex justify-center text-gray-800 md:justify-start items-center space-x-4 py-4 border-b border-gray-200 w-full">
-                  <p className="text-sm leading-5">
-                    Phone: {orderData.shipping.shipping_detail.phone_number || "Number not available"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+                      <Box
+                        mt={1}
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          Quantity: {item.quantity}
+                        </Typography>
+                        <Typography variant="body1" fontWeight="medium">
+                          {new Intl.NumberFormat("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          }).format(item.subtotal)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ mt: 4 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Order Summary
+              </Typography>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography variant="subtitle1">Total</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {new Intl.NumberFormat("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                  }).format(Number(orderData.total))}
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Customer Information
+              </Typography>
+              <Box mb={2}>
+                <Typography variant="subtitle1">
+                  {orderData.customer.name}
+                </Typography>
+                <Box display="flex" alignItems="center">
+                  <Mail size={16} style={{ marginRight: "8px" }} />
+                  <Typography variant="body2" color="text.secondary">
+                    {orderData.customer.email || "No email provided"}
+                  </Typography>
+                </Box>
+              </Box>
+              <Divider sx={{ my: 2 }} />
+              <Box>
+                <Box display="flex" alignItems="flex-start" mb={1}>
+                  <MapPin
+                    size={16}
+                    style={{ marginRight: "8px", marginTop: "4px" }}
+                  />
+                  <Typography variant="body2">
+                    {orderData.shipping.shipping_detail.address_detail},{" "}
+                    {orderData.shipping.shipping_detail.address}
+                  </Typography>
+                </Box>
+                <Box display="flex" alignItems="center">
+                  <Phone size={16} style={{ marginRight: "8px" }} />
+                  <Typography variant="body2">
+                    {orderData.shipping.shipping_detail.phone_number ||
+                      "Number not available"}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ mt: 4 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Payment Details
+              </Typography>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                mb={1}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Method
+                </Typography>
+                <Typography variant="body1">
+                  {orderData.payment.method}
+                </Typography>
+              </Box>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Status
+                </Typography>
+                <Chip
+                  label={
+                    orderData.payment.status.charAt(0).toUpperCase() +
+                    orderData.payment.status.slice(1)
+                  }
+                  color={
+                    orderData.payment.status === "paid" ? "success" : "default"
+                  }
+                  size="small"
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

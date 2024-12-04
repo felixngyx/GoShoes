@@ -76,7 +76,8 @@ class ProductService implements ProductServiceInterface
             'data' => $result['products'],
             'total_pages' => $result['total_pages'],
             'current_page' => $result['current_page'],
-            'total_items' => $result['total_items']
+            'total_items' => $result['total_items'],
+           'top_products' => $result['top_products'],
         ]);
     }
 

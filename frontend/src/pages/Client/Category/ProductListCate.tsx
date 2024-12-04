@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FaBars, FaSearch, FaTh } from "react-icons/fa";
 import { Link, useParams } from "react-router-dom";
 import { getAllCategories } from "../../../services/client/categories";
@@ -7,24 +7,35 @@ import { getProductByCateId } from "../../../services/client/product";
 import { IProduct } from "../../../types/client/products/products";
 import ProductCardList from "../ProductList/ProductCardList";
 import ProductItems from "../ProductList/ProductItem";
+import Pagination from "../ProductList/Pagination";
 
 const ProductListCate = () => {
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortType, setSortType] = useState("");
-  const [itemsToShow, setItemsToShow] = useState(12);
+
+  const [perPage, setPerPage] = useState(9);
+  const [page, setPage] = useState(1);
   // state cho giá tối đa
   const { id } = useParams<{ id: string }>();
 
-  const { data: products = [] } = useQuery<IProduct[]>({
+  const {
+    data: response = {},
+    isLoading,
+    refetch,
+  } = useQuery<IProduct[]>({
     queryKey: ["PRODUCT_CATE_ID", id],
-    queryFn: async () => await getProductByCateId(Number(id)),
+    queryFn: async () => await getProductByCateId(Number(id), page, perPage),
   });
 
-  const { data: cate = [] } = useQuery({
+  const products = response.data || [];
+
+  const { data: catesDate = [] } = useQuery({
     queryKey: ["BRANDS_KEY"],
-    queryFn: getAllCategories,
+    queryFn: async () => await getAllCategories(100, 1),
   });
+
+  const cate = Array.isArray(catesDate?.data) ? catesDate.data : [];
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -35,11 +46,11 @@ const ProductListCate = () => {
   };
 
   const handleItemsToShow = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setItemsToShow(Number(e.target.value));
+    setPerPage(Number(e.target.value));
   };
 
   // Filter products based on searchTerm and price range
-  const filterProduct = products.filter((item) =>
+  const filterProduct = products.filter((item: any) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -58,29 +69,100 @@ const ProductListCate = () => {
     return 0;
   });
 
+  const [selectedCate, setSelectedCate] = useState<number | null>(null);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const dropdownRef = useRef(null);
+
+  // Hàm xử lý khi chọn một brand
+  const handleSelectBrand = (brandId: number) => {
+    setSelectedCate(brandId);
+    setIsOpen(false); // Đóng dropdown sau khi chọn
+  };
+
+  // Hàm mở/đóng dropdown khi nhấp vào label
+  const toggleDropdown = () => {
+    setIsOpen(!isOpen);
+  };
+
+  // Đóng dropdown khi người dùng nhấp ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const totalPages = response?.total_pages || 1;
+
+  useEffect(() => {
+    refetch();
+  }, [searchTerm, sortType, perPage, page, selectedCate]);
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Brand List - New Section */}
-      <div className="mb-10 ">
-        <h2 className="text-2xl font-semibold text-gray-700 mb-5">Category</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {cate.map((item: any) => (
-            <Link to={`/category/${item.id}`} key={item.id}>
-              <div className="card relative shadow-md hover:shadow-lg transition-transform duration-300 cursor-pointer bg-blue-500 rounded-lg text-center py-4 group hover:scale-105">
-                {/* Nội dung */}
-                <p className="relative z-10 text-lg font-bold text-white group-hover:text-gray-100 transition-colors duration-300">
+      <div className="relative mb-4" ref={dropdownRef}>
+        {/* Tiêu đề Button */}
+        <label
+          tabIndex={0}
+          className="btn w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg px-6 py-3 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-md focus:outline-none flex items-center justify-between"
+          onClick={toggleDropdown} // Mở/đóng dropdown khi nhấp vào label
+        >
+          <span className="text-lg font-medium">
+            {selectedCate
+              ? `Selected: ${
+                  cate.find((b: any) => b.id === selectedCate)?.name
+                }`
+              : "Select a Brand"}
+          </span>
+          {/* Biểu tượng mũi tên chỉ xuống */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            className="w-5 h-5 text-white ml-2"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </label>
+
+        {/* Dropdown Menu */}
+        {isOpen && (
+          <ul
+            tabIndex={0}
+            className="absolute right-0 mt-2 w-full bg-white shadow-lg rounded-xl border border-gray-300 z-50 max-h-60 overflow-y-auto"
+          >
+            {cate.map((item: any) => (
+              <li key={item.id}>
+                <Link
+                  to={`/category/${item.id}`}
+                  onClick={() => handleSelectBrand(item.id)} // Chọn brand và đóng dropdown
+                  className={`block p-4 text-gray-800 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all duration-200 ease-in-out ${
+                    selectedCate === item.id ? "bg-blue-100 text-blue-600" : ""
+                  }`}
+                >
                   {item.name}
-                </p>
-
-                {/* Gradient nền */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-blue-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg z-0"></div>
-
-                {/* Viền hover */}
-                <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-600 rounded-lg transition-all duration-300 z-10"></div>
-              </div>
-            </Link>
-          ))}
-        </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Filters */}
@@ -106,12 +188,11 @@ const ProductListCate = () => {
           </select>
           <select
             className="select select-bordered bg-white text-gray-800"
-            value={itemsToShow}
+            value={perPage}
             onChange={handleItemsToShow}
           >
-            <option value={12}>Show 12</option>
-            <option value={24}>Show 24</option>
-            <option value={36}>Show 36</option>
+            <option value={9}>Show 9</option>
+            <option value={15}>Show 15</option>
           </select>
         </div>
 
@@ -133,11 +214,28 @@ const ProductListCate = () => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <button className="btn btn-square bg-[#40BFFF] text-white">
+        <div className="items-center space-x-2 ml-auto">
+          {/* Button Grid Layout */}
+          <button
+            className={`btn btn-square ${
+              layout === "grid"
+                ? "bg-[#40BFFF] text-white"
+                : "bg-white text-gray-800 border border-gray-300"
+            }`}
+            onClick={() => setLayout("grid")}
+          >
             <FaTh />
           </button>
-          <button className="btn btn-square bg-white text-gray-800 border border-gray-300">
+
+          {/* Button List Layout */}
+          <button
+            className={`btn btn-square ${
+              layout === "list"
+                ? "bg-[#40BFFF] text-white"
+                : "bg-white text-gray-800 border border-gray-300"
+            }`}
+            onClick={() => setLayout("list")}
+          >
             <FaBars />
           </button>
         </div>
@@ -146,36 +244,57 @@ const ProductListCate = () => {
       {/* Product List */}
       <div
         className={`grid ${
-          layout === "grid" ? "grid-cols-3 gap-6" : "grid-cols-1 gap-8"
-        }`}
+          layout === "grid" ? "grid-cols-3" : "grid-cols-1"
+        } gap-5`}
       >
-        {sortedProducts.length > 0 ? (
-          sortedProducts.slice(0, itemsToShow).map((product) => {
-            const ProductComponent =
-              layout === "grid" ? ProductItems : ProductCardList;
-            return (
-              <ProductComponent
+        {isLoading ? (
+          <>
+            {Array(sortedProducts.length || 9) // Hoặc một giá trị cố định nếu muốn
+              .fill(null)
+              .map((_, index) =>
+                layout === "grid" ? (
+                  <ProductItems key={index} product={null} isLoading={true} />
+                ) : (
+                  <ProductCardList
+                    key={index}
+                    product={null}
+                    isLoading={true}
+                  />
+                )
+              )}
+          </>
+        ) : sortedProducts.length > 0 ? (
+          sortedProducts.map((product: any) =>
+            layout === "grid" ? (
+              <ProductItems
                 key={product.id}
                 product={product}
                 isLoading={false}
               />
-            );
-          })
+            ) : (
+              <ProductCardList
+                key={product.id}
+                product={product}
+                isLoading={false}
+              />
+            )
+          )
         ) : (
-          <p className="col-span-full text-center text-gray-500">
-            Không có sản phẩm nào phù hợp.
-          </p>
+          <div className="col-span-full text-center">
+            <p>There are no products</p>
+          </div>
         )}
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-center gap-3 mt-10">
-        <button className="btn btn-outline btn-sm">1</button>
-        <button className="btn btn-outline btn-sm">2</button>
-        <button className="btn btn-outline btn-sm">...</button>
-        <button className="btn btn-outline btn-sm">99</button>
-        <button className="btn btn-outline btn-sm">100</button>
-      </div>
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={(newPage: number) => {
+          setPage(newPage);
+          refetch();
+        }}
+      />
     </div>
   );
 };

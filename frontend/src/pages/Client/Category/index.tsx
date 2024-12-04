@@ -1,22 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaSearch } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import Breadcrumb from "../../../components/client/Breadcrumb";
 import { getAllCategories } from "../../../services/client/categories";
+import Pagination from "../ProductList/Pagination";
 
 const CategoryPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-
-  const { data: categoryData } = useQuery({
-    queryKey: ["CATEGORIES"],
-    queryFn: getAllCategories,
+  const [currrentPage, setCurrrentPage] = useState(1);
+  const { data: categoryData, refetch } = useQuery({
+    queryKey: ["CATEGORIES", currrentPage],
+    queryFn: async () => await getAllCategories(12, currrentPage),
   });
 
-  const categories = Array.isArray(categoryData) ? categoryData : [];
-  const filteredCategories = categories.filter((category) =>
+  const categories = Array.isArray(categoryData?.data) ? categoryData.data : [];
+  const filteredCategories = categories.filter((category: any) =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const totalPages = categoryData?.last_page || 1;
 
   return (
     <>
@@ -47,7 +50,7 @@ const CategoryPage: React.FC = () => {
 
         {/* Categories */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {filteredCategories.map((category) => (
+          {filteredCategories.map((category: any) => (
             <Link to={`/category/${category.id}`} key={category.id}>
               <div className="card bg-white border border-gray-300 shadow-sm hover:shadow-md hover:border-[#40BFFF] transition-all duration-300">
                 <div className="card-body flex flex-row items-center">
@@ -72,9 +75,7 @@ const CategoryPage: React.FC = () => {
         </div>
 
         {/* Featured Products */}
-        <h2 className="text-3xl font-bold mb-6 text-center">
-          Featured Products
-        </h2>
+
         {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {products?.map((product) => (
             <div
@@ -109,6 +110,15 @@ const CategoryPage: React.FC = () => {
             </div>
           ))}
         </div> */}
+
+        <Pagination
+          currentPage={currrentPage}
+          totalPages={totalPages}
+          onPageChange={(newPage: number) => {
+            setCurrrentPage(newPage);
+            refetch();
+          }}
+        />
       </div>
     </>
   );
