@@ -3,6 +3,8 @@ import { Phone, Mail, MapPin, Clock, Send } from 'lucide-react'; // Adjust the p
 import Joi from 'joi';
 import axiosClient from '../../../apis/axiosClient';
 import Breadcrumb from '../../../components/client/Breadcrumb';
+import { toast } from "react-hot-toast";
+
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -43,9 +45,9 @@ const ContactUs = () => {
     e.preventDefault();
     const { error } = schema.validate(formData, { abortEarly: false });
     if (error) {
-      const errorMessages = {};
+      const errorMessages: FormErrors = {};
       error.details.forEach((detail) => {
-        errorMessages[detail.path[0]] = detail.message;
+        errorMessages[detail.path[0] as keyof FormErrors] = detail.message;
       });
       setErrors(errorMessages);
       return;
@@ -59,13 +61,22 @@ const ContactUs = () => {
         message: formData.message,
       });
       if (response.data.success) {
-        alert('Message sent successfully!');
-      } else {
-        alert('Failed to send message.');
+        toast.success(response.data.message);
+        setFormData({
+          fullName: '',
+          email: '',
+          subject: '',
+          message: '',
+          agree: false,
+        });
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred. Please try again.');
+    } catch (error: any) {
+      if (error.response?.status === 429) {
+        toast.error(error.response.data.message);
+      } else {
+        console.error('Error:', error);
+        toast.error('An error occurred. Please try again.');
+      }
     }
   };
 

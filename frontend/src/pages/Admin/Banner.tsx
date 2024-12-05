@@ -8,11 +8,13 @@ import {
   DialogContent, 
   TextField, 
   Button,
-  DialogActions
+  DialogActions,
+  CircularProgress
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Edit, ImagePlus} from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from "react-hot-toast";
+
 import PageTitle from "../../components/admin/PageTitle";
 import axiosClient from '../../apis/axiosClient';
 import uploadImageToCloudinary from '../../common/uploadCloudinary';
@@ -119,6 +121,7 @@ const BannerPage = () => {
   const [editingBanner, setEditingBanner] = useState<EditingBanner | null>(null);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Fetch banners when component mounts
   useEffect(() => {
@@ -185,7 +188,14 @@ const BannerPage = () => {
     
     const file = files[0];
     if (file) {
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error('Image size must be less than 10MB');
+        return;
+      }
+
       try {
+        setIsUploading(true);
         const imageUrl = await uploadImageToCloudinary(file);
         setEditingBanner(prev => {
           if (!prev) return null;
@@ -198,6 +208,8 @@ const BannerPage = () => {
       } catch (error) {
         toast.error('Image upload failed');
         console.error('Image upload error:', error);
+      } finally {
+        setIsUploading(false);
       }
     }
   };
@@ -297,24 +309,33 @@ const BannerPage = () => {
                 id="banner-image-upload"
                 type="file"
                 onChange={handleImageUpload}
+                disabled={isUploading}
               />
               <label htmlFor="banner-image-upload">
                 <Button
                   variant="contained"
                   component="span"
                   startIcon={<ImagePlus />}
+                  disabled={isUploading}
                 >
-                  Upload Image
+                  {isUploading ? 'Uploading...' : 'Upload Image'}
                 </Button>
               </label>
               
               {/* Image Preview */}
               {editingBanner?.imageUrl && (
-                <img 
-                  src={`${editingBanner.imageUrl}`} 
-                  alt="Banner Preview" 
-                  className="w-24 h-24 object-cover rounded"
-                />
+                <div className="relative">
+                  <img 
+                    src={`${editingBanner.imageUrl}`} 
+                    alt="Banner Preview" 
+                    className={`w-24 h-24 object-cover rounded ${isUploading ? 'opacity-50' : ''}`}
+                  />
+                  {isUploading && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <CircularProgress size={20} />
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
@@ -337,8 +358,9 @@ const BannerPage = () => {
             onClick={handleSaveBanner} 
             color="primary" 
             variant="contained"
+            disabled={isUploading}
           >
-            Save Changes
+            {isUploading ? 'Uploading Image...' : 'Save Changes'}
           </Button>
         </DialogActions>
       </Dialog>

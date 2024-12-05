@@ -15,18 +15,19 @@ const ContactList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        const response = await axiosClient.get('/contacts');
-        setContacts(response.data.data);
-      } catch (error) {
-        setError('Failed to fetch contacts');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchContacts = async () => {
+    setLoading(true);
+    try {
+      const response = await axiosClient.get('/contacts');
+      setContacts(response.data.data);
+    } catch (error) {
+      setError('Failed to fetch contacts');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchContacts();
   }, []);
 
@@ -40,7 +41,15 @@ const ContactList = () => {
 
   return (
     <div className="container mx-auto py-12">
-      <h2 className="text-2xl font-bold mb-6">Contact Messages</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Contact Messages</h2>
+        <button
+          onClick={fetchContacts}
+          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Refresh
+        </button>
+      </div>
       <div className="overflow-x-auto">
         <table className="table-auto w-full">
           <thead>
