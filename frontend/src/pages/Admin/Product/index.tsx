@@ -24,6 +24,8 @@ type Product = {
 	stock_quantity: number;
 	categories: string[];
 	status: string;
+	created_at: string;
+	updated_at: string;
 	thumbnail: string;
 	images: string[];
 	variants: {
@@ -41,11 +43,23 @@ const Product = () => {
 	const [loading, setLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(0);
+	const [orderBy, setOrderBy] = useState('created_at');
+	const [sortBy, setSortBy] = useState('DESC');
+
+	const handleSort = (sort: string) => {
+		setOrderBy(sort);
+		setSortBy(sortBy === 'DESC' ? 'ASC' : 'DESC');
+	};
 
 	const fetchProducts = async () => {
 		try {
 			setLoading(true);
-			const res = await productService.getAll(currentPage, 10);
+			const res = await productService.getAll(
+				currentPage,
+				10,
+				orderBy,
+				sortBy
+			);
 			setProductData(res.data.data);
 			setTotalPages(res.data.total_pages);
 		} catch (error) {
@@ -69,7 +83,7 @@ const Product = () => {
 
 	useEffect(() => {
 		fetchProducts();
-	}, [currentPage]);
+	}, [currentPage, orderBy, sortBy]);
 
 	const handleSelectAll = () => {
 		if (selectAll) {
@@ -139,7 +153,10 @@ const Product = () => {
 							<th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
 									Name
-									<a>
+									<a
+										onClick={() => handleSort('name')}
+										className="cursor-pointer"
+									>
 										<FaSort />
 									</a>
 								</div>
@@ -147,15 +164,21 @@ const Product = () => {
 							<th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
 									Price
-									<a>
+									<a
+										onClick={() => handleSort('price')}
+										className="cursor-pointer"
+									>
 										<FaSort />
 									</a>
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
-									Sale Price
-									<a>
+									Created At
+									<a
+										onClick={() => handleSort('created_at')}
+										className="cursor-pointer"
+									>
 										<FaSort />
 									</a>
 								</div>
@@ -163,7 +186,10 @@ const Product = () => {
 							<th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
 									Quantity
-									<a>
+									<a
+										onClick={() => handleSort('stock_quantity')}
+										className="cursor-pointer"
+									>
 										<FaSort />
 									</a>
 								</div>
@@ -171,7 +197,10 @@ const Product = () => {
 							<th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
 									Status
-									<a>
+									<a
+										onClick={() => handleSort('status')}
+										className="cursor-pointer"
+									>
 										<FaSort />
 									</a>
 								</div>
@@ -225,9 +254,9 @@ const Product = () => {
 										{formatVNCurrency(Number(product.price))}
 									</td>
 									<td className="px-6 py-3 font-semibold">
-										{formatVNCurrency(
-											Number(product.promotional_price)
-										)}
+										{new Date(
+											product.created_at as string
+										).toLocaleDateString()}
 									</td>
 									<td className="px-6 py-3">
 										{product.stock_quantity}

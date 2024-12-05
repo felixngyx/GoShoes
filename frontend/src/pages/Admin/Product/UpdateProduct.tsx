@@ -230,6 +230,8 @@ const UpdateProduct = () => {
 					variants: JSON.parse(resProduct.data.data.variants),
 				};
 
+				console.log('productData', productData);
+
 				const productDetailData: PRODUCT_DETAIL = {
 					...productData,
 					variants: JSON.parse(resProduct.data.data.variants),
