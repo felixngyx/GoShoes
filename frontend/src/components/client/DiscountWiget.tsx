@@ -49,15 +49,14 @@ const DiscountChatWidget: React.FC = () => {
             setIsLotteryChecked(true);
         }
 
-        // Tạo tỷ lệ "drop" ngẫu nhiên từ 0 đến 100
-        const randomDropRate = Math.floor(Math.random() * 101);
-        setDropRate(randomDropRate);
+        // Remove or comment out the following sections
+        // const randomDropRate = Math.floor(Math.random() * 101);
+        // setDropRate(randomDropRate);
 
-        // Lấy địa chỉ IP của người dùng
-        fetch('https://api.ipify.org?format=json')
-            .then(response => response.json())
-            .then(data => setUserIP(data.ip))
-            .catch(error => console.error('Error fetching IP:', error));
+        // fetch('https://api.ipify.org?format=json')
+        //     .then(response => response.json())
+        //     .then(data => setUserIP(data.ip))
+        //     .catch(error => console.error('Error fetching IP:', error));
     }, []);
 
     useEffect(() => {
@@ -305,10 +304,11 @@ const DiscountChatWidget: React.FC = () => {
                                 {renderDiscountContent()}
                             </div>
 
-                            <div className="mt-4 text-sm text-gray-600">
+                            {/* Remove or comment out the following section */}
+                            {/* <div className="mt-4 text-sm text-gray-600">
                                 <p>Drop Rate: {dropRate}%</p>
                                 <p>Your IP: {userIP}</p>
-                            </div>
+                            </div> */}
                         </motion.div>
                     )}
                 </AnimatePresence>

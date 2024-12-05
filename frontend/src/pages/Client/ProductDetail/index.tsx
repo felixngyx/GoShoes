@@ -384,9 +384,7 @@ const ProductDetail = () => {
 		if (newQuantity < 1) {
 			setQuantity(1);
 		} else if (newQuantity > availableQuantity) {
-			alert(
-				`Số lượng hiện tại là ${availableQuantity}. Không thể mua nhiều hơn.`
-			);
+			toast.error('Cannot buy more than available quantity');
 			setQuantity(availableQuantity); // Reset về số lượng tối đa
 		} else {
 			setQuantity(newQuantity); // Cập nht số lượng hợp lệ
@@ -414,6 +412,9 @@ const ProductDetail = () => {
 		if (newComment.trim()) {
 			setComments([...comments, newComment]);
 			setNewComment('');
+			toast.success('Comment added successfully');
+		} else {
+			toast.error('Please write a comment before submitting');
 		}
 	};
 
@@ -436,7 +437,7 @@ const ProductDetail = () => {
 
 	const handleBuyNow = () => {
 		if (!selectedSize || !selectedColor || !quantity) {
-			toast.error('Vui lòng chọn size và màu sắc trước khi mua hàng');
+			toast.error('Please select size and color before purchasing');
 			return;
 		}
 
