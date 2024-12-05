@@ -34,6 +34,12 @@ type Product = {
 	}[];
 };
 
+// Thêm interface cho sort
+interface SortConfig {
+	field: keyof PRODUCT | '';
+	direction: 'asc' | 'desc';
+}
+
 const Product = () => {
 	const [selectAll, setSelectAll] = useState(false); // State for select all
 	const [selectedItems, setSelectedItems] = useState<number[]>([]); // State for individual selections
@@ -41,6 +47,12 @@ const Product = () => {
 	const [loading, setLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(0);
+	const [sortConfig, setSortConfig] = useState<SortConfig>({
+		field: 'id',
+		direction: 'desc'
+	});
+	const [searchTerm, setSearchTerm] = useState('');
+	const [filteredData, setFilteredData] = useState<PRODUCT[]>([]);
 
 	const fetchProducts = async () => {
 		try {
@@ -71,6 +83,18 @@ const Product = () => {
 		fetchProducts();
 	}, [currentPage]);
 
+	useEffect(() => {
+		if (!searchTerm.trim()) {
+			setFilteredData(productData);
+			return;
+		}
+
+		const filtered = productData.filter(product =>
+			product.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
+		);
+		setFilteredData(filtered);
+	}, [searchTerm, productData]);
+
 	const handleSelectAll = () => {
 		if (selectAll) {
 			setSelectedItems([]); // Deselect all if already selected
@@ -88,13 +112,59 @@ const Product = () => {
 		}
 	};
 
+	// Thêm hàm xử lý sort
+	const handleSort = (field: keyof PRODUCT) => {
+		setSortConfig(prev => ({
+			field,
+			direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
+		}));
+	};
+
+	// Thêm hàm để sort data
+	const getSortedData = () => {
+		if (!sortConfig.field) return productData;
+
+		return [...productData].sort((a, b) => {
+			if (sortConfig.field === 'price' || sortConfig.field === 'promotional_price' || sortConfig.field === 'id') {
+				const aValue = Number(a[sortConfig.field]);
+				const bValue = Number(b[sortConfig.field]);
+				return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+			}
+
+			if (a[sortConfig.field] < b[sortConfig.field]) {
+				return sortConfig.direction === 'asc' ? -1 : 1;
+			}
+			if (a[sortConfig.field] > b[sortConfig.field]) {
+				return sortConfig.direction === 'asc' ? 1 : -1;
+			}
+			return 0;
+		});
+	};
+
+	// Hàm lọc dữ liệu chỉ theo tên
+	const getFilteredData = () => {
+		if (!searchTerm.trim()) return productData;
+		
+		const searchLower = searchTerm.toLowerCase().trim();
+		return productData.filter(product => 
+			product.name.toLowerCase().includes(searchLower)
+		);
+	};
+
 	return (
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
 					Product List
 				</h4>
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-4">
+					<input
+						type="text"
+						placeholder="Search by product name..."
+						className="input input-bordered w-full max-w-xs"
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+					/>
 					<button
 						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${
 							selectedItems.length > 0
@@ -137,27 +207,42 @@ const Product = () => {
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
+								<div 
+									className="flex items-center cursor-pointer" 
+									onClick={() => handleSort('name')}
+								>
 									Name
-									<a>
-										<FaSort />
-									</a>
+									<FaSort className={`ml-1 ${
+										sortConfig.field === 'name' 
+											? 'text-primary' 
+											: 'text-gray-400'
+									}`} />
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
+								<div 
+									className="flex items-center cursor-pointer" 
+									onClick={() => handleSort('price')}
+								>
 									Price
-									<a>
-										<FaSort />
-									</a>
+									<FaSort className={`ml-1 ${
+										sortConfig.field === 'price' 
+											? 'text-primary' 
+											: 'text-gray-400'
+									}`} />
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
+								<div 
+									className="flex items-center cursor-pointer" 
+									onClick={() => handleSort('promotional_price')}
+								>
 									Sale Price
-									<a>
-										<FaSort />
-									</a>
+									<FaSort className={`ml-1 ${
+										sortConfig.field === 'promotional_price' 
+											? 'text-primary' 
+											: 'text-gray-400'
+									}`} />
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
@@ -185,10 +270,10 @@ const Product = () => {
 						{loading ? (
 							<LoadingTable />
 						) : (
-							productData.map((product, key) => (
+							getSortedData().map((product, key) => (
 								<tr
 									className={`bg-white dark:bg-slate-800 ${
-										key !== productData.length - 1
+										key !== getSortedData().length - 1
 											? 'border-b border-stroke'
 											: ''
 									}`}
