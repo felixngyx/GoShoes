@@ -15,19 +15,17 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
 
     public function __construct(
         Product $product
-    )
-    {
+    ) {
         parent::__construct($product);
     }
 
     public function listProduct(
-        array  $filters = [],
-        int    $page = 1,
-        int    $perPage = 10,
+        array $filters = [],
+        int $page = 1,
+        int $perPage = 10,
         string $orderBy = 'created_at',
         string $orderDirection = 'DESC'
-    )
-    {
+    ) {
         $query = $this->getBaseQuery($filters);
 
         // Get total items count
@@ -35,6 +33,19 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
 
         // Add order by clause
         $query .= " ORDER BY p." . $orderBy . " " . $orderDirection;
+
+        $topProducts = Product::withSum('orderItems as total_revenue', DB::raw('price * quantity'))
+            ->withCount('orderItems as total_quantity')
+            ->join('order_items', 'products.id', '=', 'order_items.product_id')
+            ->groupBy('products.id', 'products.name')
+            ->orderByDesc('total_revenue')
+            ->take(6)
+            ->get([
+                'products.id',
+                'products.name',
+                'total_revenue',
+                'total_quantity'
+            ]);
 
         // Add pagination
         if ($page && $perPage) {
@@ -52,6 +63,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             'total_pages' => $totalPages,
             'current_page' => $page,
             'total_items' => $totalItems,
+            'top_products' => $topProducts
         ];
     }
 
@@ -95,8 +107,8 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             'id' => $product->id,
             'name' => $product->name,
             'description' => $product->description,
-            'price' => (float)$product->price,
-            'promotional_price' => (float)$product->promotional_price,
+            'price' => (float) $product->price,
+            'promotional_price' => (float) $product->promotional_price,
             'stock_quantity' => $product->stock_quantity,
             'sku' => $product->sku,
             'hagtag' => $product->hagtag,
@@ -143,8 +155,8 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 return [
                     'id' => $relatedProduct->id,
                     'name' => $relatedProduct->name,
-                    'price' => (float)$relatedProduct->price,
-                    'promotional_price' => (float)$relatedProduct->promotional_price,
+                    'price' => (float) $relatedProduct->price,
+                    'promotional_price' => (float) $relatedProduct->promotional_price,
                     'rating_count' => $relatedProduct->rating_count,
                     'stock_quantity' => $relatedProduct->stock_quantity,
                     'categories' => $relatedProduct->categories->pluck('name')->toArray(),
@@ -153,7 +165,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                     'images' => $relatedProduct->images->pluck('image_path')->toArray(),
                     'variants' => $relatedProduct->variants->map(function ($variant) {
                         return [
-                            'size' => (int)$variant->size->size,
+                            'size' => (int) $variant->size->size,
                             'color' => $variant->color->color,
                             'quantity' => $variant->quantity,
                             // 'image_variant' => $variant->image_variant
