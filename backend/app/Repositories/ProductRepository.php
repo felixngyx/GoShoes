@@ -34,8 +34,6 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
         // Add order by clause
         $query .= " ORDER BY p." . $orderBy . " " . $orderDirection;
 
-
-
         // Add pagination
         if ($page && $perPage) {
             $offset = ($page - 1) * $perPage;
@@ -301,6 +299,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 GROUP BY pc.product_id
             ) ci ON p.id = ci.product_id
             LEFT JOIN brands b ON p.brand_id = b.id
+            LEFT JOIN product_category pc ON p.id = pc.product_id
             WHERE 1 = 1
         ";
 
@@ -327,10 +326,10 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             $query .= " AND pc.category_id = " . intval($filters['category_id']);
         }
         if (!empty($filters['color_id'])) {
-            $query .= " AND vi.color_id = " . intval($filters['color_id']);
+            $query .= " AND uv.color_id = " . intval($filters['color_id']);
         }
         if (!empty($filters['size_id'])) {
-            $query .= " AND JSON_CONTAINS(vi.sizes, JSON_OBJECT('size_id', " . intval($filters['size_id']) . "))";
+            $query .= " AND JSON_CONTAINS(uv.sizes, JSON_OBJECT('size_id', " . intval($filters['size_id']) . "))";
         }
         if (!empty($filters['hagtag'])) {
             $query .= " AND p.hagtag LIKE '%" . $filters['hagtag'] . "%'";
