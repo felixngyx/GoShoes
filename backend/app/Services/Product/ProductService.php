@@ -47,7 +47,7 @@ class ProductService implements ProductServiceInterface
     /**
      * @return mixed
      */
-    public static function getProductVariantService() : ProductVariantService
+    public static function getProductVariantService(): ProductVariantService
     {
         return self::$productVariantService;
     }
@@ -60,7 +60,7 @@ class ProductService implements ProductServiceInterface
         self::$productVariantService = $productVariantService;
     }
 
-    public function listProduct(array $request) : \Illuminate\Http\JsonResponse
+    public function listProduct(array $request): \Illuminate\Http\JsonResponse
     {
         $page = $request['page'] ?? 1;
         $perPage = $request['perPage'] ?? 10;
@@ -68,13 +68,25 @@ class ProductService implements ProductServiceInterface
         $sortBy = $request['sortBy'] ?? 'DESC';
 
         $result = $this->productRepository->listProduct($request, $page, $perPage, $orderBy, $sortBy);
-
+        $topProducts = Product::withSum('orderItems as total_revenue', DB::raw('price * quantity'))
+            ->withCount('orderItems as total_quantity')
+            ->join('order_items', 'products.id', '=', 'order_items.product_id')
+            ->groupBy('products.id', 'products.name')
+            ->orderByDesc('total_revenue')
+            ->take(6)
+            ->get([
+                'products.id',
+                'products.name',
+                'total_revenue',
+                'total_quantity'
+            ]);
         return response()->json([
             'success' => true,
             'data' => $result['products'],
             'total_pages' => $result['total_pages'],
             'current_page' => $result['current_page'],
             'total_items' => $result['total_items'],
+            'top_products' => $topProducts
         ]);
     }
 
@@ -88,7 +100,7 @@ class ProductService implements ProductServiceInterface
                 'price' => $validated['price'],
                 'stock_quantity' => $validated['stock_quantity'],
                 'promotional_price' => $validated['promotional_price'] ?? null, // Thêm null nếu không có
-                'sku' =>  $validated['sku'],
+                'sku' => $validated['sku'],
                 'status' => $validated['status'],
                 'thumbnail' => $validated['thumbnail'],
                 'hagtag' => $validated['hagtag'] ?? null,
@@ -108,7 +120,7 @@ class ProductService implements ProductServiceInterface
                     $color = VariantColor::find($variantData['color_id']);
                     $size = VariantSize::find($variantData['size_id']);
 
-                    if(!$size) {
+                    if (!$size) {
                         return response()->json([
                             'message' => 'Không tìm thấy kích thước với ID ' . $variantData['size_id'],
                         ]);
@@ -155,7 +167,7 @@ class ProductService implements ProductServiceInterface
         }
     }
 
-    public function createProductService(array $request) : \Illuminate\Http\JsonResponse
+    public function createProductService(array $request): \Illuminate\Http\JsonResponse
     {
         $productData = [
             'name' => $request['name'],
@@ -180,7 +192,7 @@ class ProductService implements ProductServiceInterface
             $product = $this->productRepository->create($productData);
             $productId = $product->id;
             $this->productRepository->syncCategories($product, $categoryIds);
-            $colorsAndImagesWithProductId = array_map(function($variant) use ($productId) {
+            $colorsAndImagesWithProductId = array_map(function ($variant) use ($productId) {
                 return [
                     'color_id' => $variant['color_id'],
                     'image' => $variant['image'],
@@ -211,7 +223,7 @@ class ProductService implements ProductServiceInterface
                     'variants' => $request['variants']
                 ],
             ], 201);
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating product: ' . $e->getMessage());
 
@@ -222,7 +234,7 @@ class ProductService implements ProductServiceInterface
         }
     }
 
-    public function updateProductService(array $request, int $id) : \Illuminate\Http\JsonResponse
+    public function updateProductService(array $request, int $id): \Illuminate\Http\JsonResponse
     {
         $product = Product::find($id);
         if (!$product) {
@@ -252,7 +264,7 @@ class ProductService implements ProductServiceInterface
         try {
             $this->productRepository->update($productData, $id);
             $this->productRepository->syncCategories($product, $categoryIds);
-            $colorsAndImagesWithProductId = array_map(function($variant) use ($id) {
+            $colorsAndImagesWithProductId = array_map(function ($variant) use ($id) {
                 return [
                     'color_id' => $variant['color_id'],
                     'image' => $variant['image'],
@@ -291,7 +303,7 @@ class ProductService implements ProductServiceInterface
                     'variants' => $request['variants']
                 ],
             ], 201);
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating product: ' . $e->getMessage());
 
@@ -302,7 +314,7 @@ class ProductService implements ProductServiceInterface
         }
     }
 
-    protected static function handleCreateVariants(array $variantData, int $productId) : array
+    protected static function handleCreateVariants(array $variantData, int $productId): array
     {
         if (!$variantData) {
             return [];
@@ -351,7 +363,7 @@ class ProductService implements ProductServiceInterface
 //            }
             DB::commit();
             return $variants;
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return [
                 'message' => 'Có lỗi xảy ra khi lưu sản phẩm.',
@@ -360,7 +372,7 @@ class ProductService implements ProductServiceInterface
         }
     }
 
-    private static function handleUpsertImageVariant(array $variantData) : array
+    private static function handleUpsertImageVariant(array $variantData): array
     {
         self::getImageVariantService()->upsert(
             [
@@ -376,7 +388,7 @@ class ProductService implements ProductServiceInterface
         return $variantData;
     }
 
-    private static function handleUpsertProductVariant(array $detail, array $parentCondition, array $variantDetails) : array
+    private static function handleUpsertProductVariant(array $detail, array $parentCondition, array $variantDetails): array
     {
         $variantDetails[] = [
             'size_id' => $detail['size_id'],
@@ -448,7 +460,7 @@ class ProductService implements ProductServiceInterface
         }
     }
 
-    public function findById(int $id) : \Illuminate\Http\JsonResponse
+    public function findById(int $id): \Illuminate\Http\JsonResponse
     {
         return response()->json([
             'success' => true,
