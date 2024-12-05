@@ -198,75 +198,56 @@ const ProductDetail = () => {
 		}));
 	}, [parsedVariants]);
 
-	// Xử lý selectedColor và images
+	// Update the useEffect for handling variants
 	useEffect(() => {
-		if (!product) return;
+		if (!product || !parsedVariants.length) return;
 
-		const variants = parsedVariants;
-
-		if (!selectedColor && variants.length > 0) {
-			const firstColorId = variants[0]?.color_id;
-			setSelectedColor(firstColorId);
+		// If no color is selected, select the first one
+		if (!selectedColor) {
+			const firstVariant = parsedVariants[0];
+			if (firstVariant) {
+				handleColorChange(
+					Number(firstVariant.color_id),
+					firstVariant.image ? firstVariant.image.split(',')[0].trim() : product.thumbnail
+				);
+			}
 			return;
 		}
 
-		if (selectedColor) {
-			const selectedVariant = variants.find(
-				(variant: any) => variant.color_id === selectedColor
-			);
-
-			if (selectedVariant?.image) {
-				const images = selectedVariant.image.includes(',')
-					? selectedVariant.image
-							.split(',')
-							.map((img: string) => img.trim())
-					: [selectedVariant.image];
-
-				setSelectedThumbnail(images[0] || product.thumbnail);
-				setAllImages(images);
-			} else {
-				setSelectedThumbnail(product.thumbnail);
-				setAllImages([product.thumbnail]);
-			}
-
-			// Xử lý sizes
-			const availableSize = selectedVariant?.sizes?.find(
-				(size: any) => size?.quantity > 0
-			);
-
-			if (availableSize) {
-				setSelectedSize(availableSize.size);
-				setAvailableQuantity(availableSize.quantity);
-			} else {
-				setSelectedSize(null);
-				setAvailableQuantity(0);
-			}
-		} else {
-			setSelectedThumbnail(product.thumbnail);
-			setAllImages([product.thumbnail]);
-		}
-	}, [product, selectedColor, parsedVariants]);
-
-	// Xử lý color change
-	const handleColorChange = (colorId: number, imageUrl: string) => {
-		setSelectedColor(colorId.toString());
-
+		// Find the selected variant
 		const selectedVariant = parsedVariants.find(
-			(variant: any) => variant.color_id === colorId
+			(variant: any) => variant.color_id.toString() === selectedColor.toString()
 		);
 
 		if (selectedVariant) {
+			// Update images
 			const images = selectedVariant.image
 				? selectedVariant.image.split(',').map((img: string) => img.trim())
-				: [product?.thumbnail];
-
-			setSelectedThumbnail(imageUrl || product?.thumbnail);
+				: [product.thumbnail];
+			
 			setAllImages(images);
+			setSelectedThumbnail(images[0]);
 
-			// Reset size selection
-			setSelectedSize(null);
-			setAvailableQuantity(0);
+			// Find and set first available size
+			const firstAvailableSize = selectedVariant.sizes.find(
+				(size: any) => size.quantity > 0
+			);
+
+			if (firstAvailableSize) {
+				setSelectedSize(firstAvailableSize.size);
+				setAvailableQuantity(firstAvailableSize.quantity);
+				setQuantity(1);
+			} else {
+				setSelectedSize(null);
+				setAvailableQuantity(0);
+				setQuantity(1);
+			}
 		}
+	}, [product, selectedColor, parsedVariants]);
+
+	// Update handleColorChange to be simpler
+	const handleColorChange = (colorId: number, imageUrl: string) => {
+		setSelectedColor(colorId.toString());
 	};
 
 	const handleAdd = () => {
@@ -357,48 +338,45 @@ const ProductDetail = () => {
 		}
 	};
 
+	// Update handleSizeChange
 	const handleSizeChange = (size: string) => {
-		const selectedVariant = parsedVariants
-			.find((variant: any) => variant.color_id === selectedColor)
-			.sizes.find((s: any) => s.size === size);
+		if (!selectedColor) return;
+
+		const selectedVariant = parsedVariants.find(
+			(variant: any) => variant.color_id.toString() === selectedColor.toString()
+		);
 
 		if (selectedVariant) {
-			setSelectedSize(size);
-			setAvailableQuantity(selectedVariant.quantity);
+			const sizeInfo = selectedVariant.sizes.find(
+				(s: any) => s.size === size
+			);
+
+			if (sizeInfo) {
+				setSelectedSize(size);
+				setAvailableQuantity(sizeInfo.quantity);
+				setQuantity(1);
+			}
 		}
 	};
 
-	const uniqueSizes = selectedColor
-		? Array.from(
-				parsedVariants
-					.filter((variant: any) => variant.color_id === selectedColor)
-					.flatMap((variant: any) =>
-						variant.sizes.map((size: any) => ({
-							size: size.size,
-							disabled: size.quantity === 0,
-							quantity: size.quantity,
-						}))
-					)
-					.reduce(
-						(
-							acc: Map<
-								string,
-								{ size: string; disabled: boolean; quantity: number }
-							>,
-							current: any
-						) => {
-							if (!acc.has(current.size)) {
-								acc.set(current.size, current);
-							}
-							return acc;
-						},
-						new Map()
-					)
-					.values()
-		  )
-				.map((value: any) => value)
-				.sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
-		: [];
+	// Update uniqueSizes calculation
+	const uniqueSizes = useMemo(() => {
+		if (!selectedColor || !parsedVariants.length) return [];
+
+		const selectedVariant = parsedVariants.find(
+			(variant: any) => variant.color_id.toString() === selectedColor.toString()
+		);
+
+		if (!selectedVariant) return [];
+
+		return selectedVariant.sizes
+			.map((size: any) => ({
+				size: size.size,
+				disabled: size.quantity === 0,
+				quantity: size.quantity,
+			}))
+			.sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size));
+	}, [selectedColor, parsedVariants]);
 
 	const handleQuantityChange = (value: number) => {
 		const newQuantity = quantity + value;
@@ -411,7 +389,7 @@ const ProductDetail = () => {
 			);
 			setQuantity(availableQuantity); // Reset về số lượng tối đa
 		} else {
-			setQuantity(newQuantity); // Cập nhật số lượng hợp lệ
+			setQuantity(newQuantity); // Cập nht số lượng hợp lệ
 		}
 	};
 
@@ -462,14 +440,8 @@ const ProductDetail = () => {
 			return;
 		}
 
-		const parsedVariants = Array.isArray(product?.variants)
-			? product.variants
-			: product?.variants
-			? JSON.parse(product.variants)
-			: [];
-
 		const selectedVariant = parsedVariants.find(
-			(variant: any) => variant.color_id === selectedColor
+			(variant: any) => variant.color_id.toString() === selectedColor.toString()
 		);
 
 		const selectedSizeObj = selectedVariant?.sizes?.find(
@@ -496,8 +468,7 @@ const ProductDetail = () => {
 						thumbnail: selectedThumbnail || product.thumbnail,
 						quantity: quantity,
 						variant: variantInfo,
-						total:
-							(product.promotional_price || product.price) * quantity,
+						total: (product.promotional_price || product.price) * quantity,
 					},
 				},
 			});
@@ -683,16 +654,14 @@ const ProductDetail = () => {
 								uniqueColors.map((colorInfo: any) => (
 									<button
 										key={colorInfo.id}
-										onClick={() =>
-											handleColorChange(
-												colorInfo.id,
-												colorInfo.image || product?.thumbnail
-											)
-										}
+										onClick={() => handleColorChange(
+											colorInfo.id,
+											colorInfo.image || product?.thumbnail
+										)}
 										className={`flex items-center gap-3 px-4 py-2 border rounded-md text-sm font-medium transition-all ${
-											selectedColor === colorInfo.id
-												? 'bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary'
-												: 'bg-white text-gray-700 border-gray-300 hover:border-theme-color-primary'
+												selectedColor === colorInfo.id.toString()
+													? 'bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary text-black'
+													: 'bg-white text-gray-700 border-gray-300 hover:border-theme-color-primary'
 										}`}
 									>
 										<img
@@ -721,7 +690,19 @@ const ProductDetail = () => {
 							>
 								<IoMdRemove />
 							</button>
-							<span className="px-4 py-2 border-x">{quantity}</span>
+							<input
+								type="number"
+								value={quantity}
+								onChange={(e) => {
+									const value = parseInt(e.target.value, 10);
+									if (value > 0 && value <= availableQuantity) {
+										setQuantity(value);
+									}
+								}}
+								className="w-16 text-center border-x"
+								min="1"
+								max={availableQuantity}
+							/>
 							<button
 								onClick={() => handleQuantityChange(1)}
 								className="p-2 hover:bg-gray-100"
