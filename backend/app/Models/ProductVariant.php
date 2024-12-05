@@ -33,11 +33,9 @@ class ProductVariant extends Model
         return $this->hasMany(Cart::class);
     }
 
-//    /**
-//     * @return BelongsTo
-//     */
-//    public function image_variants(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-//    {
-//        return $this->belongsTo(ImageVariant::class, ['product_id', 'color_id'], ['product_id', 'color_id']);
-//    }
+    public function images()
+    {
+        return $this->hasMany(ImageVariant::class, 'color_id', 'color_id')
+                    ->where('product_id', $this->product_id);
+    }
 }

@@ -97,7 +97,7 @@ const Navbar = () => {
 
   const addCart = () => {
     if (selectedSize && selectedColor) {
-      const variants = parseVariants(selectedProduct?.variants || []);
+      const variants = JSON.parse(selectedProduct?.variants || '[]');
       const selectedVariant = variants.find(
         (variant: any) => variant.color === selectedColor
       );
@@ -108,13 +108,24 @@ const Navbar = () => {
         );
 
         if (selectedSizeObj && selectedSizeObj.quantity > 0) {
-          const productVariantId = selectedSizeObj.product_variant_id;
+          const productVariantId = parseInt(selectedSizeObj.product_variant_id, 10);
+          const colorId = selectedVariant.color_id;
           const quantity = 1;
-
-          handleAddToCart(productVariantId, quantity);
-          setSelectedProduct(null);
-          setSelectedSize(null);
-          setSelectedColor(null);
+          const size = selectedSize;
+          if (!isNaN(productVariantId)) {
+            handleAddToCart(
+              productVariantId,
+              1
+            );
+            
+            setShowModal(false);
+            setSelectedSize(null);
+            setSelectedColor(null);
+            
+            toast.success("Thêm vào giỏ hàng thành công!");
+          } else {
+            toast.error("Product Variant ID không hợp lệ.");
+          }
         } else {
           toast.error("Size hoặc sản phẩm không khả dụng.");
         }
@@ -126,21 +137,31 @@ const Navbar = () => {
     }
   };
 
-  const parseVariants = (variants: string | any[]) => {
+  const parseVariants = (variantsStr: string) => {
     try {
-      return Array.isArray(variants) ? variants : JSON.parse(variants);
+      const variants = JSON.parse(variantsStr);
+      const uniqueVariants = variants.reduce((acc: any[], curr: any) => {
+        const exists = acc.find(item => item.color_id === curr.color_id);
+        if (!exists) {
+          acc.push(curr);
+        }
+        return acc;
+      }, []);
+      return uniqueVariants;
     } catch (error) {
-      console.error("Error parsing variants:", error);
       return [];
     }
   };
 
-  const getVariantsForColor = (color: string) => {
+  const getVariantsForColor = (colorId: number) => {
     if (!selectedProduct) return [];
-
-    return parseVariants(selectedProduct.variants)
-      .filter((variant: any) => variant.color === color)
-      .flatMap((variant: any) => variant.sizes);
+    
+    const variants = parseVariants(selectedProduct.variants);
+    const colorVariant = variants.find(
+      variant => variant.color_id === colorId
+    );
+    
+    return colorVariant?.sizes || [];
   };
 
   const closeModal = () => {
@@ -169,6 +190,46 @@ const Navbar = () => {
         ))}
       </div>
     );
+  };
+
+  const renderColors = () => {
+    if (!selectedProduct?.variants) return null;
+    
+    const variants = JSON.parse(selectedProduct.variants);
+    const uniqueColors = [...new Set(variants.map((v: any) => v.color))];
+    
+    return uniqueColors.map((color: string) => (
+      <button
+        key={color}
+        className={`px-6 py-2 border rounded-md ${
+          selectedColor === color ? 'bg-blue-500 text-white' : ''
+        }`}
+        onClick={() => setSelectedColor(color)}
+      >
+        {color}
+      </button>
+    ));
+  };
+
+  const renderSizes = () => {
+    if (!selectedColor || !selectedProduct?.variants) return null;
+    
+    const variants = JSON.parse(selectedProduct.variants);
+    const selectedVariant = variants.find(
+      (variant: any) => variant.color === selectedColor
+    );
+    
+    return selectedVariant?.sizes.map((sizeVariant: any) => (
+      <button
+        key={sizeVariant.product_variant_id}
+        className={`px-6 py-2 border rounded-md ${
+          selectedSize === sizeVariant.size ? 'bg-blue-500 text-white' : ''
+        }`}
+        onClick={() => setSelectedSize(sizeVariant.size)}
+      >
+        {sizeVariant.size}
+      </button>
+    ));
   };
 
   return (
@@ -454,7 +515,7 @@ const Navbar = () => {
                           </div>
 
                           <p className="text-gray-600 text-sm mt-1">
-                            {product.categories}
+                            <div dangerouslySetInnerHTML={{ __html: product.description.length > 100 ? `${product.description.substring(0, 100)}...` : product.description }}></div>
                           </p>
 
                           <div className="flex justify-between items-center mt-2">
@@ -493,74 +554,30 @@ const Navbar = () => {
               <p className="mt-2">Select size and color:</p>
               <div className="flex flex-col gap-6 mt-4">
                 <div>
-                  <h4 className="text-lg font-semibold mb-2">Size:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedColor &&
-                      getVariantsForColor(selectedColor)
-                        .sort((a: any, b: any) => a.size - b.size)
-                        .map((variant: any) => {
-                          const isSizeAvailable = variant.quantity > 0;
-                          const isSelected = selectedSize === variant.size;
-
-                          return (
-                            <button
-                              key={variant.size}
-                              className={`px-8 py-2 text-center text-sm font-medium border rounded-md transition ${
-                                isSelected
-                                  ? "border-theme-color-primary ring-2 ring-theme-color-primary"
-                                  : "bg-white text-gray-700 border-gray-300"
-                              } ${
-                                !isSizeAvailable
-                                  ? "cursor-not-allowed opacity-50 line-through"
-                                  : "hover:border-theme-color-primary"
-                              }`}
-                              onClick={() => {
-                                if (isSizeAvailable) {
-                                  setSelectedSize(variant.size);
-                                }
-                              }}
-                              disabled={!isSizeAvailable}
-                            >
-                              {variant.size}
-                            </button>
-                          );
-                        })}
-                  </div>
-                </div>
-
-                <div>
                   <h4 className="text-lg font-semibold mb-2">Color:</h4>
                   <div className="flex flex-wrap gap-2">
-                    {parseVariants(selectedProduct.variants)
-                      .map((variant: any) => variant.color)
-                      .filter(
-                        (value: string, index: number, self: string[]) =>
-                          self.indexOf(value) === index
-                      )
-                      .map((color: string) => {
-                        const isSelected = selectedColor === color;
-                        return (
-                          <button
-                            key={color}
-                            className={`px-6 py-2 border rounded-md hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary flex items-center gap-2 ${
-                              isSelected
-                                ? "bg-theme-color-primary outline-none ring-2"
-                                : ""
-                            }`}
-                            onClick={() => setSelectedColor(color)}
-                          >
-                            {color}
-                          </button>
-                        );
-                      })}
+                    {renderColors()}
                   </div>
                 </div>
+
+                {selectedColor && (
+                  <div className="mt-4">
+                    <h4 className="text-lg font-semibold mb-2">Size:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {renderSizes()}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="mt-4 flex justify-end gap-4">
+              <div className="mt-6 flex justify-end gap-4">
                 <button
                   className="btn bg-gray-300 text-black"
-                  onClick={closeModal}
+                  onClick={() => {
+                    setSelectedProduct(null);
+                    setSelectedSize(null);
+                    setSelectedColor(null);
+                  }}
                 >
                   Cancel
                 </button>

@@ -19,6 +19,8 @@ import { Eye, TrashIcon, Logs, Upload, X, ArrowLeft } from 'lucide-react';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import RichTextEditor from '../../../components/admin/RichTextEditor';
 import generateSlug from '../../../common/generateSlug';
+import axiosClient from '../../../apis/axiosClient';
+
 
 // Add form validation schema
 const productSchema = Joi.object({
@@ -152,6 +154,7 @@ const UpdateProduct = () => {
 		clearErrors,
 		setValue,
 		formState: { errors },
+		reset,
 	} = useForm<PRODUCT>({
 		resolver: joiResolver(productSchema),
 		defaultValues: {
@@ -206,136 +209,124 @@ const UpdateProduct = () => {
 		[key: string]: number;
 	}>({});
 
+	// Fetch product data
 	useEffect(() => {
-		(async () => {
+		const fetchData = async () => {
 			try {
 				setLoadingData(true);
-				const [resCategory, resSize, resBrand, resColor, resProduct] =
-					await Promise.all([
-						categoryService.getAll(),
-						sizeService.getAll(),
-						brandService.getAll(),
-						colorService.getAll(),
-						productService.getById(Number(id)),
-					]);
+				
+				// Fetch reference data first
+				const [brandsRes, categoriesRes, colorsRes, sizesRes] = await Promise.all([
+					brandService.getAll(),
+					categoryService.getAll(),
+					colorService.getAll(),
+					sizeService.getAll(),
+				]);
 
-				setCategories(resCategory.data?.categories?.data || []);
-				setSizes(resSize.data?.sizes?.data || []);
-				setBrands(resBrand.data?.data?.brands || []);
-				setColors(resColor.data?.clors?.data || []);
+				// Set reference data with correct data structure
+				const brandsData = brandsRes.data.data.brands || [];
+				const categoriesData = categoriesRes.data.categories.data || [];
+				const colorsData = colorsRes.data.clors.data || [];
+				const sizesData = sizesRes.data.sizes.data || [];
 
-				const productData: PRODUCT = {
-					...resProduct.data.data,
-					category_ids: resProduct.data.data.categories,
-					variants: JSON.parse(resProduct.data.data.variants),
-				};
+				setBrands(brandsData);
+				setCategories(categoriesData);
+				setColors(colorsData);
+				setSizes(sizesData);
 
-				const productDetailData: PRODUCT_DETAIL = {
-					...productData,
-					variants: JSON.parse(resProduct.data.data.variants),
-				};
+				// Then fetch product data
+				const productRes = await axiosClient.get(`/admin/products/${id}`);
+				const productData = productRes.data.data;
 
-				setProduct(productDetailData);
+				if (!productData) {
+					throw new Error('Product data not found');
+				}
 
-				// Set form values
-				setValue('name', productData.name);
-				setValue('price', Number(productData.price));
-				setValue(
-					'promotional_price',
-					Number(productData.promotional_price)
-				);
-				setValue('status', productData.status);
-				setValue('sku', productData.sku);
-				setValue('hagtag', productData.hagtag);
-				setValue('brand_id', Number(productData.brand_id));
-				setValue('thumbnail', productData.thumbnail);
-				setValue('description', productData.description);
+				// Set product data
+				setProduct(productData);
 
-				// Set description state
-				setDescription(productData.description);
-
-				// Set thumbnail
-				setThumbnailFile(productData.thumbnail);
-
-				// Set categories
-				const productCategories =
-					resCategory.data?.categories?.data.filter((cat: CATEGORY) =>
-						productData.category_ids.includes(Number(cat.id))
-					) || [];
-				setSelectedCategories(productCategories);
-				setValue(
-					'category_ids',
-					productCategories.map((cat) => Number(cat.id))
-				);
-
-				// Set variants
-				const formattedVariants = productData.variants.map(
-					(variant: any) => ({
+				// Process variants data
+				const processedVariants = productData.variants?.map((variant: any) => {
+					return {
 						color_id: variant.color_id,
 						image: variant.image,
-						variant_details: variant.sizes,
-					})
-				);
+						variant_details: variant.variant_details || []
+					};
+				}) || [];
 
-				setValue('variants', formattedVariants);
-
-				formattedVariants.forEach((variant: any, index: number) => {
-					setVariantSizes((prev) => ({
-						...prev,
-						[index]: variant.variant_details,
-					}));
+				// Set variant images
+				const variantImagesMap: { [key: number]: (string | File)[] } = {};
+				productData.variants?.forEach((variant: any, index: number) => {
+					const images = variant.image?.split(', ') || [];
+					variantImagesMap[index] = images;
 				});
+				setVariantImageFiles(variantImagesMap);
 
 				// Set color search terms
 				const colorTermsMap: { [key: number]: string } = {};
-				formattedVariants.forEach((variant: any, index: number) => {
-					const color = resColor.data?.clors?.data.find(
-						(c: COLOR) => c.id === variant.color_id
-					);
+				productData.variants?.forEach((variant: any, index: number) => {
+					const color = colorsData.find(c => c.id === variant.color_id);
 					if (color) {
 						colorTermsMap[index] = color.color;
 					}
 				});
 				setColorSearchTerms(colorTermsMap);
 
-				// Calculate and set stock quantity
-				const totalQuantity = productData.variants.reduce(
-					(acc: number, variant: any) => {
-						return (
-							acc +
-							variant.sizes.reduce(
-								(variantAcc: number, detail: any) =>
-									variantAcc + Number(detail.quantity),
-								0
-							)
-						);
-					},
-					0
-				);
-				setStockQuantity(totalQuantity);
-
-				// Set variant images
-				const variantImagesMap: { [key: number]: (File | string)[] } = {};
-				productData.variants.forEach((variant: any, index: number) => {
-					const images = variant.image
-						.split(',')
-						.map((img: string) => img.trim());
-					variantImagesMap[index] = images;
+				// Set variant sizes
+				const variantSizesMap: { [key: number]: VariantSize[] } = {};
+				productData.variants?.forEach((variant: any, index: number) => {
+					variantSizesMap[index] = variant.variant_details || [];
 				});
-				setVariantImageFiles(variantImagesMap);
+				setVariantSizes(variantSizesMap);
 
-				// Set previous values for quantity tracking
+				// Set selected categories
+				const selectedCats = categoriesData.filter((cat: CATEGORY) => 
+					productData.category_ids?.includes(cat.id)
+				);
+				setSelectedCategories(selectedCats);
+
+				// Set previous values for quantities
 				const prevValues: { [key: string]: number } = {};
-
+				productData.variants?.forEach((variant: any, variantIndex: number) => {
+					variant.variant_details?.forEach((detail: any, detailIndex: number) => {
+						const key = `variants.${variantIndex}.variant_details.${detailIndex}.quantity`;
+						prevValues[key] = detail.quantity;
+					});
+				});
 				setPreviousValues(prevValues);
+
+				// Update form with new data
+				reset({
+					name: productData.name,
+					description: productData.description,
+					price: productData.price,
+					promotional_price: productData.promotional_price,
+					status: productData.status,
+					sku: productData.sku,
+					hagtag: productData.hagtag,
+					brand_id: productData.brand_id,
+					category_ids: productData.category_ids,
+					thumbnail: productData.thumbnail,
+					variants: processedVariants,
+				});
+
+				// Set other states
+				setDescription(productData.description);
+				setThumbnailFile(productData.thumbnail);
+				setStockQuantity(productData.stock_quantity);
+
 			} catch (error) {
-				console.error('Error fetching product data---------------:', error);
-				toast.error('Error fetching product data');
+				console.error('Error fetching data:', error);
+				toast.error('Failed to fetch product data');
 			} finally {
 				setLoadingData(false);
 			}
-		})();
-	}, [id, setValue]);
+		};
+
+		if (id) {
+			fetchData();
+		}
+	}, [id, reset]);
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		event.preventDefault();
@@ -560,18 +551,14 @@ const UpdateProduct = () => {
 
 			formattedData.stock_quantity = stockQuantity;
 
-			const response = await productService.update(
-				Number(id),
-				formattedData
-			);
+			const response = await axiosClient.put(`/products/${id}`, formattedData);
 			console.log('Response:', response);
 			if (response.status.toString() === '201') {
 				toast.success('Update product successfully!');
-				navigate('/admin/product');
 			}
 		} catch (error: any) {
 			console.error('Error submitting form:', error);
-			toast.error(error.response.data.message);
+			toast.error(error.response?.data?.message || 'Failed to update product');
 		} finally {
 			setLoading(false);
 		}
@@ -613,11 +600,11 @@ const UpdateProduct = () => {
 			sku: '',
 		};
 
-		// Lấy giá trị hiện tại từ variant_details thay vì sizes
+		// Ly giá trị hiện tại từ variant_details thay vì sizes
 		const currentValues =
 			control._formValues.variants[variantIndex].variant_details || [];
 
-		// Cập nhật stockQuantity khi thêm size mới
+		// Cập nhật stockQuantity khi thêm size mi
 		setStockQuantity((prev) => prev + newSize.quantity);
 
 		setVariantSizes((prev) => ({
@@ -645,7 +632,7 @@ const UpdateProduct = () => {
 		// Xóa giá trị quantity cũ khỏi previousValues và cập nhật lại index cho các size còn lại
 		setPreviousValues((prev) => {
 			const newPrev = { ...prev };
-			// Xóa giá trị của size bị xóa
+			// Xa giá trị của size b xóa
 			delete newPrev[
 				`variants.${variantIndex}.variant_details.${sizeIndex}.quantity`
 			];
@@ -767,6 +754,13 @@ const UpdateProduct = () => {
 		if (value) {
 			clearErrors('description');
 		}
+	};
+
+	// Hàm kiểm tra màu đã được chọn chưa
+	const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
+		return fields.some((field, index) => 
+			index !== currentVariantIndex && field.color_id === colorId
+		);
 	};
 
 	return loadingData ? (
@@ -919,12 +913,14 @@ const UpdateProduct = () => {
 							<select
 								{...register('brand_id')}
 								className="select select-bordered w-full"
+								value={product?.brand_id || ""}
 							>
-								<option defaultValue="Select Brand">
-									Select Brand
-								</option>
-								{brands.map((brand) => (
-									<option key={brand.id} value={brand.id}>
+								<option value="">Select Brand</option>
+								{brands && brands.length > 0 && brands.map((brand) => (
+									<option 
+										key={brand.id} 
+										value={brand.id}
+									>
 										{brand.name}
 									</option>
 								))}
@@ -949,7 +945,7 @@ const UpdateProduct = () => {
 								>
 									<div className="flex justify-between gap-2">
 										<div className="w-full min-h-12 border-2 border-gray-300 rounded-md p-2 flex flex-wrap gap-1">
-											{selectedCategories.map((category) => (
+											{selectedCategories && selectedCategories.length > 0 && selectedCategories.map((category) => (
 												<div
 													key={category.id}
 													className="bg-[#BCDDFE] text-primary px-2 py-1 rounded-md flex items-center gap-1 text-xs"
@@ -960,9 +956,7 @@ const UpdateProduct = () => {
 														onClick={(e) => {
 															e.preventDefault();
 															e.stopPropagation();
-															removeCategory(
-																Number(category.id)
-															);
+															removeCategory(Number(category.id));
 														}}
 														className="hover:text-primary/80"
 													>
@@ -987,15 +981,8 @@ const UpdateProduct = () => {
 									{isDropdownOpen && (
 										<div className="absolute top-full left-0 w-full mt-1 p-2 shadow border border-gray-300 rounded-md z-[1] bg-base-100 max-h-[200px] overflow-y-auto overflow-x-hidden">
 											<ul className="menu">
-												{categories
-													.filter(
-														(cat) =>
-															!selectedCategories.some(
-																(selected) =>
-																	Number(selected.id) ===
-																	Number(cat.id)
-															)
-													)
+												{categories && categories.length > 0 && categories
+													.filter((category) => !selectedCategories.some((selected) => selected.id === category.id))
 													.map((category) => (
 														<li
 															className="hover:bg-gray-100 rounded-none w-full whitespace-normal"
@@ -1003,9 +990,7 @@ const UpdateProduct = () => {
 															onClick={(e) => {
 																e.preventDefault();
 																e.stopPropagation();
-																handleCategoryChange(
-																	Number(category.id)
-																);
+																handleCategoryChange(Number(category.id));
 															}}
 														>
 															<button
@@ -1152,10 +1137,6 @@ const UpdateProduct = () => {
 										<div className="w-full">
 											<input
 												tabIndex={0}
-												disabled={
-													!!product?.variants?.[index]?.sizes?.[0]
-														?.product_variant_id
-												}
 												role="button"
 												type="text"
 												placeholder="Select color"
@@ -1189,16 +1170,14 @@ const UpdateProduct = () => {
 														<button
 															type="button"
 															onClick={() => {
-																setValue(
-																	`variants.${index}.color_id`,
-																	color.id!
-																);
+																setValue(`variants.${index}.color_id`, color.id!);
 																setColorSearchTerms((prev) => ({
 																	...prev,
 																	[index]: color.color,
 																}));
 															}}
 															className="flex items-center gap-2"
+															disabled={isSelectedColor(color.id!, index)}
 														>
 															<img
 																src={color.link_image}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { FaRegEye, FaSort } from 'react-icons/fa';
 import userService from '../../../services/admin/user';
 import { User as UserType } from '../../../services/admin/user';
-import { Eye, RotateCcw, TrashIcon } from 'lucide-react';
+import { Eye, RotateCcw, TrashIcon, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import { X } from 'lucide-react';
@@ -10,28 +10,50 @@ import Pagination from '../../../components/admin/Pagination';
 
 const User = () => {
 	const [users, setUsers] = useState<UserType[]>([]);
+	const [allUsers, setAllUsers] = useState<UserType[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(0);
 	const [previewUser, setPreviewUser] = useState<UserType | null>(null);
 	const [loadingUpdate, setLoadingUpdate] = useState(false);
+	const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+	const [searchTerm, setSearchTerm] = useState('');
+	const [isSearching, setIsSearching] = useState(false);
 
-	const fetchUsers = async () => {
+	const fetchAllUsers = async () => {
 		try {
-			const response = await userService.getAll(currentPage, 10);
-			console.log('Users----------', response.data.data);
+			setLoading(true);
+			const response = await userService.getAll(1, 1000);
+			setAllUsers(response.data.data);
+		} catch (error) {
+			console.error('Error fetching all users:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const fetchUsers = async (page: number) => {
+		try {
+			setLoading(true);
+			const response = await userService.getAll(page, 10);
 			setUsers(response.data.data);
 			setTotalPages(response.data.total_pages);
 		} catch (error) {
 			console.error('Error fetching users:', error);
+		} finally {
+			setLoading(false);
 		}
 	};
 
 	useEffect(() => {
-		setLoading(true);
-		fetchUsers();
-		setLoading(false);
-	}, [currentPage]);
+		fetchAllUsers();
+	}, []);
+
+	useEffect(() => {
+		if (!searchTerm) {
+			fetchUsers(currentPage);
+		}
+	}, [currentPage, searchTerm]);
 
 	const handleRoleChange = async (
 		e: React.ChangeEvent<HTMLSelectElement>,
@@ -41,7 +63,7 @@ const User = () => {
 		setLoadingUpdate(true);
 		const role = e.target.value;
 		await userService.update(id, { role: role as 'user' | 'admin' });
-		fetchUsers();
+		fetchUsers(currentPage);
 		setLoadingUpdate(false);
 		toast.dismiss();
 		toast.success('Update role success');
@@ -52,7 +74,7 @@ const User = () => {
 			try {
 				setLoading(true);
 				await userService.delete(id);
-				fetchUsers();
+				fetchUsers(currentPage);
 				toast.success('Delete user success');
 			} catch (error) {
 				console.error('Error deleting user:', error);
@@ -70,7 +92,7 @@ const User = () => {
 					await userService.update(id, {
 						is_deleted: status,
 					});
-					fetchUsers();
+					fetchUsers(currentPage);
 					toast.success('Restore user success');
 				} catch (error) {
 					console.error('Error restoring user:', error);
@@ -83,7 +105,7 @@ const User = () => {
 				try {
 					setLoading(true);
 					await userService.delete(id);
-					fetchUsers();
+					fetchUsers(currentPage);
 					toast.success('Delete user success');
 				} catch (error) {
 					console.error('Error deleting user:', error);
@@ -102,11 +124,53 @@ const User = () => {
 		setPreviewUser(null);
 	};
 
+	const sortUsers = (users: UserType[]) => {
+		return users.sort((a, b) => {
+			if (sortOrder === 'asc') {
+				return a.name.localeCompare(b.name);
+			} else {
+				return b.name.localeCompare(a.name);
+			}
+		});
+	};
+
+	const toggleSortOrder = () => {
+		setSortOrder((prevOrder) => (prevOrder === 'asc' ? 'desc' : 'asc'));
+	};
+
+	const filteredUsers = searchTerm
+		? allUsers.filter(user =>
+				user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+			)
+		: users;
+
+	const sortedAndFilteredUsers = sortUsers(filteredUsers);
+
 	return (
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
-			<h4 className="text-xl font-semibold text-black dark:text-white">
-				User List
-			</h4>
+			<div className="flex justify-between items-center">
+				<h4 className="text-xl font-semibold text-black dark:text-white">
+					User List ({filteredUsers.length} users)
+				</h4>
+				
+				<div className="flex items-center gap-4">
+					<div className="relative">
+						<input
+							type="text"
+							placeholder="Search by name, email, phone..."
+							value={searchTerm}
+							onChange={(e) => setSearchTerm(e.target.value)}
+							className="input input-bordered w-full max-w-xs pl-10"
+						/>
+						<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+					</div>
+					<button onClick={toggleSortOrder} className="btn btn-sm btn-primary">
+						Sort by Name ({sortOrder})
+					</button>
+				</div>
+			</div>
 
 			<div className="relative overflow-x-auto border border-stroke">
 				<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -164,8 +228,14 @@ const User = () => {
 									/>
 								</td>
 							</tr>
+						) : sortedAndFilteredUsers.length === 0 ? (
+							<tr>
+								<td colSpan={5} className="text-center py-4">
+									No users found
+								</td>
+							</tr>
 						) : (
-							users.map((user) => (
+							sortedAndFilteredUsers.map((user) => (
 								<tr
 									key={user.id}
 									className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
@@ -268,11 +338,13 @@ const User = () => {
 					</tbody>
 				</table>
 			</div>
-			<Pagination
-				currentPage={currentPage}
-				totalPages={totalPages}
-				onPageChange={setCurrentPage}
-			/>
+			{!searchTerm && (
+				<Pagination
+					currentPage={currentPage}
+					totalPages={totalPages}
+					onPageChange={setCurrentPage}
+				/>
+			)}
 			{previewUser && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 					<div className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/2">
