@@ -14,7 +14,7 @@ class OrderSeeder extends Seeder
     public function run(): void
     {
         $faker = Faker::create();
-        
+
         foreach (range(1, 10) as $index) {
             DB::table('orders')->insert([
                 'user_id' => rand(1, 5),

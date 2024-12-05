@@ -24,7 +24,9 @@ class DatabaseSeeder extends Seeder
         \App\Models\Post::factory()->count(50)->create();
         $this->call(BannerSeeder::class);
         $this->call(PaymentMethodsSeeder::class);
-
-        // git
+        $this->call(ShippingSeeder::class);
+        $this->call(OrderSeeder::class);
+        $this->call(OrderItemSeeder::class);
+        $this->call(OrderPaymentSeeder::class);
     }
 }
