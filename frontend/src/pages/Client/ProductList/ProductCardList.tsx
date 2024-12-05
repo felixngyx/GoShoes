@@ -1,14 +1,13 @@
 import { Heart, ShoppingCart } from "lucide-react";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
+import { IProduct } from "../../../types/client/products/products";
 import useCart from "../../../hooks/client/useCart";
 import useWishlist from "../../../hooks/client/useWhishList";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { formatVNCurrency } from "../../../common/formatVNCurrency";
 import toast from "react-hot-toast";
-import { addToCart } from "../../../services/client/cart";
-
 
 const ProductCardListSkeleton = () => {
   return (
@@ -65,33 +64,10 @@ const ProductCardList = ({
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const { handleAddToWishlist } = useWishlist();
 
-  const handleAddToCartDetail = async (
-    variantId: number,
-    size: string,
-    colorId: number,
-    quantity: number
-  ) => {
-    try {
-      const response = await addToCart({
-        product_variant_id: variantId,
-        size: size,
-        color_id: colorId,
-        quantity: quantity
-      });
-      
-      if (response) {
-        toast.success("Product added to cart successfully!");
-      }
-    } catch (error) {
-      toast.error("Failed to add product to cart");
-      console.error("Error adding to cart:", error);
-    }
-  };
-
   // Thêm sản phẩm vào giỏ hàng
   const addCart = () => {
     if (selectedSize && selectedColor) {
-      const variants = parseVariants(product?.variants);
+      const variants = parseVariants(product?.variants || []);
       const selectedVariant = variants.find(
         (variant: any) => variant.color === selectedColor
       );
@@ -105,24 +81,18 @@ const ProductCardList = ({
           const productVariantId = selectedSizeObj.product_variant_id;
           const quantity = 1;
 
-          handleAddToCartDetail(
-            productVariantId,
-            selectedSize,
-            selectedColor,
-            quantity
-          );
-
+          handleAddToCart(productVariantId, quantity);
           setShowModal(false);
           setSelectedSize(null);
           setSelectedColor(null);
         } else {
-          toast.error("Size hoặc sản phẩm không khả dụng.");
+          toast.error("Size or product is not available.");
         }
       } else {
-        toast.error("Không tìm thấy màu được chọn.");
+        toast.error("Selected color not found.");
       }
     } else {
-      toast.error("Hãy chọn kích thước và màu trước khi thêm vào giỏ hàng.");
+      toast.error("Please select size and color before adding to cart.");
     }
   };
 
@@ -130,11 +100,11 @@ const ProductCardList = ({
     if (!accessToken) {
       setModalCheckLogin(true);
       setShowModal(false);
-
       return;
     }
     setShowModal(true);
   };
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
@@ -188,28 +158,16 @@ const ProductCardList = ({
 
   return (
     <div className="flex flex-row gap-5">
-      <div key={product.id} className="w-1/3 relative">
-        <Link to={`/products/${product.id}`}>
-          <img
-            className="w-[650px] h-[300px] object-cover"
-            src={product.thumbnail}
-            alt={product.name}
-          />
-          <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
-            {Math.round(
-              ((Number(product.price) - Number(product.promotional_price)) /
-                Number(product.price)) *
-                100
-            )}
-            %
-          </p>
-        </Link>
+      <div key={product.id} className="w-1/3">
+        <img
+          className="w-[650px] h-[300px] object-cover"
+          src={product.thumbnail}
+          alt={product.name}
+        />
       </div>
       <div className="w-2/3">
         <div className="flex flex-col justify-between items-start h-full gap-2 p-2">
-          <Link to={`/products/${product.id}`}>
-            <h3 className="text-2xl font-semibold">{product.name}</h3>
-          </Link>
+          <h3 className="text-2xl font-semibold">{product.name}</h3>
           <div className="flex flex-row gap-2 items-center">
             <div className="rating flex flex-row items-center gap-1">
               <RatingStars rating={product.rating_count} />
@@ -219,11 +177,12 @@ const ProductCardList = ({
           <hr className="w-2/3" />
           <div className="flex flex-row gap-2 items-center">
             <p className="text-xl font-semibold text-[#40BFFF]">
-              {formatVNCurrency(Number(product.promotional_price))}
+              {formatVNCurrency(product.promotional_price)} ₫
             </p>
             <p className="text-sm line-through text-[#C1C8CE]">
-              {formatVNCurrency(Number(product.price))}
+              {formatVNCurrency(product.price)} ₫
             </p>
+            <p className="text-sm text-[#FF4242] font-semibold">-6% Off</p>
           </div>
           <p>{product.description}</p>
           <div className="flex flex-row gap-2">
@@ -253,27 +212,21 @@ const ProductCardList = ({
               <h3 className="font-bold text-xl text-blue-500">
                 {product.name}
               </h3>
-
               <p className="mt-2">Select size and color:</p>
               <div className="flex flex-col gap-6 mt-4">
                 <div>
                   <h4 className="text-lg font-semibold mb-2">Size:</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedColor &&
-                      [...new Set(
-                        getVariantsForColor(selectedColor).map((variant: any) => variant.size)
-                      )]
-                        .sort((a, b) => a - b)
-                        .map((size: string) => {
-                          const variant = getVariantsForColor(selectedColor).find(
-                            (v: any) => v.size === size
-                          );
+                      getVariantsForColor(selectedColor)
+                        .sort((a: any, b: any) => a.size - b.size)
+                        .map((variant: any) => {
                           const isSizeAvailable = variant.quantity > 0;
-                          const isSelected = selectedSize === size;
+                          const isSelected = selectedSize === variant.size;
 
                           return (
                             <button
-                              key={size}
+                              key={variant.size}
                               className={`px-8 py-2 text-center text-sm font-medium border rounded-md transition ${
                                 isSelected
                                   ? "border-theme-color-primary ring-2 ring-theme-color-primary"
@@ -285,12 +238,12 @@ const ProductCardList = ({
                               }`}
                               onClick={() => {
                                 if (isSizeAvailable) {
-                                  setSelectedSize(size);
+                                  setSelectedSize(variant.size);
                                 }
                               }}
                               disabled={!isSizeAvailable}
                             >
-                              {size}
+                              {variant.size}
                             </button>
                           );
                         })}

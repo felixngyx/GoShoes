@@ -7,7 +7,6 @@ import { useState } from "react";
 import { formatVNCurrency } from "../../../common/formatVNCurrency";
 import useWishlist from "../../../hooks/client/useWhishList";
 import toast from "react-hot-toast";
-import { addToCart } from "../../../services/client/cart";
 
 const ProductItemSkeleton = () => {
   return (
@@ -58,32 +57,9 @@ const ProductItems = ({
     return <ProductItemSkeleton />;
   }
 
-  const handleAddToCartDetail = async (
-    variantId: number,
-    size: string,
-    colorId: number,
-    quantity: number
-  ) => {
-    try {
-      const response = await addToCart({
-        product_variant_id: variantId,
-        size: size,
-        color_id: colorId,
-        quantity: quantity
-      });
-      
-      if (response) {
-        toast.success("Product added to cart successfully!");
-      }
-    } catch (error) {
-      toast.error("Failed to add product to cart");
-      console.error("Error adding to cart:", error);
-    }
-  };
-
   const addCart = () => {
     if (selectedSize && selectedColor) {
-      const variants = parseVariants(product?.variants);
+      const variants = parseVariants(product?.variants || []);
       const selectedVariant = variants.find(
         (variant: any) => variant.color === selectedColor
       );
@@ -97,24 +73,18 @@ const ProductItems = ({
           const productVariantId = selectedSizeObj.product_variant_id;
           const quantity = 1;
 
-          handleAddToCartDetail(
-            productVariantId,
-            selectedSize,
-            selectedColor,
-            quantity
-          );
-
+          handleAddToCart(productVariantId, quantity);
           setShowModal(false);
           setSelectedSize(null);
           setSelectedColor(null);
         } else {
-          toast.error("Size hoặc sản phẩm không khả dụng.");
+          toast.error("Size or product is not available.");
         }
       } else {
-        toast.error("Không tìm thấy màu được chọn.");
+        toast.error("Selected color not found.");
       }
     } else {
-      toast.error("Hãy chọn kích thước và màu trước khi thêm vào giỏ hàng.");
+      toast.error("Please select size and color before adding to cart.");
     }
   };
 
@@ -137,12 +107,11 @@ const ProductItems = ({
   };
 
   const getVariantsForColor = (color: string) => {
-    if (!product?.variants) return [];
+    if (!product) return [];
 
-    const parsedVariants = parseVariants(product.variants);
-    return parsedVariants
+    return parseVariants(product.variants)
       .filter((variant: any) => variant.color === color)
-      .flatMap((variant: any) => variant.sizes || []);
+      .flatMap((variant: any) => variant.sizes);
   };
 
   const closeModal = () => {
@@ -238,20 +207,15 @@ const ProductItems = ({
                   <h4 className="text-lg font-semibold mb-2">Size:</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedColor &&
-                      [...new Set(
-                        getVariantsForColor(selectedColor).map((variant: any) => variant.size)
-                      )]
-                        .sort((a, b) => a - b)
-                        .map((size: string) => {
-                          const variant = getVariantsForColor(selectedColor).find(
-                            (v: any) => v.size === size
-                          );
-                          const isSizeAvailable = variant?.quantity > 0;
-                          const isSelected = selectedSize === size;
+                      getVariantsForColor(selectedColor)
+                        .sort((a: any, b: any) => a.size - b.size)
+                        .map((variant: any) => {
+                          const isSizeAvailable = variant.quantity > 0;
+                          const isSelected = selectedSize === variant.size;
 
                           return (
                             <button
-                              key={size}
+                              key={variant.size}
                               className={`px-8 py-2 text-center text-sm font-medium border rounded-md transition ${
                                 isSelected
                                   ? "border-theme-color-primary ring-2 ring-theme-color-primary"
@@ -263,12 +227,12 @@ const ProductItems = ({
                               }`}
                               onClick={() => {
                                 if (isSizeAvailable) {
-                                  setSelectedSize(size);
+                                  setSelectedSize(variant.size);
                                 }
                               }}
                               disabled={!isSizeAvailable}
                             >
-                              {size}
+                              {variant.size}
                             </button>
                           );
                         })}
