@@ -10,7 +10,6 @@ import { getAllProducts } from "../../services/client/product";
 import { IProduct } from "../../types/client/products/products";
 import toast from "react-hot-toast";
 import { formatVNCurrency } from "../../common/formatVNCurrency";
-import { addToCart } from "../../services/client/cart";
 
 const ProductCardSkeleton = () => {
   return (
@@ -73,77 +72,52 @@ const ProductCard = () => {
     setSelectedProduct(product);
   };
 
-  const parseVariants = (variantsStr: string) => {
+  const addCart = () => {
+    if (selectedSize && selectedColor) {
+      const variants = parseVariants(selectedProduct?.variants || []);
+      const selectedVariant = variants.find(
+        (variant: any) => variant.color === selectedColor
+      );
+
+      if (selectedVariant) {
+        const selectedSizeObj = selectedVariant.sizes.find(
+          (sizeObj: any) => sizeObj.size === selectedSize
+        );
+
+        if (selectedSizeObj && selectedSizeObj.quantity > 0) {
+          const productVariantId = selectedSizeObj.product_variant_id;
+          const quantity = 1;
+
+          handleAddToCart(productVariantId, quantity);
+          setSelectedProduct(null);
+          setSelectedSize(null);
+          setSelectedColor(null);
+        } else {
+          toast.error("Size hoặc sản phẩm không khả dụng.");
+        }
+      } else {
+        toast.error("Không tìm thấy màu được chọn.");
+      }
+    } else {
+      toast.error("Hãy chọn kích thước và màu trước khi thêm vào giỏ hàng.");
+    }
+  };
+
+  const parseVariants = (variants: string | any[]) => {
     try {
-      return JSON.parse(variantsStr);
+      return Array.isArray(variants) ? variants : JSON.parse(variants);
     } catch (error) {
+      console.error("Error parsing variants:", error);
       return [];
     }
   };
 
-  const handleAddToCartDetail = async (
-    variantId: number,
-    size: string,
-    colorId: number,
-    quantity: number
-  ) => {
-    try {
-      const response = await addToCart({
-        product_variant_id: variantId,
-        size: size,
-        color_id: colorId,
-        quantity: quantity
-      });
-      
-      if (response) {
-        toast.success("Product added to cart successfully!");
-      }
-    } catch (error) {
-      toast.error("Failed to add product to cart");
-      console.error("Error adding to cart:", error);
-    }
-  };
-
-  const addCart = () => {
-    if (!selectedProduct) return;
-
-    const parsedVariants = parseVariants(selectedProduct.variants);
-    const selectedVariant = parsedVariants.find(
-      variant => variant.color_id === selectedColor
-    );
-
-    if (selectedVariant) {
-      const selectedSizeVariant = selectedVariant.sizes.find(
-        size => size.size === selectedSize
-      );
-
-      if (selectedSizeVariant) {
-        handleAddToCartDetail(
-          selectedSizeVariant.product_variant_id,
-          selectedSize,
-          selectedColor,
-          1
-        );
-        setSelectedProduct(null);
-        setSelectedSize(null);
-        setSelectedColor(null);
-      } else {
-        toast.error("Size or product is not available.");
-      }
-    } else {
-      toast.error("Selected color not found.");
-    }
-  };
-
-  const getVariantsForColor = (colorId: number) => {
+  const getVariantsForColor = (color: string) => {
     if (!selectedProduct) return [];
-    
-    const variants = parseVariants(selectedProduct.variants);
-    const colorVariant = variants.find(
-      variant => variant.color_id === colorId
-    );
-    
-    return colorVariant?.sizes || [];
+
+    return parseVariants(selectedProduct.variants)
+      .filter((variant: any) => variant.color === color)
+      .flatMap((variant: any) => variant.sizes);
   };
 
   const closeModal = () => {
@@ -247,61 +221,74 @@ const ProductCard = () => {
               <p className="mt-2">Select size and color:</p>
               <div className="flex flex-col gap-6 mt-4">
                 <div>
-                  <h4 className="text-lg font-semibold mb-2">Color:</h4>
+                  <h4 className="text-lg font-semibold mb-2">Size:</h4>
                   <div className="flex flex-wrap gap-2">
-                    {parseVariants(selectedProduct.variants).map((variant) => (
-                      <button
-                        key={variant.color_id}
-                        className={`px-6 py-2 border rounded-md hover:border-theme-color-primary ${
-                          selectedColor === variant.color_id ? 'bg-blue-500 text-white' : ''
-                        }`}
-                        onClick={() => {
-                          setSelectedColor(variant.color_id);
-                          setSelectedSize(null);
-                        }}
-                      >
-                        {variant.color}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {selectedColor && (
-                  <div className="mt-4">
-                    <h4 className="text-lg font-semibold mb-2">Size:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {getVariantsForColor(selectedColor)
-                        .sort((a, b) => Number(a.size) - Number(b.size))
-                        .map((sizeVariant) => {
-                          const isSelected = selectedSize === sizeVariant.size;
-                          const isSizeAvailable = sizeVariant.quantity > 0;
+                    {selectedColor &&
+                      getVariantsForColor(selectedColor)
+                        .sort((a: any, b: any) => a.size - b.size)
+                        .map((variant: any) => {
+                          const isSizeAvailable = variant.quantity > 0;
+                          const isSelected = selectedSize === variant.size;
 
                           return (
                             <button
-                              key={sizeVariant.product_variant_id}
-                              className={`px-6 py-2 border rounded-md ${
-                                isSelected ? 'bg-blue-500 text-white' : ''
-                              } ${!isSizeAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              onClick={() => isSizeAvailable && setSelectedSize(sizeVariant.size)}
+                              key={variant.size}
+                              className={`px-8 py-2 text-center text-sm font-medium border rounded-md transition ${
+                                isSelected
+                                  ? "border-theme-color-primary ring-2 ring-theme-color-primary"
+                                  : "bg-white text-gray-700 border-gray-300"
+                              } ${
+                                !isSizeAvailable
+                                  ? "cursor-not-allowed opacity-50 line-through"
+                                  : "hover:border-theme-color-primary"
+                              }`}
+                              onClick={() => {
+                                if (isSizeAvailable) {
+                                  setSelectedSize(variant.size);
+                                }
+                              }}
                               disabled={!isSizeAvailable}
                             >
-                              {sizeVariant.size}
+                              {variant.size}
                             </button>
                           );
                         })}
-                    </div>
                   </div>
-                )}
+                </div>
+
+                <div>
+                  <h4 className="text-lg font-semibold mb-2">Color:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {parseVariants(selectedProduct.variants)
+                      .map((variant: any) => variant.color)
+                      .filter(
+                        (value: string, index: number, self: string[]) =>
+                          self.indexOf(value) === index
+                      )
+                      .map((color: string) => {
+                        const isSelected = selectedColor === color;
+                        return (
+                          <button
+                            key={color}
+                            className={`px-6 py-2 border rounded-md hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary flex items-center gap-2 ${
+                              isSelected
+                                ? "bg-theme-color-primary outline-none ring-2"
+                                : ""
+                            }`}
+                            onClick={() => setSelectedColor(color)}
+                          >
+                            {color}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-6 flex justify-end gap-4">
+              <div className="mt-4 flex justify-end gap-4">
                 <button
                   className="btn bg-gray-300 text-black"
-                  onClick={() => {
-                    setSelectedProduct(null);
-                    setSelectedSize(null);
-                    setSelectedColor(null);
-                  }}
+                  onClick={closeModal}
                 >
                   Cancel
                 </button>
