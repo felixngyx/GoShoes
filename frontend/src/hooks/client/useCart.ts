@@ -53,7 +53,7 @@ const useCart = () => {
     },
   });
 
-  const handleAddToCartDetail = (
+  const handleAddToCartDetail = async (
     productVariantId: number,
     selectedSize: string,
     selectedColor: string,
@@ -66,12 +66,42 @@ const useCart = () => {
       return;
     }
 
-    const params: CartParams = {
-      product_variant_id: productVariantId,
-      quantity,
-    };
+    // Kiểm tra sản phẩm đã tồn tại trong giỏ hàng chưa
+    const existingItem = cartItems.find(
+      (item) => item.product_variant.id === productVariantId
+    );
 
-    addToCartMutation.mutate(params);
+    if (existingItem) {
+      // Kiểm tra số lượng tồn kho
+      const stockQuantity = await checkStock(productVariantId);
+      const newQuantity = existingItem.quantity + quantity;
+
+      if (newQuantity > stockQuantity) {
+        toast.error(`The maximum quantity available is ${stockQuantity}`);
+        return;
+      }
+
+      // Cập nhật số lượng mới
+      const params: CartParams = {
+        product_variant_id: productVariantId,
+        quantity: newQuantity
+      };
+
+      try {
+        await updateCartQuantity(params);
+        queryClient.invalidateQueries({ queryKey: ["CART"] });
+        toast.success("Updated cart quantity successfully");
+      } catch (error) {
+        toast.error("Failed to update cart quantity");
+      }
+    } else {
+      // Thêm mới vào giỏ hàng
+      const params: CartParams = {
+        product_variant_id: productVariantId,
+        quantity
+      };
+      addToCartMutation.mutate(params);
+    }
   };
 
   const { mutate: addProductToCart } = useMutation({

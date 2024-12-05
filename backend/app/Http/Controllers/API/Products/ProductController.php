@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
+use App\Models\ImageVariant;
 use App\Services\ServiceInterfaces\Product\ProductServiceInterface as ProductService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 
 class ProductController extends Controller
@@ -316,6 +318,196 @@ class ProductController extends Controller
         return response()->json([
             'Data' => $product
         ]);
+    }
+
+
+    public function getProductForAdmin(string $id)
+    {
+        try {
+            $product = Product::with(['brand', 'variants.color', 'variants.size', 'categories'])
+                ->where('id', $id)
+                ->first();
+
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sản phẩm không tồn tại!'
+                ], 404);
+            }
+
+            // Nhóm variants theo color_id
+            $variantsByColor = [];
+            foreach ($product->variants as $variant) {
+                $colorId = $variant->color_id;
+                if (!isset($variantsByColor[$colorId])) {
+                    // Lấy ảnh cho màu này
+                    $images = ImageVariant::where('product_id', $product->id)
+                                        ->where('color_id', $colorId)
+                                        ->pluck('image')
+                                        ->implode(', ');
+
+                    $variantsByColor[$colorId] = [
+                        'color_id' => $colorId,
+                        'image' => $images,
+                        'variant_details' => []
+                    ];
+                }
+
+                $variantsByColor[$colorId]['variant_details'][] = [
+                    'size_id' => $variant->size_id,
+                    'quantity' => $variant->quantity,
+                    'sku' => $variant->sku
+                ];
+            }
+
+            $data = [
+                'id' => $product->id,
+                'brand_id' => $product->brand_id,
+                'name' => $product->name,
+                'description' => $product->description,
+                'price' => $product->price,
+                'stock_quantity' => $product->stock_quantity,
+                'promotional_price' => $product->promotional_price,
+                'status' => $product->status,
+                'sku' => $product->sku,
+                'is_deleted' => $product->is_deleted,
+                'rating_count' => $product->rating_count,
+                'slug' => $product->slug,
+                'thumbnail' => $product->thumbnail,
+                'hagtag' => $product->hagtag,
+                'created_at' => $product->created_at,
+                'updated_at' => $product->updated_at,
+                'brand_name' => $product->brand->name,
+                'category_ids' => $product->categories->pluck('id')->toArray(),
+                'variants' => array_values($variantsByColor)
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi lấy thông tin sản phẩm.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function getProductForClient(string $id)
+    {
+        try {
+            // Lấy thông tin sản phẩm với các quan hệ
+            $product = Product::with(['brand', 'variants.color', 'variants.size', 'categories'])
+                ->where('id', $id)
+                ->where('is_deleted', false) // Chỉ lấy sản phẩm chưa bị xóa
+                ->first();
+
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sản phẩm không tồn tại hoặc đã bị xóa!'
+                ], 404);
+            }
+
+            // Lấy thông tin bestseller từ bảng order_items
+            $bestsellerInfo = DB::table('order_items')
+                ->select(
+                    'product_id',
+                    DB::raw('SUM(quantity) as total_sold'),
+                    DB::raw('COUNT(DISTINCT order_id) as order_count')
+                )
+                ->where('product_id', $id)
+                ->groupBy('product_id')
+                ->first();
+
+            // Nhóm variants theo color_id
+            $variantsByColor = [];
+            foreach ($product->variants as $variant) {
+                $colorId = $variant->color_id;
+                if (!isset($variantsByColor[$colorId])) {
+                    // Lấy ảnh cho màu này
+                    $images = ImageVariant::where('product_id', $product->id)
+                        ->where('color_id', $colorId)
+                        ->pluck('image')
+                        ->implode(', ');
+
+                    $variantsByColor[$colorId] = [
+                        'color_id' => $colorId,
+                        'color_name' => $variant->color->color,
+                        'image' => $images,
+                        'variant_details' => []
+                    ];
+                }
+
+                $variantsByColor[$colorId]['variant_details'][] = [
+                    'variant_id' => $variant->id,
+                    'size_id' => $variant->size_id,
+                    'size' => $variant->size->size,
+                    'quantity' => $variant->quantity,
+                    'sku' => $variant->sku
+                ];
+            }
+
+            // Chuẩn bị dữ liệu phản hồi
+            $data = [
+                'id' => $product->id,
+                'brand_id' => $product->brand_id,
+                'name' => $product->name,
+                'description' => $product->description,
+                'price' => $product->price,
+                'original_price' => $product->price, // Giá gốc không format
+                'stock_quantity' => $product->stock_quantity,
+                'promotional_price' => $product->promotional_price, // Removed formatting
+                'original_promotional_price' => $product->promotional_price, // Giá khuyến mãi không format
+                'status' => $product->status,
+                'sku' => $product->sku,
+                'is_deleted' => $product->is_deleted,
+                'rating_count' => $product->rating_count,
+                'slug' => $product->slug,
+                'thumbnail' => $product->thumbnail,
+                'hagtag' => explode(' ', $product->hagtag), // Chuyển hagtag thành mảng
+                'created_at' => $product->created_at,
+                'updated_at' => $product->updated_at,
+                'brand' => [
+                    'id' => $product->brand->id,
+                    'name' => $product->brand->name,
+                    'logo_url' => $product->brand->logo_url
+                ],
+                'categories' => $product->categories->map(function ($category) {
+                    return [
+                        'id' => $category->id,
+                        'name' => $category->name,
+                        'slug' => $category->slug
+                    ];
+                }),
+                'variants' => array_values($variantsByColor),
+                'bestseller_info' => [
+                    'total_sold' => $bestsellerInfo ? $bestsellerInfo->total_sold : 0,
+                    'order_count' => $bestsellerInfo ? $bestsellerInfo->order_count : 0,
+                    'is_bestseller' => $bestsellerInfo && $bestsellerInfo->total_sold > 50 // Có thể điều chỉnh ngưỡng này
+                ]
+            ];
+
+            // Tính phần trăm giảm giá nếu có
+            if ($product->promotional_price && $product->price > 0) {
+                $discountPercentage = round((($product->price - $product->promotional_price) / $product->price) * 100);
+                $data['discount_percentage'] = $discountPercentage;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi lấy thông tin sản phẩm.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
 }

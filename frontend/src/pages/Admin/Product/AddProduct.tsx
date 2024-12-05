@@ -92,11 +92,16 @@ const productSchema = Joi.object({
 								'number.min': 'Please select a size',
 								'any.required': 'Please select a size',
 							}),
-							quantity: Joi.number().min(1).required().messages({
-								'number.base': 'Quantity must be a number',
-								'number.min': 'Quantity must be greater than 0',
-								'any.required': 'Quantity is required',
-							}),
+							quantity: Joi.number()
+								.min(1)
+								.max(999999)
+								.required()
+								.messages({
+									'number.base': 'Quantity must be a number',
+									'number.min': 'Quantity must be greater than 0',
+									'number.max': 'Quantity cannot exceed 999,999',
+									'any.required': 'Quantity is required',
+								}),
 							sku: Joi.string().allow('').optional(),
 						})
 					)
@@ -655,6 +660,13 @@ const AddProduct = () => {
 		}
 	};
 
+	// Hàm kiểm tra màu đã được chọn chưa
+	const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
+		return fields.some((field, index) => 
+			index !== currentVariantIndex && field.color_id === colorId
+		);
+	};
+
 	return loadingData ? (
 		<div className="flex justify-center items-center h-screen">
 			<LoadingIcon size="lg" color="primary" type="spinner" />
@@ -1073,6 +1085,7 @@ const AddProduct = () => {
 																}));
 															}}
 															className="flex items-center gap-2"
+															disabled={isSelectedColor(color.id!, index)}
 														>
 															<img
 																src={color.link_image}
@@ -1222,30 +1235,55 @@ const AddProduct = () => {
 															})}
 														</select>
 														<input
-															type="text"
+															type="number"
+															min="1"
+															max="999999"
 															placeholder="Quantity"
 															className="input input-bordered input-sm w-full"
 															{...register(
-																`variants.${index}.variant_details.${sizeIndex}.quantity`
-															)}
-															onChange={(e) => {
-																const inputPath = `variants.${index}.variant_details.${sizeIndex}.quantity`;
-																const newValue =
-																	Number(e.target.value) || 0;
-																const oldValue =
-																	previousValues[inputPath] ||
-																	0;
+																`variants.${index}.variant_details.${sizeIndex}.quantity`,
+																{
+																	valueAsNumber: true,
+																	onChange: (e) => {
+																		const inputPath = `variants.${index}.variant_details.${sizeIndex}.quantity`;
+																		let newValue = parseInt(e.target.value);
+																		
+																		// Kiểm tra và giới hạn giá trị
+																		if (isNaN(newValue) || newValue < 0) {
+																			newValue = 0;
+																		} else if (newValue > 999999) {
+																			newValue = 999999;
+																			toast.error('Quantity cannot exceed 999,999');
+																		}
 
-																setStockQuantity(
-																	(prev) =>
-																		prev - oldValue + newValue
-																);
-																setPreviousValues((prev) => ({
-																	...prev,
-																	[inputPath]: newValue,
-																}));
-															}}
+																		// Cập nhật giá trị
+																		setValue(inputPath, newValue);
+																		
+																		// Cập nhật tổng số lượng
+																		const oldValue = previousValues[inputPath] || 0;
+																		setStockQuantity((prev) => prev - oldValue + newValue);
+																		setPreviousValues((prev) => ({
+																			...prev,
+																			[inputPath]: newValue,
+																		}));
+																	},
+																}
+															)}
 														/>
+														<small className="text-gray-500 mt-1">
+															Enter a quantity between 1 and 999,999
+														</small>
+														{errors.variants?.[index]
+															?.variant_details?.[sizeIndex]
+															?.quantity && (
+															<span className="text-red-500 text-xs mt-1">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.quantity?.message
+																}
+															</span>
+														)}
 														<button
 															type="button"
 															onClick={() =>
@@ -1271,17 +1309,6 @@ const AddProduct = () => {
 																errors.variants[index]
 																	.variant_details[sizeIndex]
 																	?.size_id?.message
-															}
-														</span>
-													)}
-													{errors.variants?.[index]
-														?.variant_details?.[sizeIndex]
-														?.quantity && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.quantity?.message
 															}
 														</span>
 													)}

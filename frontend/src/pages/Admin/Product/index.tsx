@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import Pagination from '../../../components/admin/Pagination';
 import { Link } from 'react-router-dom';
 import { formatVNCurrency } from '../../../common/formatVNCurrency';
+import { Search } from 'lucide-react';
 
 export enum Status {
 	PUBLIC = 'public',
@@ -53,6 +54,8 @@ const Product = () => {
 	});
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filteredData, setFilteredData] = useState<PRODUCT[]>([]);
+	const [allProducts, setAllProducts] = useState<PRODUCT[]>([]);
+	const itemsPerPage = 10;
 
 	const fetchProducts = async () => {
 		try {
@@ -151,20 +154,62 @@ const Product = () => {
 		);
 	};
 
+	// Fetch tất cả sản phẩm
+	const fetchAllProducts = async () => {
+		try {
+			setLoading(true);
+			const res = await productService.getAll(1, 1000); // Lấy nhiều sản phẩm
+			const sortedProducts = res.data.data.sort((a: PRODUCT, b: PRODUCT) => 
+				new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+			);
+			setAllProducts(sortedProducts);
+		} catch (error) {
+			console.error(error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchAllProducts();
+	}, []);
+
+	// Lọc sản phẩm theo search term
+	const filteredProducts = searchTerm
+		? allProducts.filter(product =>
+				product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				product.categories.some(cat => 
+					cat.toLowerCase().includes(searchTerm.toLowerCase())
+				)
+			)
+		: allProducts;
+
+	// Tính toán sản phẩm cho trang hiện tại
+	const paginatedProducts = filteredProducts.slice(
+		(currentPage - 1) * itemsPerPage,
+		currentPage * itemsPerPage
+	);
+
 	return (
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
-					Product List
+					Product List ({filteredProducts.length} products)
 				</h4>
 				<div className="flex items-center gap-4">
-					<input
-						type="text"
-						placeholder="Search by product name..."
-						className="input input-bordered w-full max-w-xs"
-						value={searchTerm}
-						onChange={(e) => setSearchTerm(e.target.value)}
-					/>
+					<div className="relative">
+						<input
+							type="text"
+							placeholder="Search by name or category..."
+							value={searchTerm}
+							onChange={(e) => {
+								setSearchTerm(e.target.value);
+								setCurrentPage(1); // Reset về trang 1 khi search
+							}}
+							className="input input-bordered w-full max-w-xs pl-10"
+						/>
+						<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+					</div>
 					<button
 						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${
 							selectedItems.length > 0
@@ -269,11 +314,17 @@ const Product = () => {
 					<tbody>
 						{loading ? (
 							<LoadingTable />
+						) : paginatedProducts.length === 0 ? (
+							<tr>
+								<td colSpan={7} className="text-center py-4">
+									No products found
+								</td>
+							</tr>
 						) : (
-							getSortedData().map((product, key) => (
+							paginatedProducts.map((product, key) => (
 								<tr
 									className={`bg-white dark:bg-slate-800 ${
-										key !== getSortedData().length - 1
+										key !== paginatedProducts.length - 1
 											? 'border-b border-stroke'
 											: ''
 									}`}
@@ -358,7 +409,7 @@ const Product = () => {
 
 			<Pagination
 				currentPage={currentPage}
-				totalPages={totalPages}
+				totalPages={Math.ceil(filteredProducts.length / itemsPerPage)}
 				onPageChange={setCurrentPage}
 			/>
 		</div>

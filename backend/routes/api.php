@@ -59,7 +59,8 @@ Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/productDetail/{id}', [ProductController::class, 'getDetailProduct']);
 Route::post('/products', [ProductController::class, 'createProduct']);
-
+Route::get('/admin/products/{id}', [ProductController::class, 'getProductForAdmin']);
+Route::get('/client/products/{id}', [ProductController::class, 'getProductForClient']);
 Route::get('/product/{id}', [ProductClientController::class, 'show']);
 Route::get('/product/variant/{id}/stock', [ProductController::class, 'checkStockProductVariant']);
 

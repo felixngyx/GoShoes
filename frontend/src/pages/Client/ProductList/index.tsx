@@ -11,6 +11,7 @@ import ProductItems from "./ProductItem";
 import Pagination from "./Pagination";
 import { getAllBrands } from "../../../services/client/brand";
 import { getAllSizes } from "../../../services/client/product";
+import { Link } from 'react-router-dom';
 
 const ProductList = () => {
   const [layout, setLayout] = useState<"grid" | "list">("grid");
@@ -200,17 +201,15 @@ const ProductList = () => {
           <div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2">
             <h2 className="text-xl font-semibold capitalize">HOT DEALS</h2>
             <ul className="flex flex-col gap-3">
-              {[
-                "Air Jordan",
-                "Nike Air Max",
-                "Puma",
-                "Air Force 1",
-                "Converse",
-                "Balenciaga",
-              ].map((item) => (
-                <li key={item} className="flex justify-between">
-                  <p className="text-sm capitalize">{item}</p>
-                  <p className="text-sm text-gray-500">30</p>
+              {products?.top_products?.map((product) => (
+                <li key={product.id} className="flex justify-between hover:bg-gray-100 p-2 rounded-md">
+                  <Link 
+                    to={`/products/${product.id}`} 
+                    className="text-sm capitalize hover:text-blue-600 transition-colors flex-1"
+                  >
+                    {product.name}
+                  </Link>
+                  <p className="text-sm text-gray-500">{product.total_quantity}</p>
                 </li>
               ))}
             </ul>
