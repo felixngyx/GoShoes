@@ -82,7 +82,7 @@ const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(
 					onInit={(evt, editor) => {
 						editorRef.current = editor;
 					}}
-					initialValue={initialValue}
+					value={initialValue}
 					init={{
 						...TINYMCE_SETTINGS,
 						images_upload_handler: handleImageUpload,

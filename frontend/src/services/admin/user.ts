@@ -27,8 +27,15 @@ export type User_Update = {
 };
 
 const userService = {
-	getAll: async (page: number = 1, limit: number = 10) => {
-		return await axiosClient.get(`/admin/user?page=${page}&perPage=${limit}`);
+	getAll: async (
+		page: number = 1,
+		limit: number = 10,
+		orderBy: string = 'created_at',
+		sortBy: string = 'DESC'
+	) => {
+		return await axiosClient.get(
+			`/admin/user?page=${page}&perPage=${limit}&orderBy=${orderBy}&sortBy=${sortBy}`
+		);
 	},
 
 	update: (id: number, data: User_Update) => {

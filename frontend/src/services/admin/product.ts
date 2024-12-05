@@ -46,6 +46,7 @@ export interface PRODUCT {
 	updated_at?: string;
 	description: string;
 	stock_quantity?: number;
+	created_at?: string;
 	variants: {
 		color_id: number;
 		image: string;
@@ -108,8 +109,15 @@ export interface PRODUCT_UPDATE {
 }
 
 const productService = {
-	getAll: async (page: number = 1, limit: number = 1) => {
-		return await axiosClient.get(`/products?page=${page}&perPage=${limit}`);
+	getAll: async (
+		page: number = 1,
+		limit: number = 1,
+		orderBy: string = 'created_at',
+		sortBy: string = 'DESC'
+	) => {
+		return await axiosClient.get(
+			`/products?page=${page}&perPage=${limit}&orderBy=${orderBy}&sortBy=${sortBy}`
+		);
 	},
 	getById: async (id: number) => {
 		return await axiosClient.get(`/products/${id}`);
