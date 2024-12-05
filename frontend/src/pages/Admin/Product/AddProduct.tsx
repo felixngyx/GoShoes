@@ -343,8 +343,7 @@ const AddProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${
-								variantIndex - 1
+							`variants.${variantIndex - 1
 							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
@@ -457,11 +456,20 @@ const AddProduct = () => {
 			console.log('response', response);
 			if (response.status === 201) {
 				toast.success('Create product successfully');
-				// navigate('/admin/product');
+				navigate('/admin/product');
 			}
 		} catch (error: any) {
 			console.error('Error submitting form:', error);
-			toast.error(error.response.data.message);
+			if (error.response && error.response.data && error.response.data.error) {
+				const errorMessage = error.response.data.error.message;
+				if (errorMessage.includes('File size too large')) {
+					toast.error('Image upload failed: File size too large. Please upload a smaller image.');
+				} else {
+					toast.error(errorMessage);
+				}
+			} else {
+				toast.error('An unexpected error occurred');
+			}
 		} finally {
 			setLoading(false);
 		}
@@ -502,9 +510,8 @@ const AddProduct = () => {
 		// Khởi tạo previousValues cho size mới với quantity = 0
 		setPreviousValues((prev) => ({
 			...prev,
-			[`variants.${variantIndex}.variant_details.${
-				variantSizes[variantIndex]?.length || 0
-			}.quantity`]: 0,
+			[`variants.${variantIndex}.variant_details.${variantSizes[variantIndex]?.length || 0
+				}.quantity`]: 0,
 		}));
 
 		setVariantSizes((prev) => ({
@@ -543,9 +550,8 @@ const AddProduct = () => {
 			const remainingSizes = currentVariant.variant_details.length;
 			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
 				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
-				const newKey = `variants.${variantIndex}.variant_details.${
-					i - 1
-				}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${i - 1
+					}.quantity`;
 				newPrev[newKey] = newPrev[oldKey];
 				delete newPrev[oldKey];
 			}
@@ -1131,9 +1137,8 @@ const AddProduct = () => {
 													>
 														<img
 															src={URL.createObjectURL(image)}
-															alt={`Variant ${index + 1} - ${
-																imageIndex + 1
-															}`}
+															alt={`Variant ${index + 1} - ${imageIndex + 1
+																}`}
 															className="w-full h-full object-cover rounded-md border border-gray-300"
 														/>
 														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -1267,25 +1272,25 @@ const AddProduct = () => {
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.size_id && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.size_id?.message
-															}
-														</span>
-													)}
+															<span className="label-text text-red-500 text-xs ms-2">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.size_id?.message
+																}
+															</span>
+														)}
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.quantity && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.quantity?.message
-															}
-														</span>
-													)}
+															<span className="label-text text-red-500 text-xs ms-2">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.quantity?.message
+																}
+															</span>
+														)}
 												</>
 											)
 										)}
