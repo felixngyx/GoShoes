@@ -15,8 +15,8 @@ import {
   Box,
   Chip,
 } from "@mui/material";
-import { MdCalendarToday, MdEmail, MdLocationOn } from "react-icons/md";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { MdCalendarToday } from "react-icons/md";
+import { CalendarClock, Mail, MapPin, Phone } from "lucide-react";
 
 interface OrderItem {
   quantity: number;
@@ -32,6 +32,13 @@ interface OrderItem {
   } | null;
 }
 
+interface ShippingDetail {
+  name: string;
+  phone_number: string;
+  address: string;
+  address_detail: string;
+}
+
 interface OrderData {
   id: number;
   sku: string;
@@ -45,12 +52,7 @@ interface OrderData {
   };
   shipping: {
     id: number;
-    shipping_detail: {
-      name: string;
-      address: string;
-      phone_number: string;
-      address_detail: string;
-    };
+    shipping_detail: string;
     is_default: boolean;
   };
   payment: {
@@ -101,6 +103,14 @@ const OrderDetail: React.FC = () => {
   }
 
   const orderData = order.data;
+  const shippingDetail: ShippingDetail = orderData.shipping?.shipping_detail || {
+    name: orderData.customer?.name || '',
+    phone_number: orderData.customer?.phone || '',
+    address: '',
+    address_detail: ''
+  };
+
+  console.log('Shipping Detail:', shippingDetail);
 
   return (
     <Box className="container mx-auto py-8 px-4">
@@ -117,7 +127,7 @@ const OrderDetail: React.FC = () => {
                 Order #{orderData.sku}
               </Typography>
               <Box display="flex" alignItems="center">
-                <MdCalendarToday fontSize="small" sx={{ mr: 1 }} />
+                <CalendarClock size={16} style={{ marginRight: "8px" }} />
                 <Typography variant="body2" color="text.secondary">
                   {new Date(orderData.created_at).toLocaleDateString("vi-VN")}
                 </Typography>
@@ -249,12 +259,12 @@ const OrderDetail: React.FC = () => {
               </Typography>
               <Box mb={2}>
                 <Typography variant="subtitle1">
-                  {orderData.customer.name}
+                  {shippingDetail.name}
                 </Typography>
                 <Box display="flex" alignItems="center">
                   <Mail size={16} style={{ marginRight: "8px" }} />
                   <Typography variant="body2" color="text.secondary">
-                    {orderData.customer.email || "No email provided"}
+                    {orderData.customer.email}
                   </Typography>
                 </Box>
               </Box>
@@ -266,15 +276,15 @@ const OrderDetail: React.FC = () => {
                     style={{ marginRight: "8px", marginTop: "4px" }}
                   />
                   <Typography variant="body2">
-                    {orderData.shipping.shipping_detail.address_detail},{" "}
-                    {orderData.shipping.shipping_detail.address}
+                    {shippingDetail.address_detail && 
+                        `${shippingDetail.address_detail}, `}
+                    {shippingDetail.address}
                   </Typography>
                 </Box>
                 <Box display="flex" alignItems="center">
                   <Phone size={16} style={{ marginRight: "8px" }} />
                   <Typography variant="body2">
-                    {orderData.shipping.shipping_detail.phone_number ||
-                      "Number not available"}
+                    {shippingDetail.phone_number}
                   </Typography>
                 </Box>
               </Box>

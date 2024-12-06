@@ -971,7 +971,6 @@ class OrderController extends Controller
                     'shipping' => $order->shipping ? [
                         'id' => $order->shipping->id,
                         'shipping_detail' => $order->shipping->shipping_detail,
-                        'is_default' => $order->shipping->is_default,
                     ] : null,
 
                     // Thông tin thanh toán

@@ -412,15 +412,18 @@ class ProductController extends Controller
                 ], 404);
             }
 
-            // Lấy thông tin bestseller từ bảng order_items
+            // Thay đổi query bestseller để include thông tin sản phẩm
             $bestsellerInfo = DB::table('order_items')
+                ->join('products', 'order_items.product_id', '=', 'products.id')
                 ->select(
-                    'product_id',
-                    DB::raw('SUM(quantity) as total_sold'),
-                    DB::raw('COUNT(DISTINCT order_id) as order_count')
+                    'order_items.product_id',
+                    'products.name as product_name',
+                    'products.description',
+                    DB::raw('SUM(order_items.quantity) as total_sold'),
+                    DB::raw('COUNT(DISTINCT order_items.order_id) as order_count')
                 )
-                ->where('product_id', $id)
-                ->groupBy('product_id')
+                ->where('order_items.product_id', $id)
+                ->groupBy('order_items.product_id', 'products.name', 'products.description')
                 ->first();
 
             // Nhóm variants theo color_id
@@ -485,9 +488,9 @@ class ProductController extends Controller
                 }),
                 'variants' => array_values($variantsByColor),
                 'bestseller_info' => [
-                    'total_sold' => $bestsellerInfo ? $bestsellerInfo->total_sold : 0,
-                    'order_count' => $bestsellerInfo ? $bestsellerInfo->order_count : 0,
-                    'is_bestseller' => $bestsellerInfo && $bestsellerInfo->total_sold > 50 // Có thể điều chỉnh ngưỡng này
+                    'id' => $bestsellerInfo ? $bestsellerInfo->product_id : null,
+                    'name' => $bestsellerInfo ? $bestsellerInfo->product_name : null,
+                    'description' => $bestsellerInfo ? $bestsellerInfo->description : null
                 ]
             ];
 

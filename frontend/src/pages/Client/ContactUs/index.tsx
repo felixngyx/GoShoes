@@ -3,6 +3,7 @@ import { Phone, Mail, MapPin, Clock, Send } from 'lucide-react'; // Adjust the p
 import Joi from 'joi';
 import axiosClient from '../../../apis/axiosClient';
 import Breadcrumb from '../../../components/client/Breadcrumb';
+import { toast } from 'react-hot-toast';
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -59,13 +60,21 @@ const ContactUs = () => {
         message: formData.message,
       });
       if (response.data.success) {
-        alert('Message sent successfully!');
+        toast.success('Message sent successfully!');
+        setFormData({
+          fullName: '',
+          email: '',
+          subject: '',
+          message: '',
+          agree: false,
+        });
       } else {
-        alert('Failed to send message.');
+        toast.error(response.data.message || 'Failed to send message.');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred. Please try again.');
+      const errorMessage = error.response?.data?.message || 'An error occurred. Please try again.';
+      toast.error(errorMessage);
     }
   };
 

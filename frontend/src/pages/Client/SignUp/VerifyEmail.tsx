@@ -18,6 +18,7 @@ const VerifyEmail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState(true);
   const access_token = Cookies.get('access_token');
+  const [newPhone, setNewPhone] = useState('');
   
   // State for showing password
   const [showPassword, setShowPassword] = useState(false);
@@ -58,6 +59,20 @@ const VerifyEmail: React.FC = () => {
     }
   };
 
+  const handleChangePhone = async () => {
+    try {
+      await axiosClient.post('/profile/verify-token-change-phone', { 
+        token, 
+        phone: newPhone 
+      });
+      toast.success('Phone number has been updated successfully!');
+      navigate('/');
+    } catch (error) {
+      toast.error('Failed to update phone number. Please try again.');
+      console.error('Failed to update phone number');
+    }
+  };
+
   useEffect(() => {
     if (!access_token) {
       navigate('/signin');
@@ -73,6 +88,8 @@ const VerifyEmail: React.FC = () => {
         .then(() => setStatus(true))
         .catch(() => setStatus(false))
         .finally(() => setIsLoading(false));
+    } else if (type === 'change-phone' && token) {
+      handleVerifyResetToken(token);
     }
   }, [token, type]);
 
@@ -138,6 +155,29 @@ const VerifyEmail: React.FC = () => {
               className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
             >
               Update Password
+            </button>
+          </form>
+        ) : type === 'change-phone' ? (
+          <form onSubmit={(e) => { e.preventDefault(); handleChangePhone(); }} className="space-y-6">
+            <h1 className="text-2xl font-semibold text-center">Change Phone Number</h1>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">New Phone Number</span>
+              </label>
+              <input
+                type="tel"
+                placeholder="Enter new phone number"
+                className="input input-bordered w-full p-4 rounded-md"
+                value={newPhone}
+                onChange={(e) => setNewPhone(e.target.value)}
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
+            >
+              Update Phone Number
             </button>
           </form>
         ) : (

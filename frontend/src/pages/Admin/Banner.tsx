@@ -12,10 +12,10 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Edit, ImagePlus} from 'lucide-react';
-import { toast } from 'react-toastify';
 import PageTitle from "../../components/admin/PageTitle";
 import axiosClient from '../../apis/axiosClient';
 import uploadImageToCloudinary from '../../common/uploadCloudinary';
+import toast from 'react-hot-toast';
 
 interface BannerType {
   id: number;
@@ -185,16 +185,24 @@ const BannerPage = () => {
     
     const file = files[0];
     if (file) {
+      // Kiểm tra kích thước file (10MB = 10 * 1024 * 1024 bytes)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Image size must be less than 10MB');
+        return;
+      }
+
       try {
         const imageUrl = await uploadImageToCloudinary(file);
-        setEditingBanner(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            imageUrl: imageUrl
-          };
-        });
-        toast.success('Image uploaded successfully');
+        if (imageUrl) {
+          setEditingBanner(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              imageUrl: imageUrl
+            };
+          });
+          toast.success('Image uploaded successfully');
+        }
       } catch (error) {
         toast.error('Image upload failed');
         console.error('Image upload error:', error);
@@ -207,10 +215,16 @@ const BannerPage = () => {
     if (!editingBanner) return;
 
     try {
+      // Kiểm tra các trường bắt buộc
+      if (!editingBanner.title || !editingBanner.imageUrl) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
       // Update banner via API
       const response = await axiosClient.put(`/banners/${editingBanner.id}`, {
         title: editingBanner.title,
-        url: editingBanner.redirectUrl,
+        url: editingBanner.redirectUrl || '', // Cho phép URL rỗng
         image: editingBanner.imageUrl
       });
       

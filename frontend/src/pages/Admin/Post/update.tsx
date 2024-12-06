@@ -7,7 +7,7 @@ import PageTitle from '../../../components/admin/PageTitle';
 import { useNavigate, useParams } from 'react-router-dom';
 import * as Joi from 'joi';
 import { joiResolver } from '@hookform/resolvers/joi';
-import { getPostById, updatePost } from '../../../services/admin/post';
+import { getPostById } from '../../../services/admin/post';
 
 interface Post {
   id: number;
@@ -45,6 +45,11 @@ interface CategoryResponse {
       perPage: number;
     };
   };
+}
+
+interface Editor {
+  getContent: () => string;
+  setContent: (content: string) => void;
 }
 
 const postSchema = Joi.object({
@@ -109,7 +114,7 @@ const FormSkeleton = () => {
 const UpdatePost = () => {
   const { id } = useParams();
   const [initialContent, setInitialContent] = useState('');
-  const editorRef = useRef(null);
+  const editorRef = useRef<Editor>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [previewImage, setPreviewImage] = useState('');
@@ -204,6 +209,7 @@ const UpdatePost = () => {
           const imageResponse = await axiosClient.post('/upload', formData);
           postData.image = imageResponse.data.url;
         } catch (error) {
+          console.error('Image upload error:', error);
           toast.error('Error uploading image');
           return;
         }
@@ -266,7 +272,8 @@ const UpdatePost = () => {
               <input
                 type="text"
                 {...register('title')}
-                className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-white"
+                disabled={isLoading}
+                className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-white disabled:opacity-50"
               />
               {errors.title && (
                 <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
@@ -291,7 +298,8 @@ const UpdatePost = () => {
                   accept="image/*"
                   onChange={handleImageChange}
                   ref={fileInputRef}
-                  className="mt-1 block w-full text-gray-400"
+                  disabled={isLoading}
+                  className="mt-1 block w-full text-gray-400 disabled:opacity-50"
                 />
                 {errors.image && (
                   <p className="text-red-500 text-sm mt-1">{errors.image.message}</p>
@@ -308,6 +316,7 @@ const UpdatePost = () => {
                   onChange={(newContent) => {
                     setValue('content', newContent);
                   }}
+                  height={1000}
                   key={`editor-${id}`}
                 />
               </div>
@@ -317,7 +326,8 @@ const UpdatePost = () => {
               <label className="block mb-2 font-medium">Category</label>
               <select
                 {...register("category_id")}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                disabled={isLoading}
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 value={watch('category_id')}
               >
                 <option value="">Select category</option>

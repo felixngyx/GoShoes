@@ -22,7 +22,6 @@ interface Discount {
 
 const DiscountChatWidget: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false)
-    const [isLotteryChecked, setIsLotteryChecked] = useState(false)
     const [copiedCode, setCopiedCode] = useState<string | null>(null)
     const [position, setPosition] = useState({ x: 20, y: 20 })
     const [discounts, setDiscounts] = useState<Discount[]>([])
@@ -31,31 +30,9 @@ const DiscountChatWidget: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [expandedDiscounts, setExpandedDiscounts] = useState<number[]>([])
-    const [userIP, setUserIP] = useState<string | null>(null)
-    const [dropRate, setDropRate] = useState<number | null>(null)
 
     const nodeRef = useRef<HTMLDivElement>(null)
     const navigate = useNavigate()
-
-    useEffect(() => {
-        const lotteryResult = localStorage.getItem('lotteryResult');
-        if (lotteryResult !== null) {
-            setIsOpen(lotteryResult === 'true');
-            setIsLotteryChecked(true);
-        } else {
-            const result = Math.random() < 0.5;
-            localStorage.setItem('lotteryResult', result.toString());
-            setIsOpen(result);
-            setIsLotteryChecked(true);
-            setDropRate(result ? 50 : 0); // Giả sử tỷ lệ là 50%
-        }
-
-        // Lấy địa chỉ IP của người dùng
-        fetch('https://api.ipify.org?format=json')
-            .then(response => response.json())
-            .then(data => setUserIP(data.ip))
-            .catch(error => console.error('Error fetching IP:', error));
-    }, []);
 
     useEffect(() => {
         const fetchDiscounts = async () => {
@@ -253,9 +230,6 @@ const DiscountChatWidget: React.FC = () => {
         ))
     }
 
-    if (!isLotteryChecked) {
-        return null;
-    }
 
     return (
         <Draggable
@@ -302,10 +276,6 @@ const DiscountChatWidget: React.FC = () => {
                                 {renderDiscountContent()}
                             </div>
 
-                            <div className="mt-4 text-sm text-gray-600">
-                                <p>Drop Rate: {dropRate}%</p>
-                                <p>Your IP: {userIP}</p>
-                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
