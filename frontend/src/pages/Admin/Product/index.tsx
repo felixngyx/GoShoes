@@ -47,13 +47,11 @@ const Product = () => {
 	const [productData, setProductData] = useState<PRODUCT[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
-	const [totalPages, setTotalPages] = useState(0);
 	const [sortConfig, setSortConfig] = useState<SortConfig>({
 		field: 'id',
 		direction: 'desc'
 	});
 	const [searchTerm, setSearchTerm] = useState('');
-	const [filteredData, setFilteredData] = useState<PRODUCT[]>([]);
 	const [allProducts, setAllProducts] = useState<PRODUCT[]>([]);
 	const itemsPerPage = 10;
 
@@ -62,7 +60,6 @@ const Product = () => {
 			setLoading(true);
 			const res = await productService.getAll(currentPage, 10);
 			setProductData(res.data.data);
-			setTotalPages(res.data.total_pages);
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -86,18 +83,6 @@ const Product = () => {
 		fetchProducts();
 	}, [currentPage]);
 
-	useEffect(() => {
-		if (!searchTerm.trim()) {
-			setFilteredData(productData);
-			return;
-		}
-
-		const filtered = productData.filter(product =>
-			product.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
-		);
-		setFilteredData(filtered);
-	}, [searchTerm, productData]);
-
 	const handleSelectAll = () => {
 		if (selectAll) {
 			setSelectedItems([]); // Deselect all if already selected
@@ -109,49 +94,44 @@ const Product = () => {
 
 	const handleSelectItem = (index: number) => {
 		if (selectedItems.includes(index)) {
-			setSelectedItems(selectedItems.filter((item: any) => item !== index)); // Deselect item
+			setSelectedItems(selectedItems.filter((item: number) => item !== index));
 		} else {
-			setSelectedItems([...selectedItems, index]); // Select item
+			setSelectedItems([...selectedItems, index]);
 		}
 	};
 
-	// Thêm hàm xử lý sort
+	// Sửa lại hàm handleSort để chỉ xử lý sort khi click
 	const handleSort = (field: keyof PRODUCT) => {
-		setSortConfig(prev => ({
-			field,
-			direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
-		}));
-	};
-
-	// Thêm hàm để sort data
-	const getSortedData = () => {
-		if (!sortConfig.field) return productData;
-
-		return [...productData].sort((a, b) => {
-			if (sortConfig.field === 'price' || sortConfig.field === 'promotional_price' || sortConfig.field === 'id') {
-				const aValue = Number(a[sortConfig.field]);
-				const bValue = Number(b[sortConfig.field]);
-				return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
-			}
-
-			if (a[sortConfig.field] < b[sortConfig.field]) {
-				return sortConfig.direction === 'asc' ? -1 : 1;
-			}
-			if (a[sortConfig.field] > b[sortConfig.field]) {
-				return sortConfig.direction === 'asc' ? 1 : -1;
-			}
-			return 0;
-		});
-	};
-
-	// Hàm lọc dữ liệu chỉ theo tên
-	const getFilteredData = () => {
-		if (!searchTerm.trim()) return productData;
+		const newDirection = sortConfig.field === field && sortConfig.direction === 'asc' ? 'desc' : 'asc';
 		
-		const searchLower = searchTerm.toLowerCase().trim();
-		return productData.filter(product => 
-			product.name.toLowerCase().includes(searchLower)
-		);
+		// Sort trên toàn bộ dữ liệu thay vì chỉ trang hiện tại
+		const newProducts = [...allProducts].sort((a, b) => {
+			const direction = newDirection === 'asc' ? 1 : -1;
+			
+			switch (field) {
+				case 'name':
+					return direction * (a.name || '').localeCompare(b.name || '');
+				case 'price':
+					return direction * (Number(a.price) - Number(b.price));
+				case 'promotional_price':
+					return direction * (Number(a.promotional_price) - Number(b.promotional_price));
+				case 'stock_quantity':
+					return direction * (Number(a.stock_quantity) - Number(b.stock_quantity));
+				case 'status':
+					return direction * (a.status || '').localeCompare(b.status || '');
+				default:
+					return 0;
+			}
+		});
+
+		setAllProducts(newProducts);
+		setSortConfig({ field, direction: newDirection });
+	};
+
+	// Cập nhật lại hàm search để giữ nguyên thứ tự sort
+	const handleSearch = (searchValue: string) => {
+		setSearchTerm(searchValue);
+		setCurrentPage(1);
 	};
 
 	// Fetch tất cả sản phẩm
@@ -160,7 +140,7 @@ const Product = () => {
 			setLoading(true);
 			const res = await productService.getAll(1, 1000); // Lấy nhiều sản phẩm
 			const sortedProducts = res.data.data.sort((a: PRODUCT, b: PRODUCT) => 
-				new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+				(new Date(b.created_at || 0)).getTime() - (new Date(a.created_at || 0)).getTime()
 			);
 			setAllProducts(sortedProducts);
 		} catch (error) {
@@ -176,12 +156,18 @@ const Product = () => {
 
 	// Lọc sản phẩm theo search term
 	const filteredProducts = searchTerm
-		? allProducts.filter(product =>
-				product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				product.categories.some(cat => 
-					cat.toLowerCase().includes(searchTerm.toLowerCase())
-				)
-			)
+		? allProducts.filter(product => {
+			const searchLower = searchTerm.toLowerCase();
+			const nameMatch = product.name.toLowerCase().includes(searchLower);
+			
+			// Sử dụng category_ids thay vì categories
+			const categories = Array.isArray(product.category_ids) ? product.category_ids : [];
+			const categoryMatch = categories.some(cat => 
+				String(cat).toLowerCase().includes(searchLower)
+			);
+			
+			return nameMatch || categoryMatch;
+		})
 		: allProducts;
 
 	// Tính toán sản phẩm cho trang hiện tại
@@ -202,10 +188,7 @@ const Product = () => {
 							type="text"
 							placeholder="Search by name or category..."
 							value={searchTerm}
-							onChange={(e) => {
-								setSearchTerm(e.target.value);
-								setCurrentPage(1); // Reset về trang 1 khi search
-							}}
+							onChange={(e) => handleSearch(e.target.value)}
 							className="input input-bordered w-full max-w-xs pl-10"
 						/>
 						<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -291,19 +274,29 @@ const Product = () => {
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
+								<div 
+									className="flex items-center cursor-pointer" 
+									onClick={() => handleSort('stock_quantity')}
+								>
 									Quantity
-									<a>
-										<FaSort />
-									</a>
+									<FaSort className={`ml-1 ${
+										sortConfig.field === 'stock_quantity' 
+											? 'text-primary' 
+											: 'text-gray-400'
+									}`} />
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
+								<div 
+									className="flex items-center cursor-pointer"
+									onClick={() => handleSort('status')}
+								>
 									Status
-									<a>
-										<FaSort />
-									</a>
+									<FaSort className={`ml-1 ${
+										sortConfig.field === 'status' 
+											? 'text-primary' 
+											: 'text-gray-400'
+									}`} />
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
@@ -382,9 +375,12 @@ const Product = () => {
 										</div>
 									</td>
 									<td className="px-6 py-3 flex items-center gap-2">
-										<button className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary">
+										<Link
+											to={`/products/${product.id}`}
+											className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+										>
 											<Eye size={16} />
-										</button>
+										</Link>
 										<Link
 											to={`/admin/product/update/${product.id}`}
 											className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"

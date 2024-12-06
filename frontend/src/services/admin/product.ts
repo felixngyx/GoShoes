@@ -45,6 +45,7 @@ export interface PRODUCT {
 	thumbnail: string;
 	updated_at?: string;
 	description: string;
+	created_at?: string;
 	stock_quantity?: number;
 	variants: {
 		color_id: number;

@@ -39,8 +39,7 @@ axiosClient.interceptors.response.use(
 
 		if (error.response.status === 401 && !originalRequest._retry) {
 			originalRequest._retry = true;
-			const refreshToken = Cookies.get('refresh_token');
-
+			const refreshToken = Cookies.get('refresh_token');	
 			if (!refreshToken) {
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');

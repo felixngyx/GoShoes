@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { Status } from '.';
+import { Status } from '../../../constants/status';
 import categoryService, { CATEGORY } from '../../../services/admin/category';
 import sizeService, { SIZE } from '../../../services/admin/size';
 import brandService, { BRAND } from '../../../services/admin/brand';
@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 import Joi from 'joi';
 import { joiResolver } from '@hookform/resolvers/joi';
 import uploadImageToCloudinary from '../../../common/uploadCloudinary';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { COLOR } from '../../../services/admin/color';
 import colorService from '../../../services/admin/color';
 import { Eye, TrashIcon, Logs, Upload, X, ArrowLeft } from 'lucide-react';
@@ -20,6 +20,7 @@ import LoadingIcon from '../../../components/common/LoadingIcon';
 import RichTextEditor from '../../../components/admin/RichTextEditor';
 import generateSlug from '../../../common/generateSlug';
 import axiosClient from '../../../apis/axiosClient';
+import { formatVNCurrency } from '../../../common/formatVNCurrency';
 
 
 // Add form validation schema
@@ -131,6 +132,12 @@ type VariantSize = {
 	product_variant_id?: number;
 };
 
+interface Variant {
+	color_id: number;
+	image: string;
+	variant_details: VariantSize[];
+}
+
 const UpdateProduct = () => {
 	const { id } = useParams();
 	const [product, setProduct] = useState<PRODUCT_DETAIL | null>(null);
@@ -143,10 +150,9 @@ const UpdateProduct = () => {
 	const [loadingData, setLoadingData] = useState(false);
 	const [stockQuantity, setStockQuantity] = useState(0);
 	const [description, setDescription] = useState('');
-	const navigate = useNavigate();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
-
+	const editorRef = useRef(null);
 	const {
 		register,
 		handleSubmit,
@@ -209,12 +215,15 @@ const UpdateProduct = () => {
 		[key: string]: number;
 	}>({});
 
+	// Thêm state để kiểm soát việc disable các nút
+	const [isSubmitting, setIsSubmitting] = useState(false);
+
 	// Fetch product data
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
 				setLoadingData(true);
-				
+
 				// Fetch reference data first
 				const [brandsRes, categoriesRes, colorsRes, sizesRes] = await Promise.all([
 					brandService.getAll(),
@@ -246,7 +255,7 @@ const UpdateProduct = () => {
 				setProduct(productData);
 
 				// Process variants data
-				const processedVariants = productData.variants?.map((variant: any) => {
+				const processedVariants = productData.variants?.map((variant: Variant) => {
 					return {
 						color_id: variant.color_id,
 						image: variant.image,
@@ -256,7 +265,7 @@ const UpdateProduct = () => {
 
 				// Set variant images
 				const variantImagesMap: { [key: number]: (string | File)[] } = {};
-				productData.variants?.forEach((variant: any, index: number) => {
+				productData.variants?.forEach((variant: Variant, index: number) => {
 					const images = variant.image?.split(', ') || [];
 					variantImagesMap[index] = images;
 				});
@@ -264,8 +273,8 @@ const UpdateProduct = () => {
 
 				// Set color search terms
 				const colorTermsMap: { [key: number]: string } = {};
-				productData.variants?.forEach((variant: any, index: number) => {
-					const color = colorsData.find(c => c.id === variant.color_id);
+				productData.variants?.forEach((variant: Variant, index: number) => {
+					const color = colorsData.find((c: COLOR) => c.id === variant.color_id);
 					if (color) {
 						colorTermsMap[index] = color.color;
 					}
@@ -274,21 +283,21 @@ const UpdateProduct = () => {
 
 				// Set variant sizes
 				const variantSizesMap: { [key: number]: VariantSize[] } = {};
-				productData.variants?.forEach((variant: any, index: number) => {
+				productData.variants?.forEach((variant: Variant, index: number) => {
 					variantSizesMap[index] = variant.variant_details || [];
 				});
 				setVariantSizes(variantSizesMap);
 
 				// Set selected categories
-				const selectedCats = categoriesData.filter((cat: CATEGORY) => 
+				const selectedCats = categoriesData.filter((cat: CATEGORY) =>
 					productData.category_ids?.includes(cat.id)
 				);
 				setSelectedCategories(selectedCats);
 
 				// Set previous values for quantities
 				const prevValues: { [key: string]: number } = {};
-				productData.variants?.forEach((variant: any, variantIndex: number) => {
-					variant.variant_details?.forEach((detail: any, detailIndex: number) => {
+				productData.variants?.forEach((variant: Variant, variantIndex: number) => {
+					variant.variant_details?.forEach((detail: VariantSize, detailIndex: number) => {
 						const key = `variants.${variantIndex}.variant_details.${detailIndex}.quantity`;
 						prevValues[key] = detail.quantity;
 					});
@@ -299,8 +308,8 @@ const UpdateProduct = () => {
 				reset({
 					name: productData.name,
 					description: productData.description,
-					price: productData.price,
-					promotional_price: productData.promotional_price,
+					price: Number(formatVNCurrency(productData.price)),
+					promotional_price: Number(formatVNCurrency(productData.promotional_price)),
 					status: productData.status,
 					sku: productData.sku,
 					hagtag: productData.hagtag,
@@ -440,8 +449,7 @@ const UpdateProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${
-								variantIndex - 1
+							`variants.${variantIndex - 1
 							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
@@ -492,6 +500,7 @@ const UpdateProduct = () => {
 	const onSubmit = async (data: PRODUCT) => {
 		try {
 			setLoading(true);
+			setIsSubmitting(true);
 			let thumbnailName = '';
 			if (thumbnailFile instanceof File) {
 				thumbnailName = await uploadImageToCloudinary(thumbnailFile);
@@ -556,11 +565,13 @@ const UpdateProduct = () => {
 			if (response.status.toString() === '201') {
 				toast.success('Update product successfully!');
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error submitting form:', error);
-			toast.error(error.response?.data?.message || 'Failed to update product');
+			const errorMessage = error instanceof Error ? error.message : 'Failed to update product';
+			toast.error(errorMessage);
 		} finally {
 			setLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
@@ -641,9 +652,8 @@ const UpdateProduct = () => {
 			const remainingSizes = currentVariant.variant_details.length;
 			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
 				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
-				const newKey = `variants.${variantIndex}.variant_details.${
-					i - 1
-				}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${i - 1
+					}.quantity`;
 				newPrev[newKey] = newPrev[oldKey];
 				delete newPrev[oldKey];
 			}
@@ -746,21 +756,20 @@ const UpdateProduct = () => {
 	}, []);
 
 	// Update the description state handler
-	const handleDescriptionChange = (value: string) => {
-		setDescription(value);
-		// Update the form value
-		setValue('description', value);
-		// Clear description error if value is not empty
-		if (value) {
-			clearErrors('description');
-		}
-	};
-
 	// Hàm kiểm tra màu đã được chọn chưa
 	const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
-		return fields.some((field, index) => 
+		return fields.some((field, index) =>
 			index !== currentVariantIndex && field.color_id === colorId
 		);
+	};
+
+	// Thêm hàm xử lý input số
+	const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		// Chỉ cho phép số và dấu chấm
+		if (!/^\d*\.?\d*$/.test(value)) {
+			e.target.value = value.replace(/[^\d.]/g, '');
+		}
 	};
 
 	return loadingData ? (
@@ -806,7 +815,10 @@ const UpdateProduct = () => {
 							</div>
 							<input
 								{...register('price')}
-								type="text"
+								type="number"
+								min="0"
+								step="any"
+								onInput={handleNumberInput}
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
@@ -825,7 +837,10 @@ const UpdateProduct = () => {
 							</div>
 							<input
 								{...register('promotional_price')}
-								type="text"
+								type="number"
+								min="0"
+								step="any"
+								onInput={handleNumberInput}
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
@@ -858,7 +873,13 @@ const UpdateProduct = () => {
 								{...register('sku')}
 								type="text"
 								placeholder="Type here"
-								className="input input-bordered w-full"
+								className="input input-bordered w-full uppercase"
+								onChange={(e) => {
+									// Chỉ cho phép chữ cái không dấu, số và dấu gạch ngang
+									const value = e.target.value.replace(/[^A-Za-z0-9-]/g, '').toUpperCase();
+									e.target.value = value;
+									setValue('sku', value);
+								}}
 							/>
 							{errors.sku && (
 								<p className="text-red-500 text-xs">
@@ -917,8 +938,8 @@ const UpdateProduct = () => {
 							>
 								<option value="">Select Brand</option>
 								{brands && brands.length > 0 && brands.map((brand) => (
-									<option 
-										key={brand.id} 
+									<option
+										key={brand.id}
 										value={brand.id}
 									>
 										{brand.name}
@@ -1047,8 +1068,8 @@ const UpdateProduct = () => {
 													openModal(
 														thumbnailFile instanceof File
 															? URL.createObjectURL(
-																	thumbnailFile
-															  )
+																thumbnailFile
+															)
 															: thumbnailFile
 													);
 												}}
@@ -1096,9 +1117,13 @@ const UpdateProduct = () => {
 								</span>
 							</div>
 							<RichTextEditor
-								initialValue={description}
-								onChange={handleDescriptionChange}
-								height={300}
+								ref={editorRef}
+								initialValue={product?.description || ''}
+								onChange={(newContent) => {
+									setValue('description', newContent);
+									setDescription(newContent);
+								}}
+								key={`editor-${id}`}
 							/>
 							{errors.description && (
 								<p className="text-red-500 text-xs">
@@ -1239,9 +1264,8 @@ const UpdateProduct = () => {
 																	? URL.createObjectURL(image)
 																	: image
 															}
-															alt={`Variant ${index + 1} - ${
-																imageIndex + 1
-															}`}
+															alt={`Variant ${index + 1} - ${imageIndex + 1
+																}`}
 															className="w-full h-full object-cover rounded-md border border-gray-300"
 														/>
 														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -1252,8 +1276,8 @@ const UpdateProduct = () => {
 																	openModal(
 																		image instanceof File
 																			? URL.createObjectURL(
-																					image
-																			  )
+																				image
+																			)
 																			: image
 																	);
 																}}
@@ -1311,6 +1335,7 @@ const UpdateProduct = () => {
 															{...register(
 																`variants.${index}.variant_details.${sizeIndex}.size_id`
 															)}
+															disabled={isSubmitting}
 														>
 															<option value="0">
 																Select size
@@ -1335,12 +1360,15 @@ const UpdateProduct = () => {
 															})}
 														</select>
 														<input
-															type="text"
+															type="number"
+															min="0"
 															placeholder="Quantity"
 															className="input input-bordered input-sm w-full"
 															{...register(
 																`variants.${index}.variant_details.${sizeIndex}.quantity`
 															)}
+															disabled={isSubmitting}
+															onInput={handleNumberInput}
 															onChange={(e) => {
 																const inputPath = `variants.${index}.variant_details.${sizeIndex}.quantity`;
 																const newValue =
@@ -1368,6 +1396,7 @@ const UpdateProduct = () => {
 																)
 															}
 															className="btn btn-sm btn-error"
+															disabled={isSubmitting}
 														>
 															<TrashIcon
 																size={16}
@@ -1379,25 +1408,25 @@ const UpdateProduct = () => {
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.size_id && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.size_id?.message
-															}
-														</span>
-													)}
+															<span className="label-text text-red-500 text-xs ms-2">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.size_id?.message
+																}
+															</span>
+														)}
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.quantity && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.quantity?.message
-															}
-														</span>
-													)}
+															<span className="label-text text-red-500 text-xs ms-2">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.quantity?.message
+																}
+															</span>
+														)}
 												</>
 											)
 										)}
@@ -1405,6 +1434,7 @@ const UpdateProduct = () => {
 											type="button"
 											onClick={() => handleAddSize(index)}
 											className="btn btn-sm w-fit ms-auto"
+											disabled={isSubmitting}
 										>
 											Add size
 										</button>
@@ -1412,15 +1442,16 @@ const UpdateProduct = () => {
 								</div>
 								{!product?.variants?.[index]?.sizes?.[0]
 									?.product_variant_id && (
-									<button
-										type="button"
-										onClick={() => removeVariant(index)}
-										className="btn bg-red-500	 btn-sm col-span-3 text-white"
-									>
-										<TrashIcon size={16} color="white" /> Delete
-										Variant
-									</button>
-								)}
+										<button
+											type="button"
+											onClick={() => removeVariant(index)}
+											className="btn bg-red-500	 btn-sm col-span-3 text-white"
+											disabled={isSubmitting}
+										>
+											<TrashIcon size={16} color="white" /> Delete
+											Variant
+										</button>
+									)}
 							</div>
 						))}
 
@@ -1428,12 +1459,13 @@ const UpdateProduct = () => {
 							type="button"
 							onClick={addVariant}
 							className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit"
+							disabled={isSubmitting}
 						>
 							Add Variant
 						</button>
 
 						<button
-							disabled={loading}
+							disabled={loading || isSubmitting}
 							type="submit"
 							className="btn mt-4 col-span-3 bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 						>

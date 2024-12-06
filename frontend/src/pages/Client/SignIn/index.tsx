@@ -76,6 +76,7 @@ const SignIn = () => {
 					Cookies.set('refresh_token', serverResponse.data.refresh_token);
 					dispatch(login(serverResponse.data.user));
 					toast.success(serverResponse.data.message);
+					
 					navigate('/');
 				} else {
 					toast.error(serverResponse.data.message);

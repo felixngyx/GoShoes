@@ -18,7 +18,6 @@ const User = () => {
 	const [loadingUpdate, setLoadingUpdate] = useState(false);
 	const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 	const [searchTerm, setSearchTerm] = useState('');
-	const [isSearching, setIsSearching] = useState(false);
 
 	const fetchAllUsers = async () => {
 		try {

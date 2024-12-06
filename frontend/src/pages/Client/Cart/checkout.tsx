@@ -36,8 +36,6 @@ const CheckoutPage = () => {
 
   // Tính toán thông tin đơn hàng
   const orderDetails = useMemo(() => {
-    const buyNowProductId = buyNowProduct?.variant?.id;
-    console.log("Buy Now Product:", buyNowProductId);
     if (buyNowProduct) {
       return {
         items: [
@@ -45,7 +43,7 @@ const CheckoutPage = () => {
             id: buyNowProduct.id,
             name: buyNowProduct.name,
             price: buyNowProduct.price,
-            quantity: buyNowProduct.quantity,
+            quantity: Number(buyNowProduct.quantity),
             thumbnail: buyNowProduct.thumbnail,
             variant: {
               id: buyNowProduct.variant?.id,
@@ -58,11 +56,11 @@ const CheckoutPage = () => {
                 color_name: buyNowProduct.variant?.color?.color,
               },
             },
-            total: buyNowProduct.total,
+            total: buyNowProduct.price * Number(buyNowProduct.quantity),
           },
         ],
-        subtotal: buyNowProduct.total,
-        total: buyNowProduct.total,
+        subtotal: buyNowProduct.price * Number(buyNowProduct.quantity),
+        total: buyNowProduct.price * Number(buyNowProduct.quantity),
       };
     } else if (cartItems?.length > 0) {
       return {
@@ -75,10 +73,8 @@ const CheckoutPage = () => {
         total: cartOrderSummary?.total || 0,
       };
     } else if (buyAgainItems?.length > 0) {
-      console.log("Buy Again Items:", buyAgainItems);
       return {
         items: buyAgainItems.map((item: any) => {
-          console.log("Processing item:", item);
           return {
             id: item.id,
             name: item.name,
@@ -120,8 +116,6 @@ const CheckoutPage = () => {
       };
     }
   }, [buyNowProduct, cartItems, cartOrderSummary, buyAgainItems]);
-
-  console.log(address);
 
   // Khởi tạo quantities từ orderDetails
   useEffect(() => {
@@ -294,25 +288,6 @@ const CheckoutPage = () => {
         }),
       }));
 
-      // Thêm điều kiện để xử lý buy now
-      if (buyNowState) {
-        const existingItemIndex = items.findIndex(
-          (item) => item.product_id === Number(buyNowState.id)
-        );
-
-        if (existingItemIndex > -1) {
-          // Nếu sản phẩm đã tồn tại, cập nhật số lượng
-          items[existingItemIndex].quantity += Number(buyNowState.quantity);
-        } else {
-          // Nếu sản phẩm chưa tồn tại, thêm mới
-          items.push({
-            product_id: Number(buyNowState.id),
-            quantity: Number(buyNowState.quantity),
-            variant_id: Number(buyNowState.variant?.variant_id), // Thêm variant_id cho buy now
-          });
-        }
-      }
-
       // Tạo request body và chuyển thành JSON string
       const requestData = JSON.stringify({
         items: items,
@@ -324,7 +299,6 @@ const CheckoutPage = () => {
       });
 
       // Log để kiểm tra
-      console.log("Request Data:", requestData);
 
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/orders`,

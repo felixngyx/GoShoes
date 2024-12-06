@@ -187,7 +187,8 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
-    const cartItemsForCheckout = cartItemsWithSelected.map(item => ({
+    // Chỉ lấy những sản phẩm đã được chọn
+    const selectedCartItems = cartItemsWithSelected.filter(item => item.selected).map(item => ({
       id: item.product_variant.product_id,
       name: item.product_variant.product.name,
       price: Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price),
@@ -204,15 +205,18 @@ const Cart = () => {
           color_name: item.product_variant.color.color_name || item.product_variant.color.color
         }
       },
-      total: Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price) * item.quantity
+      total: (Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price)) * item.quantity
     }));
+
+    // Tính lại tổng tiền chỉ cho các sản phẩm được chọn
+    const selectedSubtotal = selectedCartItems.reduce((sum, item) => sum + item.total, 0);
 
     navigate("/checkout", {
       state: {
-        cartItems: cartItemsForCheckout,
+        cartItems: selectedCartItems,
         orderSummary: {
-          subtotal: orderSummary.subtotal,
-          total: orderSummary.total,
+          subtotal: selectedSubtotal,
+          total: selectedSubtotal,
         },
       },
     });

@@ -203,7 +203,7 @@ export default function OrderList(): JSX.Element {
 
 	const handleRefundRequest = async (orderId: string): Promise<void> => {
 		try {
-			// Upload ảnh ln Cloudinary trước
+			// Upload ảnh ln Cloudinary trư��c
 			const uploadedImages = await Promise.all(
 				refundForm.images.map(async (image) => {
 					const imageFormData = new FormData();
@@ -365,7 +365,7 @@ export default function OrderList(): JSX.Element {
 
 							if (matchingSize.quantity < item.quantity) {
 								throw new Error(
-									`Chỉ còn ${matchingSize.quantity} sản phẩm cho biến thể của ${item.product.name}`
+									`Chỉ còn ${matchingSize.quantity} sản phẩm cho biến th�� của ${item.product.name}`
 								);
 							}
 
@@ -857,7 +857,7 @@ export default function OrderList(): JSX.Element {
 							<div className="flex items-start justify-between">
 								<div className="flex items-center space-x-4">
 									<img
-										src={order.items[0]?.product.thumbnail}
+										src={order.items[0]?.variant?.image || order.items[0]?.product.thumbnail}
 										alt={order.items[0]?.product.name}
 										className="w-20 h-20 rounded-lg object-cover"
 									/>

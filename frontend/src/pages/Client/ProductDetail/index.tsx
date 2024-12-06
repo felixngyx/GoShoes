@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { FaShoppingCart } from "react-icons/fa";
 import { IoMdAdd, IoMdRemove } from "react-icons/io";
-import { useParams, useNavigate, useNavigation } from "react-router-dom";
+import { useParams, useNavigate, useNavigation, Link } from "react-router-dom";
 import useCart from "../../../hooks/client/useCart";
 import { getProductById } from "../../../services/client/product";
 import { Category } from "../../../types/client/category";
@@ -18,6 +18,40 @@ import Cookies from "js-cookie";
 import { addProductToWishlist } from "../../../services/client/whishlist";
 import axiosClient from "../../../apis/axiosClient";
 
+interface Variant {
+	color_id: number;
+	color_name: string;
+	image: string;
+	variant_details: Array<{
+		size: string;
+		quantity: number;
+		variant_id: number;
+	}>;
+}
+
+interface Review {
+	user: {
+		name: string;
+		avt: string;
+	};
+	rating: number;
+	comment: string;
+	created_at: string;
+}
+
+interface PaginationLink {
+	url: string | null;
+	label: string;
+	active: boolean;
+}
+
+interface ReviewResponse {
+	current_page: number;
+	data: Review[];
+	last_page: number;
+	links: PaginationLink[];
+	total: number;
+}
 
 const ProductDetailSkeleton = () => {
 	return (
@@ -167,7 +201,7 @@ const ProductDetail = () => {
 	const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(
 		null
 	);
-	const [selectedColor, setSelectedColor] = useState<string | null>(null);
+	const [selectedColor, setSelectedColor] = useState<number | null>(null);
 	const [quantity, setQuantity] = useState(1);
 	const [activeTab, setActiveTab] = useState<
 		"description" | "reviews" | "writeComment"
@@ -178,6 +212,10 @@ const ProductDetail = () => {
 	const [availableQuantity, setAvailableQuantity] = useState(0);
 	const { handleAddToCartDetail } = useCart();
 	const [allImages, setAllImages] = useState<string[]>([]);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [isExpanded, setIsExpanded] = useState(false);
+	const [shouldShowButton, setShouldShowButton] = useState(false);
+	const contentRef = useRef<HTMLDivElement>(null);
 
 	// Xử lý variants an toàn hơn
 	const parsedVariants = useMemo(() => {
@@ -210,7 +248,7 @@ const ProductDetail = () => {
 
 		if (selectedColor) {
 			const selectedVariant = variants.find(
-				(variant: any) => variant.color_id === selectedColor
+				(variant: Variant) => variant.color_id === selectedColor
 			);
 
 			if (selectedVariant?.image) {
@@ -265,7 +303,7 @@ const ProductDetail = () => {
 		}
 
 		const selectedVariant = parsedVariants.find(
-			(variant: any) => variant.color_id === selectedColor
+			(variant: Variant) => variant.color_id === selectedColor
 		);
 
 		const selectedSizeDetails = selectedVariant?.variant_details?.find(
@@ -316,13 +354,28 @@ const ProductDetail = () => {
 	const handleSizeChange = (size: string) => {
 		console.log("Changing size to:", size);
 		setSelectedSize(size);
+
+		// Cập nhật availableQuantity dựa trên size mới
+		const selectedVariant = parsedVariants.find(
+			(variant: Variant) => variant.color_id === selectedColor
+		);
+
+		const sizeDetails = selectedVariant?.variant_details?.find(
+			(detail: any) => detail.size === size
+		);
+
+		if (sizeDetails) {
+			setAvailableQuantity(sizeDetails.quantity);
+			// Reset quantity về 1 khi đổi size
+			setQuantity(1);
+		}
 	};
 
 	const uniqueSizes = selectedColor
 		? Array.from(
 			parsedVariants
-				.filter((variant: any) => variant.color_id === selectedColor)
-				.flatMap((variant: any) =>
+				.filter((variant: Variant) => variant.color_id === selectedColor)
+				.flatMap((variant: Variant) =>
 					variant.variant_details?.map((detail: any) => ({
 						size: detail.size,
 						disabled: detail.quantity === 0,
@@ -406,14 +459,18 @@ const ProductDetail = () => {
 		}
 	};
 
-	const handleBuyNow = () => {
+	const handleBuyNow = (e: React.MouseEvent) => {
+		e.preventDefault();
+		
 		if (!selectedSize || !selectedColor) {
 			toast.error("Vui lòng chọn size và màu sắc trước khi mua hàng");
 			return;
 		}
 
+		console.log('Current quantity:', quantity);
+
 		const selectedVariant = parsedVariants.find(
-			(variant: any) => variant.color_id === selectedColor
+			(variant: Variant) => variant.color_id === selectedColor
 		);
 
 		const selectedSizeDetails = selectedVariant?.variant_details?.find(
@@ -438,7 +495,7 @@ const ProductDetail = () => {
 						name: product.name,
 						price: product.original_promotional_price || product.original_price,
 						thumbnail: selectedThumbnail || product.thumbnail,
-						quantity: quantity,
+						quantity,
 						variant: variantInfo,
 						total: (product.original_promotional_price || product.original_price) * quantity,
 					}
@@ -451,10 +508,18 @@ const ProductDetail = () => {
 
 	const accessToken = Cookies.get("access_token");
 
-	const { data: review } = useQuery({
-		queryKey: ["PRODUCT_REVIEWS", product?.id],
-		queryFn: () => gellReviewByProductId(product?.id),
+	const { data: reviewData } = useQuery<ReviewResponse>({
+		queryKey: ["PRODUCT_REVIEWS", product?.id, currentPage],
+		queryFn: () => gellReviewByProductId(product?.id, currentPage),
 	});
+
+	// Thêm useEffect để kiểm tra chiều cao của content
+	useEffect(() => {
+		if (contentRef.current && product?.description) {
+			// Nếu nội dung cao hơn 200px thì hiện nút xem thêm
+			setShouldShowButton(contentRef.current.scrollHeight > 200);
+		}
+	}, [product?.description]);
 
 	if (isLoading) {
 		return <ProductDetailSkeleton />;
@@ -487,8 +552,8 @@ const ProductDetail = () => {
 											key={index}
 											onClick={() => setSelectedThumbnail(image)} // Cập nhật hình ảnh được chọn
 											className={`relative overflow-hidden rounded-md ${selectedThumbnail === image
-													? "ring-2 ring-theme-color-primary"
-													: ""
+												? "ring-2 ring-theme-color-primary"
+												: ""
 												}`}
 										>
 											<img
@@ -519,9 +584,12 @@ const ProductDetail = () => {
 					<div className="flex items-center gap-4 mb-2">
 						<RatingStars rating={product.rating_count} />
 						<span className="text-[#9098B1] text-sm">
-							({product.reviews} reviews)
+							{product.reviews}
+							<span className="text-sm text-gray-600">
+								{product.rating_count} reviews
+							</span>
 						</span>
-						<span className="text-xs text-[#40BFFF]">Submit a review</span>
+
 					</div>
 					<div className="flex items-center gap-2 mt-1 mb-3">
 						<p className="text-primary text-lg font-semibold">
@@ -555,7 +623,7 @@ const ProductDetail = () => {
 						</div>
 						<div className="grid grid-cols-2 max-w-xs">
 							<span className="col-span-1">Brand:</span>
-							<span className="col-span-1 text-left">{product.brand_name}</span>
+							<span className="col-span-1 text-left">{product.brand.name}</span>
 						</div>
 						<div className="grid grid-cols-2 max-w-xs">
 							<span className="col-span-1">Availability:</span>
@@ -683,8 +751,8 @@ const ProductDetail = () => {
 					<div className="flex gap-4 md:gap-28 border-b">
 						<button
 							className={`px-4 py-2 ${activeTab === "description"
-									? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
-									: ""
+								? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
+								: ""
 								}`}
 							onClick={() => setActiveTab("description")}
 						>
@@ -692,27 +760,60 @@ const ProductDetail = () => {
 						</button>
 						<button
 							className={`px-4 py-2 ${activeTab === "reviews"
-									? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
-									: ""
+								? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
+								: ""
 								}`}
 							onClick={() => setActiveTab("reviews")}
 						>
 							Reviews
 						</button>
-						<button
-							className={`px-4 py-2 ${activeTab === "writeComment"
-									? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
-									: ""
-								}`}
-							onClick={() => setActiveTab("writeComment")}
-						>
-							Write Comment
-						</button>
 					</div>
 					<div className="p-4">
 						{activeTab === "description" && (
-							<div>
-								<p className="mb-2 text-[#9098B1]">{product.description}</p>
+							<div className="relative z-10">
+								<div
+									ref={contentRef}
+									className={`description-content overflow-hidden transition-all duration-300 relative ${
+										isExpanded ? '' : 'max-h-[200px]'
+									}`}
+								>
+									{product?.description ? (
+										<div dangerouslySetInnerHTML={{ __html: product.description }}></div>
+									) : (
+										<p>No description available</p>
+									)}
+								</div>
+								
+								{/* Gradient overlay when collapsed */}
+								{!isExpanded && shouldShowButton && (
+									<div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent z-20"></div>
+								)}
+								
+								{/* Show more/less button */}
+								{shouldShowButton && product?.description && (
+									<div className="relative z-30">
+										<button
+											onClick={() => setIsExpanded(!isExpanded)}
+											className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 mx-auto bg-white rounded-md shadow-sm hover:shadow"
+										>
+											{isExpanded ? (
+												<>
+													Show Less
+													<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+													</svg>
+												</>
+											) : (
+												<>
+													Show More
+													<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+													</svg>
+												</>
+											)}
+										</button>
+									</div>
+								)}
 							</div>
 						)}
 						{activeTab === "reviews" && (
@@ -721,7 +822,7 @@ const ProductDetail = () => {
 								<div className="max-w-6xl mx-auto">
 									<div></div>
 									<div className="flex flex-col gap-8">
-										{review?.data.map((item: any, index: number) => (
+										{reviewData?.data.map((item: Review, index: number) => (
 											<div
 												key={index}
 												className="bg-white rounded-lg shadow-lg p-6 transition-transform hover:scale-[1.01]"
@@ -763,13 +864,22 @@ const ProductDetail = () => {
 
 										{/* Pagination or more reviews */}
 										<div className="join bg-[#FAFAFB] rounded-md ms-auto">
-											<button className="join-item btn btn-sm">1</button>
-											<button className="join-item btn btn-sm">2</button>
-											<button className="join-item btn btn-sm btn-disabled">
-												...
-											</button>
-											<button className="join-item btn btn-sm">99</button>
-											<button className="join-item btn btn-sm">100</button>
+											{reviewData?.links.map((link, index) => (
+												<button
+													key={index}
+													onClick={() => {
+														if (link.url) {
+															const page = parseInt(link.label);
+															if (!isNaN(page)) setCurrentPage(page);
+														}
+													}}
+													disabled={!link.url}
+													className={`join-item btn btn-sm ${
+														link.active ? 'btn-active' : ''
+													} ${!link.url ? 'btn-disabled' : ''}`}
+													dangerouslySetInnerHTML={{ __html: link.label }}
+												/>
+											))}
 										</div>
 									</div>
 								</div>

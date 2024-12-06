@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { ColorExtractor } from 'color-thief-react';
 import { motion } from "framer-motion";
 
+
 interface Banner {
   id: number;
   title: string;
@@ -151,6 +152,27 @@ const ImageWithFallback = ({ src, alt, ...props }) => {
   return <img src={src} alt={alt} onError={handleError} {...props} />;
 };
 
+// Thêm component ProductSkeleton
+const ProductSkeleton = () => (
+  <div className="col-span-1 shadow-md animate-pulse">
+    <div className="grid grid-cols-2 gap-5">
+      <div className="col-span-1 bg-gray-200 h-[150px]"></div>
+      <div className="col-span-1 flex flex-col justify-start my-2 space-y-2">
+        <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+        <div className="flex items-center gap-1">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-4 w-4 bg-gray-200 rounded-full"></div>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-5 bg-gray-200 rounded w-24"></div>
+          <div className="h-4 bg-gray-200 rounded w-20"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 // Cập nhật component Homepage
 const Homepage = () => {
   const navigate = useNavigate();
@@ -158,6 +180,22 @@ const Homepage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [dominantColors, setDominantColors] = useState<{ [key: number]: string }>({});
+  const [top_products, setTopProducts] = useState([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+
+  const fetchTopProducts = async () => {
+    setIsLoadingProducts(true);
+    try {
+      const response = await axiosClient.get("/products");
+      setTopProducts(response.data.top_products);
+    } catch (error) {
+      console.error("Failed to fetch top products:", error);
+      toast.error("Failed to load top products");
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
   useEffect(() => {
     const fetchBanners = async () => {
       setIsLoading(true);
@@ -170,9 +208,10 @@ const Homepage = () => {
         setIsLoading(false);
       }
     };
-
+    fetchTopProducts();
     fetchBanners();
   }, []);
+
 
   const headerBanners = banners.filter((banner) =>
     ["home1", "home2", "home3"].includes(banner.position)
@@ -284,7 +323,7 @@ const Homepage = () => {
 
       {/* Latest Product */}
       <p className="text-black text-3xl font-bold text-center mt-20">
-        Best Seller
+        Product List
       </p>
       <div className="container max-w-7xl mx-auto">
         <div className="grid grid-cols-4 gap-10 mt-10">
@@ -324,7 +363,7 @@ const Homepage = () => {
                 className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-50"
               />
               <div className="absolute inset-0 z-20 flex flex-col justify-between p-8">
-                <p 
+                <p
                   className="text-white text-5xl font-extrabold 
                   transform translate-y-[-100%] opacity-0 transition-all duration-300 
                   group-hover:translate-y-0 group-hover:opacity-100"
@@ -388,47 +427,94 @@ const Homepage = () => {
       </div>
 
       {/* Featured Product */}
-      {/* <div className="container max-w-7xl mx-auto my-10">
+      <div className="container max-w-7xl mx-auto my-10">
         <p className="text-black text-3xl font-bold text-center">
-          Featured Product
+          Top Product
         </p>
         <div className="grid grid-cols-3 gap-10 mt-10">
-          {Array(3)
-            .fill(null)
-            .map((_, index) => (
-              <div key={index} className="col-span-1 shadow-md cursor-pointer">
+          {isLoadingProducts ? (
+            // Hiển thị skeleton khi đang loading
+            [...Array(6)].map((_, index) => (
+              <ProductSkeleton key={index} />
+            ))
+          ) : (
+            top_products.map((product) => (
+              <div 
+                key={product.id} 
+                className="col-span-1 shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-300"
+                onClick={() => navigate(`/products/${product.id}`)}
+              >
                 <div className="grid grid-cols-2 gap-5">
                   <div className="col-span-1">
-                    <img src="demo 2.png" alt="Featured Product" />
+                    <img
+                      src={product.thumbnail}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="col-span-1 flex flex-col justify-start my-2">
-                    <p className="text-black text-xl font-normal">
-                      Blue Swade Nike Sneakers
+                    <p className="text-black text-xl font-normal hover:text-blue-600 transition-colors">
+                      {product.name}
                     </p>
                     <div className="flex items-center gap-1 my-2">
-                      <IoStar color="yellow" />
-                      <IoStar color="yellow" />
-                      <IoStar color="yellow" />
-                      <IoStar color="yellow" />
-                      <IoStar color="yellow" />
+                      {[...Array(Math.floor(Number(product.rating_count)))].map((_, i) => (
+                        <IoStar key={i} color="yellow" />
+                      ))}
                     </div>
                     <div className="flex items-center gap-2">
                       <p className="text-[#FF6875] text-md font-bold">
-                        2.345.000 ₫
+                        {Number(product.promotional_price).toLocaleString('vi-VN')} ₫
                       </p>
                       <p className="text-gray-400 text-xs font-medium line-through">
-                        2.345.000 ₫
+                        {Number(product.price).toLocaleString('vi-VN')} ₫
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
+            ))
+          )}
         </div>
-        <p className="text-[#40BFFF] text-xl font-bold text-center mt-10 cursor-pointer underline ">
-          View All
-        </p>
-      </div> */}
+        {/* Map and Store Information */}
+        <div className="container max-w-7xl mx-auto my-10">
+          <p className="text-black text-3xl font-bold text-center">
+            Find Us
+          </p>
+          <div className="grid grid-cols-2 gap-10 mt-10">
+            <div className="col-span-1">
+              <iframe
+                width="600"
+                height="450"
+                style={{ border: 0 }}
+                referrerPolicy="no-referrer-when-downgrade"
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=Cao%20%C4%91%E1%BA%B3ng%20Fpt&zoom=10&maptype=roadmap">
+              </iframe>
+            </div>
+            <div className="col-span-1 flex flex-col justify-start">
+              <p className="text-black text-xl font-bold">
+                Khu Tự Trị Trịnh Văn Bô
+              </p>
+              <p className="text-black text-md font-medium">
+                Hai Ba Trung , Ha Noi
+
+                Viet Nam
+              </p>
+              <p className="text-black text-xl font-bold mt-4">
+                Contact Us
+              </p>
+              <p className="text-black text-md font-medium">
+                Phone: +1 (123) 456-7890
+              </p>
+              <p className="text-black text-md font-medium">
+                Email: [goshoes@example.com](mailto:goshoes@example.com)
+              </p>
+            <p className="text-black text-xl font-bold mt-4 cursor-pointer hover:text-gray-800" onClick={() => navigate('/contact')}>
+              Contact Us
+            </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   );
 };

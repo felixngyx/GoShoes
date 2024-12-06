@@ -18,11 +18,7 @@ const ProductList = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [perPage, setPerPage] = useState(9);
   const [page, setPage] = useState(1);
-  const [sortByName, setSortByName] = useState<"asc" | "desc" | undefined>();
-  const [sortByPrice, setSortByPrice] = useState<"asc" | "desc" | undefined>();
-  const [sortByRating, setSortByRating] = useState<
-    "asc" | "desc" | undefined
-  >();
+  const [sortBy, setSortBy] = useState<string>("newest");
   const [selectedSize, setSelectedSize] = useState<number | number>(0);
   const [selectedBrand, setSelectedBrand] = useState<number | number>(0);
 
@@ -39,9 +35,7 @@ const ProductList = () => {
       perPage,
       selectedBrand,
       selectedSize,
-      sortByName,
-      sortByPrice,
-      sortByRating,
+      sortBy,
     ],
     queryFn: () =>
       filterProduct(
@@ -51,9 +45,7 @@ const ProductList = () => {
         perPage,
         selectedBrand,
         selectedSize,
-        sortByName,
-        sortByPrice,
-        sortByRating
+        sortBy
       ),
     staleTime: 2,
     refetchOnWindowFocus: false,
@@ -68,44 +60,33 @@ const ProductList = () => {
   const filteredProducts = useMemo(() => {
     let filteredData = [...(products?.data || [])];
 
-    // Sắp xếp theo tên
-    if (sortByName) {
-      filteredData.sort((a, b) =>
-        sortByName === "asc"
-          ? a.name.localeCompare(b.name)
-          : b.name.localeCompare(a.name)
-      );
-    }
-
-    // Sắp xếp theo giá
-    if (sortByPrice) {
-      filteredData.sort((a: any, b: any) => {
-        const priceA = parsePrice(a.promotional_price);
-        const priceB = parsePrice(b.promotional_price);
-
-        return sortByPrice === "asc" ? priceA - priceB : priceB - priceA;
-      });
-    }
-
-    // Sắp xếp theo rating
-    if (sortByRating) {
-      filteredData.sort((a, b) =>
-        sortByRating === "asc"
-          ? b.rating_count - a.rating_count
-          : a.rating_count - b.rating_count
-      );
+    // Sort theo lựa chọn
+    switch (sortBy) {
+      case "newest":
+        filteredData.sort((a, b) => b.id - a.id); // Sort theo ID giảm dần
+        break;
+      case "name-asc":
+        filteredData.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc": 
+        filteredData.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case "price-asc":
+        filteredData.sort((a, b) => parseFloat(a.promotional_price) - parseFloat(b.promotional_price));
+        break;
+      case "price-desc":
+        filteredData.sort((a, b) => parseFloat(b.promotional_price) - parseFloat(a.promotional_price));
+        break;
+      case "rating-asc":
+        filteredData.sort((a, b) => parseFloat(b.rating_count) - parseFloat(a.rating_count));
+        break;
+      case "rating-desc":
+        filteredData.sort((a, b) => parseFloat(a.rating_count) - parseFloat(b.rating_count));
+        break;
     }
 
     return filteredData;
-  }, [
-    products,
-    priceRange,
-    sortByName,
-    sortByPrice,
-    sortByRating,
-    selectedBrand,
-    selectedSize,
-  ]);
+  }, [products, sortBy]);
 
   useEffect(() => {
     refetch();
@@ -114,9 +95,7 @@ const ProductList = () => {
     products,
     selectedBrand,
     selectedSize,
-    sortByName,
-    sortByPrice,
-    sortByRating,
+    sortBy,
   ]);
 
   const formatPrice = (price: number) => {
@@ -336,20 +315,10 @@ const ProductList = () => {
               <span>{filteredProducts.length} Items</span>
               <select
                 className="select select-bordered bg-white text-gray-800"
-                onChange={(e) => {
-                  const [type, order] = e.target.value.split("-");
-                  if (type === "name") {
-                    setSortByName(order as "asc" | "desc");
-                  } else if (type === "price") {
-                    setSortByPrice(order as "asc" | "desc");
-                  } else if (type === "rating") {
-                    setSortByRating(order as "asc" | "desc");
-                  }
-                }}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
               >
-                <option disabled value="">
-                  Sort By
-                </option>
+                <option value="newest">Newest</option>
                 <option value="name-asc">Name A-Z</option>
                 <option value="name-desc">Name Z-A</option>
                 <option value="price-asc">Price Low to High</option>

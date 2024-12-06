@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { Status } from '.';
+import { Status } from '../../../constants/status';
 import categoryService, { CATEGORY } from '../../../services/admin/category';
 import sizeService, { SIZE } from '../../../services/admin/size';
 import brandService, { BRAND } from '../../../services/admin/brand';
@@ -16,6 +16,7 @@ import { Eye, TrashIcon, Logs, Upload, X, ArrowLeft } from 'lucide-react';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import RichTextEditor from '../../../components/admin/RichTextEditor';
 import generateSlug from '../../../common/generateSlug';
+
 
 // Add form validation schema
 const productSchema = Joi.object({
@@ -348,8 +349,7 @@ const AddProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${
-								variantIndex - 1
+							`variants.${variantIndex - 1
 							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
@@ -463,9 +463,14 @@ const AddProduct = () => {
 				toast.success('Create product successfully');
 				navigate('/admin/product');
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error submitting form:', error);
-			toast.error(error.response.data.message);
+			if (error && typeof error === 'object' && 'response' in error) {
+				const apiError = error as { response: { data: { message: string } } };
+				toast.error(apiError.response.data.message);
+			} else {
+				toast.error('An unexpected error occurred');
+			}
 		} finally {
 			setLoading(false);
 		}
@@ -506,9 +511,8 @@ const AddProduct = () => {
 		// Khởi tạo previousValues cho size mới với quantity = 0
 		setPreviousValues((prev) => ({
 			...prev,
-			[`variants.${variantIndex}.variant_details.${
-				variantSizes[variantIndex]?.length || 0
-			}.quantity`]: 0,
+			[`variants.${variantIndex}.variant_details.${variantSizes[variantIndex]?.length || 0
+				}.quantity`]: 0,
 		}));
 
 		setVariantSizes((prev) => ({
@@ -547,9 +551,8 @@ const AddProduct = () => {
 			const remainingSizes = currentVariant.variant_details.length;
 			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
 				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
-				const newKey = `variants.${variantIndex}.variant_details.${
-					i - 1
-				}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${i - 1
+					}.quantity`;
 				newPrev[newKey] = newPrev[oldKey];
 				delete newPrev[oldKey];
 			}
@@ -599,7 +602,7 @@ const AddProduct = () => {
 				[variantIndex]: [...(prev[variantIndex] || []), ...filesArray],
 			}));
 
-			// Cập nhật giá trị cho form
+			// Cp nhật giá trị cho form
 			setValue(
 				`variants.${variantIndex}.image`,
 				filesArray[0].name // Tạm thời lấy tên file đu tiên
@@ -662,7 +665,7 @@ const AddProduct = () => {
 
 	// Hàm kiểm tra màu đã được chọn chưa
 	const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
-		return fields.some((field, index) => 
+		return fields.some((field, index) =>
 			index !== currentVariantIndex && field.color_id === colorId
 		);
 	};
@@ -1001,9 +1004,8 @@ const AddProduct = () => {
 								</span>
 							</div>
 							<RichTextEditor
-								initialValue={description}
+								initialValue=""
 								onChange={handleDescriptionChange}
-								height={300}
 							/>
 							{errors.description && (
 								<p className="text-red-500 text-xs">
@@ -1143,9 +1145,8 @@ const AddProduct = () => {
 													>
 														<img
 															src={URL.createObjectURL(image)}
-															alt={`Variant ${index + 1} - ${
-																imageIndex + 1
-															}`}
+															alt={`Variant ${index + 1} - ${imageIndex + 1
+																}`}
 															className="w-full h-full object-cover rounded-md border border-gray-300"
 														/>
 														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -1238,7 +1239,7 @@ const AddProduct = () => {
 															type="number"
 															min="1"
 															max="999999"
-															placeholder="Quantity"
+															placeholder="Enter a quantity between 1 and 999,999"
 															className="input input-bordered input-sm w-full"
 															{...register(
 																`variants.${index}.variant_details.${sizeIndex}.quantity`,
@@ -1247,7 +1248,7 @@ const AddProduct = () => {
 																	onChange: (e) => {
 																		const inputPath = `variants.${index}.variant_details.${sizeIndex}.quantity`;
 																		let newValue = parseInt(e.target.value);
-																		
+
 																		// Kiểm tra và giới hạn giá trị
 																		if (isNaN(newValue) || newValue < 0) {
 																			newValue = 0;
@@ -1258,7 +1259,7 @@ const AddProduct = () => {
 
 																		// Cập nhật giá trị
 																		setValue(inputPath, newValue);
-																		
+
 																		// Cập nhật tổng số lượng
 																		const oldValue = previousValues[inputPath] || 0;
 																		setStockQuantity((prev) => prev - oldValue + newValue);
@@ -1270,20 +1271,6 @@ const AddProduct = () => {
 																}
 															)}
 														/>
-														<small className="text-gray-500 mt-1">
-															Enter a quantity between 1 and 999,999
-														</small>
-														{errors.variants?.[index]
-															?.variant_details?.[sizeIndex]
-															?.quantity && (
-															<span className="text-red-500 text-xs mt-1">
-																{
-																	errors.variants[index]
-																		.variant_details[sizeIndex]
-																		?.quantity?.message
-																}
-															</span>
-														)}
 														<button
 															type="button"
 															onClick={() =>
@@ -1304,14 +1291,14 @@ const AddProduct = () => {
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.size_id && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.size_id?.message
-															}
-														</span>
-													)}
+															<span className="label-text text-red-500 text-xs ms-2">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.size_id?.message
+																}
+															</span>
+														)}
 												</>
 											)
 										)}
