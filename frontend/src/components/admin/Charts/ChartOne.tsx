@@ -4,8 +4,10 @@ import ReactApexChart from 'react-apexcharts';
 
 interface ChartOneProps {
 	data: {
-		month: string;
-		revenue: number;
+		hour?: string;
+		month?: string;
+		revenue: string | number;
+		date?: string;
 	}[];
 	onFilterChange: (filter: string) => void;
 	currentFilter: string;
@@ -20,8 +22,8 @@ const ChartOne: React.FC<ChartOneProps> = ({
 		switch (currentFilter) {
 			case 'today':
 				return rawData.map((item) => ({
-					month: new Date(item.date).getHours() + ':00',
-					revenue: item.revenue,
+					month: item.hour,
+					revenue: Number(item.revenue),
 				}));
 
 			case 'monthly':
@@ -45,6 +47,13 @@ const ChartOne: React.FC<ChartOneProps> = ({
 	};
 
 	const formattedData = formatChartData(data);
+
+	const formatXAxis = (value: string) => {
+		if (currentFilter === 'today') {
+			return value.split(':')[0] + ':00';
+		}
+		return value;
+	};
 
 	const options: ApexOptions = {
 		chart: {

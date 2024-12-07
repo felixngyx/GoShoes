@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
         \App\Models\VariantSize::factory()->upsertVariantSizes(30);
         \App\Models\PostCategory::factory()->count(10)->create();
         \App\Models\Post::factory()->count(50)->create();
+        $this->call(BannerSeeder::class);
+        $this->call(PaymentMethodsSeeder::class);
 
         // git
     }

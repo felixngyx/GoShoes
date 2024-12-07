@@ -39,9 +39,10 @@ class FacebookAuthController extends Controller
 
         // Tìm hoặc tạo mới user trong database
         $user = $this->findOrCreateUser($facebookUser);
-
+        config(['jwt.ttl' => 30]);
         // Tạo access token và refresh token cho user
         $accessToken = JWTAuth::claims(['token_type' => 'access'])->fromUser($user);
+        config(['jwt.refresh_ttl' => 30 * 24 * 60]);
         $refreshToken = JWTAuth::claims(['token_type' => 'refresh'])->fromUser($user);
 
         // Trả về phản hồi JSON với thông tin người dùng và token

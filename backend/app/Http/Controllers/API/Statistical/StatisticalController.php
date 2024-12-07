@@ -60,9 +60,9 @@ class StatisticalController extends Controller
         switch ($request->filter) {
             case 'today':
                 $query->whereDate('created_at', Carbon::today())
-                    ->selectRaw('HOUR(created_at) as date, SUM(total) as revenue')
-                    ->groupBy('date')
-                    ->orderBy('date');
+                    ->selectRaw('DATE_FORMAT(created_at, "%H:00") as hour, SUM(total) as revenue')
+                    ->groupBy('hour')
+                    ->orderBy('hour');
                 break;
 
             case 'monthly':
@@ -93,7 +93,7 @@ class StatisticalController extends Controller
         if ($revenue->isEmpty()) {
             switch ($request->filter) {
                 case 'today':
-                    $revenue = [['date' => Carbon::now()->format('Y-m-d H:00:00'), 'revenue' => 0]];
+                    $revenue = [['hour' => Carbon::now()->format('H:00'), 'revenue' => 0]];
                     break;
                 case 'monthly':
                     $revenue = [['date' => Carbon::now()->format('Y-m-d'), 'revenue' => 0]];

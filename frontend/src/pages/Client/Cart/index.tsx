@@ -13,6 +13,7 @@ import useCart from "../../../hooks/client/useCart";
 import toast from "react-hot-toast";
 import { removeFromCart } from "../../../hooks/client/cartSlice";
 import { useDispatch } from "react-redux";
+import Breadcrumb from "../../../components/client/Breadcrumb";
 
 const CartSkeleton = () => {
   return (
@@ -186,7 +187,8 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
-    const cartItemsForCheckout = cartItemsWithSelected.map(item => ({
+    // Chỉ lấy những sản phẩm đã được chọn
+    const selectedCartItems = cartItemsWithSelected.filter(item => item.selected).map(item => ({
       id: item.product_variant.product_id,
       name: item.product_variant.product.name,
       price: Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price),
@@ -203,15 +205,18 @@ const Cart = () => {
           color_name: item.product_variant.color.color_name || item.product_variant.color.color
         }
       },
-      total: Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price) * item.quantity
+      total: (Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price)) * item.quantity
     }));
+
+    // Tính lại tổng tiền chỉ cho các sản phẩm được chọn
+    const selectedSubtotal = selectedCartItems.reduce((sum, item) => sum + item.total, 0);
 
     navigate("/checkout", {
       state: {
-        cartItems: cartItemsForCheckout,
+        cartItems: selectedCartItems,
         orderSummary: {
-          subtotal: orderSummary.subtotal,
-          total: orderSummary.total,
+          subtotal: selectedSubtotal,
+          total: selectedSubtotal,
         },
       },
     });
@@ -227,6 +232,13 @@ const Cart = () => {
   if (isLoading) return <CartSkeleton />;
 
   return (
+    <>
+       <Breadcrumb
+        items={[
+          { name: "Home", link: "" },
+          { name: "Cart", link: "cart" },
+        ]}
+      />
     <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
@@ -424,6 +436,7 @@ const Cart = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

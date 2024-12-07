@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "vite preview --port 4567",
     "proxy": "https://provinces.open-api.vn"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-react": "^9.4.0",
     "@cloudinary/react": "^1.13.1",
     "@cloudinary/url-gen": "^1.21.0",
     "@emotion/react": "^11.13.3",
@@ -27,9 +28,12 @@
     "@tinymce/tinymce-react": "^5.1.1",
     "apexcharts": "^3.53.0",
     "axios": "^1.7.4",
+    "babel-polyfill": "^6.26.0",
     "class-variance-authority": "^0.7.0",
+    "color-thief-react": "^2.1.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
+    "draft-js": "^0.11.7",
     "flatpickr": "^4.6.13",
     "framer-motion": "^11.11.11",
     "headlessui": "^0.0.0",

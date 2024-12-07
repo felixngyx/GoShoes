@@ -163,14 +163,23 @@ const ProductCard = () => {
 			{products?.map((product: IProduct) => (
 				<div
 					key={product.id}
-					className="col-span-1 border border-[#F6F7F8] rounded-lg group overflow-hidden shadow-sm transition-shadow duration-300 hover:shadow-lg"
+					className="col-span-1 border border-[#F6F7F8] rounded-lg group overflow-hidden shadow-sm transition-shadow duration-300 hover:shadow-lg flex flex-col justify-between pb-4"
 				>
-					<div className="relative w-full h-[280px] overflow-hidden">
+					<div className="relative overflow-hidden">
 						<img
-							className="w-full h-full object-cover transition-transform duration-300 transform group-hover:scale-105"
+							className="w-full h-[150px] sm:h-[200px] lg:h-[280px] object-cover transition-transform duration-300 transform group-hover:scale-105"
 							src={product.thumbnail}
 							alt={product.name}
 						/>
+						<p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
+							{Math.round(
+								((Number(product.price) -
+									Number(product.promotional_price)) /
+									Number(product.price)) *
+									100
+							)}
+							%
+						</p>
 						<div className="absolute hidden group-hover:flex w-full h-full top-0 left-0 bg-opacity-70 bg-gray-50 justify-center items-center gap-8 z-10">
 							<IoHeartOutline
 								onClick={() => handleAddToWishlist(product.id)}
@@ -185,33 +194,23 @@ const ProductCard = () => {
 								color="#40BFFF"
 							/>
 						</div>
-						<div className="absolute top-2 left-2 text-white font-semibold bg-red-500 px-2 rounded-md text-sm shadow-md">
-							HOT
-						</div>
 					</div>
+
 					<Link to={`/products/${product.id}`}>
-						<p className="text-center text-[#223263] text-lg font-semibold mt-2 px-2 hover:text-primary transition">
+						<p className="text-center text-[#223263] text-sm md:text-base font-semibold mt-2 px-2 hover:text-primary transition">
 							{product.name}
 						</p>
 					</Link>
+
 					<div className="flex flex-row items-center justify-center gap-1 mt-1">
 						<RatingStars rating={product.rating_count} />
 					</div>
-					<div className="flex items-center justify-center gap-2 mt-1 mb-3">
-						<p className="text-primary text-lg font-semibold">
+					<div className="flex items-center justify-center gap-2">
+						<p className="text-primary text-xs md:text-sm font-semibold">
 							{formatVNCurrency(Number(product.promotional_price))}
 						</p>
-						<p className="text-[#9098B1] text-sm font-medium line-through">
+						<p className="text-[#9098B1] text-xs md:text-sm font-medium line-through">
 							{formatVNCurrency(Number(product.price))}
-						</p>
-						<p className="text-[#E71D36] text-sm font-semibold">
-							{Math.round(
-								((Number(product.price) -
-									Number(product.promotional_price)) /
-									Number(product.price)) *
-									100
-							)}
-							%
 						</p>
 					</div>
 				</div>

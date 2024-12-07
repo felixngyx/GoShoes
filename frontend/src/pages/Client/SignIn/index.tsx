@@ -1,6 +1,6 @@
 import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 import Navbar from '../../../components/client/Navbar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
 import { env } from '../../../environment/env';
@@ -10,10 +10,11 @@ import { IUser } from '../../../types/client/user';
 import { joiResolver } from '@hookform/resolvers/joi';
 import authService from '../../../services/client/auth';
 import Cookies from 'js-cookie';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../../../store/client/userSlice';
 import toast from 'react-hot-toast';
 import LoadingIcon from '../../../components/common/LoadingIcon';
+import { RootState } from '../../../store';
 
 const schema = Joi.object({
 	email: Joi.string()
@@ -33,6 +34,14 @@ const SignIn = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const [loading, setLoading] = useState(false);
+	const { user } = useSelector((state: RootState) => state.client);
+
+	useEffect(() => {
+		if (user.name) {
+			navigate('/');
+		}
+	}, [user, navigate]);
+
 	const {
 		register,
 		handleSubmit,
@@ -76,6 +85,7 @@ const SignIn = () => {
 					Cookies.set('refresh_token', serverResponse.data.refresh_token);
 					dispatch(login(serverResponse.data.user));
 					toast.success(serverResponse.data.message);
+
 					navigate('/');
 				} else {
 					toast.error(serverResponse.data.message);
@@ -96,8 +106,8 @@ const SignIn = () => {
 		<>
 			<div className="h-screen">
 				<Navbar />
-				<div className="flex justify-between items-center container max-w-5xl mx-auto mt-10">
-					<div className="relative w-2/3 flex justify-start items-center">
+				<div className="flex justify-between items-center container max-w-5xl mx-auto mt-10 px-5 md:px-8 lg:px-0">
+					<div className="relative w-full lg:w-2/3 hidden lg:flex justify-start items-center">
 						<div className="flex flex-col gap-5">
 							<h1 className="text-4xl font-bold">Sign in to</h1>
 							<h1 className="text-5xl font-bold italic text-[#40BFFF]">
@@ -117,7 +127,7 @@ const SignIn = () => {
 							alt=""
 						/>
 					</div>
-					<div className="w-1/3 flex justify-center items-center">
+					<div className="w-full lg:w-1/3 flex justify-center items-center">
 						<form
 							className="my-auto w-full"
 							onSubmit={handleSubmit(onSubmit)}

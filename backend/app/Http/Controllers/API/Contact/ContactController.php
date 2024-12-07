@@ -41,6 +41,18 @@ class ContactController extends Controller
      */
     public function store(Request $request)
     {
+        // Đếm số contact trong 24h qua từ IP hiện tại
+        $contactCount = Contact::where('created_at', '>=', now()->subDay())
+            ->where('email', $request->email)
+            ->count();
+
+        if ($contactCount >= 3) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You have sent too many messages. Please try again after 24 hours.'
+            ], 429); // 429 Too Many Requests
+        }
+
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
             'email' => 'required|email',
@@ -50,7 +62,7 @@ class ContactController extends Controller
         $contact = Contact::create($validated);
         return response()->json([
             'success' => true,
-            'message' => 'Tin nhắn của bạn đã được gửi!',
+            'message' => 'Your message has been sent!',
             'data' => $contact
         ], 201);
     }
@@ -67,18 +79,18 @@ class ContactController extends Controller
         if (!$contact) {
             return response()->json([
                 'success' => false,
-                'message' => 'Liên hệ không tồn tại'
+                'message' => 'Contact not found'
             ], 404);
         }
 
         // Trả về dữ liệu liên hệ
         return response()->json([
             'success' => true,
-            'message' => 'Chi tiết liên hệ',
+            'message' => 'Contact details',
             'data' => $contact
         ], 200);
     }
-    
+
 
     /**
      * Show the form for editing the specified resource.
@@ -105,7 +117,7 @@ class ContactController extends Controller
         if (!$contact) {
             return response()->json([
                 'success' => false,
-                'message' => 'Liên hệ không tồn tại'
+                'message' => 'Contact not found'
             ], 404);
         }
         $contact->delete();

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Phone, Mail, MapPin, Clock, Send } from 'lucide-react'; // Adjust the path as necessary
 import Joi from 'joi';
 import axiosClient from '../../../apis/axiosClient';
+import Breadcrumb from '../../../components/client/Breadcrumb';
+import { toast } from 'react-hot-toast';
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -58,17 +60,32 @@ const ContactUs = () => {
         message: formData.message,
       });
       if (response.data.success) {
-        alert('Message sent successfully!');
+        toast.success('Message sent successfully!');
+        setFormData({
+          fullName: '',
+          email: '',
+          subject: '',
+          message: '',
+          agree: false,
+        });
       } else {
-        alert('Failed to send message.');
+        toast.error(response.data.message || 'Failed to send message.');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred. Please try again.');
+      const errorMessage = error.response?.data?.message || 'An error occurred. Please try again.';
+      toast.error(errorMessage);
     }
   };
 
   return (
+    <>
+     <Breadcrumb
+        items={[
+          { name: "Home", link: "" },
+          { name: "Contact", link: "contact" },
+        ]}
+      />
     <div className="min-h-screen bg-base-200 py-12 px-4">
       {/* Hero Section */}
       <div className="container mx-auto">
@@ -245,6 +262,7 @@ const ContactUs = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { Status } from '.';
+import { Status } from '../../../constants/status';
 import categoryService, { CATEGORY } from '../../../services/admin/category';
 import sizeService, { SIZE } from '../../../services/admin/size';
 import brandService, { BRAND } from '../../../services/admin/brand';
@@ -12,13 +12,16 @@ import toast from 'react-hot-toast';
 import Joi from 'joi';
 import { joiResolver } from '@hookform/resolvers/joi';
 import uploadImageToCloudinary from '../../../common/uploadCloudinary';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { COLOR } from '../../../services/admin/color';
 import colorService from '../../../services/admin/color';
 import { Eye, TrashIcon, Logs, Upload, X, ArrowLeft } from 'lucide-react';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import RichTextEditor from '../../../components/admin/RichTextEditor';
 import generateSlug from '../../../common/generateSlug';
+import axiosClient from '../../../apis/axiosClient';
+import { formatVNCurrency } from '../../../common/formatVNCurrency';
+
 
 // Add form validation schema
 const productSchema = Joi.object({
@@ -129,6 +132,12 @@ type VariantSize = {
 	product_variant_id?: number;
 };
 
+interface Variant {
+	color_id: number;
+	image: string;
+	variant_details: VariantSize[];
+}
+
 const UpdateProduct = () => {
 	const { id } = useParams();
 	const [product, setProduct] = useState<PRODUCT_DETAIL | null>(null);
@@ -141,10 +150,9 @@ const UpdateProduct = () => {
 	const [loadingData, setLoadingData] = useState(false);
 	const [stockQuantity, setStockQuantity] = useState(0);
 	const [description, setDescription] = useState('');
-	const navigate = useNavigate();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
-
+	const editorRef = useRef(null);
 	const {
 		register,
 		handleSubmit,
@@ -152,6 +160,7 @@ const UpdateProduct = () => {
 		clearErrors,
 		setValue,
 		formState: { errors },
+		reset,
 	} = useForm<PRODUCT>({
 		resolver: joiResolver(productSchema),
 		defaultValues: {
@@ -206,138 +215,127 @@ const UpdateProduct = () => {
 		[key: string]: number;
 	}>({});
 
+	// Thêm state để kiểm soát việc disable các nút
+	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	// Fetch product data
 	useEffect(() => {
-		(async () => {
+		const fetchData = async () => {
 			try {
 				setLoadingData(true);
-				const [resCategory, resSize, resBrand, resColor, resProduct] =
-					await Promise.all([
-						categoryService.getAll(),
-						sizeService.getAll(),
-						brandService.getAll(),
-						colorService.getAll(),
-						productService.getById(Number(id)),
-					]);
 
-				setCategories(resCategory.data?.categories?.data || []);
-				setSizes(resSize.data?.sizes?.data || []);
-				setBrands(resBrand.data?.data?.brands || []);
-				setColors(resColor.data?.clors?.data || []);
+				// Fetch reference data first
+				const [brandsRes, categoriesRes, colorsRes, sizesRes] = await Promise.all([
+					brandService.getAll(),
+					categoryService.getAll(),
+					colorService.getAll(),
+					sizeService.getAll(),
+				]);
 
-				const productData: PRODUCT = {
-					...resProduct.data.data,
-					category_ids: resProduct.data.data.categories,
-					variants: JSON.parse(resProduct.data.data.variants),
-				};
+				// Set reference data with correct data structure
+				const brandsData = brandsRes.data.data.brands || [];
+				const categoriesData = categoriesRes.data.categories.data || [];
+				const colorsData = colorsRes.data.clors.data || [];
+				const sizesData = sizesRes.data.sizes.data || [];
 
-				const productDetailData: PRODUCT_DETAIL = {
-					...productData,
-					variants: JSON.parse(resProduct.data.data.variants),
-				};
+				setBrands(brandsData);
+				setCategories(categoriesData);
+				setColors(colorsData);
+				setSizes(sizesData);
 
-				setProduct(productDetailData);
+				// Then fetch product data
+				const productRes = await axiosClient.get(`/admin/products/${id}`);
+				const productData = productRes.data.data;
 
-				console.log('productData----------', productData);
+				if (!productData) {
+					throw new Error('Product data not found');
+				}
 
-				// Set form values
-				setValue('name', productData.name);
-				setValue('price', Number(productData.price));
-				setValue(
-					'promotional_price',
-					Number(productData.promotional_price)
-				);
-				setValue('status', productData.status);
-				setValue('sku', productData.sku);
-				setValue('hagtag', productData.hagtag);
-				setValue('brand_id', Number(productData.brand_id));
-				setValue('thumbnail', productData.thumbnail);
-				setValue('description', productData.description);
+				// Set product data
+				setProduct(productData);
 
-				// Set description state
-				setDescription(productData.description);
-
-				// Set thumbnail
-				setThumbnailFile(productData.thumbnail);
-
-				// Set categories
-				const productCategories =
-					resCategory.data?.categories?.data.filter((cat: CATEGORY) =>
-						productData.category_ids.includes(Number(cat.id))
-					) || [];
-				setSelectedCategories(productCategories);
-				setValue(
-					'category_ids',
-					productCategories.map((cat) => Number(cat.id))
-				);
-
-				// Set variants
-				const formattedVariants = productData.variants.map(
-					(variant: any) => ({
+				// Process variants data
+				const processedVariants = productData.variants?.map((variant: Variant) => {
+					return {
 						color_id: variant.color_id,
 						image: variant.image,
-						variant_details: variant.sizes,
-					})
-				);
+						variant_details: variant.variant_details || []
+					};
+				}) || [];
 
-				setValue('variants', formattedVariants);
-
-				formattedVariants.forEach((variant: any, index: number) => {
-					setVariantSizes((prev) => ({
-						...prev,
-						[index]: variant.variant_details,
-					}));
+				// Set variant images
+				const variantImagesMap: { [key: number]: (string | File)[] } = {};
+				productData.variants?.forEach((variant: Variant, index: number) => {
+					const images = variant.image?.split(', ') || [];
+					variantImagesMap[index] = images;
 				});
+				setVariantImageFiles(variantImagesMap);
 
 				// Set color search terms
 				const colorTermsMap: { [key: number]: string } = {};
-				formattedVariants.forEach((variant: any, index: number) => {
-					const color = resColor.data?.clors?.data.find(
-						(c: COLOR) => c.id === variant.color_id
-					);
+				productData.variants?.forEach((variant: Variant, index: number) => {
+					const color = colorsData.find((c: COLOR) => c.id === variant.color_id);
 					if (color) {
 						colorTermsMap[index] = color.color;
 					}
 				});
 				setColorSearchTerms(colorTermsMap);
 
-				// Calculate and set stock quantity
-				const totalQuantity = productData.variants.reduce(
-					(acc: number, variant: any) => {
-						return (
-							acc +
-							variant.sizes.reduce(
-								(variantAcc: number, detail: any) =>
-									variantAcc + Number(detail.quantity),
-								0
-							)
-						);
-					},
-					0
-				);
-				setStockQuantity(totalQuantity);
-
-				// Set variant images
-				const variantImagesMap: { [key: number]: (File | string)[] } = {};
-				productData.variants.forEach((variant: any, index: number) => {
-					const images = variant.image
-						.split(',')
-						.map((img: string) => img.trim());
-					variantImagesMap[index] = images;
+				// Set variant sizes
+				const variantSizesMap: { [key: number]: VariantSize[] } = {};
+				productData.variants?.forEach((variant: Variant, index: number) => {
+					variantSizesMap[index] = variant.variant_details || [];
 				});
-				setVariantImageFiles(variantImagesMap);
+				setVariantSizes(variantSizesMap);
 
-				// Set previous values for quantity tracking
+				// Set selected categories
+				const selectedCats = categoriesData.filter((cat: CATEGORY) =>
+					productData.category_ids?.includes(cat.id)
+				);
+				setSelectedCategories(selectedCats);
+
+				// Set previous values for quantities
 				const prevValues: { [key: string]: number } = {};
-
+				productData.variants?.forEach((variant: Variant, variantIndex: number) => {
+					variant.variant_details?.forEach((detail: VariantSize, detailIndex: number) => {
+						const key = `variants.${variantIndex}.variant_details.${detailIndex}.quantity`;
+						prevValues[key] = detail.quantity;
+					});
+				});
 				setPreviousValues(prevValues);
+
+				// Update form with new data
+				reset({
+					name: productData.name,
+					description: productData.description,
+					price: Number(formatVNCurrency(productData.price)),
+					promotional_price: Number(formatVNCurrency(productData.promotional_price)),
+					status: productData.status,
+					sku: productData.sku,
+					hagtag: productData.hagtag,
+					brand_id: productData.brand_id,
+					category_ids: productData.category_ids,
+					thumbnail: productData.thumbnail,
+					variants: processedVariants,
+				});
+
+				// Set other states
+				setDescription(productData.description);
+				setThumbnailFile(productData.thumbnail);
+				setStockQuantity(productData.stock_quantity);
+
 			} catch (error) {
-				console.error('Error fetching product data---------------:', error);
-				toast.error('Error fetching product data');
+				console.error('Error fetching data:', error);
+				toast.error('Failed to fetch product data');
 			} finally {
 				setLoadingData(false);
 			}
-		})();
-	}, [id, setValue]);
+		};
+
+		if (id) {
+			fetchData();
+		}
+	}, [id, reset]);
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		event.preventDefault();
@@ -441,7 +439,9 @@ const UpdateProduct = () => {
 		setPreviousValues((prev) => {
 			const newPrev: { [key: string]: number } = {};
 			Object.entries(prev).forEach(([key, value]) => {
-				const match = key.match(/variants\.(\d+)\.size\.(\d+)\.quantity/);
+				const match = key.match(
+					/variants\.(\d+)\.variant_details\.(\d+)\.quantity/
+				);
 				if (match) {
 					const variantIndex = parseInt(match[1]);
 					const sizeIndex = match[2];
@@ -449,7 +449,8 @@ const UpdateProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${variantIndex - 1}.size.${sizeIndex}.quantity`
+							`variants.${variantIndex - 1
+							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
 				}
@@ -499,6 +500,7 @@ const UpdateProduct = () => {
 	const onSubmit = async (data: PRODUCT) => {
 		try {
 			setLoading(true);
+			setIsSubmitting(true);
 			let thumbnailName = '';
 			if (thumbnailFile instanceof File) {
 				thumbnailName = await uploadImageToCloudinary(thumbnailFile);
@@ -558,21 +560,18 @@ const UpdateProduct = () => {
 
 			formattedData.stock_quantity = stockQuantity;
 
-			console.log('Formatted submit data:', formattedData);
-			const response = await productService.update(
-				Number(id),
-				formattedData
-			);
+			const response = await axiosClient.put(`/products/${id}`, formattedData);
 			console.log('Response:', response);
 			if (response.status.toString() === '201') {
 				toast.success('Update product successfully!');
-				navigate('/admin/product');
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error submitting form:', error);
-			toast.error(error.response.data.message);
+			const errorMessage = error instanceof Error ? error.message : 'Failed to update product';
+			toast.error(errorMessage);
 		} finally {
 			setLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
@@ -612,11 +611,11 @@ const UpdateProduct = () => {
 			sku: '',
 		};
 
-		// Lấy giá trị hiện tại từ variant_details thay vì sizes
+		// Ly giá trị hiện tại từ variant_details thay vì sizes
 		const currentValues =
 			control._formValues.variants[variantIndex].variant_details || [];
 
-		// Cập nhật stockQuantity khi thêm size mới
+		// Cập nhật stockQuantity khi thêm size mi
 		setStockQuantity((prev) => prev + newSize.quantity);
 
 		setVariantSizes((prev) => ({
@@ -638,7 +637,29 @@ const UpdateProduct = () => {
 		const sizeToRemove = currentVariant.variant_details[sizeIndex];
 
 		// Trừ đi số lượng của size bị xóa khỏi tổng stock quantity
-		setStockQuantity((prev) => prev - (Number(sizeToRemove.quantity) || 0));
+		const quantityToRemove = Number(sizeToRemove.quantity) || 0;
+		setStockQuantity((prev) => prev - quantityToRemove);
+
+		// Xóa giá trị quantity cũ khỏi previousValues và cập nhật lại index cho các size còn lại
+		setPreviousValues((prev) => {
+			const newPrev = { ...prev };
+			// Xa giá trị của size b xóa
+			delete newPrev[
+				`variants.${variantIndex}.variant_details.${sizeIndex}.quantity`
+			];
+
+			// Cập nhật lại index cho các size phía sau
+			const remainingSizes = currentVariant.variant_details.length;
+			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
+				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${i - 1
+					}.quantity`;
+				newPrev[newKey] = newPrev[oldKey];
+				delete newPrev[oldKey];
+			}
+
+			return newPrev;
+		});
 
 		const updatedSizes = currentVariant.variant_details.filter(
 			(_: VariantSize, idx: number) => idx !== sizeIndex
@@ -735,13 +756,19 @@ const UpdateProduct = () => {
 	}, []);
 
 	// Update the description state handler
-	const handleDescriptionChange = (value: string) => {
-		setDescription(value);
-		// Update the form value
-		setValue('description', value);
-		// Clear description error if value is not empty
-		if (value) {
-			clearErrors('description');
+	// Hàm kiểm tra màu đã được chọn chưa
+	const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
+		return fields.some((field, index) =>
+			index !== currentVariantIndex && field.color_id === colorId
+		);
+	};
+
+	// Thêm hàm xử lý input số
+	const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		// Chỉ cho phép số và dấu chấm
+		if (!/^\d*\.?\d*$/.test(value)) {
+			e.target.value = value.replace(/[^\d.]/g, '');
 		}
 	};
 
@@ -788,7 +815,10 @@ const UpdateProduct = () => {
 							</div>
 							<input
 								{...register('price')}
-								type="text"
+								type="number"
+								min="0"
+								step="any"
+								onInput={handleNumberInput}
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
@@ -807,7 +837,10 @@ const UpdateProduct = () => {
 							</div>
 							<input
 								{...register('promotional_price')}
-								type="text"
+								type="number"
+								min="0"
+								step="any"
+								onInput={handleNumberInput}
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
@@ -840,7 +873,13 @@ const UpdateProduct = () => {
 								{...register('sku')}
 								type="text"
 								placeholder="Type here"
-								className="input input-bordered w-full"
+								className="input input-bordered w-full uppercase"
+								onChange={(e) => {
+									// Chỉ cho phép chữ cái không dấu, số và dấu gạch ngang
+									const value = e.target.value.replace(/[^A-Za-z0-9-]/g, '').toUpperCase();
+									e.target.value = value;
+									setValue('sku', value);
+								}}
 							/>
 							{errors.sku && (
 								<p className="text-red-500 text-xs">
@@ -895,12 +934,14 @@ const UpdateProduct = () => {
 							<select
 								{...register('brand_id')}
 								className="select select-bordered w-full"
+								value={product?.brand_id || ""}
 							>
-								<option defaultValue="Select Brand">
-									Select Brand
-								</option>
-								{brands.map((brand) => (
-									<option key={brand.id} value={brand.id}>
+								<option value="">Select Brand</option>
+								{brands && brands.length > 0 && brands.map((brand) => (
+									<option
+										key={brand.id}
+										value={brand.id}
+									>
 										{brand.name}
 									</option>
 								))}
@@ -925,7 +966,7 @@ const UpdateProduct = () => {
 								>
 									<div className="flex justify-between gap-2">
 										<div className="w-full min-h-12 border-2 border-gray-300 rounded-md p-2 flex flex-wrap gap-1">
-											{selectedCategories.map((category) => (
+											{selectedCategories && selectedCategories.length > 0 && selectedCategories.map((category) => (
 												<div
 													key={category.id}
 													className="bg-[#BCDDFE] text-primary px-2 py-1 rounded-md flex items-center gap-1 text-xs"
@@ -936,9 +977,7 @@ const UpdateProduct = () => {
 														onClick={(e) => {
 															e.preventDefault();
 															e.stopPropagation();
-															removeCategory(
-																Number(category.id)
-															);
+															removeCategory(Number(category.id));
 														}}
 														className="hover:text-primary/80"
 													>
@@ -963,15 +1002,8 @@ const UpdateProduct = () => {
 									{isDropdownOpen && (
 										<div className="absolute top-full left-0 w-full mt-1 p-2 shadow border border-gray-300 rounded-md z-[1] bg-base-100 max-h-[200px] overflow-y-auto overflow-x-hidden">
 											<ul className="menu">
-												{categories
-													.filter(
-														(cat) =>
-															!selectedCategories.some(
-																(selected) =>
-																	Number(selected.id) ===
-																	Number(cat.id)
-															)
-													)
+												{categories && categories.length > 0 && categories
+													.filter((category) => !selectedCategories.some((selected) => selected.id === category.id))
 													.map((category) => (
 														<li
 															className="hover:bg-gray-100 rounded-none w-full whitespace-normal"
@@ -979,9 +1011,7 @@ const UpdateProduct = () => {
 															onClick={(e) => {
 																e.preventDefault();
 																e.stopPropagation();
-																handleCategoryChange(
-																	Number(category.id)
-																);
+																handleCategoryChange(Number(category.id));
 															}}
 														>
 															<button
@@ -1038,8 +1068,8 @@ const UpdateProduct = () => {
 													openModal(
 														thumbnailFile instanceof File
 															? URL.createObjectURL(
-																	thumbnailFile
-															  )
+																thumbnailFile
+															)
 															: thumbnailFile
 													);
 												}}
@@ -1087,9 +1117,13 @@ const UpdateProduct = () => {
 								</span>
 							</div>
 							<RichTextEditor
-								initialValue={description}
-								onChange={handleDescriptionChange}
-								height={300}
+								ref={editorRef}
+								initialValue={product?.description || ''}
+								onChange={(newContent) => {
+									setValue('description', newContent);
+									setDescription(newContent);
+								}}
+								key={`editor-${id}`}
 							/>
 							{errors.description && (
 								<p className="text-red-500 text-xs">
@@ -1128,10 +1162,6 @@ const UpdateProduct = () => {
 										<div className="w-full">
 											<input
 												tabIndex={0}
-												disabled={
-													!!product?.variants?.[index]?.sizes?.[0]
-														?.product_variant_id
-												}
 												role="button"
 												type="text"
 												placeholder="Select color"
@@ -1165,16 +1195,14 @@ const UpdateProduct = () => {
 														<button
 															type="button"
 															onClick={() => {
-																setValue(
-																	`variants.${index}.color_id`,
-																	color.id!
-																);
+																setValue(`variants.${index}.color_id`, color.id!);
 																setColorSearchTerms((prev) => ({
 																	...prev,
 																	[index]: color.color,
 																}));
 															}}
 															className="flex items-center gap-2"
+															disabled={isSelectedColor(color.id!, index)}
 														>
 															<img
 																src={color.link_image}
@@ -1236,9 +1264,8 @@ const UpdateProduct = () => {
 																	? URL.createObjectURL(image)
 																	: image
 															}
-															alt={`Variant ${index + 1} - ${
-																imageIndex + 1
-															}`}
+															alt={`Variant ${index + 1} - ${imageIndex + 1
+																}`}
 															className="w-full h-full object-cover rounded-md border border-gray-300"
 														/>
 														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -1249,8 +1276,8 @@ const UpdateProduct = () => {
 																	openModal(
 																		image instanceof File
 																			? URL.createObjectURL(
-																					image
-																			  )
+																				image
+																			)
 																			: image
 																	);
 																}}
@@ -1308,6 +1335,7 @@ const UpdateProduct = () => {
 															{...register(
 																`variants.${index}.variant_details.${sizeIndex}.size_id`
 															)}
+															disabled={isSubmitting}
 														>
 															<option value="0">
 																Select size
@@ -1332,12 +1360,15 @@ const UpdateProduct = () => {
 															})}
 														</select>
 														<input
-															type="text"
+															type="number"
+															min="0"
 															placeholder="Quantity"
 															className="input input-bordered input-sm w-full"
 															{...register(
 																`variants.${index}.variant_details.${sizeIndex}.quantity`
 															)}
+															disabled={isSubmitting}
+															onInput={handleNumberInput}
 															onChange={(e) => {
 																const inputPath = `variants.${index}.variant_details.${sizeIndex}.quantity`;
 																const newValue =
@@ -1365,6 +1396,7 @@ const UpdateProduct = () => {
 																)
 															}
 															className="btn btn-sm btn-error"
+															disabled={isSubmitting}
 														>
 															<TrashIcon
 																size={16}
@@ -1376,25 +1408,25 @@ const UpdateProduct = () => {
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.size_id && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.size_id?.message
-															}
-														</span>
-													)}
+															<span className="label-text text-red-500 text-xs ms-2">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.size_id?.message
+																}
+															</span>
+														)}
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.quantity && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.quantity?.message
-															}
-														</span>
-													)}
+															<span className="label-text text-red-500 text-xs ms-2">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.quantity?.message
+																}
+															</span>
+														)}
 												</>
 											)
 										)}
@@ -1402,6 +1434,7 @@ const UpdateProduct = () => {
 											type="button"
 											onClick={() => handleAddSize(index)}
 											className="btn btn-sm w-fit ms-auto"
+											disabled={isSubmitting}
 										>
 											Add size
 										</button>
@@ -1409,15 +1442,16 @@ const UpdateProduct = () => {
 								</div>
 								{!product?.variants?.[index]?.sizes?.[0]
 									?.product_variant_id && (
-									<button
-										type="button"
-										onClick={() => removeVariant(index)}
-										className="btn bg-red-500	 btn-sm col-span-3 text-white"
-									>
-										<TrashIcon size={16} color="white" /> Delete
-										Variant
-									</button>
-								)}
+										<button
+											type="button"
+											onClick={() => removeVariant(index)}
+											className="btn bg-red-500	 btn-sm col-span-3 text-white"
+											disabled={isSubmitting}
+										>
+											<TrashIcon size={16} color="white" /> Delete
+											Variant
+										</button>
+									)}
 							</div>
 						))}
 
@@ -1425,12 +1459,13 @@ const UpdateProduct = () => {
 							type="button"
 							onClick={addVariant}
 							className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit"
+							disabled={isSubmitting}
 						>
 							Add Variant
 						</button>
 
 						<button
-							disabled={loading}
+							disabled={loading || isSubmitting}
 							type="submit"
 							className="btn mt-4 col-span-3 bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 						>

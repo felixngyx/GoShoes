@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import Pagination from '../../../components/admin/Pagination';
 import { Link } from 'react-router-dom';
 import { formatVNCurrency } from '../../../common/formatVNCurrency';
+import { Search } from 'lucide-react';
 
 export enum Status {
 	PUBLIC = 'public',
@@ -34,37 +35,36 @@ type Product = {
 	}[];
 };
 
+// Thêm interface cho sort
+interface SortConfig {
+	field: keyof PRODUCT | '';
+	direction: 'asc' | 'desc';
+}
+
 const Product = () => {
 	const [selectAll, setSelectAll] = useState(false); // State for select all
 	const [selectedItems, setSelectedItems] = useState<number[]>([]); // State for individual selections
 	const [productData, setProductData] = useState<PRODUCT[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
-	const [itemsPerPage] = useState(10);
-	const [totalPages, setTotalPages] = useState(0);
+	const [sortConfig, setSortConfig] = useState<SortConfig>({
+		field: 'id',
+		direction: 'desc',
+	});
+	const [searchTerm, setSearchTerm] = useState('');
+	const [allProducts, setAllProducts] = useState<PRODUCT[]>([]);
+	const itemsPerPage = 10;
 
 	const fetchProducts = async () => {
 		try {
 			setLoading(true);
-			const res = await productService.getAll(1, 1000);
-			res.sort((a, b) => {
-				const dateA = new Date(a.updated_at as string).getTime();
-				const dateB = new Date(b.updated_at as string).getTime();
-				return dateB - dateA; // Sắp xếp giảm dần (mới nhất lên đầu)
-			});
-			setProductData(res);
-			setTotalPages(Math.ceil(res.length / itemsPerPage));
+			const res = await productService.getAll(currentPage, 10);
+			setProductData(res.data.data);
 		} catch (error) {
 			console.error(error);
 		} finally {
 			setLoading(false);
 		}
-	};
-
-	const getCurrentProducts = () => {
-		const indexOfLastItem = currentPage * itemsPerPage;
-		const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-		return productData.slice(indexOfFirstItem, indexOfLastItem);
 	};
 
 	const deleteProduct = async (id: number) => {
@@ -81,7 +81,7 @@ const Product = () => {
 
 	useEffect(() => {
 		fetchProducts();
-	}, [currentPage, itemsPerPage]);
+	}, [currentPage]);
 
 	const handleSelectAll = () => {
 		if (selectAll) {
@@ -94,295 +94,357 @@ const Product = () => {
 
 	const handleSelectItem = (index: number) => {
 		if (selectedItems.includes(index)) {
-			setSelectedItems(selectedItems.filter((item: any) => item !== index)); // Deselect item
+			setSelectedItems(
+				selectedItems.filter((item: number) => item !== index)
+			);
 		} else {
-			setSelectedItems([...selectedItems, index]); // Select item
+			setSelectedItems([...selectedItems, index]);
 		}
 	};
 
-	const handlePageChange = (newPage: number) => {
-		setCurrentPage(newPage);
+	// Sửa lại hàm handleSort để chỉ xử lý sort khi click
+	const handleSort = (field: keyof PRODUCT) => {
+		const newDirection =
+			sortConfig.field === field && sortConfig.direction === 'asc'
+				? 'desc'
+				: 'asc';
+
+		// Sort trên toàn bộ dữ liệu thay vì chỉ trang hiện tại
+		const newProducts = [...allProducts].sort((a, b) => {
+			const direction = newDirection === 'asc' ? 1 : -1;
+
+			switch (field) {
+				case 'name':
+					return direction * (a.name || '').localeCompare(b.name || '');
+				case 'price':
+					return direction * (Number(a.price) - Number(b.price));
+				case 'promotional_price':
+					return (
+						direction *
+						(Number(a.promotional_price) - Number(b.promotional_price))
+					);
+				case 'stock_quantity':
+					return (
+						direction *
+						(Number(a.stock_quantity) - Number(b.stock_quantity))
+					);
+				case 'status':
+					return (
+						direction * (a.status || '').localeCompare(b.status || '')
+					);
+				default:
+					return 0;
+			}
+		});
+
+		setAllProducts(newProducts);
+		setSortConfig({ field, direction: newDirection });
 	};
 
-	const getPageNumbers = () => {
-		const pageNumbers = [];
-		const maxVisiblePages = 5; // Số trang hiển thị tối đa (không tính first/last page)
+	// Cập nhật lại hàm search để giữ nguyên thứ tự sort
+	const handleSearch = (searchValue: string) => {
+		setSearchTerm(searchValue);
+		setCurrentPage(1);
+	};
 
-		if (totalPages <= maxVisiblePages + 2) {
-			// Hiển thị tất cả các trang nếu tổng số trang nhỏ hơn hoặc bằng maxVisiblePages + 2
-			for (let i = 1; i <= totalPages; i++) {
-				pageNumbers.push(i);
-			}
-		} else {
-			// Luôn hiển thị trang đầu
-			pageNumbers.push(1);
-
-			if (currentPage <= 3) {
-				// Nếu đang ở gần trang đầu
-				for (let i = 2; i <= 4; i++) {
-					pageNumbers.push(i);
-				}
-				pageNumbers.push('...');
-				pageNumbers.push(totalPages);
-			} else if (currentPage >= totalPages - 2) {
-				// Nếu đang ở gần trang cuối
-				pageNumbers.push('...');
-				for (let i = totalPages - 3; i < totalPages; i++) {
-					pageNumbers.push(i);
-				}
-				pageNumbers.push(totalPages);
-			} else {
-				// Ở giữa
-				pageNumbers.push('...');
-				for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-					pageNumbers.push(i);
-				}
-				pageNumbers.push('...');
-				pageNumbers.push(totalPages);
-			}
+	// Fetch tất cả sản phẩm
+	const fetchAllProducts = async () => {
+		try {
+			setLoading(true);
+			const res = await productService.getAll(1, 1000); // Lấy nhiều sản phẩm
+			const sortedProducts = res.data.data.sort(
+				(a: PRODUCT, b: PRODUCT) =>
+					new Date(b.created_at || 0).getTime() -
+					new Date(a.created_at || 0).getTime()
+			);
+			setAllProducts(sortedProducts);
+		} catch (error) {
+			console.error(error);
+		} finally {
+			setLoading(false);
 		}
-
-		return pageNumbers;
 	};
+
+	useEffect(() => {
+		fetchAllProducts();
+	}, []);
+
+	// Lọc sản phẩm theo search term
+	const filteredProducts = searchTerm
+		? allProducts.filter((product) => {
+				const searchLower = searchTerm.toLowerCase();
+				const nameMatch = product.name.toLowerCase().includes(searchLower);
+
+				// Sử dụng category_ids thay vì categories
+				const categories = Array.isArray(product.category_ids)
+					? product.category_ids
+					: [];
+				const categoryMatch = categories.some((cat) =>
+					String(cat).toLowerCase().includes(searchLower)
+				);
+
+				return nameMatch || categoryMatch;
+		  })
+		: allProducts;
+
+	// Tính toán sản phẩm cho trang hiện tại
+	const paginatedProducts = filteredProducts.slice(
+		(currentPage - 1) * itemsPerPage,
+		currentPage * itemsPerPage
+	);
 
 	return (
-		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
-			<div className="flex justify-between items-center">
+		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-4 px-2 md:py-6 md:px-6 xl:px-7.5 flex flex-col gap-5">
+			<div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
-					Product List
+					Product List ({filteredProducts.length} products)
 				</h4>
-				<div className="flex items-center gap-2">
-					<button
-						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${
-							selectedItems.length > 0
-								? 'flex items-center gap-2'
-								: 'hidden'
-						}`}
-					>
-						<Trash2 size={16} />
-						<p>Delete {selectedItems.length} items</p>
-					</button>
-					<Link
-						to="/admin/product/create"
-						className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
-					>
-						<Plus size={16} />
-						Add Product
-					</Link>
+
+				<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+					<div className="relative flex-1 sm:flex-none">
+						<input
+							type="text"
+							placeholder="Search by name or category..."
+							value={searchTerm}
+							onChange={(e) => handleSearch(e.target.value)}
+							className="input input-bordered w-full pl-10"
+						/>
+						<Search
+							className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+							size={20}
+						/>
+					</div>
+
+					<div className="flex items-center gap-2">
+						<button
+							className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error whitespace-nowrap ${
+								selectedItems.length > 0
+									? 'flex items-center gap-2'
+									: 'hidden'
+							}`}
+						>
+							<Trash2 size={16} />
+							<span className="hidden sm:inline">Delete</span>
+							{selectedItems.length > 0 && (
+								<span>({selectedItems.length})</span>
+							)}
+						</button>
+
+						<Link
+							to="/admin/product/create"
+							className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary whitespace-nowrap"
+						>
+							<Plus size={16} />
+							<span className="hidden sm:inline">Add Product</span>
+						</Link>
+					</div>
 				</div>
 			</div>
 
 			<div className="relative overflow-x-auto border border-stroke">
-				<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-					<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-						<tr>
-							<th scope="col" className="p-4">
-								<div className="flex items-center">
-									<input
-										id="checkbox-all-search"
-										type="checkbox"
-										className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-										checked={selectAll} // Bind checked state
-										onChange={handleSelectAll} // Add onChange handler
-									/>
-									<label
-										htmlFor="checkbox-all-search"
-										className="sr-only"
+				<div className="overflow-x-auto">
+					<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+						<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+							<tr>
+								<th scope="col" className="p-4 whitespace-nowrap">
+									<div className="flex items-center">
+										<input
+											type="checkbox"
+											className="w-4 h-4"
+											checked={selectAll}
+											onChange={handleSelectAll}
+										/>
+									</div>
+								</th>
+								<th scope="col" className="px-4 py-3 whitespace-nowrap">
+									<div
+										className="flex items-center cursor-pointer"
+										onClick={() => handleSort('name')}
 									>
-										checkbox
-									</label>
-								</div>
-							</th>
-							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
-									Name
-									<a>
-										<FaSort />
-									</a>
-								</div>
-							</th>
-							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
-									Price
-									<a>
-										<FaSort />
-									</a>
-								</div>
-							</th>
-							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
-									Sale Price
-									<a>
-										<FaSort />
-									</a>
-								</div>
-							</th>
-							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
-									Quantity
-									<a>
-										<FaSort />
-									</a>
-								</div>
-							</th>
-							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
-									Status
-									<a>
-										<FaSort />
-									</a>
-								</div>
-							</th>
-							<th scope="col" className="px-6 py-3">
-								Action
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{loading ? (
-							<LoadingTable />
-						) : (
-							getCurrentProducts().map((product, key) => (
-								<tr
-									className={`bg-white dark:bg-slate-800 ${
-										key !== getCurrentProducts().length - 1
-											? 'border-b border-stroke'
-											: ''
-									}`}
-									key={key}
-								>
-									<td className="w-4 p-4">
-										<div className="flex items-center">
-											<input
-												id={`checkbox-table-search-${key}`} // Unique ID for each checkbox
-												type="checkbox"
-												className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-												checked={selectedItems.includes(key)} // Bind checked state to individual selection
-												onChange={() => handleSelectItem(key)} // Add onChange handler for individual checkboxes
-											/>
-											<label
-												htmlFor={`checkbox-table-search-${key}`}
-												className="sr-only"
-											>
-												checkbox
-											</label>
-										</div>
-									</td>
-									<td className="px-6 py-3">
-										<div className="flex items-center gap-2">
-											<img
-												src={product.thumbnail as string}
-												alt={product.name}
-												className="size-10 rounded-full"
-											/>
-											<p className="font-semibold">{product.name}</p>
-										</div>
-									</td>
-									<td className="px-6 py-3 font-semibold">
-										{formatVNCurrency(Number(product.price))}
-									</td>
-									<td className="px-6 py-3 font-semibold">
-										{formatVNCurrency(
-											Number(product.promotional_price)
-										)}
-									</td>
-									<td className="px-6 py-3">
-										{product.stock_quantity}
-									</td>
-									<td className="px-6 py-3">
-										<div
-											className={`badge text-white bg-${
-												product.status === Status.PUBLIC
-													? 'success'
-													: product.status === Status.UNPUBLIC
-													? 'warning'
-													: 'red-500'
+										Name
+										<FaSort
+											className={`ml-1 ${
+												sortConfig.field === 'name'
+													? 'text-primary'
+													: 'text-gray-400'
 											}`}
-										>
-											{product.status}
-										</div>
-									</td>
-									<td className="px-6 py-3 flex items-center gap-2">
-										<button className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary">
-											<Eye size={16} />
-										</button>
-										<Link
-											to={`/admin/product/update/${product.id}`}
-											className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
-										>
-											<PencilLine size={16} />
-										</Link>
-										<button
-											onClick={() =>
-												deleteProduct(Number(product.id))
-											}
-											className="btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error"
-										>
-											<Trash2 size={16} />
-										</button>
+										/>
+									</div>
+								</th>
+								<th
+									scope="col"
+									className="px-4 py-3 whitespace-nowrap hidden sm:table-cell"
+								>
+									<div
+										className="flex items-center cursor-pointer"
+										onClick={() => handleSort('price')}
+									>
+										Price
+										<FaSort
+											className={`ml-1 ${
+												sortConfig.field === 'price'
+													? 'text-primary'
+													: 'text-gray-400'
+											}`}
+										/>
+									</div>
+								</th>
+								<th
+									scope="col"
+									className="px-4 py-3 whitespace-nowrap hidden md:table-cell"
+								>
+									<div
+										className="flex items-center cursor-pointer"
+										onClick={() => handleSort('promotional_price')}
+									>
+										Sale Price
+										<FaSort
+											className={`ml-1 ${
+												sortConfig.field === 'promotional_price'
+													? 'text-primary'
+													: 'text-gray-400'
+											}`}
+										/>
+									</div>
+								</th>
+								<th
+									scope="col"
+									className="px-4 py-3 whitespace-nowrap hidden lg:table-cell"
+								>
+									<div
+										className="flex items-center cursor-pointer"
+										onClick={() => handleSort('stock_quantity')}
+									>
+										Quantity
+										<FaSort
+											className={`ml-1 ${
+												sortConfig.field === 'stock_quantity'
+													? 'text-primary'
+													: 'text-gray-400'
+											}`}
+										/>
+									</div>
+								</th>
+								<th
+									scope="col"
+									className="px-4 py-3 whitespace-nowrap hidden sm:table-cell"
+								>
+									<div
+										className="flex items-center cursor-pointer"
+										onClick={() => handleSort('status')}
+									>
+										Status
+										<FaSort
+											className={`ml-1 ${
+												sortConfig.field === 'status'
+													? 'text-primary'
+													: 'text-gray-400'
+											}`}
+										/>
+									</div>
+								</th>
+								<th scope="col" className="px-4 py-3 whitespace-nowrap">
+									Action
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							{loading ? (
+								<LoadingTable />
+							) : paginatedProducts.length === 0 ? (
+								<tr>
+									<td colSpan={7} className="text-center py-4">
+										No products found
 									</td>
 								</tr>
-							))
-						)}
-					</tbody>
-				</table>
+							) : (
+								paginatedProducts.map((product, key) => (
+									<tr
+										key={key}
+										className="border-b border-stroke hover:bg-gray-50"
+									>
+										<td className="p-4">
+											<input
+												type="checkbox"
+												className="w-4 h-4"
+												checked={selectedItems.includes(key)}
+												onChange={() => handleSelectItem(key)}
+											/>
+										</td>
+										<td className="px-4 py-3">
+											<div className="flex items-center gap-2">
+												<img
+													src={product.thumbnail as string}
+													alt={product.name}
+													className="size-8 sm:size-10 rounded-full"
+												/>
+												<p className="font-semibold line-clamp-1">
+													{product.name}
+												</p>
+											</div>
+										</td>
+										<td className="px-4 py-3 hidden sm:table-cell">
+											{formatVNCurrency(Number(product.price))}
+										</td>
+										<td className="px-4 py-3 hidden md:table-cell">
+											{formatVNCurrency(
+												Number(product.promotional_price)
+											)}
+										</td>
+										<td className="px-4 py-3 hidden lg:table-cell">
+											{product.stock_quantity}
+										</td>
+										<td className="px-4 py-3 hidden sm:table-cell">
+											<div
+												className={`badge text-white bg-${
+													product.status === Status.PUBLIC
+														? 'success'
+														: product.status === Status.UNPUBLIC
+														? 'warning'
+														: 'red-500'
+												}`}
+											>
+												{product.status}
+											</div>
+										</td>
+										<td className="px-4 py-3">
+											<div className="flex items-center gap-1 sm:gap-2">
+												<Link
+													to={`/products/${product.id}`}
+													className="btn btn-xs sm:btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+												>
+													<Eye size={14} />
+												</Link>
+												<Link
+													to={`/admin/product/update/${product.id}`}
+													className="btn btn-xs sm:btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+												>
+													<PencilLine size={14} />
+												</Link>
+												<button
+													onClick={() =>
+														deleteProduct(Number(product.id))
+													}
+													className="btn btn-xs sm:btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error"
+												>
+													<Trash2 size={14} />
+												</button>
+											</div>
+										</td>
+									</tr>
+								))
+							)}
+						</tbody>
+					</table>
+				</div>
 			</div>
 
-			<div className="join ms-auto">
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === 1 ? 'btn-disabled' : ''
-					}`}
-					onClick={() => setCurrentPage(1)}
-				>
-					«
-				</button>
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === 1 ? 'btn-disabled' : ''
-					}`}
-					onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-				>
-					‹
-				</button>
-				{getPageNumbers().map((pageNumber, index) =>
-					pageNumber === '...' ? (
-						<button
-							key={`ellipsis-${index}`}
-							className="join-item btn btn-sm btn-disabled"
-						>
-							...
-						</button>
-					) : (
-						<button
-							key={pageNumber}
-							className={`join-item btn btn-sm ${
-								currentPage === pageNumber ? 'btn-active' : ''
-							}`}
-							onClick={() => setCurrentPage(Number(pageNumber))}
-						>
-							{pageNumber}
-						</button>
-					)
-				)}
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === totalPages ? 'btn-disabled' : ''
-					}`}
-					onClick={() =>
-						setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-					}
-				>
-					›
-				</button>
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === totalPages ? 'btn-disabled' : ''
-					}`}
-					onClick={() => setCurrentPage(totalPages)}
-				>
-					»
-				</button>
+			<div className="mt-4">
+				<Pagination
+					currentPage={currentPage}
+					totalPages={Math.ceil(filteredProducts.length / itemsPerPage)}
+					onPageChange={setCurrentPage}
+				/>
 			</div>
 		</div>
 	);

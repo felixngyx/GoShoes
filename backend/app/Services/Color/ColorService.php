@@ -44,7 +44,7 @@ class ColorService
                 'color' => $validated['color'],
                 'link_image' => $validated['link_image'],
             ];
-            
+
             $color = $this->colorRepository->updateColor($id, $colorData);
             if ($color) {
                 return $color;
@@ -65,14 +65,19 @@ class ColorService
             $this->colorRepository->deleteColor($color);
 
             return response()->json([
-                'message' => 'Màu sắc đã được xóa thành công!',
-            ], 200);
+                'message' => 'Màu sắc đã được xóa thành công!'
+            ], 200, [], JSON_UNESCAPED_UNICODE);
         } catch (\Exception $e) {
-            // Ghi log lỗi và trả về thông báo lỗi
-            Log::error('Error deleting product: ' . $e->getMessage());
+            Log::error('Error deleting color: ' . $e->getMessage());
+
+            if (str_contains($e->getMessage(), 'being used')) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                ], 400);
+            }
 
             return response()->json([
-                'message' => 'Có lỗi xảy ra khi xóa màu sắc.',
+                'message' => 'An error occurred while deleting the color.',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -80,14 +85,26 @@ class ColorService
     public function deleteColors(array $ids)
     {
         if (empty($ids)) {
-            return response()->json(['message' => 'Không có ID nào được cung cấp!'], 400);
+            return response()->json(['message' => 'Không có IDnào được cung cấp!'], 400, [], JSON_UNESCAPED_UNICODE);
         }
         try {
             $deletedCount = $this->colorRepository->deleteColorsByIds($ids);
-            return response()->json(['message' => 'Đã xóa thành công ' . $deletedCount . ' màu sắc!'], 200);
+            return response()->json([
+                'message' => 'Đã xóa thành công' . $deletedCount . ' màu sắc!'
+            ], 200, [], JSON_UNESCAPED_UNICODE);
         } catch (\Exception $e) {
             Log::error('Error deleting colors: ' . $e->getMessage());
-            return response()->json(['message' => 'Có lỗi xảy ra khi xóa màu sắc.', 'error' => $e->getMessage()], 500);
+
+            if (str_contains($e->getMessage(), 'being used')) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                ], 400);
+            }
+
+            return response()->json([
+                'message' => 'An error occurred while deleting the color.',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

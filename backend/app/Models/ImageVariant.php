@@ -24,9 +24,11 @@ class ImageVariant extends Model
         parent::boot();
     }
 
-//    public function product_variants(): \Illuminate\Database\Eloquent\Relations\HasMany
-//    {
-//        return $this->hasMany(ProductVariant::class, ['product_id', 'color_id'], ['product_id', 'color_id']);
-//    }
+    public function variant()
+    {
+        return $this->belongsTo(ProductVariant::class)
+                    ->where('product_id', $this->product_id)
+                    ->where('color_id', $this->color_id);
+    }
 
 }

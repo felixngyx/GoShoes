@@ -26,12 +26,27 @@ class SizeRepository implements SizeRepositoryInterface
 
         return null;
     }
-    public function deleteSize(VariantSize $Size)
-
+    public function deleteSize(VariantSize $size)
     {
-        return $Size->delete();
+        // Kiểm tra xem có biến thể nào đang sử dụng size này không
+        if ($size->variants()->count() > 0) {
+            throw new \Exception('You cannot delete this size because it is being used in product variants.');
+        }
+
+        return $size->delete();
     }
-    public function deleteSizesByIds(array $ids){
-        return VariantSize::whereIn('id', $ids)->delete();  // Xóa tất cả kích thước theo ID
+    public function deleteSizesByIds(array $ids)
+    {
+        // Kiểm tra tất cả size được chọn
+        $sizesWithVariants = VariantSize::whereIn('id', $ids)
+            ->withCount('variants')
+            ->having('variants_count', '>', 0)
+            ->get();
+
+        if ($sizesWithVariants->isNotEmpty()) {
+            throw new \Exception('You cannot delete the selected sizes because some sizes are being used in product variants.');
+        }
+
+        return VariantSize::whereIn('id', $ids)->delete();
     }
 }

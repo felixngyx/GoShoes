@@ -45,6 +45,7 @@ export interface PRODUCT {
 	thumbnail: string;
 	updated_at?: string;
 	description: string;
+	created_at?: string;
 	stock_quantity?: number;
 	variants: {
 		color_id: number;
@@ -108,14 +109,8 @@ export interface PRODUCT_UPDATE {
 }
 
 const productService = {
-	getAll: async (
-		page: number = 1,
-		limit: number = 100
-	): Promise<PRODUCT[]> => {
-		const res = await axiosClient.get(
-			`/products?page=${page}&perPage=${limit}`
-		);
-		return res.data.data;
+	getAll: async (page: number = 1, limit: number = 1) => {
+		return await axiosClient.get(`/products?page=${page}&perPage=${limit}`);
 	},
 	getById: async (id: number) => {
 		return await axiosClient.get(`/products/${id}`);

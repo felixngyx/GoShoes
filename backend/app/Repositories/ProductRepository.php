@@ -39,6 +39,21 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
 
         $products = DB::select($query);
 
+        // Get top 6 products with most sales
+        $topProducts = Product::withSum('orderItems as total_revenue', DB::raw('price * quantity'))
+            ->withSum('orderItems as total_quantity', 'quantity')
+            ->join('order_items', 'products.id', '=', 'order_items.product_id')
+            ->groupBy('products.id', 'products.name')
+            ->orderByDesc('total_revenue')
+            ->take(6)
+            ->get([
+                'products.id',
+                'products.name',
+                'total_revenue',
+                'total_quantity'
+            ]);
+
+
         // Calculate total pages
         $totalPages = ceil($totalItems / $perPage);
 
@@ -46,7 +61,8 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             'products' => $products,
             'total_pages' => $totalPages,
             'current_page' => $page,
-            'total_items' => $totalItems
+            'total_items' => $totalItems,
+            'top_products' => $topProducts,
         ];
     }
 
@@ -208,78 +224,79 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     private function getBaseQuery($filters = [])
     {
         $query = "
-    WITH distinct_variants AS (
-    SELECT DISTINCT
-        pv.product_id,
-        pv.color_id,
-        pv.id AS product_variant_id,
-        pv.size_id,
-        vs.size,
-        pv.quantity,
-        vc.color,
-        iv.image
-    FROM product_variants pv
-    LEFT JOIN variant_colors vc ON pv.color_id = vc.id
-    LEFT JOIN variant_sizes vs ON pv.size_id = vs.id
-    LEFT JOIN image_variants iv ON pv.product_id = iv.product_id
-        AND pv.color_id = iv.color_id
-),
-variant_info AS (
-    SELECT
-        dv.product_id,
-        dv.color_id,
-        dv.color,
-        JSON_ARRAYAGG(
-            JSON_OBJECT(
-                'product_variant_id', dv.product_variant_id,
-                'size_id', dv.size_id,
-                'size', dv.size,
-                'quantity', dv.quantity
+                WITH distinct_variants AS (
+                SELECT DISTINCT
+                    pv.product_id,
+                    pv.color_id,
+                    pv.id AS product_variant_id,
+                    pv.size_id,
+                    vs.size,
+                    pv.quantity,
+                    vc.color,
+                    iv.image
+                FROM product_variants pv
+                LEFT JOIN variant_colors vc ON pv.color_id = vc.id
+                LEFT JOIN variant_sizes vs ON pv.size_id = vs.id
+                LEFT JOIN image_variants iv ON pv.product_id = iv.product_id
+                    AND pv.color_id = iv.color_id
+            ),
+            variant_info AS (
+                SELECT
+                    dv.product_id,
+                    dv.color_id,
+                    dv.color,
+                    JSON_ARRAYAGG(
+                        JSON_OBJECT(
+                            'product_variant_id', dv.product_variant_id,
+                            'size_id', dv.size_id,
+                            'size', dv.size,
+                            'quantity', dv.quantity
+                        )
+                    ) AS sizes,
+                    MAX(dv.image) AS image, -- Chọn 1 hình đại diện
+                    SUM(dv.quantity) AS total_quantity
+                FROM distinct_variants dv
+                GROUP BY dv.product_id, dv.color_id, dv.color
+            ),
+            category_info AS (
+                SELECT
+                    pc.product_id,
+                    JSON_ARRAYAGG(
+                        JSON_OBJECT(
+                            'name', c.name,
+                            'parent_id', c.parent_id,
+                            'description', c.description,
+                            'slug', c.slug,
+                            'id', c.id
+                        )
+                    ) AS categories
+                FROM product_category pc
+                LEFT JOIN categories c ON pc.category_id = c.id
+                GROUP BY pc.product_id
             )
-        ) AS sizes,
-        MAX(dv.image) AS image, -- Chọn 1 hình đại diện
-        SUM(dv.quantity) AS total_quantity
-    FROM distinct_variants dv
-    GROUP BY dv.product_id, dv.color_id, dv.color
-),
-category_info AS (
-    SELECT
-        pc.product_id,
-        JSON_ARRAYAGG(
-            JSON_OBJECT(
-                'name', c.name,
-                'parent_id', c.parent_id,
-                'description', c.description,
-                'slug', c.slug,
-                'id', c.id
-            )
-        ) AS categories
-    FROM product_category pc
-    LEFT JOIN categories c ON pc.category_id = c.id
-    GROUP BY pc.product_id
-)
-SELECT
-    p.*,
-    p.description,
-    b.name AS brand_name,
-    COALESCE(
-        JSON_ARRAYAGG(
-            JSON_OBJECT(
-                'color_id', vi.color_id,
-                'color', vi.color,
-                'sizes', vi.sizes,
-                'image', vi.image,
-                'total_quantity', vi.total_quantity
-            )
-        ),
-        JSON_ARRAY()
-    ) AS variants,
-    ci.categories
-FROM products p
-LEFT JOIN variant_info vi ON p.id = vi.product_id
-LEFT JOIN category_info ci ON p.id = ci.product_id
-LEFT JOIN brands b ON p.brand_id = b.id
-WHERE 1 = 1
+            SELECT
+                p.*,
+                p.description,
+                b.name AS brand_name,
+                COALESCE(
+                    JSON_ARRAYAGG(
+                        JSON_OBJECT(
+                            'color_id', vi.color_id,
+                            'color', vi.color,
+                            'sizes', vi.sizes,
+                            'image', vi.image,
+                            'total_quantity', vi.total_quantity
+                        )
+                    ),
+                    JSON_ARRAY()
+                ) AS variants,
+                ci.categories
+            FROM products p
+            LEFT JOIN variant_info vi ON p.id = vi.product_id
+            LEFT JOIN category_info ci ON p.id = ci.product_id
+            LEFT JOIN brands b ON p.brand_id = b.id
+            LEFT JOIN product_category pc ON p.id = pc.product_id
+            WHERE p.is_deleted = 0
     ";
 
         // Thêm các điều kiện lọc

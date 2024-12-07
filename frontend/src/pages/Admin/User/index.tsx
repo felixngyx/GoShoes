@@ -2,53 +2,57 @@ import { useEffect, useState } from 'react';
 import { FaRegEye, FaSort } from 'react-icons/fa';
 import userService from '../../../services/admin/user';
 import { User as UserType } from '../../../services/admin/user';
-import { Link } from 'react-router-dom';
-import { Eye, TrashIcon } from 'lucide-react';
+import { Eye, RotateCcw, TrashIcon, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import { X } from 'lucide-react';
+import Pagination from '../../../components/admin/Pagination';
 
 const User = () => {
 	const [users, setUsers] = useState<UserType[]>([]);
+	const [allUsers, setAllUsers] = useState<UserType[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
-	const [itemsPerPage] = useState(5);
 	const [totalPages, setTotalPages] = useState(0);
 	const [previewUser, setPreviewUser] = useState<UserType | null>(null);
 	const [loadingUpdate, setLoadingUpdate] = useState(false);
+	const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+	const [searchTerm, setSearchTerm] = useState('');
 
-	const fetchUsers = async () => {
+	const fetchAllUsers = async () => {
 		try {
-			const response = await userService.getAll();
-			let user = Array.isArray(response)
-				? response
-				: (Object.values(response) as UserType[]);
-
-			user.sort((a, b) => {
-				if (a.role === 'super-admin') return -1;
-				if (b.role === 'super-admin') return 1;
-				if (a.role === 'admin') return -1;
-				if (b.role === 'admin') return 1;
-				return 0;
-			});
-			setUsers(user);
-			setTotalPages(Math.ceil(user.length / itemsPerPage));
+			setLoading(true);
+			const response = await userService.getAll(1, 1000);
+			setAllUsers(response.data.data);
 		} catch (error) {
-			console.error('Error fetching users:', error);
+			console.error('Error fetching all users:', error);
+		} finally {
+			setLoading(false);
 		}
 	};
 
-	const getCurrentUsers = () => {
-		const indexOfLastItem = currentPage * itemsPerPage;
-		const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-		return users.slice(indexOfFirstItem, indexOfLastItem);
+	const fetchUsers = async (page: number) => {
+		try {
+			setLoading(true);
+			const response = await userService.getAll(page, 10);
+			setUsers(response.data.data);
+			setTotalPages(response.data.total_pages);
+		} catch (error) {
+			console.error('Error fetching users:', error);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	useEffect(() => {
-		setLoading(true);
-		fetchUsers();
-		setLoading(false);
+		fetchAllUsers();
 	}, []);
+
+	useEffect(() => {
+		if (!searchTerm) {
+			fetchUsers(currentPage);
+		}
+	}, [currentPage, searchTerm]);
 
 	const handleRoleChange = async (
 		e: React.ChangeEvent<HTMLSelectElement>,
@@ -58,7 +62,7 @@ const User = () => {
 		setLoadingUpdate(true);
 		const role = e.target.value;
 		await userService.update(id, { role: role as 'user' | 'admin' });
-		fetchUsers();
+		fetchUsers(currentPage);
 		setLoadingUpdate(false);
 		toast.dismiss();
 		toast.success('Update role success');
@@ -69,12 +73,44 @@ const User = () => {
 			try {
 				setLoading(true);
 				await userService.delete(id);
-				fetchUsers();
+				fetchUsers(currentPage);
 				toast.success('Delete user success');
 			} catch (error) {
 				console.error('Error deleting user:', error);
 			} finally {
 				setLoading(false);
+			}
+		}
+	};
+
+	const updateStatus = async (id: number, status: boolean) => {
+		if (!status) {
+			if (confirm('Are you sure you want to restore this user?')) {
+				try {
+					setLoading(true);
+					await userService.update(id, {
+						is_deleted: status,
+					});
+					fetchUsers(currentPage);
+					toast.success('Restore user success');
+				} catch (error) {
+					console.error('Error restoring user:', error);
+				} finally {
+					setLoading(false);
+				}
+			}
+		} else {
+			if (confirm('Are you sure you want to delete this user?')) {
+				try {
+					setLoading(true);
+					await userService.delete(id);
+					fetchUsers(currentPage);
+					toast.success('Delete user success');
+				} catch (error) {
+					console.error('Error deleting user:', error);
+				} finally {
+					setLoading(false);
+				}
 			}
 		}
 	};
@@ -87,11 +123,53 @@ const User = () => {
 		setPreviewUser(null);
 	};
 
+	const sortUsers = (users: UserType[]) => {
+		return users.sort((a, b) => {
+			if (sortOrder === 'asc') {
+				return a.name.localeCompare(b.name);
+			} else {
+				return b.name.localeCompare(a.name);
+			}
+		});
+	};
+
+	const toggleSortOrder = () => {
+		setSortOrder((prevOrder) => (prevOrder === 'asc' ? 'desc' : 'asc'));
+	};
+
+	const filteredUsers = searchTerm
+		? allUsers.filter(user =>
+				user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+			)
+		: users;
+
+	const sortedAndFilteredUsers = sortUsers(filteredUsers);
+
 	return (
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
-			<h4 className="text-xl font-semibold text-black dark:text-white">
-				User List
-			</h4>
+			<div className="flex justify-between items-center">
+				<h4 className="text-xl font-semibold text-black dark:text-white">
+					User List ({filteredUsers.length} users)
+				</h4>
+				
+				<div className="flex items-center gap-4">
+					<div className="relative">
+						<input
+							type="text"
+							placeholder="Search by name, email, phone..."
+							value={searchTerm}
+							onChange={(e) => setSearchTerm(e.target.value)}
+							className="input input-bordered w-full max-w-xs pl-10"
+						/>
+						<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+					</div>
+					<button onClick={toggleSortOrder} className="btn btn-sm btn-primary">
+						Sort by Name ({sortOrder})
+					</button>
+				</div>
+			</div>
 
 			<div className="relative overflow-x-auto border border-stroke">
 				<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -149,8 +227,14 @@ const User = () => {
 									/>
 								</td>
 							</tr>
+						) : sortedAndFilteredUsers.length === 0 ? (
+							<tr>
+								<td colSpan={5} className="text-center py-4">
+									No users found
+								</td>
+							</tr>
 						) : (
-							getCurrentUsers().map((user) => (
+							sortedAndFilteredUsers.map((user) => (
 								<tr
 									key={user.id}
 									className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
@@ -225,11 +309,25 @@ const User = () => {
 														color="primary"
 													/>
 												</button>
-												<TrashIcon
-													color="red"
-													className="w-5 h-5 cursor-pointer"
-													onClick={() => handleDelete(user.id!)}
-												/>
+												{user.is_deleted ? (
+													<RotateCcw
+														size={20}
+														className="cursor-pointer"
+														color="#40bfff"
+														onClick={() =>
+															updateStatus(user.id!, false)
+														}
+													/>
+												) : (
+													<TrashIcon
+														size={20}
+														className="cursor-pointer"
+														color="red"
+														onClick={() =>
+															updateStatus(user.id!, true)
+														}
+													/>
+												)}
 											</div>
 										)}
 									</td>
@@ -239,53 +337,13 @@ const User = () => {
 					</tbody>
 				</table>
 			</div>
-			<div className="join ms-auto">
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === 1 ? 'btn-disabled' : ''
-					}`}
-					onClick={() => setCurrentPage(1)}
-				>
-					«
-				</button>
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === 1 ? 'btn-disabled' : ''
-					}`}
-					onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-				>
-					‹
-				</button>
-				{[...Array(totalPages)].map((_, index) => (
-					<button
-						key={index + 1}
-						className={`join-item btn btn-sm ${
-							currentPage === index + 1 ? 'btn-active' : ''
-						}`}
-						onClick={() => setCurrentPage(index + 1)}
-					>
-						{index + 1}
-					</button>
-				))}
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === totalPages ? 'btn-disabled' : ''
-					}`}
-					onClick={() =>
-						setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-					}
-				>
-					›
-				</button>
-				<button
-					className={`join-item btn btn-sm ${
-						currentPage === totalPages ? 'btn-disabled' : ''
-					}`}
-					onClick={() => setCurrentPage(totalPages)}
-				>
-					»
-				</button>
-			</div>
+			{!searchTerm && (
+				<Pagination
+					currentPage={currentPage}
+					totalPages={totalPages}
+					onPageChange={setCurrentPage}
+				/>
+			)}
 			{previewUser && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 					<div className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/2">

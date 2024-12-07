@@ -7,7 +7,7 @@ import PageTitle from '../../../components/admin/PageTitle';
 import { useNavigate, useParams } from 'react-router-dom';
 import * as Joi from 'joi';
 import { joiResolver } from '@hookform/resolvers/joi';
-import { getPostById, updatePost } from '../../../services/admin/post';
+import { getPostById } from '../../../services/admin/post';
 
 interface Post {
   id: number;
@@ -47,6 +47,11 @@ interface CategoryResponse {
   };
 }
 
+interface Editor {
+  getContent: () => string;
+  setContent: (content: string) => void;
+}
+
 const postSchema = Joi.object({
   title: Joi.string().required().messages({
     'string.empty': 'Title is required',
@@ -66,6 +71,12 @@ const postSchema = Joi.object({
 const FormSkeleton = () => {
   return (
     <div className="space-y-6 animate-pulse">
+      {/* Header skeleton */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="h-8 w-32 bg-white/10 rounded"></div>
+        <div className="h-10 w-20 bg-white/10 rounded"></div>
+      </div>
+
       {/* Title skeleton */}
       <div>
         <div className="h-5 w-20 bg-white/10 rounded mb-2"></div>
@@ -76,6 +87,7 @@ const FormSkeleton = () => {
       <div>
         <div className="h-5 w-20 bg-white/10 rounded mb-2"></div>
         <div className="h-48 bg-white/10 rounded"></div>
+        <div className="h-10 w-full bg-white/10 rounded mt-2"></div>
       </div>
 
       {/* Content editor skeleton */}
@@ -102,7 +114,7 @@ const FormSkeleton = () => {
 const UpdatePost = () => {
   const { id } = useParams();
   const [initialContent, setInitialContent] = useState('');
-  const editorRef = useRef(null);
+  const editorRef = useRef<Editor>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [previewImage, setPreviewImage] = useState('');
@@ -197,6 +209,7 @@ const UpdatePost = () => {
           const imageResponse = await axiosClient.post('/upload', formData);
           postData.image = imageResponse.data.url;
         } catch (error) {
+          console.error('Image upload error:', error);
           toast.error('Error uploading image');
           return;
         }
@@ -250,16 +263,6 @@ const UpdatePost = () => {
     <>
       <PageTitle title="Update Post | Goshoes" />
       <div className="max-w-5xl mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Update Post</h1>
-          <button
-            onClick={() => navigate('/admin/post')}
-            className="px-4 py-2 text-white bg-gray-500 hover:bg-gray-600 rounded"
-          >
-            Back
-          </button>
-        </div>
-
         {isPageLoading ? (
           <FormSkeleton />
         ) : (
@@ -269,7 +272,8 @@ const UpdatePost = () => {
               <input
                 type="text"
                 {...register('title')}
-                className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-white"
+                disabled={isLoading}
+                className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-white disabled:opacity-50"
               />
               {errors.title && (
                 <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
@@ -294,7 +298,8 @@ const UpdatePost = () => {
                   accept="image/*"
                   onChange={handleImageChange}
                   ref={fileInputRef}
-                  className="mt-1 block w-full text-gray-400"
+                  disabled={isLoading}
+                  className="mt-1 block w-full text-gray-400 disabled:opacity-50"
                 />
                 {errors.image && (
                   <p className="text-red-500 text-sm mt-1">{errors.image.message}</p>
@@ -311,6 +316,7 @@ const UpdatePost = () => {
                   onChange={(newContent) => {
                     setValue('content', newContent);
                   }}
+                  height={1000}
                   key={`editor-${id}`}
                 />
               </div>
@@ -320,7 +326,8 @@ const UpdatePost = () => {
               <label className="block mb-2 font-medium">Category</label>
               <select
                 {...register("category_id")}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                disabled={isLoading}
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 value={watch('category_id')}
               >
                 <option value="">Select category</option>

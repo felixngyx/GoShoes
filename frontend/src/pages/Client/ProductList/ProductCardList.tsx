@@ -4,7 +4,7 @@ import { IProduct } from '../../../types/client/products/products';
 import useCart from '../../../hooks/client/useCart';
 import useWishlist from '../../../hooks/client/useWhishList';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { formatVNCurrency } from '../../../common/formatVNCurrency';
 import toast from 'react-hot-toast';
@@ -67,7 +67,7 @@ const ProductCardList = ({
 	// Thêm sản phẩm vào giỏ hàng
 	const addCart = () => {
 		if (selectedSize && selectedColor) {
-			const variants = parseVariants(product?.variants);
+			const variants = parseVariants(product?.variants || []);
 			const selectedVariant = variants.find(
 				(variant: any) => variant.color === selectedColor
 			);
@@ -82,18 +82,17 @@ const ProductCardList = ({
 					const quantity = 1;
 
 					handleAddToCart(productVariantId, quantity);
-
 					setShowModal(false);
 					setSelectedSize(null);
 					setSelectedColor(null);
 				} else {
-					toast.error('Size hoặc sản phẩm không khả dụng.');
+					toast.error('Size or product is not available.');
 				}
 			} else {
-				toast.error('Không tìm thấy màu được chọn.');
+				toast.error('Selected color not found.');
 			}
 		} else {
-			toast.error('Hãy chọn kích thước và màu trước khi thêm vào giỏ hàng.');
+			toast.error('Please select size and color before adding to cart.');
 		}
 	};
 
@@ -101,11 +100,11 @@ const ProductCardList = ({
 		if (!accessToken) {
 			setModalCheckLogin(true);
 			setShowModal(false);
-
 			return;
 		}
 		setShowModal(true);
 	};
+
 	if (isLoading) {
 		return (
 			<div className="flex flex-col gap-4">
@@ -158,21 +157,17 @@ const ProductCardList = ({
 	};
 
 	return (
-		<div className="flex flex-row gap-5">
+		<div className="flex flex-row gap-5 shadow-md border border-gray-200 rounded-lg overflow-hidden">
 			<div key={product.id} className="w-1/3">
-				<Link to={`/products/${product.id}`}>
-					<img
-						className="w-[650px] h-[300px] object-cover"
-						src={product.thumbnail}
-						alt={product.name}
-					/>
-				</Link>
+				<img
+					className="w-[650px] h-[300px] object-cover"
+					src={product.thumbnail}
+					alt={product.name}
+				/>
 			</div>
 			<div className="w-2/3">
 				<div className="flex flex-col justify-between items-start h-full gap-2 p-2">
-					<Link to={`/products/${product.id}`}>
-						<h3 className="text-2xl font-semibold">{product.name}</h3>
-					</Link>
+					<h3 className="text-2xl font-semibold">{product.name}</h3>
 					<div className="flex flex-row gap-2 items-center">
 						<div className="rating flex flex-row items-center gap-1">
 							<RatingStars rating={product.rating_count} />
@@ -219,7 +214,6 @@ const ProductCardList = ({
 							<h3 className="font-bold text-xl text-blue-500">
 								{product.name}
 							</h3>
-
 							<p className="mt-2">Select size and color:</p>
 							<div className="flex flex-col gap-6 mt-4">
 								<div>

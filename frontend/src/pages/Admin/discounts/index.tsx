@@ -41,6 +41,52 @@ const fetchDiscounts = async () => {
 	return response.data;
 };
 
+const TableSkeleton = () => {
+	return (
+		<div className="p-6 bg-white/80 dark:bg-gray-800/80">
+			{/* Header skeleton */}
+			<div className="flex items-center justify-between mb-6 animate-pulse">
+				<div className="w-[300px] h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+				<div className="flex gap-2">
+					<div className="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+					<div className="w-24 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+					<div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+				</div>
+			</div>
+
+			{/* Table skeleton */}
+			<div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700">
+				<div className="animate-pulse">
+					{/* Table header */}
+					<div className="border-b dark:border-gray-700 grid grid-cols-9 px-4 py-3">
+						{[...Array(9)].map((_, index) => (
+							<div
+								key={index}
+								className="h-5 bg-gray-200 dark:bg-gray-700 rounded"
+							/>
+						))}
+					</div>
+
+					{/* Table rows */}
+					{[...Array(5)].map((_, rowIndex) => (
+						<div
+							key={rowIndex}
+							className="border-b dark:border-gray-700 last:border-b-0 grid grid-cols-9 px-4 py-3 gap-4"
+						>
+							{[...Array(9)].map((_, colIndex) => (
+								<div
+									key={colIndex}
+									className="h-5 bg-gray-200 dark:bg-gray-700 rounded"
+								/>
+							))}
+						</div>
+					))}
+				</div>
+			</div>
+		</div>
+	);
+};
+
 const DiscountList = () => {
 	const navigate = useNavigate();
 	const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -135,11 +181,7 @@ const DiscountList = () => {
 	};
 
 	if (isLoading) {
-		return (
-			<div className="flex items-center justify-center h-64">
-				<div className="w-8 h-8 border-2 border-blue-500 rounded-full border-t-transparent animate-spin" />
-			</div>
-		);
+		return <TableSkeleton />;
 	}
 
 	if (error) {

@@ -21,7 +21,7 @@ return new class extends Migration
             $table->enum('status', ['public', 'unpublic', 'hidden'])->default('public');
             $table->string('sku')->unique();
             $table->boolean('is_deleted')->default(false);
-            $table->decimal('rating_count', 3, 2)->default(3.00);
+            $table->decimal('rating_count', 3, 2)->default(0.00);
             $table->string('slug')->unique();
             $table->string('thumbnail')->nullable();
             $table->string('hagtag');
@@ -37,6 +37,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('products');
-        
+
     }
 };

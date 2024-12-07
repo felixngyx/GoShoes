@@ -2,6 +2,7 @@
 
 namespace App\Services\Review;
 
+use App\Models\Product;
 use App\Repositories\RepositoryInterfaces\ReviewRepositoryInterface;
 use App\Services\ServiceInterfaces\Review\ReviewServiceInterface;
 use App\Exceptions\ReviewException;
@@ -19,22 +20,40 @@ class ReviewService implements ReviewServiceInterface
     public function createReview(array $data, int $userId)
     {
         try {
-            // Kiểm tra xem user đã mua sản phẩm chưa
-            $hasPurchased = DB::table('order_items')
-                ->join('orders', 'order_items.order_id', '=', 'orders.id')
-                ->where('orders.user_id', $userId)
-                ->where('order_items.product_id', $data['product_id'])
-                ->where('orders.status', 'completed')
-                ->exists();
+            // Tạo review mới
+            $reviewData = array_merge($data, ['user_id' => $userId]);
+            $newReview = $this->reviewRepository->create($reviewData);
 
-            if (!$hasPurchased) {
-                throw new ReviewException('You must purchase the product before reviewing');
+            // Lấy tất cả reviews
+            $reviews = $this->reviewRepository->getByProduct($data['product_id'], 10);
+
+            // Lấy mảng data từ paginator
+            if ($reviews instanceof \Illuminate\Pagination\LengthAwarePaginator) {
+                $reviewsArray = $reviews->items();
+
+                // Tính tổng rating
+                $totalRating = 0;
+                foreach ($reviewsArray as $review) {
+                    $totalRating += floatval($review['rating']);
+                }
+
+                // Cập nhật rating trung bình cho sản phẩm
+                if (count($reviewsArray) > 0) {
+                    $product = Product::find($data['product_id']);
+                    $product->rating_count = min($totalRating / count($reviewsArray), 5);
+                    $product->save();
+
+                    \Log::info('Rating calculation:', [
+                        'totalRating' => $totalRating,
+                        'count' => count($reviewsArray),
+                        'average' => $product->rating_count
+                    ]);
+                }
             }
 
-            $reviewData = array_merge($data, ['user_id' => $userId]);
-            return $this->reviewRepository->create($reviewData);
-
+            return $newReview;
         } catch (\Exception $e) {
+            \Log::error('Review creation error:', ['error' => $e->getMessage()]);
             throw new ReviewException($e->getMessage());
         }
     }
@@ -43,7 +62,7 @@ class ReviewService implements ReviewServiceInterface
     {
         try {
             $review = $this->reviewRepository->findById($reviewId);
-            
+
             if ($review->user_id !== $userId) {
                 throw new ReviewException('Unauthorized to update this review');
             }
@@ -59,7 +78,7 @@ class ReviewService implements ReviewServiceInterface
     {
         try {
             $review = $this->reviewRepository->findById($reviewId);
-            
+
             if ($review->user_id !== $userId) {
                 throw new ReviewException('Unauthorized to delete this review');
             }

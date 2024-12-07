@@ -14,10 +14,12 @@ const DefaultLayout = () => {
 			<OrderNotifications />
 			<div className="flex h-screen overflow-hidden">
 				{/* <!-- ===== Sidebar Start ===== --> */}
-				<Sidebar
-					sidebarOpen={sidebarOpen}
-					setSidebarOpen={setSidebarOpen}
-				/>
+				<div className="z-50">
+					<Sidebar
+						sidebarOpen={sidebarOpen}
+						setSidebarOpen={setSidebarOpen}
+					/>
+				</div>
 				{/* <!-- ===== Sidebar End ===== --> */}
 
 				{/* <!-- ===== Content Area Start ===== --> */}

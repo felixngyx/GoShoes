@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { Status } from '.';
+import { Status } from '../../../constants/status';
 import categoryService, { CATEGORY } from '../../../services/admin/category';
 import sizeService, { SIZE } from '../../../services/admin/size';
 import brandService, { BRAND } from '../../../services/admin/brand';
@@ -16,6 +16,7 @@ import { Eye, TrashIcon, Logs, Upload, X, ArrowLeft } from 'lucide-react';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import RichTextEditor from '../../../components/admin/RichTextEditor';
 import generateSlug from '../../../common/generateSlug';
+
 
 // Add form validation schema
 const productSchema = Joi.object({
@@ -92,11 +93,16 @@ const productSchema = Joi.object({
 								'number.min': 'Please select a size',
 								'any.required': 'Please select a size',
 							}),
-							quantity: Joi.number().min(1).required().messages({
-								'number.base': 'Quantity must be a number',
-								'number.min': 'Quantity must be greater than 0',
-								'any.required': 'Quantity is required',
-							}),
+							quantity: Joi.number()
+								.min(1)
+								.max(999999)
+								.required()
+								.messages({
+									'number.base': 'Quantity must be a number',
+									'number.min': 'Quantity must be greater than 0',
+									'number.max': 'Quantity cannot exceed 999,999',
+									'any.required': 'Quantity is required',
+								}),
 							sku: Joi.string().allow('').optional(),
 						})
 					)
@@ -294,7 +300,7 @@ const AddProduct = () => {
 		// Khởi tạo previousValues cho variant mới
 		setPreviousValues((prev) => ({
 			...prev,
-			[`variants.${newIndex}.size.0.quantity`]: 0,
+			[`variants.${newIndex}.variant_details.0.quantity`]: 0,
 		}));
 
 		setColorSearchTerms((prev) => ({
@@ -333,7 +339,9 @@ const AddProduct = () => {
 		setPreviousValues((prev) => {
 			const newPrev: { [key: string]: number } = {};
 			Object.entries(prev).forEach(([key, value]) => {
-				const match = key.match(/variants\.(\d+)\.size\.(\d+)\.quantity/);
+				const match = key.match(
+					/variants\.(\d+)\.variant_details\.(\d+)\.quantity/
+				);
 				if (match) {
 					const variantIndex = parseInt(match[1]);
 					const sizeIndex = match[2];
@@ -341,7 +349,8 @@ const AddProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${variantIndex - 1}.size.${sizeIndex}.quantity`
+							`variants.${variantIndex - 1
+							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
 				}
@@ -449,16 +458,19 @@ const AddProduct = () => {
 				),
 			};
 
-			console.log('Formatted submit data:', formattedData);
 			const response = await productService.create(formattedData);
-			console.log('Response:', response);
 			if (response.status === 201) {
 				toast.success('Create product successfully');
 				navigate('/admin/product');
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error submitting form:', error);
-			toast.error(error.response.data.message);
+			if (error && typeof error === 'object' && 'response' in error) {
+				const apiError = error as { response: { data: { message: string } } };
+				toast.error(apiError.response.data.message);
+			} else {
+				toast.error('An unexpected error occurred');
+			}
 		} finally {
 			setLoading(false);
 		}
@@ -496,9 +508,12 @@ const AddProduct = () => {
 			sku: '',
 		};
 
-		// Lấy giá trị hiện tại từ form thay vì fields
-		const currentValues: VariantSize[] =
-			control._formValues.variants[variantIndex].variant_details || [];
+		// Khởi tạo previousValues cho size mới với quantity = 0
+		setPreviousValues((prev) => ({
+			...prev,
+			[`variants.${variantIndex}.variant_details.${variantSizes[variantIndex]?.length || 0
+				}.quantity`]: 0,
+		}));
 
 		setVariantSizes((prev) => ({
 			...prev,
@@ -506,6 +521,8 @@ const AddProduct = () => {
 		}));
 
 		// Cập nhật form với giá trị hiện tại + size mới
+		const currentValues =
+			control._formValues.variants[variantIndex].variant_details || [];
 		setValue(`variants.${variantIndex}.variant_details`, [
 			...currentValues,
 			newSize,
@@ -519,7 +536,29 @@ const AddProduct = () => {
 		const sizeToRemove = currentVariant.variant_details[sizeIndex];
 
 		// Trừ đi số lượng của size bị xóa khỏi tổng stock quantity
-		setStockQuantity((prev) => prev - (Number(sizeToRemove.quantity) || 0));
+		const quantityToRemove = Number(sizeToRemove.quantity) || 0;
+		setStockQuantity((prev) => prev - quantityToRemove);
+
+		// Xóa giá trị quantity cũ khỏi previousValues và cập nhật lại index cho các size còn lại
+		setPreviousValues((prev) => {
+			const newPrev = { ...prev };
+			// Xóa giá trị của size bị xóa
+			delete newPrev[
+				`variants.${variantIndex}.variant_details.${sizeIndex}.quantity`
+			];
+
+			// Cập nhật lại index cho các size phía sau
+			const remainingSizes = currentVariant.variant_details.length;
+			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
+				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${i - 1
+					}.quantity`;
+				newPrev[newKey] = newPrev[oldKey];
+				delete newPrev[oldKey];
+			}
+
+			return newPrev;
+		});
 
 		const updatedSizes = currentVariant.variant_details.filter(
 			(_: VariantSize, idx: number) => idx !== sizeIndex
@@ -563,7 +602,7 @@ const AddProduct = () => {
 				[variantIndex]: [...(prev[variantIndex] || []), ...filesArray],
 			}));
 
-			// Cập nhật giá trị cho form
+			// Cp nhật giá trị cho form
 			setValue(
 				`variants.${variantIndex}.image`,
 				filesArray[0].name // Tạm thời lấy tên file đu tiên
@@ -622,6 +661,13 @@ const AddProduct = () => {
 		if (value) {
 			clearErrors('description');
 		}
+	};
+
+	// Hàm kiểm tra màu đã được chọn chưa
+	const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
+		return fields.some((field, index) =>
+			index !== currentVariantIndex && field.color_id === colorId
+		);
 	};
 
 	return loadingData ? (
@@ -958,9 +1004,8 @@ const AddProduct = () => {
 								</span>
 							</div>
 							<RichTextEditor
-								initialValue={description}
+								initialValue=""
 								onChange={handleDescriptionChange}
-								height={300}
 							/>
 							{errors.description && (
 								<p className="text-red-500 text-xs">
@@ -1042,6 +1087,7 @@ const AddProduct = () => {
 																}));
 															}}
 															className="flex items-center gap-2"
+															disabled={isSelectedColor(color.id!, index)}
 														>
 															<img
 																src={color.link_image}
@@ -1099,9 +1145,8 @@ const AddProduct = () => {
 													>
 														<img
 															src={URL.createObjectURL(image)}
-															alt={`Variant ${index + 1} - ${
-																imageIndex + 1
-															}`}
+															alt={`Variant ${index + 1} - ${imageIndex + 1
+																}`}
 															className="w-full h-full object-cover rounded-md border border-gray-300"
 														/>
 														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -1191,29 +1236,40 @@ const AddProduct = () => {
 															})}
 														</select>
 														<input
-															type="text"
-															placeholder="Quantity"
+															type="number"
+															min="1"
+															max="999999"
+															placeholder="Enter a quantity between 1 and 999,999"
 															className="input input-bordered input-sm w-full"
 															{...register(
-																`variants.${index}.variant_details.${sizeIndex}.quantity`
-															)}
-															onChange={(e) => {
-																const inputPath = `variants.${index}.variant_details.${sizeIndex}.quantity`;
-																const newValue =
-																	Number(e.target.value) || 0;
-																const oldValue =
-																	previousValues[inputPath] ||
-																	0;
+																`variants.${index}.variant_details.${sizeIndex}.quantity`,
+																{
+																	valueAsNumber: true,
+																	onChange: (e) => {
+																		const inputPath = `variants.${index}.variant_details.${sizeIndex}.quantity`;
+																		let newValue = parseInt(e.target.value);
 
-																setStockQuantity(
-																	(prev) =>
-																		prev - oldValue + newValue
-																);
-																setPreviousValues((prev) => ({
-																	...prev,
-																	[inputPath]: newValue,
-																}));
-															}}
+																		// Kiểm tra và giới hạn giá trị
+																		if (isNaN(newValue) || newValue < 0) {
+																			newValue = 0;
+																		} else if (newValue > 999999) {
+																			newValue = 999999;
+																			toast.error('Quantity cannot exceed 999,999');
+																		}
+
+																		// Cập nhật giá trị
+																		setValue(inputPath, newValue);
+
+																		// Cập nhật tổng số lượng
+																		const oldValue = previousValues[inputPath] || 0;
+																		setStockQuantity((prev) => prev - oldValue + newValue);
+																		setPreviousValues((prev) => ({
+																			...prev,
+																			[inputPath]: newValue,
+																		}));
+																	},
+																}
+															)}
 														/>
 														<button
 															type="button"
@@ -1235,25 +1291,14 @@ const AddProduct = () => {
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.size_id && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.size_id?.message
-															}
-														</span>
-													)}
-													{errors.variants?.[index]
-														?.variant_details?.[sizeIndex]
-														?.quantity && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.quantity?.message
-															}
-														</span>
-													)}
+															<span className="label-text text-red-500 text-xs ms-2">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.size_id?.message
+																}
+															</span>
+														)}
 												</>
 											)
 										)}

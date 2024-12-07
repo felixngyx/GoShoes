@@ -1,5 +1,5 @@
 import { FaUser } from 'react-icons/fa';
-import { Box, Boxes, ContactRound, Newspaper, TicketPercent } from 'lucide-react';
+import { Box, Boxes, ContactRound, Home, Image, Newspaper, TicketPercent } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import Logo from '../../../images/logo/logo.svg';
@@ -61,9 +61,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 	return (
 		<aside
 			ref={sidebar}
-			className={`absolute left-0 top-0 z-100 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear dark:bg-boxdark lg:static lg:translate-x-0 ${
-				sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-			}`}
+			className={`absolute left-0 top-0 z-100 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear dark:bg-boxdark lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+				}`}
 		>
 			<div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
 				<NavLink to="/admin">
@@ -206,11 +205,22 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
 							<li>
 								<NavLink
-									to="/admin/user"
+									to="/admin"
 									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-										pathname.includes('user') &&
+										// Thay đổi điều kiện kiểm tra pathname
+										pathname === '/admin' ? 'bg-graydark dark:bg-meta-4' : ''
+										}`}
+								>
+									<Home size={18} />
+									Dashboard
+								</NavLink>
+							</li>
+							<li>
+								<NavLink
+									to="/admin/user"
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${pathname.includes('user') &&
 										'bg-graydark dark:bg-meta-4'
-									}`}
+										}`}
 								>
 									<FaUser />
 									Users
@@ -220,10 +230,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 							<li>
 								<NavLink
 									to="/admin/product"
-									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-										pathname.includes('product') &&
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${pathname.includes('product') &&
 										'bg-graydark dark:bg-meta-4'
-									}`}
+										}`}
 								>
 									<Box size={18} />
 									Product
@@ -233,10 +242,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 							<li>
 								<NavLink
 									to="/admin/attribute"
-									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-										pathname.includes('attribute') &&
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${pathname.includes('attribute') &&
 										'bg-graydark dark:bg-meta-4'
-									}`}
+										}`}
 								>
 									<Boxes size={18} />
 									Attribute
@@ -251,9 +259,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 									<BsCart2 size={18} />
 									<span>Orders</span>
 									<svg
-										className={`ml-auto fill-current transition-transform duration-300 ${
-											ordersOpen ? 'rotate-180' : ''
-										}`}
+										className={`ml-auto fill-current transition-transform duration-300 ${ordersOpen ? 'rotate-180' : ''
+											}`}
 										width="20"
 										height="20"
 										viewBox="0 0 20 20"
@@ -287,15 +294,14 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 									</li>
 								</ul>
 							</li>
-							
+
 
 							<li>
 								<NavLink
 									to="/admin/discounts"
-									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-										pathname.includes('discounts') &&
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${pathname.includes('discounts') &&
 										'bg-graydark dark:bg-meta-4'
-									}`}
+										}`}
 								>
 									<TicketPercent size={18} />
 									Discounts
@@ -304,10 +310,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 							<li>
 								<NavLink
 									to="/admin/post"
-									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-										pathname.includes('post') &&
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${pathname.includes('post') &&
 										'bg-graydark dark:bg-meta-4'
-									}`}
+										}`}
 								>
 									<Newspaper size={18} />
 									Post
@@ -316,13 +321,23 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 							<li>
 								<NavLink
 									to="/admin/contact"
-									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-										pathname.includes('contact') &&
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${pathname.includes('contact') &&
 										'bg-graydark dark:bg-meta-4'
-									}`}
+										}`}
 								>
 									<ContactRound size={18} />
 									Contact
+								</NavLink>
+							</li>
+							<li>
+								<NavLink
+									to="/admin/banner"
+									className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${pathname.includes('banner') &&
+										'bg-graydark dark:bg-meta-4'
+										}`}
+								>
+									<Image size={18} />
+									Banner
 								</NavLink>
 							</li>
 
