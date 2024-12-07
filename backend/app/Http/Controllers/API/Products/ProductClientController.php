@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\Products;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Services\Product\ProductService;
 
@@ -50,7 +51,7 @@ class ProductClientController extends Controller
 
         return response()->json([
             'product' => $product
-            
+
         ]);
     }
 
@@ -76,5 +77,31 @@ class ProductClientController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function HomeCustom(){
+        $newProducts = Product::with(['images', 'categories'])
+            ->where('is_deleted', 0)
+            ->orderBy('created_at', 'desc')
+            ->take(8)
+            ->get();
+
+        $discountProducts = Product::with(['images', 'categories'])
+            ->where('is_deleted', 0)
+            ->whereNotNull('promotional_price')
+            ->orderByRaw('(price - promotional_price) DESC')
+            ->take(8)
+            ->get()
+            ->map(function ($product) {
+                $product->discount_percentage = round(
+                    (($product->price - $product->promotional_price) / $product->price * 100)
+                );
+                return $product;
+            });
+
+        return response()->json([
+            'newProducts' => $newProducts,
+            'discountProducts' => $discountProducts
+        ]);
     }
 }

@@ -260,6 +260,8 @@ Route::group([
     });
 });
 
+Route::get('/client/homecustom', [ProductClientController::class, 'HomeCustom']);
+
 Route::post('/auth/facebook-login', [FacebookAuthController::class, 'loginWithFacebook']);
 
 // API review
