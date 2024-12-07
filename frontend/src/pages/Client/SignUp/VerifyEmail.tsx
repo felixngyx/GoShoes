@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import axiosClient from '../../../apis/axiosClient';
 import Cookies from 'js-cookie';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 import Footer from '../../../components/client/Footer';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai'; // Import các icon mắt
@@ -40,7 +40,7 @@ const VerifyEmail: React.FC = () => {
       return;
     }
     try {
-      await axiosClient.post('/auth/reset-password', { token, newPassword });
+      await axiosClient.post('/profile/reset-password', { token, password: newPassword, password_confirmation: confirmPassword });
       toast.success('Password has been updated successfully!');
       navigate('/');
     } catch (error) {
