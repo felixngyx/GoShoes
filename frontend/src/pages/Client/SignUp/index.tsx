@@ -116,8 +116,8 @@ const SignUp = () => {
 		<>
 			<div className="h-screen">
 				<Navbar />
-				<div className="flex justify-between items-center container max-w-5xl mx-auto mt-10">
-					<div className="flex justify-start w-2/3">
+				<div className="flex justify-between items-center container max-w-5xl mx-auto mt-10 px-5 md:px-8 lg:px-0">
+					<div className="hidden lg:flex justify-start w-full md:w-2/3">
 						<div className="flex flex-col gap-5 justify-center">
 							<h1 className="text-4xl font-bold">Sign up to</h1>
 							<h1 className="text-5xl font-bold text-[#40BFFF] italic">
@@ -133,7 +133,7 @@ const SignUp = () => {
 						</div>
 						<img src="user_login.svg" alt="" />
 					</div>
-					<div className="w-1/3 flex justify-center items-center">
+					<div className="w-full lg:w-1/3 flex justify-center items-center">
 						<form onSubmit={handleSubmit(onSubmit)} className="w-full">
 							<p className="text-2xl font-bold">Sign up</p>
 							<input

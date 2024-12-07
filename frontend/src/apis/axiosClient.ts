@@ -33,13 +33,27 @@ axiosClient.interceptors.response.use(
 		const pathname = window.location.pathname;
 
 		// Bỏ qua kiểm tra cho các trang public
-		const publicPaths = ['/', '/signin', '/signup', '/products', '/product'];
+		const publicPaths = [
+			'/',
+			'/signin',
+			'/signup',
+			'/products',
+			'/products/:id',
+			'/about-us',
+			'/news',
+			'/news/:id',
+			'/brand',
+			'/brand/:id',
+			'/category',
+			'/category/:id',
+			'/contact',
+		];
 
 		const originalRequest = error.config;
 
 		if (error.response.status === 401 && !originalRequest._retry) {
 			originalRequest._retry = true;
-			const refreshToken = Cookies.get('refresh_token');	
+			const refreshToken = Cookies.get('refresh_token');
 			if (!refreshToken) {
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');
