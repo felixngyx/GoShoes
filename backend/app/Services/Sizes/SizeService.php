@@ -61,17 +61,29 @@ class SizeService
     public function deleteSize(VariantSize $size)
     {
         try {
-            $this->sizeRepository->deleteSize($size);
+            $result = $this->sizeRepository->deleteSize($size);
+
+            if ($result) {
+                return response()->json([
+                    'message' => 'Size is deleted successfully!'
+                ], 200);
+            }
 
             return response()->json([
-                'message' => 'Size đã được xóa thành công!',
-            ], 200);
+                'message' => 'You cannot delete this size because it is being used in product variants.'
+            ], 400);
+
         } catch (\Exception $e) {
-            // Ghi log lỗi và trả về thông báo lỗi
             Log::error('Error deleting size: ' . $e->getMessage());
 
+            if (str_contains($e->getMessage(), 'being used')) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                ], 400);
+            }
+
             return response()->json([
-                'message' => 'Có lỗi xảy ra khi xóa Size.',
+                'message' => 'An error occurred while deleting the size.',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -79,14 +91,24 @@ class SizeService
     public function deleteSizes(array $ids)
     {
         if (empty($ids)) {
-            return response()->json(['message' => 'Không có ID nào được cung cấp!'], 400);
+            return response()->json(['message' => 'No IDs provided!'], 400);
         }
         try {
             $deletedCount = $this->sizeRepository->deleteSizesByIds($ids);
-            return response()->json(['message' => 'Đã xóa thành công ' . $deletedCount . ' size!'], 200);
+            return response()->json(['message' => 'Successfully deleted ' . $deletedCount . ' sizes!'], 200);
         } catch (\Exception $e) {
             Log::error('Error deleting sizes: ' . $e->getMessage());
-            return response()->json(['message' => 'Có lỗi xảy ra khi xóa size.', 'error' => $e->getMessage()], 500);
+
+            if (str_contains($e->getMessage(), 'being used')) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                ], 400);
+            }
+
+            return response()->json([
+                'message' => 'An error occurred while deleting the sizes.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }

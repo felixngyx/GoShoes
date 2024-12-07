@@ -24,8 +24,7 @@ class StoreSizeRequest extends FormRequest
     {
         return [
             'size' => 'required|string|max:255|unique:variant_sizes,size',
-            'code' => 'required|string|max:20',
         ];
-        
+
     }
 }

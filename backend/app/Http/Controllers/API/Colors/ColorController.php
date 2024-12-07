@@ -75,7 +75,7 @@ class ColorController extends Controller
         ], 200);
     }
 
-   
+
     public function edit(string $id) {}
 
     public function update(Request $request, string $id)
@@ -92,20 +92,21 @@ class ColorController extends Controller
         ], 200);
     }
 
-    
+
     public function destroy(string $id)
     {
-        // Tìm sản phẩm theo ID
+        // Tìm màu sắc theo ID
         $color = $this->colorService->findColor($id);
 
         if (!$color) {
             return response()->json(['message' => 'Màu sắc không tồn tại!'], 404);
         }
 
-        // Xóa Màu sắc
-        $this->colorService->deleteColor($color);
+        // Xóa màu sắc và l�y response từ service
+        $response = $this->colorService->deleteColor($color);
 
-        return response()->json(['message' => 'Màu sắc đã được xóa thành công!'], 200);
+        // Trả về response trực tiếp từ service
+        return $response;
     }
     public function destroyMultiple(Request $request){
         $ids = $request->input('ids');

@@ -174,9 +174,9 @@ class BrandController extends Controller
         }
 
         // Xóa Thương hiệu
-        $this->brandService->deleteBrand($brand);
+        $response = $this->brandService->deleteBrand($brand);
 
-        return response()->json(['message' => 'Thương hiệu đã được xóa thành công!'], 200);
+        return $response;
     }
     public function destroyMultiple(Request $request)
     {

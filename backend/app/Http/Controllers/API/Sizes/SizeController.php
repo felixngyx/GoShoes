@@ -97,17 +97,18 @@ class SizeController extends Controller
 
     public function destroy(string $id)
     {
-        // Tìm sản phẩm theo ID
+        // Tìm size theo ID
         $size = $this->sizeService->findSize($id);
 
         if (!$size) {
-            return response()->json(['message' => 'Size không tồn tại!'], 404);
+            return response()->json(['message' => 'Size does not exist!'], 404);
         }
 
-        // Xóa Màu sắc
-        $this->sizeService->deleteSize($size);
+        // Xóa size và lấy response từ service
+        $response = $this->sizeService->deleteSize($size);
 
-        return response()->json(['message' => 'Size đã được xóa thành công!'], 200);
+        // Trả về response trực tiếp từ service
+        return $response;
     }
     public function destroyMultiple(Request $request){
         $ids = $request->input('ids');
