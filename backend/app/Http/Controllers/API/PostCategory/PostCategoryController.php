@@ -31,7 +31,7 @@ class PostCategoryController extends Controller
             if (!method_exists($categories, 'total')) {
                 $totalItems = $categories->count();
                 $totalPages = ceil($totalItems / $limit);
-                
+
                 return response()->json([
                     'success' => true,
                     'message' => $categories->isEmpty() ? 'Không có danh mục nào.' : 'Lấy danh sách danh mục thành công.',
@@ -98,13 +98,13 @@ class PostCategoryController extends Controller
             $category = $this->postCategoryService->createCategory($data);
             return response()->json([
                 'success' => true,
-                'message' => 'Danh mục đã được tạo thành công.',
+                'message' => 'The category has been created successfully.',
                 'data' => $category
             ], 201);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không thể tạo danh mục.',
+                'message' => 'An error occurred while creating the category. May be the category name is already exists.',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -165,17 +165,17 @@ class PostCategoryController extends Controller
             $this->postCategoryService->deleteCategory($id);
             return response()->json([
                 'success' => true,
-                'message' => 'Danh mục đã được xóa thành công.'
+                'message' => 'The category has been deleted successfully.'
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy danh mục để xóa.'
+                'message' => 'The category was not found.'
             ], 404);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi khi xóa danh mục.',
+                'message' => 'An error occurred while deleting the category.' . $e->getMessage(),
                 'error' => $e->getMessage()
             ], 500);
         }

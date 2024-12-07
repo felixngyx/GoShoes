@@ -27,13 +27,25 @@ class ColorRepository implements ColorRepositoryInterface
         return null;
     }
     public function deleteColor(VariantColor $color)
-
     {
+        if ($color->variants()->count() > 0) {
+            throw new \Exception('This color cannot be deleted because it is being used in product variants.');
+        }
+
         return $color->delete();
     }
     public function deleteColorsByIds(array $ids)
     {
-        return VariantColor::whereIn('id', $ids)->delete();  // Xóa tất cả màu sắc theo ID
+        $colorsWithVariants = VariantColor::whereIn('id', $ids)
+            ->withCount('variants')
+            ->having('variants_count', '>', 0)
+            ->get();
+
+        if ($colorsWithVariants->isNotEmpty()) {
+            throw new \Exception('Cannot delete selected colors because some colors are being used in product variants.');
+        }
+
+        return VariantColor::whereIn('id', $ids)->delete();
     }
 
 }

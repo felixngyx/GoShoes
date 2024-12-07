@@ -69,31 +69,62 @@ class BrandService
     public function deleteBrand(Brand $brand)
     {
         try {
+            // Kiểm tra xem có sản phẩm nào thuộc thương hiệu này không
+            if ($brand->products()->count() > 0) {
+                return response()->json([
+                    'message' => 'You cannot delete this brand because it has products.',
+                ], 400);
+            }
 
-            $this->brandRepository->deleteBrand($brand);
+            $result = $this->brandRepository->deleteBrand($brand);
+
+            if ($result) {
+                return response()->json([
+                    'message' => 'Thương hiệu đã được xóa thành công!'
+                ], 200, [], JSON_UNESCAPED_UNICODE);
+            }
 
             return response()->json([
-                'message' => 'Thương hiệu đã được xóa thành công!',
-            ], 200);
+                'message' => 'Không thể xóa thương hiệu.'
+            ], 400, [], JSON_UNESCAPED_UNICODE);
+
         } catch (\Exception $e) {
             Log::error('Error deleting brand: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Có lỗi xảy ra khi xóa thương hiệu.',
-                'error' => $e->getMessage(),
-            ], 500);
+                'error' => $e->getMessage()
+            ], 500, [], JSON_UNESCAPED_UNICODE);
         }
     }
     public function deleteBrands(array $ids)
     {
         if (empty($ids)) {
-            return response()->json(['message' => 'Không có ID nào được cung cấp!'], 400);
+            return response()->json(['message' => 'No IDs provided!'], 400);
         }
         try {
+            // Kiểm tra các thương hiệu được chọn
+            $brandsWithProducts = Brand::whereIn('id', $ids)
+                ->withCount('products')
+                ->having('products_count', '>', 0)
+                ->get();
+
+            if ($brandsWithProducts->isNotEmpty()) {
+                return response()->json([
+                    'message' => 'You cannot delete the selected brands because some brands have products.'
+                ], 400);
+            }
+
             $deletedCount = $this->brandRepository->deleteBrandsByIds($ids);
-            return response()->json(['message' => 'Đã xóa thành công ' . $deletedCount . ' thương hiệu!'], 200);
+            return response()->json([
+                'message' => 'Successfully deleted ' . $deletedCount . ' brands!'
+            ], 200);
+
         } catch (\Exception $e) {
             Log::error('Error deleting brands: ' . $e->getMessage());
-            return response()->json(['message' => 'Có lỗi xảy ra khi xóa thương hiệu.', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'An error occurred while deleting the brands.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }

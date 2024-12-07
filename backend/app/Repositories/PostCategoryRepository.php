@@ -6,7 +6,7 @@ use App\Models\PostCategory;
 
 use App\Repositories\RepositoryInterfaces\PostCategoryRepositoryInterface;
 use Illuminate\Support\Facades\Storage;
-   
+
 class PostCategoryRepository implements PostCategoryRepositoryInterface
 {
     protected $postCategory;
@@ -43,9 +43,25 @@ class PostCategoryRepository implements PostCategoryRepositoryInterface
     public function delete($id)
     {
         $postCategory = $this->findById($id);
+        // Kiểm tra xem category có chứa bàipost nào không
+        if ($postCategory->posts()->count() > 0) {
+            throw new \Exception('This category cannot be deleted because it contains posts.');
+        }
         return $postCategory->delete();
     }
-    public function deletePostCategoryByIds(array $ids){
+
+    public function deletePostCategoryByIds(array $ids)
+    {
+        // Kiểm tra tất cả category được chọn
+        $categoriesWithPosts = $this->postCategory->whereIn('id', $ids)
+            ->withCount('posts')
+            ->having('posts_count', '>', 0)
+            ->get();
+
+        if ($categoriesWithPosts->isNotEmpty()) {
+            throw new \Exception('Cannot delete selected categories because some categories contain posts.');
+        }
+
         return $this->postCategory->whereIn('id', $ids)->delete();
     }
 

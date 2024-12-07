@@ -36,6 +36,17 @@ class CategoryService implements CategoryServiceInterface
 
     public function deleteCategory($id)
     {
-        return $this->categoryRepository->delete($id);
+        try {
+            $category = $this->categoryRepository->findById($id);
+
+            // Kiểm tra xem category có chứa sản phẩm không
+            if ($category->products()->count() > 0) {
+                throw new \Exception('You cannot delete this category because it contains products.');
+            }
+
+            return $this->categoryRepository->delete($id);
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
+        }
     }
 }
