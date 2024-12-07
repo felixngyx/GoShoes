@@ -12,7 +12,8 @@ class PostRepository implements PostRepositoryInterface
     {
         try {
             return Post::with(['author:id,name', 'category:id,name'])
-                ->select('id', 'title', 'image', 'content', 'slug', 'category_id', 'author_id', 'scheduled_at', 'published_at')
+                ->select('id', 'title', 'image', 'content', 'slug', 'category_id', 'author_id', 'scheduled_at', 'published_at', 'created_at')
+                ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($post) {
                     return [
@@ -26,6 +27,7 @@ class PostRepository implements PostRepositoryInterface
                         'author_name' => $post->author ? $post->author->name : 'N/A',
                         'category_id' => $post->category_id,
                         'category_name' => $post->category ? $post->category->name : 'N/A',
+                        'created_at' => $post->created_at,
                     ];
                 });
         } catch (\Exception $e) {
@@ -72,7 +74,7 @@ class PostRepository implements PostRepositoryInterface
     {
         try {
             $post = Post::find($id);
-            
+
             if ($post) {
                 $post->update($data);
                 return $post;
