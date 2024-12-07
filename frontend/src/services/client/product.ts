@@ -3,7 +3,7 @@ import axiosClient from "../../apis/axiosClient";
 export const getAllProducts = async (page: number, limit: number) => {
   try {
     const response = await axiosClient.get(
-      `/products?page=${page}&perPage=${limit}`
+      `/products?page=${page}&perPage=${limit}&status=public`
     );
     return response.data.data || [];
   } catch (error: unknown) {
@@ -25,7 +25,9 @@ export const getProductById = async (id: number) => {
 
 export const getAllRelatedProducts = async (id: number) => {
   try {
-    const response = await axiosClient.get(`/products?brand_id=${id}`);
+    const response = await axiosClient.get(
+      `/products?brand_id=${id}&status=public`
+    );
     return response.data.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -35,7 +37,9 @@ export const getAllRelatedProducts = async (id: number) => {
 
 export const getProductsByName = async (name: string) => {
   try {
-    const response = await axiosClient.get(`/products?name=${name}`);
+    const response = await axiosClient.get(
+      `/products?name=${name}&status=public`
+    );
 
     return response.data.data;
   } catch (error) {
@@ -63,7 +67,7 @@ export const getProductByBrandId = async (
 ) => {
   try {
     const response = await axiosClient.get(
-      `/products?brand_id=${brandId}&page=${page}&perPage=${perPage}`
+      `/products?brand_id=${brandId}&page=${page}&perPage=${perPage}&status=public`
     );
     return response.data;
   } catch (error) {
@@ -79,7 +83,7 @@ export const getProductByCateId = async (
 ) => {
   try {
     const response = await axiosClient.get(
-      `/products?category_id=${CateId}&page=${page}&perPage=${perPage}`
+      `/products?category_id=${CateId}&page=${page}&perPage=${perPage}&status=public`
     );
     return response.data;
   } catch (error) {
@@ -94,6 +98,16 @@ export const getAllSizes = async () => {
     return response.data.sizes.data;
   } catch (error) {
     console.error("Failed to get all sizes:", error);
+    throw error;
+  }
+};
+
+export const getProductsHomeCustom = async () => {
+  try {
+    const response = await axiosClient.get("/client/homecustom");
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get all:", error);
     throw error;
   }
 };
