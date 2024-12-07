@@ -1,22 +1,22 @@
-import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
-import { useEffect, useState, useMemo, useRef } from "react";
-import { AiFillStar, AiOutlineStar } from "react-icons/ai";
-import { FaShoppingCart } from "react-icons/fa";
-import { IoMdAdd, IoMdRemove } from "react-icons/io";
-import { useParams, useNavigate, useNavigation, Link } from "react-router-dom";
-import useCart from "../../../hooks/client/useCart";
-import { getProductById } from "../../../services/client/product";
-import { Category } from "../../../types/client/category";
-import { IImages } from "../../../types/client/products/images";
-import { Variant } from "../../../types/client/products/variants";
-import RelatedProduct from "../ProductList/RelatedProduct";
-import { toast } from "react-hot-toast";
-import { formatVNCurrency } from "../../../common/formatVNCurrency";
-import { gellReviewByProductId } from "../../../services/client/review";
-import Cookies from "js-cookie";
-import { addProductToWishlist } from "../../../services/client/whishlist";
-import axiosClient from "../../../apis/axiosClient";
+import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { AiFillStar, AiOutlineStar } from 'react-icons/ai';
+import { FaShoppingCart } from 'react-icons/fa';
+import { IoMdAdd, IoMdRemove } from 'react-icons/io';
+import { useParams, useNavigate, useNavigation, Link } from 'react-router-dom';
+import useCart from '../../../hooks/client/useCart';
+// import { getProductById } from '../../../services/client/product';
+// import { Category } from '../../../types/client/category';
+// import { IImages } from '../../../types/client/products/images';
+import RelatedProduct from '../ProductList/RelatedProduct';
+import { toast } from 'react-hot-toast';
+import { formatVNCurrency } from '../../../common/formatVNCurrency';
+import { gellReviewByProductId } from '../../../services/client/review';
+import Cookies from 'js-cookie';
+import { addProductToWishlist } from '../../../services/client/whishlist';
+import axiosClient from '../../../apis/axiosClient';
+import ZoomImage from '../../../components/common/ZoomImage';
 
 interface Variant {
 	color_id: number;
@@ -151,7 +151,7 @@ const ProductDetailSkeleton = () => {
 				{/* Description Tab Skeleton */}
 				<div className="mt-8 col-span-1 md:col-span-10 bg-[#FAFAFB] p-5 rounded-lg shadow-md">
 					<div className="flex gap-4 md:gap-28 border-b mb-4">
-						{["Description", "Reviews", "Write Comment"].map((tab) => (
+						{['Description', 'Reviews', 'Write Comment'].map((tab) => (
 							<div
 								key={tab}
 								className="h-8 bg-gray-200 animate-pulse rounded w-24"
@@ -190,13 +190,12 @@ const ProductDetail = () => {
 	const { id } = useParams();
 	const navigate = useNavigate();
 	const { data: product, isLoading } = useQuery({
-		queryKey: ["PRODUCT_KEY", id],
+		queryKey: ['PRODUCT_KEY', id],
 		queryFn: async () => {
 			const response = await axiosClient.get(`/client/products/${id}`);
 			return response.data.data;
-		}
+		},
 	});
-	console.log(product);
 	const [selectedSize, setSelectedSize] = useState<string | null>(null);
 	const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(
 		null
@@ -204,10 +203,10 @@ const ProductDetail = () => {
 	const [selectedColor, setSelectedColor] = useState<number | null>(null);
 	const [quantity, setQuantity] = useState(1);
 	const [activeTab, setActiveTab] = useState<
-		"description" | "reviews" | "writeComment"
-	>("description");
+		'description' | 'reviews' | 'writeComment'
+	>('description');
 	const [comments, setComments] = useState<string[]>([]);
-	const [newComment, setNewComment] = useState("");
+	const [newComment, setNewComment] = useState('');
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [availableQuantity, setAvailableQuantity] = useState(0);
 	const { handleAddToCartDetail } = useCart();
@@ -229,8 +228,10 @@ const ProductDetail = () => {
 			id: variant.color_id,
 			color: variant.color_name,
 			image: variant.image ? variant.image.split(',')[0].trim() : null,
-			allImages: variant.image ? variant.image.split(',').map((img: string) => img.trim()) : [],
-			sizes: variant.variant_details
+			allImages: variant.image
+				? variant.image.split(',').map((img: string) => img.trim())
+				: [],
+			sizes: variant.variant_details,
 		}));
 	}, [parsedVariants]);
 
@@ -252,7 +253,9 @@ const ProductDetail = () => {
 			);
 
 			if (selectedVariant?.image) {
-				const images = selectedVariant.image.split(',').map((img: string) => img.trim());
+				const images = selectedVariant.image
+					.split(',')
+					.map((img: string) => img.trim());
 				setSelectedThumbnail(images[0] || product.thumbnail);
 				setAllImages(images);
 			} else {
@@ -280,7 +283,6 @@ const ProductDetail = () => {
 
 	// Xử lý color change
 	const handleColorChange = (colorId: number, imageUrl: string) => {
-		console.log("Changing color to:", colorId);
 		setSelectedColor(colorId);
 		setSelectedThumbnail(imageUrl || product?.thumbnail);
 
@@ -290,15 +292,15 @@ const ProductDetail = () => {
 	};
 
 	const handleAdd = () => {
-		const accessToken = Cookies.get("access_token");
+		const accessToken = Cookies.get('access_token');
 		if (!accessToken) {
-			toast.error("Please login to add to cart");
-			navigate("/signin");
+			toast.error('Please login to add to cart');
+			navigate('/signin');
 			return;
 		}
 
 		if (!selectedSize || !selectedColor) {
-			toast.error("Select a Size and Color to add to cart.");
+			toast.error('Select a Size and Color to add to cart.');
 			return;
 		}
 
@@ -314,11 +316,9 @@ const ProductDetail = () => {
 			const variantId = selectedSizeDetails.variant_id;
 
 			if (!variantId) {
-				toast.error("Product Variant ID is missing.");
+				toast.error('Product Variant ID is missing.');
 				return;
 			}
-
-			console.log("Adding to cart with Variant ID:", variantId);
 
 			handleAddToCartDetail(
 				variantId,
@@ -327,7 +327,7 @@ const ProductDetail = () => {
 				quantity
 			);
 		} else {
-			toast.error("Selected size or color is unavailable.");
+			toast.error('Selected size or color is unavailable.');
 		}
 	};
 
@@ -339,20 +339,19 @@ const ProductDetail = () => {
 
 			addProductToWishlist(productToAdd)
 				.then(() => {
-					toast.success("The product has been added to your wishlist!");
+					toast.success('The product has been added to your wishlist!');
 				})
 				.catch(() => {
 					toast.error(
-						"Failed to add the product to your wishlist. Please try again."
+						'Failed to add the product to your wishlist. Please try again.'
 					);
 				});
 		} else {
-			toast.error("Invalid product information.");
+			toast.error('Invalid product information.');
 		}
 	};
 
 	const handleSizeChange = (size: string) => {
-		console.log("Changing size to:", size);
 		setSelectedSize(size);
 
 		// Cập nhật availableQuantity dựa trên size mới
@@ -373,34 +372,35 @@ const ProductDetail = () => {
 
 	const uniqueSizes = selectedColor
 		? Array.from(
-			parsedVariants
-				.filter((variant: Variant) => variant.color_id === selectedColor)
-				.flatMap((variant: Variant) =>
-					variant.variant_details?.map((detail: any) => ({
-						size: detail.size,
-						disabled: detail.quantity === 0,
-						quantity: detail.quantity,
-					})) || []
-				)
-				.reduce(
-					(
-						acc: Map<
-							string,
-							{ size: string; disabled: boolean; quantity: number }
-						>,
-						current
-					) => {
-						if (!acc.has(current.size)) {
-							acc.set(current.size, current);
-						}
-						return acc;
-					},
-					new Map()
-				)
-				.values()
-		)
-			.map((value: any) => value)
-			.sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
+				parsedVariants
+					.filter((variant: Variant) => variant.color_id === selectedColor)
+					.flatMap(
+						(variant: Variant) =>
+							variant.variant_details?.map((detail: any) => ({
+								size: detail.size,
+								disabled: detail.quantity === 0,
+								quantity: detail.quantity,
+							})) || []
+					)
+					.reduce(
+						(
+							acc: Map<
+								string,
+								{ size: string; disabled: boolean; quantity: number }
+							>,
+							current: any
+						) => {
+							if (!acc.has(current.size)) {
+								acc.set(current.size, current);
+							}
+							return acc;
+						},
+						new Map()
+					)
+					.values()
+		  )
+				.map((value: any) => value)
+				.sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
 		: [];
 
 	const handleQuantityChange = (value: number) => {
@@ -438,7 +438,7 @@ const ProductDetail = () => {
 	const handleAddComment = () => {
 		if (newComment.trim()) {
 			setComments([...comments, newComment]);
-			setNewComment("");
+			setNewComment('');
 		}
 	};
 
@@ -461,13 +461,11 @@ const ProductDetail = () => {
 
 	const handleBuyNow = (e: React.MouseEvent) => {
 		e.preventDefault();
-		
+
 		if (!selectedSize || !selectedColor) {
-			toast.error("Vui lòng chọn size và màu sắc trước khi mua hàng");
+			toast.error('Vui lòng chọn size và màu sắc trước khi mua hàng');
 			return;
 		}
-
-		console.log('Current quantity:', quantity);
 
 		const selectedVariant = parsedVariants.find(
 			(variant: Variant) => variant.color_id === selectedColor
@@ -488,29 +486,33 @@ const ProductDetail = () => {
 				},
 			};
 
-			navigate("/checkout", {
+			navigate('/checkout', {
 				state: {
 					productInfo: {
 						id: product.id,
 						name: product.name,
-						price: product.original_promotional_price || product.original_price,
+						price:
+							product.original_promotional_price ||
+							product.original_price,
 						thumbnail: selectedThumbnail || product.thumbnail,
 						quantity,
 						variant: variantInfo,
-						total: (product.original_promotional_price || product.original_price) * quantity,
-					}
-				}
+						total:
+							(product.original_promotional_price ||
+								product.original_price) * quantity,
+					},
+				},
 			});
 		} else {
-			toast.error("Không tìm thấy phiên bản sản phẩm phù hợp");
+			toast.error('Không tìm thấy phiên bản sản phẩm phù hợp');
 		}
 	};
 
-	const accessToken = Cookies.get("access_token");
+	const accessToken = Cookies.get('access_token');
 
 	const { data: reviewData } = useQuery<ReviewResponse>({
-		queryKey: ["PRODUCT_REVIEWS", product?.id, currentPage],
-		queryFn: () => gellReviewByProductId(product?.id, currentPage),
+		queryKey: ['PRODUCT_REVIEWS', product?.id],
+		queryFn: () => gellReviewByProductId(product?.id),
 	});
 
 	// Thêm useEffect để kiểm tra chiều cao của content
@@ -527,14 +529,13 @@ const ProductDetail = () => {
 
 	return (
 		<div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
-			<div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+			<div className="grid grid-cols-1 md:grid-cols-12 gap-10 px-4 lg:px-0">
 				{/* Left Section - Product Images */}
-				<div className="md:col-span-5">
+				<div className="md:col-span-6 lg:col-span-5 col-span-1">
 					<div className="relative overflow-hidden rounded-lg bg-gray-100 mb-2">
-						<img
-							src={selectedThumbnail || product.thumbnail} // Đảm bảo sử dụng selectedThumbnail nếu có
+						<ZoomImage
+							src={selectedThumbnail || product.thumbnail}
 							alt={product.name}
-							className="w-[575px] h-[571px] object-cover transition-transform duration-500 hover:scale-105"
 						/>
 					</div>
 					<div className="flex items-center justify-between relative z-10">
@@ -551,10 +552,11 @@ const ProductDetail = () => {
 										<button
 											key={index}
 											onClick={() => setSelectedThumbnail(image)} // Cập nhật hình ảnh được chọn
-											className={`relative overflow-hidden rounded-md ${selectedThumbnail === image
-												? "ring-2 ring-theme-color-primary"
-												: ""
-												}`}
+											className={`relative overflow-hidden rounded-md ${
+												selectedThumbnail === image
+													? 'ring-2 ring-theme-color-primary'
+													: ''
+											}`}
 										>
 											<img
 												src={image}
@@ -579,7 +581,7 @@ const ProductDetail = () => {
 				</div>
 
 				{/* Right Section - Product Information */}
-				<div className="md:col-span-5">
+				<div className="md:col-span-6 lg:col-span-5 col-span-1">
 					<h1 className="text-2xl font-semibold mb-2">{product.name}</h1>
 					<div className="flex items-center gap-4 mb-2">
 						<RatingStars rating={product.rating_count} />
@@ -589,7 +591,6 @@ const ProductDetail = () => {
 								{product.rating_count} reviews
 							</span>
 						</span>
-
 					</div>
 					<div className="flex items-center gap-2 mt-1 mb-3">
 						<p className="text-primary text-lg font-semibold">
@@ -599,7 +600,13 @@ const ProductDetail = () => {
 							{formatVNCurrency(Number(product?.price))}
 						</p>
 						<p className="text-[#E71D36] text-sm font-semibold">
-							{Math.round(((Number(product?.price) - Number(product?.promotional_price)) / Number(product?.price)) * 100)}%
+							{Math.round(
+								((Number(product?.price) -
+									Number(product?.promotional_price)) /
+									Number(product?.price)) *
+									100
+							)}
+							%
 						</p>
 					</div>
 
@@ -609,21 +616,23 @@ const ProductDetail = () => {
 						<div className="grid grid-cols-2 max-w-xs">
 							<span className="col-span-1">Category:</span>
 							<span className="col-span-1 text-left">
-								{product.categories &&
-									Array.isArray(product.categories)
+								{product.categories && Array.isArray(product.categories)
 									? [
-										...new Set(
-											product.categories.map(
-												(category: { name: string }) => category.name
-											)
-										),
-									].join(", ")
-									: "No categories available"}
+											...new Set(
+												product.categories.map(
+													(category: { name: string }) =>
+														category.name
+												)
+											),
+									  ].join(', ')
+									: 'No categories available'}
 							</span>
 						</div>
 						<div className="grid grid-cols-2 max-w-xs">
 							<span className="col-span-1">Brand:</span>
-							<span className="col-span-1 text-left">{product.brand.name}</span>
+							<span className="col-span-1 text-left">
+								{product.brand.name}
+							</span>
 						</div>
 						<div className="grid grid-cols-2 max-w-xs">
 							<span className="col-span-1">Availability:</span>
@@ -646,8 +655,16 @@ const ProductDetail = () => {
 											key={sizeInfo.size}
 											onClick={() => handleSizeChange(sizeInfo.size)}
 											className={`py-2 text-center text-sm font-medium border rounded-md w-full 
-												${selectedSize === sizeInfo.size ? "border-theme-color-primary ring-2 ring-theme-color-primary" : "bg-white text-gray-700 border-gray-300"}
-												${sizeInfo.disabled ? "cursor-not-allowed opacity-50 line-through" : "focus:outline-none focus:ring-2 focus:ring-theme-color-primary"}`}
+												${
+													selectedSize === sizeInfo.size
+														? 'border-theme-color-primary ring-2 ring-theme-color-primary'
+														: 'bg-white text-gray-700 border-gray-300'
+												}
+												${
+													sizeInfo.disabled
+														? 'cursor-not-allowed opacity-50 line-through'
+														: 'focus:outline-none focus:ring-2 focus:ring-theme-color-primary'
+												}`}
 											disabled={sizeInfo.disabled}
 										>
 											{sizeInfo.size}
@@ -669,9 +686,18 @@ const ProductDetail = () => {
 								uniqueColors.map((colorInfo: any) => (
 									<button
 										key={colorInfo.id}
-										onClick={() => handleColorChange(colorInfo.id, colorInfo.image || product?.thumbnail)}
+										onClick={() =>
+											handleColorChange(
+												colorInfo.id,
+												colorInfo.image || product?.thumbnail
+											)
+										}
 										className={`flex items-center gap-3 px-4 py-2 border rounded-md text-sm font-medium transition-all 
-											${selectedColor === colorInfo.id ? "bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary" : "bg-white text-gray-700 border-gray-300 hover:border-theme-color-primary"}`}
+											${
+												selectedColor === colorInfo.id
+													? 'bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary'
+													: 'bg-white text-gray-700 border-gray-300 hover:border-theme-color-primary'
+											}`}
 									>
 										<img
 											className="w-8 h-8 rounded-full border border-gray-300 object-cover"
@@ -682,7 +708,9 @@ const ProductDetail = () => {
 									</button>
 								))
 							) : (
-								<p className="text-gray-500 text-sm italic">No colors available</p>
+								<p className="text-gray-500 text-sm italic">
+									No colors available
+								</p>
 							)}
 						</div>
 					</div>
@@ -733,13 +761,17 @@ const ProductDetail = () => {
 
 				{/* Best Sellers */}
 				{product?.bestseller_info?.is_bestseller && (
-					<div className="md:col-span-2">
+					<div className="md:col-span-2 hidden md:block">
 						<h3 className="text-lg font-semibold mb-2">Bestseller</h3>
 						<div className="p-4 border rounded-sm">
 							<div className="flex items-center gap-4">
 								<div className="text-sm">
-									<p>Total Sold: {product.bestseller_info.total_sold}</p>
-									<p>Order Count: {product.bestseller_info.order_count}</p>
+									<p>
+										Total Sold: {product.bestseller_info.total_sold}
+									</p>
+									<p>
+										Order Count: {product.bestseller_info.order_count}
+									</p>
 								</div>
 							</div>
 						</div>
@@ -747,29 +779,31 @@ const ProductDetail = () => {
 				)}
 
 				{/* Description, Reviews & Write Comment */}
-				<div className="mt-8 col-span-1 md:col-span-10 bg-[#FAFAFB] p-5 rounded-lg shadow-md">
+				<div className="mt-8 md:col-span-12 lg:col-span-10 bg-[#FAFAFB] p-5 rounded-lg shadow-md">
 					<div className="flex gap-4 md:gap-28 border-b">
 						<button
-							className={`px-4 py-2 ${activeTab === "description"
-								? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
-								: ""
-								}`}
-							onClick={() => setActiveTab("description")}
+							className={`px-4 py-2 ${
+								activeTab === 'description'
+									? 'border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]'
+									: ''
+							}`}
+							onClick={() => setActiveTab('description')}
 						>
 							Description
 						</button>
 						<button
-							className={`px-4 py-2 ${activeTab === "reviews"
-								? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
-								: ""
-								}`}
-							onClick={() => setActiveTab("reviews")}
+							className={`px-4 py-2 ${
+								activeTab === 'reviews'
+									? 'border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]'
+									: ''
+							}`}
+							onClick={() => setActiveTab('reviews')}
 						>
 							Reviews
 						</button>
 					</div>
 					<div className="p-4">
-						{activeTab === "description" && (
+						{activeTab === 'description' && (
 							<div className="relative z-10">
 								<div
 									ref={contentRef}
@@ -778,17 +812,21 @@ const ProductDetail = () => {
 									}`}
 								>
 									{product?.description ? (
-										<div dangerouslySetInnerHTML={{ __html: product.description }}></div>
+										<div
+											dangerouslySetInnerHTML={{
+												__html: product.description,
+											}}
+										></div>
 									) : (
 										<p>No description available</p>
 									)}
 								</div>
-								
+
 								{/* Gradient overlay when collapsed */}
 								{!isExpanded && shouldShowButton && (
 									<div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent z-20"></div>
 								)}
-								
+
 								{/* Show more/less button */}
 								{shouldShowButton && product?.description && (
 									<div className="relative z-30">
@@ -799,15 +837,37 @@ const ProductDetail = () => {
 											{isExpanded ? (
 												<>
 													Show Less
-													<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														className="h-4 w-4"
+														fill="none"
+														viewBox="0 0 24 24"
+														stroke="currentColor"
+													>
+														<path
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															strokeWidth={2}
+															d="M5 15l7-7 7 7"
+														/>
 													</svg>
 												</>
 											) : (
 												<>
 													Show More
-													<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														className="h-4 w-4"
+														fill="none"
+														viewBox="0 0 24 24"
+														stroke="currentColor"
+													>
+														<path
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															strokeWidth={2}
+															d="M19 9l-7 7-7-7"
+														/>
 													</svg>
 												</>
 											)}
@@ -816,51 +876,59 @@ const ProductDetail = () => {
 								)}
 							</div>
 						)}
-						{activeTab === "reviews" && (
+						{activeTab === 'reviews' && (
 							<div>
 								{/* Reviews List */}
 								<div className="max-w-6xl mx-auto">
 									<div></div>
 									<div className="flex flex-col gap-8">
-										{reviewData?.data.map((item: Review, index: number) => (
-											<div
-												key={index}
-												className="bg-white rounded-lg shadow-lg p-6 transition-transform hover:scale-[1.01]"
-											>
-												<div className="flex items-start justify-between mb-4">
-													<div className="flex items-center space-x-4">
-														<img
-															src={item.user.avt}
-															className="w-12 h-12 rounded-full object-cover"
-														/>
-														<div>
-															<h3 className="text-xl font-semibold">
-																{item.user.name}
-															</h3>
-															<div className="flex items-center space-x-2 mt-1">
-																<RatingStars rating={item.rating} />
-																<span className="text-gray-500">
-																	{new Date(item.created_at).toLocaleDateString(
-																		"vi-VN",
-																		{
-																			day: "2-digit",
-																			month: "2-digit",
-																			year: "numeric",
-																		}
-																	)}
-																</span>
+										{reviewData?.data.map(
+											(item: Review, index: number) => (
+												<div
+													key={index}
+													className="bg-white rounded-lg shadow-lg p-6 transition-transform hover:scale-[1.01]"
+												>
+													<div className="flex items-start justify-between mb-4">
+														<div className="flex items-center space-x-4">
+															<img
+																src={item.user.avt}
+																className="w-12 h-12 rounded-full object-cover"
+															/>
+															<div>
+																<h3 className="text-xl font-semibold">
+																	{item.user.name}
+																</h3>
+																<div className="flex items-center space-x-2 mt-1">
+																	<RatingStars
+																		rating={item.rating}
+																	/>
+																	<span className="text-gray-500">
+																		{new Date(
+																			item.created_at
+																		).toLocaleDateString(
+																			'vi-VN',
+																			{
+																				day: '2-digit',
+																				month: '2-digit',
+																				year: 'numeric',
+																			}
+																		)}
+																	</span>
+																</div>
 															</div>
 														</div>
 													</div>
+													<p className="text-gray-700 mb-4">
+														{item.comment}
+													</p>
+													<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+														<button className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg overflow-hidden">
+															{/* <img className="w-full h-32 object-cover hover:opacity-90 transition-opacity" /> */}
+														</button>
+													</div>
 												</div>
-												<p className="text-gray-700 mb-4">{item.comment}</p>
-												<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-													<button className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg overflow-hidden">
-														{/* <img className="w-full h-32 object-cover hover:opacity-90 transition-opacity" /> */}
-													</button>
-												</div>
-											</div>
-										))}
+											)
+										)}
 
 										{/* Pagination or more reviews */}
 										<div className="join bg-[#FAFAFB] rounded-md ms-auto">
@@ -870,14 +938,17 @@ const ProductDetail = () => {
 													onClick={() => {
 														if (link.url) {
 															const page = parseInt(link.label);
-															if (!isNaN(page)) setCurrentPage(page);
+															if (!isNaN(page))
+																setCurrentPage(page);
 														}
 													}}
 													disabled={!link.url}
 													className={`join-item btn btn-sm ${
 														link.active ? 'btn-active' : ''
 													} ${!link.url ? 'btn-disabled' : ''}`}
-													dangerouslySetInnerHTML={{ __html: link.label }}
+													dangerouslySetInnerHTML={{
+														__html: link.label,
+													}}
 												/>
 											))}
 										</div>
@@ -885,7 +956,7 @@ const ProductDetail = () => {
 								</div>
 							</div>
 						)}
-						{activeTab === "writeComment" && (
+						{activeTab === 'writeComment' && (
 							<div>
 								{/* Comment Form */}
 								<div className="mb-4">

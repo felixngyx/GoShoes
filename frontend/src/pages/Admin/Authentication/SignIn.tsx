@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { env } from '../../../environment/env';
 import LogoDark from '../../../images/logo/logo-dark.svg';
@@ -6,7 +6,7 @@ import Logo from '../../../images/logo/logo.svg';
 import { useForm } from 'react-hook-form';
 import { joiResolver } from '@hookform/resolvers/joi';
 import Joi from 'joi';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import toast from 'react-hot-toast';
@@ -17,6 +17,7 @@ import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import { FaRegEye } from 'react-icons/fa';
+import { RootState } from '../../../store';
 
 const schema = Joi.object({
 	email: Joi.string()
@@ -37,6 +38,13 @@ const SignIn: React.FC = () => {
 	const navigate = useNavigate();
 	const roles = ['super-admin', 'admin'];
 	const [showPassword, setShowPassword] = useState(false);
+	const { user } = useSelector((state: RootState) => state.client);
+
+	useEffect(() => {
+		if (user.name) {
+			navigate('/admin');
+		}
+	}, [user, navigate]);
 
 	const {
 		register,
