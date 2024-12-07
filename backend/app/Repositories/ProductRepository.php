@@ -296,7 +296,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             LEFT JOIN category_info ci ON p.id = ci.product_id
             LEFT JOIN brands b ON p.brand_id = b.id
             LEFT JOIN product_category pc ON p.id = pc.product_id
-            WHERE 1 = 1
+            WHERE p.is_deleted = 0
     ";
 
         // Thêm các điều kiện lọc
