@@ -51,8 +51,14 @@ class SizeController extends Controller
     public function store(StoreSizeRequest $request)
     {
         $validated = $request->validated();
-        Log::info($validated);
 
+        // Kiểm tra size đã tồn tại chưa
+        $existingSize = VariantSize::where('size', $validated['size'])->first();
+        if ($existingSize) {
+            return response()->json([
+                'message' => 'Size này đã tồn tại trong hệ thống!',
+            ], 409); // 409 Conflict - thích hợp cho trường hợp resource đã tồn tại
+        }
 
         $size = $this->sizeService->storeSize($validated);
         return response()->json([

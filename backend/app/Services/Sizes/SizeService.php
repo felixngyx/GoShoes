@@ -21,7 +21,6 @@ class SizeService
         try {
             $SizeData = [
                 'size' => $validated['size'],
-                'code' => $validated['code'],
             ];
             $size = $this->sizeRepository->createSize($SizeData);
             return $size;
