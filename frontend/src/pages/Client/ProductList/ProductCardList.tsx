@@ -176,15 +176,28 @@ const ProductCardList = ({
 					</div>
 					<hr className="w-2/3" />
 					<div className="flex flex-row gap-2 items-center">
-						<p className="text-xl font-semibold text-[#40BFFF]">
-							{formatVNCurrency(product.promotional_price)} ₫
-						</p>
-						<p className="text-sm line-through text-[#C1C8CE]">
-							{formatVNCurrency(product.price)} ₫
-						</p>
-						<p className="text-sm text-[#FF4242] font-semibold">
-							-6% Off
-						</p>
+						{product.promotional_price ? (
+							<>
+								<p className="text-xl font-semibold text-[#40BFFF]">
+									{formatVNCurrency(Number(product.promotional_price))}
+								</p>
+								<p className="text-sm line-through text-[#C1C8CE]">
+									{formatVNCurrency(Number(product.price))}
+								</p>
+								<p className="text-sm text-[#FF4242] font-semibold">
+									{Math.round(
+										((Number(product.price) - Number(product.promotional_price)) /
+											Number(product.price)) *
+											100
+									)}
+									% Off
+								</p>
+							</>
+						) : (
+							<p className="text-xl font-semibold text-[#40BFFF]">
+								{formatVNCurrency(Number(product.price))}
+							</p>
+						)}
 					</div>
 					<p>{product.description}</p>
 					<div className="flex flex-row gap-2">

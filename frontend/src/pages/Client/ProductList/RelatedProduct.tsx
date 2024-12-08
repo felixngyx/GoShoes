@@ -93,29 +93,33 @@ const RelatedProduct: React.FC<RelatedProductProps> = ({ id, productId }) => {
 											/>
 										</Link>
 
-										<h4 className="text-center text-sm text-gray-800 px-2 truncate">
-											{product.name}
-										</h4>
+										<Link to={`/products/${product.id}`}>
+											<h4 className="text-center text-sm font-bold text-gray-800 px-2 truncate hover:text-[#40BFFF]">
+												{product.name}
+											</h4>
+										</Link>
 
 										<div className="flex items-center justify-center gap-1 my-2">
 											<RatingStars rating={product.rating_count} />
 										</div>
 										<div className="flex items-center gap-2 justify-center mb-2">
-											<span className="text-lg text-[#40BFFF]">
-												{formatVNCurrency(
-													product.promotional_price
-												)}
-											</span>
-											<span className="text-sm text-[#9098B1] line-through">
-												{formatVNCurrency(product.price)}
-											</span>
-											<span className="text-sm font-bold text-[#FB7181]">
-												{`${(
-													(product.promotional_price /
-														product.price) *
-													100
-												).toFixed(2)}% OFF`}
-											</span>
+											{product.promotional_price ? (
+												<>
+													<span className="text-lg text-[#40BFFF]">
+														{formatVNCurrency(product.promotional_price)}
+													</span>
+													<span className="text-sm text-[#9098B1] line-through">
+														{formatVNCurrency(product.price)}
+													</span>
+													<span className="text-sm font-bold text-[#FB7181]">
+														{`${((product.promotional_price / product.price) * 100).toFixed(2)}% OFF`}
+													</span>
+												</>
+											) : (
+												<span className="text-lg text-[#40BFFF]">
+													{formatVNCurrency(product.price)}
+												</span>
+											)}
 										</div>
 									</div>
 								</div>

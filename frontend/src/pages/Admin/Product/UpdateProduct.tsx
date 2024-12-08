@@ -29,21 +29,25 @@ const productSchema = Joi.object({
 		'string.empty': 'Name is required',
 		'any.required': 'Name is required',
 	}),
-	price: Joi.number().positive().required().messages({
-		'number.base': 'Price must be a number',
-		'number.positive': 'Price must be greater than 0',
-		'any.required': 'Price is required',
-	}),
-	promotional_price: Joi.number()
+	price: Joi.number()
 		.positive()
-		.max(Joi.ref('price'))
+		.max(99999999)
 		.required()
 		.messages({
-			'number.base': 'Promotional price must be a number',
-			'number.positive': 'Promotional price must be greater than 0',
-			'number.max': 'Promotional price must be less than the original price',
-			'any.required': 'Promotional price is required',
+			'number.base': 'Price must be a number',
+			'number.max': 'Price cannot exceed 99,999,999₫',
+			'any.required': 'Price is required',
 		}),
+	promotional_price: Joi.alternatives().try(
+		Joi.number()
+			.max(Joi.ref('price'))
+			.max(99999999)
+			.messages({
+				'number.base': 'Promotional price must be a number',
+				'number.max': 'Promotional price must be less than the original price and cannot exceed 99,999,999₫',
+			}),
+		Joi.valid(null, '')
+	),
 	status: Joi.string()
 		.valid('public', 'unpublic', 'hidden')
 		.required()
@@ -309,7 +313,7 @@ const UpdateProduct = () => {
 					name: productData.name,
 					description: productData.description,
 					price: Number(formatVNCurrency(productData.price)),
-					promotional_price: Number(formatVNCurrency(productData.promotional_price)),
+					promotional_price: productData.promotional_price ? Number(formatVNCurrency(productData.promotional_price)) : null,
 					status: productData.status,
 					sku: productData.sku,
 					hagtag: productData.hagtag,
@@ -501,27 +505,37 @@ const UpdateProduct = () => {
 		try {
 			setLoading(true);
 			setIsSubmitting(true);
-			let thumbnailName = '';
-			if (thumbnailFile instanceof File) {
-				thumbnailName = await uploadImageToCloudinary(thumbnailFile);
-			} else {
-				thumbnailName = data.thumbnail;
-			}
+
+			const processPrice = (price: string | number) => {
+				if (typeof price === 'string') {
+					const processedPrice = Number(price.replace(/[.,đ₫]/g, ''));
+					// Kiểm tra giới hạn giá
+					if (processedPrice > 99000000) {
+						throw new Error('Price cannot exceed 99,000,000₫');
+					}
+					return processedPrice;
+				}
+				// Kiểm tra giới hạn giá cho number
+				if (price > 99000000) {
+					throw new Error('Price cannot exceed 99,000,000₫');
+				}
+				return price;
+			};
 
 			const formattedData = {
 				...data,
+				price: processPrice(data.price),
+				promotional_price: data.promotional_price ? processPrice(data.promotional_price) : null,
 				is_deleted: false,
 				slug: generateSlug(data.name),
-				thumbnail: thumbnailName,
+				thumbnail: thumbnailFile,
 				description: description,
 				variants: await Promise.all(
 					data.variants.map(async (variant, index) => {
 						const imageUrls = await Promise.all(
 							(variantImageFiles[index] || []).map(async (file) => {
 								if (file instanceof File) {
-									const uploadedUrl = await uploadImageToCloudinary(
-										file
-									);
+									const uploadedUrl = await uploadImageToCloudinary(file);
 									return uploadedUrl;
 								}
 								return file;
@@ -534,19 +548,9 @@ const UpdateProduct = () => {
 						return {
 							...variant,
 							variant_details: variant.variant_details.map((detail) => {
-								// Tìm size name cho từng variant detail
-								const size = sizes.find(
-									(s) => Number(s.id) === Number(detail.size_id)
-								);
+								const size = sizes.find((s) => Number(s.id) === Number(detail.size_id));
 								const sizeName = size ? size.size : '';
-
-								// Tạo SKU riêng cho từng combination của color và size
-								const variantSKU = generateVariantSKU(
-									data.sku,
-									colorName,
-									sizeName
-								);
-
+								const variantSKU = generateVariantSKU(data.sku, colorName, sizeName);
 								return {
 									...detail,
 									sku: variantSKU,
@@ -836,7 +840,9 @@ const UpdateProduct = () => {
 								</span>
 							</div>
 							<input
-								{...register('promotional_price')}
+								{...register('promotional_price', {
+									setValueAs: (value: string) => (value === '' ? null : Number(value)),
+								})}
 								type="number"
 								min="0"
 								step="any"

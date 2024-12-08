@@ -108,15 +108,22 @@ const TopProducts: FC<TopProductsProps> = ({
                             ))}
                           </div>
                           <div className="flex items-baseline justify-between">
-                            <p className="text-red-500 font-bold text-xl">
-                              {Number(product.promotional_price).toLocaleString(
-                                "vi-VN"
-                              )}{" "}
-                              ₫
-                            </p>
-                            <p className="text-gray-400 text-sm line-through">
-                              {Number(product.price).toLocaleString("vi-VN")} ₫
-                            </p>
+                            {product.promotional_price ? (
+                              <>
+                                <p className="text-red-500 font-bold text-xl">
+                                  {Number(product.promotional_price).toLocaleString(
+                                    "vi-VN"
+                                  )} ₫
+                                </p>
+                                <p className="text-gray-400 text-sm line-through">
+                                  {Number(product.price).toLocaleString("vi-VN")} ₫
+                                </p>
+                              </>
+                            ) : (
+                              <p className="text-red-500 font-bold text-xl">
+                                {Number(product.price).toLocaleString("vi-VN")} ₫
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>

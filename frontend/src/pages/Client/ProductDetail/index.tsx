@@ -504,7 +504,7 @@ const ProductDetail = () => {
 				},
 			});
 		} else {
-			toast.error('Không tìm thấy phiên bản sản phẩm phù hợp');
+			toast.error('Không tìm thấy phiên b��n sản phẩm phù hợp');
 		}
 	};
 
@@ -593,21 +593,31 @@ const ProductDetail = () => {
 						</span>
 					</div>
 					<div className="flex items-center gap-2 mt-1 mb-3">
-						<p className="text-primary text-lg font-semibold">
-							{formatVNCurrency(Number(product?.promotional_price))}
-						</p>
-						<p className="text-[#9098B1] text-sm font-medium line-through">
-							{formatVNCurrency(Number(product?.price))}
-						</p>
-						<p className="text-[#E71D36] text-sm font-semibold">
-							{Math.round(
-								((Number(product?.price) -
-									Number(product?.promotional_price)) /
-									Number(product?.price)) *
-									100
-							)}
-							%
-						</p>
+						{product?.promotional_price ? (
+							// Nếu có promotional_price thì hiển thị cả giá khuyến mãi và giá gốc
+							<>
+								<p className="text-primary text-lg font-semibold">
+									{formatVNCurrency(Number(product?.promotional_price))}
+								</p>
+								<p className="text-[#9098B1] text-sm font-medium line-through">
+									{formatVNCurrency(Number(product?.price))}
+								</p>
+								<p className="text-[#E71D36] text-sm font-semibold">
+									{Math.round(
+										((Number(product?.price) -
+											Number(product?.promotional_price)) /
+											Number(product?.price)) *
+											100
+									)}
+									%
+								</p>
+							</>
+						) : (
+							// Nếu không có promotional_price thì chỉ hiển thị giá gốc
+							<p className="text-primary text-lg font-semibold">
+								{formatVNCurrency(Number(product?.price))}
+							</p>
+						)}
 					</div>
 
 					<hr className="my-4" />
