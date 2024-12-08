@@ -24,19 +24,25 @@ const productSchema = Joi.object({
 		'string.empty': 'Name is required',
 		'any.required': 'Name is required',
 	}),
-	price: Joi.number().positive().required().messages({
-		'number.base': 'Price must be a number',
-		'number.positive': 'Price must be greater than 0',
-		'any.required': 'Price is required',
-	}),
+	price: Joi.number()
+		.positive()
+		.max(99999999)
+		.required()
+		.messages({
+			'number.base': 'Price must be a number',
+			'number.positive': 'Price must be greater than 0',
+			'number.max': 'Price cannot exceed 99,999,999₫',
+			'any.required': 'Price is required',
+		}),
 	promotional_price: Joi.alternatives().try(
 		Joi.number()
 			.positive()
 			.max(Joi.ref('price'))
+			.max(99999999)
 			.messages({
 				'number.base': 'Promotional price must be a number',
 				'number.positive': 'Promotional price must be greater than 0',
-				'number.max': 'Promotional price must be less than the original price',
+				'number.max': 'Promotional price must be less than the original price and cannot exceed 99,999,999₫',
 			}),
 		Joi.valid(null)
 	),

@@ -29,18 +29,22 @@ const productSchema = Joi.object({
 		'string.empty': 'Name is required',
 		'any.required': 'Name is required',
 	}),
-	price: Joi.number().positive().required().messages({
-		'number.base': 'Price must be a number',
-		'any.required': 'Price is required',
-	}),
+	price: Joi.number()
+		.positive()
+		.max(99999999)
+		.required()
+		.messages({
+			'number.base': 'Price must be a number',
+			'number.max': 'Price cannot exceed 99,999,999₫',
+			'any.required': 'Price is required',
+		}),
 	promotional_price: Joi.alternatives().try(
 		Joi.number()
-			.positive()
 			.max(Joi.ref('price'))
+			.max(99999999)
 			.messages({
 				'number.base': 'Promotional price must be a number',
-				'number.positive': 'Promotional price must be greater than 0',
-				'number.max': 'Promotional price must be less than the original price',
+				'number.max': 'Promotional price must be less than the original price and cannot exceed 99,999,999₫',
 			}),
 		Joi.valid(null, '')
 	),
@@ -502,9 +506,26 @@ const UpdateProduct = () => {
 			setLoading(true);
 			setIsSubmitting(true);
 
+			const processPrice = (price: string | number) => {
+				if (typeof price === 'string') {
+					const processedPrice = Number(price.replace(/[.,đ₫]/g, ''));
+					// Kiểm tra giới hạn giá
+					if (processedPrice > 99000000) {
+						throw new Error('Price cannot exceed 99,000,000₫');
+					}
+					return processedPrice;
+				}
+				// Kiểm tra giới hạn giá cho number
+				if (price > 99000000) {
+					throw new Error('Price cannot exceed 99,000,000₫');
+				}
+				return price;
+			};
+
 			const formattedData = {
 				...data,
-				promotional_price: data.promotional_price === '' ? null : data.promotional_price,
+				price: processPrice(data.price),
+				promotional_price: data.promotional_price ? processPrice(data.promotional_price) : null,
 				is_deleted: false,
 				slug: generateSlug(data.name),
 				thumbnail: thumbnailFile,
@@ -514,9 +535,7 @@ const UpdateProduct = () => {
 						const imageUrls = await Promise.all(
 							(variantImageFiles[index] || []).map(async (file) => {
 								if (file instanceof File) {
-									const uploadedUrl = await uploadImageToCloudinary(
-										file
-									);
+									const uploadedUrl = await uploadImageToCloudinary(file);
 									return uploadedUrl;
 								}
 								return file;
@@ -529,19 +548,9 @@ const UpdateProduct = () => {
 						return {
 							...variant,
 							variant_details: variant.variant_details.map((detail) => {
-								// Tìm size name cho từng variant detail
-								const size = sizes.find(
-									(s) => Number(s.id) === Number(detail.size_id)
-								);
+								const size = sizes.find((s) => Number(s.id) === Number(detail.size_id));
 								const sizeName = size ? size.size : '';
-
-								// Tạo SKU riêng cho từng combination của color và size
-								const variantSKU = generateVariantSKU(
-									data.sku,
-									colorName,
-									sizeName
-								);
-
+								const variantSKU = generateVariantSKU(data.sku, colorName, sizeName);
 								return {
 									...detail,
 									sku: variantSKU,

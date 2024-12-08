@@ -109,9 +109,16 @@ const ProductItems = ({
 	const getVariantsForColor = (color: string) => {
 		if (!product) return [];
 
-		return parseVariants(product.variants)
-			.filter((variant: any) => variant.color === color)
-			.flatMap((variant: any) => variant.sizes);
+		const variants = parseVariants(product.variants);
+		const selectedVariant = variants.find((variant: any) => variant.color === color);
+		
+		const uniqueSizes = Array.from(new Set(
+			selectedVariant?.sizes.map((size: any) => size.size)
+		)).map(size => {
+			return selectedVariant.sizes.find((s: any) => s.size === size);
+		}).sort((a: any, b: any) => Number(a.size) - Number(b.size));
+
+		return uniqueSizes;
 	};
 
 	const closeModal = () => {
@@ -168,13 +175,13 @@ const ProductItems = ({
 						<IoHeartOutline
 							onClick={() => handleAddToWishlist(product.id)}
 							className="cursor-pointer p-2 sm:p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
-							size={36}
+							size={46}
 							color="#40BFFF"
 						/>
 						<IoCart
 							onClick={() => handleCheckAdd()}
 							className="cursor-pointer p-2 sm:p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
-							size={36}
+							size={46}
 							color="#40BFFF"
 						/>
 					</div>

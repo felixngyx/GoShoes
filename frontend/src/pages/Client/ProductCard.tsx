@@ -117,9 +117,16 @@ const ProductCard = () => {
 	const getVariantsForColor = (color: string) => {
 		if (!selectedProduct) return [];
 
-		return parseVariants(selectedProduct.variants)
+		const sizes = parseVariants(selectedProduct.variants)
 			.filter((variant: any) => variant.color === color)
 			.flatMap((variant: any) => variant.sizes);
+
+		const uniqueSizes = Array.from(new Set(sizes.map((s: any) => s.size)))
+			.map(size => {
+				return sizes.find((s: any) => s.size === size);
+			});
+
+		return uniqueSizes;
 	};
 
 	const closeModal = () => {
