@@ -276,14 +276,13 @@ const CheckoutPage = () => {
 
         const currentProducts = await Promise.all(checkPromises);
 
-        // Kiểm tra và cập nhật nếu có thay đổi
         let hasChanges = false;
         const updatedItems = orderState.items.map((item, index) => {
             const currentProduct = currentProducts[index];
-            const currentPrice = currentProduct.promotional_price || currentProduct.price;
-            const itemPrice = item.promotional_price || item.price;
+            const currentPrice = Number(currentProduct.promotional_price || currentProduct.price);
+            const itemPrice = Number(item.price);
             
-            if (currentPrice !== itemPrice) {
+            if (Math.abs(currentPrice - itemPrice) > 0.01) {
                 hasChanges = true;
                 return {
                     ...item,
@@ -342,6 +341,7 @@ const CheckoutPage = () => {
             }
         }
 
+        // Tiếp tục xử lý đặt hàng nếu giá không thay đổi hoặc người dùng đồng ý với giá mới
         const requestData = {
             items: orderState.items.map((item) => ({
                 product_id: Number(item.id || item.product_id),
@@ -411,13 +411,13 @@ const CheckoutPage = () => {
     }
   };
 
+  // Sửa lại hàm handleConfirmOrder
   const handleConfirmOrder = () => {
     if (!isTermsAccepted) {
       alert("Please accept the terms and conditions");
       return;
     }
 
-    // Không cần check discount code nữa, chỉ cần gọi handleCheckout
     handleCheckout();
   };
 
@@ -550,7 +550,7 @@ const CheckoutPage = () => {
                   <button
                     onClick={async () => {
                       try {
-                        // Sửa lại API endpoint
+                        // Sửa l��i API endpoint
                         await axios.put(
                           `${import.meta.env.VITE_API_URL}/shipping/${item.id}`,
                           {
@@ -1012,7 +1012,7 @@ const CheckoutPage = () => {
               disabled={isLoading || !isTermsAccepted}
               className={`block w-full max-w-xs mx-auto ${
                 isLoading || !isTermsAccepted
-                  ? "bg-indigo-400 cursor-not-allowed"
+                  ? "bg-indigo-400 cursor-not-allowed" 
                   : "bg-indigo-500 hover:bg-indigo-700"
               } focus:bg-indigo-700 text-white rounded-lg px-3 py-2 font-semibold relative`}
             >
