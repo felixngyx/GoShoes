@@ -23,21 +23,28 @@ const productSchema = Joi.object({
 		'string.empty': 'Name is required',
 		'any.required': 'Name is required',
 	}),
-	price: Joi.number().positive().required().messages({
-		'number.base': 'Price must be a number',
-		'number.positive': 'Price must be greater than 0',
-		'any.required': 'Price is required',
-	}),
-	promotional_price: Joi.number()
+	price: Joi.number()
 		.positive()
-		.max(Joi.ref('price'))
+		.max(99999999)
 		.required()
 		.messages({
-			'number.base': 'Promotional price must be a number',
-			'number.positive': 'Promotional price must be greater than 0',
-			'number.max': 'Promotional price must be less than the original price',
-			'any.required': 'Promotional price is required',
+			'number.base': 'Price must be a number',
+			'number.positive': 'Price must be greater than 0',
+			'number.max': 'Price cannot exceed 99,999,999₫',
+			'any.required': 'Price is required',
 		}),
+	promotional_price: Joi.alternatives().try(
+		Joi.number()
+			.positive()
+			.max(Joi.ref('price'))
+			.max(99999999)
+			.messages({
+				'number.base': 'Promotional price must be a number',
+				'number.positive': 'Promotional price must be greater than 0',
+				'number.max': 'Promotional price must be less than the original price and cannot exceed 99,999,999₫',
+			}),
+		Joi.valid(null)
+	),
 	status: Joi.string()
 		.valid('public', 'unpublic', 'hidden')
 		.required()
@@ -155,6 +162,7 @@ const AddProduct = () => {
 	} = useForm<PRODUCT>({
 		resolver: joiResolver(productSchema),
 		defaultValues: {
+			promotional_price: null,
 			variants: [
 				{
 					color_id: 0,
@@ -205,6 +213,9 @@ const AddProduct = () => {
 	const [previousValues, setPreviousValues] = useState<{
 		[key: string]: number;
 	}>({});
+
+	// Add loading state to track form submission
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	useEffect(() => {
 		(async () => {
@@ -405,6 +416,7 @@ const AddProduct = () => {
 	const onSubmit = async (data: PRODUCT) => {
 		try {
 			setLoading(true);
+			setIsSubmitting(true);
 			const thumbnailName = await uploadImageToCloudinary(thumbnailFile!);
 
 			// Tính tổng stock_quantity từ tất cả các variant
@@ -480,6 +492,7 @@ const AddProduct = () => {
 			}
 		} finally {
 			setLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
@@ -723,7 +736,7 @@ const AddProduct = () => {
 							</div>
 							<input
 								{...register('price')}
-								type="text"
+								type="number"
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
@@ -741,8 +754,10 @@ const AddProduct = () => {
 								</span>
 							</div>
 							<input
-								{...register('promotional_price')}
-								type="text"
+								{...register('promotional_price', {
+									setValueAs: (value: string) => (value === '' ? null : Number(value)),
+								})}
+								type="number"
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
@@ -989,8 +1004,10 @@ const AddProduct = () => {
 								) : (
 									<div className="flex flex-col gap-2">
 										<div
-											onClick={(e) => handleUploadClick(e)}
-											className="size-[200px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
+											onClick={(e) => !isSubmitting && handleUploadClick(e)}
+											className={`size-[200px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md ${
+												isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+											}`}
 										>
 											<Upload />
 											<p className="text-xs text-gray-500">
@@ -1323,12 +1340,13 @@ const AddProduct = () => {
 																	sizeIndex
 																)
 															}
-															className="btn btn-sm btn-error"
+															disabled={isSubmitting}
+															className="btn btn-sm btn-error disabled:opacity-50"
 														>
 															<TrashIcon
 																size={16}
 																color="white"
-																className="z-10"
+																 className="z-10"
 															/>
 														</button>
 													</div>
@@ -1349,7 +1367,8 @@ const AddProduct = () => {
 										<button
 											type="button"
 											onClick={() => handleAddSize(index)}
-											className="btn btn-sm w-fit ms-auto"
+											disabled={isSubmitting}
+											className="btn btn-sm w-fit ms-auto disabled:opacity-50"
 										>
 											Add size
 										</button>
@@ -1358,7 +1377,8 @@ const AddProduct = () => {
 								<button
 									type="button"
 									onClick={() => removeVariant(index)}
-									className="btn bg-red-500	 btn-sm col-span-3 text-white"
+									disabled={isSubmitting}
+									className="btn bg-red-500	 btn-sm col-span-3 text-white disabled:opacity-50"
 								>
 									<TrashIcon size={16} color="white" />
 									Delete Variant
@@ -1369,17 +1389,18 @@ const AddProduct = () => {
 						<button
 							type="button"
 							onClick={addVariant}
-							className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit"
+							disabled={isSubmitting}
+							className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit disabled:opacity-50"
 						>
 							Add Variant
 						</button>
 
 						<button
-							disabled={loading}
+							disabled={loading || isSubmitting}
 							type="submit"
-							className="btn mt-4 col-span-3 bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+							className="btn mt-4 col-span-3 bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary disabled:opacity-50"
 						>
-							{loading ? (
+							{loading || isSubmitting ? (
 								<>
 									<span className="loading loading-spinner loading-sm text-info"></span>
 									Creating product...

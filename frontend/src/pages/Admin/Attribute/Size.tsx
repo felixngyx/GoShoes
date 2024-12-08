@@ -22,6 +22,16 @@ type PaginationType = {
 	total: number;
 };
 
+// Thêm vào đầu file, sau các import
+interface ApiError {
+	response?: {
+		data?: {
+			message?: string;
+			status?: string;
+		};
+	};
+}
+
 const Size = () => {
 	const [selectAll, setSelectAll] = useState(false); // State for select all
 	const [selectedItems, setSelectedItems] = useState<number[]>([]); // State for individual selections
@@ -50,8 +60,9 @@ const Size = () => {
 				limit: Number(res.data.sizes.per_page),
 				total: Number(res.data.sizes.total),
 			});
-		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'Something went wrong');
+		} catch (error: unknown) {
+			const err = error as ApiError;
+			toast.error(err.response?.data?.message || 'Something went wrong');
 		} finally {
 			setLoading(false);
 		}
@@ -64,32 +75,29 @@ const Size = () => {
 				await sizeService.delete(id);
 				toast.success('Size deleted successfully');
 				fetchSize();
-			} catch (error: any) {
-				toast.error(
-					error.response?.data?.message || 'Something went wrong'
-				);
+			} catch (error: unknown) {
+				const err = error as ApiError;
+				toast.error(err.response?.data?.message || 'Something went wrong');
 			}
 		}
 	};
 
 	// Create size
 	const createSize = async (data: SizeType) => {
-		try {
-			await sizeService.create(data);
-			toast.success('Size added successfully');
-		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'Something went wrong');
+		const response = await sizeService.create(data);
+		if (response.data.status === 'error') {
+			throw { response: { data: response.data } };
 		}
+		return response;
 	};
 
 	// Update size
 	const updateSize = async (id: string, data: SizeType) => {
-		try {
-			await sizeService.update(id, data);
-			toast.success('Size updated successfully');
-		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'Something went wrong');
+		const response = await sizeService.update(id, data);
+		if (response.data.status === 'error') {
+			throw { response: { data: response.data } };
 		}
+		return response;
 	};
 
 	useEffect(() => {
@@ -177,21 +185,26 @@ const Size = () => {
 	// Add submit handler
 	const onSubmit = async (data: SizeType) => {
 		try {
-			setIsModalOpen(false);
 			toast.loading(`${editingSize ? 'Updating' : 'Adding'} size`);
 			if (editingSize) {
-				// Handle edit
 				await updateSize(editingSize, data);
 			} else {
-				// Handle add
 				await createSize(data);
 			}
 			toast.dismiss();
 			toast.success(`${editingSize ? 'Update' : 'Add'} size successfully`);
 			await fetchSize(); // Refresh the list
 			reset(); // Reset form
-		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'Something went wrong');
+			setIsModalOpen(false); // Chỉ đóng modal khi thành công
+		} catch (error: unknown) {
+			const err = error as ApiError;
+			toast.dismiss(); // Dismiss loading toastS
+			if (err.response?.data?.message === 'The size has already been taken.') {
+				toast.error('This size already exists');
+				// Không đóng modal và giữ dữ liệu để người dùng có thể sửa
+			} else {
+				toast.error(err.response?.data?.message || 'Something went wrong');
+			}
 		}
 	};
 

@@ -18,7 +18,7 @@ class StoreProductRequest extends FormRequest
             "description" => "required|string",
             "brand_id" => "required|exists:brands,id",
             "price" => "required|numeric|min:0",
-            "promotional_price" => "required|nullable|numeric|min:0|lte:price",
+            "promotional_price" => "nullable|numeric|min:0|lte:price",
             "status" => "required|in:public,unpublic,hidden",
             "sku" => "required|string|unique:products",
             "thumbnail" => "required|string|max:255",

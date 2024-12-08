@@ -1,125 +1,109 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import useProfile from '../../../../hooks/client/useProfile';
 import axios from 'axios';
-import { Eye, X } from 'lucide-react';
-import { FaRegTrashAlt } from 'react-icons/fa';
-import { Upload } from 'lucide-react';
 
 interface ChangeAvatarProps {
 	profile: { avt: string };
 }
 
 const ChangeAvatar: React.FC<ChangeAvatarProps> = ({ profile }) => {
-	const [imageFile, setImageFile] = useState<File | string | null>(
-		profile?.avt || null
-	);
-	const fileInputRef = useRef<HTMLInputElement>(null);
-	const [previewImage, setPreviewImage] = useState<string | null>(null);
+	const { handleUpdateAvatar } = useProfile();
+	const [avatarFile, setAvatarFile] = useState<File | null>(null);
 	const [isUploading, setIsUploading] = useState(false);
-	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		event.preventDefault();
 		const file = event.target.files?.[0];
 		if (file) {
-			setImageFile(file);
+			const validFileTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+			if (!validFileTypes.includes(file.type)) {
+				toast.error(
+					'Invalid file type. Please select a JPEG or PNG image.'
+				);
+				return;
+			}
+			if (file.size > 5 * 1024 * 1024) {
+				toast.error('File size exceeds 5MB. Please select a smaller file.');
+				return;
+			}
+			setAvatarFile(file);
 		}
 	};
 
-	const removeImage = () => {
-		setImageFile(null);
+	const handleUploadToCloudinary = async (file: File) => {
+		const formData = new FormData();
+		formData.append('file', file);
+		formData.append('upload_preset', 'avatar_preset');
+		formData.append('cloud_name', 'doc2vx0k6');
+
+		try {
+			const response = await axios.post(
+				'https://api.cloudinary.com/v1_1/doc2vx0k6/image/upload',
+				formData,
+				{
+					headers: { 'Content-Type': 'multipart/form-data' },
+				}
+			);
+			return response.data.secure_url;
+		} catch (error) {
+			toast.error('Failed to upload image');
+			throw error;
+		}
 	};
 
-	const handleUploadClick = (e: React.MouseEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		fileInputRef.current?.click();
-	};
+	const handleUpdate = async () => {
+		if (!avatarFile) {
+			toast.error('Please select an avatar image');
+			return;
+		}
 
-	const openPreviewModal = (imageSrc: string) => {
-		setPreviewImage(imageSrc);
+		setIsUploading(true);
+		try {
+			const uploadedImageUrl = await handleUploadToCloudinary(avatarFile);
+			await handleUpdateAvatar(uploadedImageUrl); // Cập nhật avatar với URL từ Cloudinary
+			toast.success('Avatar updated successfully');
+			setAvatarFile(null); // Reset sau khi cập nhật thành công
+		} catch (error) {
+			toast.error('Failed to update avatar');
+		} finally {
+			setIsUploading(false);
+		}
 	};
 
 	return (
-		<>
-			<div className="p-5 rounded-lg border border-gray-200 shadow-lg">
-				<div className="flex flex-col sm:flex-row items-center gap-6">
-					<div className="flex gap-2">
-						{imageFile ? (
-							<div className="relative size-[150px] group">
-								<img
-									src={
-										imageFile instanceof File
-											? URL.createObjectURL(imageFile)
-											: imageFile
-									}
-									alt="Brand logo preview"
-									className="w-full h-full object-cover rounded-full border-solid border-[#40BFFF] ring-2 ring-[#40BFFF]"
-								/>
-								<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
-									<button
-										onClick={(e) => {
-											e.preventDefault();
-											e.stopPropagation();
-											openPreviewModal(
-												imageFile instanceof File
-													? URL.createObjectURL(imageFile)
-													: imageFile
-											);
-										}}
-									>
-										<Eye color="#fff" size={18} />
-									</button>
-									<button
-										onClick={(e) => {
-											e.preventDefault();
-											e.stopPropagation();
-											removeImage();
-										}}
-									>
-										<FaRegTrashAlt color="#fff" size={18} />
-									</button>
-								</div>
-							</div>
-						) : (
-							<div
-								onClick={handleUploadClick}
-								className="size-[150px] flex flex-col gap-2 items-center justify-center border-2 border-solid border-[#40BFFF] rounded-full cursor-pointer"
-							>
-								<Upload />
-								<p className="text-xs text-gray-500">Upload Image</p>
-							</div>
-						)}
-					</div>
-					<div className="flex flex-col w-full gap-4">
-						<input
-							ref={fileInputRef}
-							onChange={handleFileChange}
-							type="file"
-							className="file-input file-input-xs file-input-bordered w-full"
+		<div className="p-5 rounded-lg border border-gray-200 shadow-lg">
+			<div className="flex flex-col sm:flex-row items-center gap-6">
+				<div className="relative flex-shrink-0">
+					<div className="w-24 h-24 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100">
+						<img
+							src={profile?.avt || '/path/to/default-avatar.jpg'}
+							alt="Avatar"
+							className="w-full h-full object-cover rounded-full"
 						/>
-						<button className="btn btn-xs text-white w-full text-3xs bg-[#40BFFF] hover:bg-[#259CFA]">
-							Update Avatar
-						</button>
 					</div>
 				</div>
+				<div className="flex flex-col w-full gap-4">
+					<input
+						type="file"
+						className="file-input file-input-bordered file-input-xs w-full max-w-[180px] text-[10px] p-1"
+						accept="image/*"
+						onChange={handleFileChange}
+						disabled={isUploading}
+					/>
+					<button
+						className={`btn btn-xs text-white w-full max-w-[180px] ${
+							isUploading
+								? 'bg-gray-400 cursor-not-allowed'
+								: 'bg-[#40BFFF] hover:bg-[#259CFA]'
+						}`}
+						onClick={handleUpdate}
+						disabled={isUploading || !avatarFile}
+					>
+						{isUploading ? 'Uploading...' : 'Update Avatar'}
+					</button>
+				</div>
 			</div>
-
-			{previewImage && (
-				<dialog open className="modal">
-					<div className="modal-box">
-						<img src={previewImage} alt="Preview" className="w-full" />
-						<button
-							onClick={() => setPreviewImage(null)}
-							className="btn btn-sm absolute right-2 top-2"
-						>
-							<X size={16} />
-						</button>
-					</div>
-				</dialog>
-			)}
-		</>
+		</div>
 	);
 };
 

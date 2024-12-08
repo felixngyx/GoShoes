@@ -334,7 +334,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             $query .= " AND p.is_deleted = " . boolval($filters['is_deleted']);
         }
 
-        $query .= " GROUP BY p.id, b.name, ci.categories ORDER BY p.id";
+        $query .= " GROUP BY p.id, b.name, ci.categories ORDER BY p.created_at DESC, p.id DESC";
         return $query;
     }
 
