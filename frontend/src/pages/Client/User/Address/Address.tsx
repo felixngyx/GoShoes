@@ -24,6 +24,8 @@ const AddressComponent: React.FC = () => {
     editAddress,
   } = useShipping();
 
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
+
   if (isLoading) return <p>Loading...</p>;
   return (
     <div className="col-span-9 rounded-lg border border-gray-200 shadow-lg h-fit font-sans">
@@ -167,7 +169,9 @@ const AddressComponent: React.FC = () => {
                           <input
                             type="text"
                             className="grow"
-                            placeholder="Search"
+                            placeholder="Tìm kiếm tỉnh, quận, phường..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                           />
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -184,6 +188,7 @@ const AddressComponent: React.FC = () => {
                         </label>
                       </div>
                       <LocationSelect
+                        searchQuery={searchQuery}
                         onLocationSelect={handleLocationSelect}
                         onClose={() => setShowPopup1(false)}
                       />
