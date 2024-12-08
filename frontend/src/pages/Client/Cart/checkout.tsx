@@ -280,9 +280,10 @@ const CheckoutPage = () => {
         let hasChanges = false;
         const updatedItems = orderState.items.map((item, index) => {
             const currentProduct = currentProducts[index];
+            const currentPrice = currentProduct.promotional_price || currentProduct.price;
+            const itemPrice = item.promotional_price || item.price;
             
-            if (currentProduct.price !== item.price || 
-                currentProduct.promotional_price !== item.promotional_price) {
+            if (currentPrice !== itemPrice) {
                 hasChanges = true;
                 return {
                     ...item,

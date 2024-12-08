@@ -6,7 +6,8 @@ export type OrderStatus =
   | 'refunded'
   | 'expired'
   | 'shipping'
-  | 'failed';
+  | 'failed'
+  | 'success';
 
 interface ProductItem {
   id: string;
