@@ -17,7 +17,6 @@ import LoadingIcon from '../../../components/common/LoadingIcon';
 import RichTextEditor from '../../../components/admin/RichTextEditor';
 import generateSlug from '../../../common/generateSlug';
 
-
 // Add form validation schema
 const productSchema = Joi.object({
 	name: Joi.string().required().messages({
@@ -144,6 +143,7 @@ const AddProduct = () => {
 	const navigate = useNavigate();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
+	const [selectedColor, setSelectedColor] = useState<number[]>([]);
 
 	const {
 		register,
@@ -349,7 +349,8 @@ const AddProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${variantIndex - 1
+							`variants.${
+								variantIndex - 1
 							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
@@ -384,6 +385,10 @@ const AddProduct = () => {
 			});
 			return newTerms;
 		});
+
+		setSelectedColor((prev) =>
+			prev.filter((colorId) => colorId !== currentVariant.color_id)
+		);
 
 		remove(index);
 	};
@@ -466,7 +471,9 @@ const AddProduct = () => {
 		} catch (error: unknown) {
 			console.error('Error submitting form:', error);
 			if (error && typeof error === 'object' && 'response' in error) {
-				const apiError = error as { response: { data: { message: string } } };
+				const apiError = error as {
+					response: { data: { message: string } };
+				};
 				toast.error(apiError.response.data.message);
 			} else {
 				toast.error('An unexpected error occurred');
@@ -511,8 +518,9 @@ const AddProduct = () => {
 		// Khởi tạo previousValues cho size mới với quantity = 0
 		setPreviousValues((prev) => ({
 			...prev,
-			[`variants.${variantIndex}.variant_details.${variantSizes[variantIndex]?.length || 0
-				}.quantity`]: 0,
+			[`variants.${variantIndex}.variant_details.${
+				variantSizes[variantIndex]?.length || 0
+			}.quantity`]: 0,
 		}));
 
 		setVariantSizes((prev) => ({
@@ -551,8 +559,9 @@ const AddProduct = () => {
 			const remainingSizes = currentVariant.variant_details.length;
 			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
 				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
-				const newKey = `variants.${variantIndex}.variant_details.${i - 1
-					}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${
+					i - 1
+				}.quantity`;
 				newPrev[newKey] = newPrev[oldKey];
 				delete newPrev[oldKey];
 			}
@@ -663,12 +672,13 @@ const AddProduct = () => {
 		}
 	};
 
-	// Hàm kiểm tra màu đã được chọn chưa
-	const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
-		return fields.some((field, index) =>
-			index !== currentVariantIndex && field.color_id === colorId
-		);
-	};
+	// // Hàm kiểm tra màu đã được chọn chưa
+	// const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
+	// 	return fields.some(
+	// 		(field, index) =>
+	// 			index !== currentVariantIndex && field.color_id === colorId
+	// 	);
+	// };
 
 	return loadingData ? (
 		<div className="flex justify-center items-center h-screen">
@@ -1085,9 +1095,19 @@ const AddProduct = () => {
 																	...prev,
 																	[index]: color.color,
 																}));
+																setSelectedColor((prev) => [
+																	...prev,
+																	color.id!,
+																]);
 															}}
-															className="flex items-center gap-2"
-															disabled={isSelectedColor(color.id!, index)}
+															className={`flex items-center gap-2 ${
+																selectedColor.includes(
+																	color.id!
+																) && 'opacity-50'
+															}`}
+															disabled={selectedColor.includes(
+																color.id!
+															)}
 														>
 															<img
 																src={color.link_image}
@@ -1145,8 +1165,9 @@ const AddProduct = () => {
 													>
 														<img
 															src={URL.createObjectURL(image)}
-															alt={`Variant ${index + 1} - ${imageIndex + 1
-																}`}
+															alt={`Variant ${index + 1} - ${
+																imageIndex + 1
+															}`}
 															className="w-full h-full object-cover rounded-md border border-gray-300"
 														/>
 														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -1247,26 +1268,49 @@ const AddProduct = () => {
 																	valueAsNumber: true,
 																	onChange: (e) => {
 																		const inputPath = `variants.${index}.variant_details.${sizeIndex}.quantity`;
-																		let newValue = parseInt(e.target.value);
+																		let newValue = parseInt(
+																			e.target.value
+																		);
 
 																		// Kiểm tra và giới hạn giá trị
-																		if (isNaN(newValue) || newValue < 0) {
+																		if (
+																			isNaN(newValue) ||
+																			newValue < 0
+																		) {
 																			newValue = 0;
-																		} else if (newValue > 999999) {
+																		} else if (
+																			newValue > 999999
+																		) {
 																			newValue = 999999;
-																			toast.error('Quantity cannot exceed 999,999');
+																			toast.error(
+																				'Quantity cannot exceed 999,999'
+																			);
 																		}
 
 																		// Cập nhật giá trị
-																		setValue(inputPath, newValue);
+																		setValue(
+																			inputPath as any,
+																			newValue
+																		);
 
 																		// Cập nhật tổng số lượng
-																		const oldValue = previousValues[inputPath] || 0;
-																		setStockQuantity((prev) => prev - oldValue + newValue);
-																		setPreviousValues((prev) => ({
-																			...prev,
-																			[inputPath]: newValue,
-																		}));
+																		const oldValue =
+																			previousValues[
+																				inputPath
+																			] || 0;
+																		setStockQuantity(
+																			(prev) =>
+																				prev -
+																				oldValue +
+																				newValue
+																		);
+																		setPreviousValues(
+																			(prev) => ({
+																				...prev,
+																				[inputPath]:
+																					newValue,
+																			})
+																		);
 																	},
 																}
 															)}
@@ -1291,14 +1335,14 @@ const AddProduct = () => {
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.size_id && (
-															<span className="label-text text-red-500 text-xs ms-2">
-																{
-																	errors.variants[index]
-																		.variant_details[sizeIndex]
-																		?.size_id?.message
-																}
-															</span>
-														)}
+														<span className="label-text text-red-500 text-xs ms-2">
+															{
+																errors.variants[index]
+																	.variant_details[sizeIndex]
+																	?.size_id?.message
+															}
+														</span>
+													)}
 												</>
 											)
 										)}

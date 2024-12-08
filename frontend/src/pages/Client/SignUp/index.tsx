@@ -242,11 +242,11 @@ const SignUp = () => {
 										/>
 									)}
 								/>
-								<img
+								{/* <img
 									className="w-8 cursor-pointer"
 									src="images/google_logo.webp"
 									alt=""
-								/>
+								/> */}
 							</div>
 						</form>
 					</div>
