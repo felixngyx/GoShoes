@@ -171,15 +171,17 @@ const ProductCard = () => {
 							src={product.thumbnail}
 							alt={product.name}
 						/>
-						<p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
-							{Math.round(
-								((Number(product.price) -
-									Number(product.promotional_price)) /
-									Number(product.price)) *
-									100
-							)}
-							%
-						</p>
+						{product.promotional_price && (
+							<p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
+								{Math.round(
+									((Number(product.price) -
+										Number(product.promotional_price)) /
+										Number(product.price)) *
+										100
+								)}
+								%
+							</p>
+						)}
 						<div className="absolute hidden group-hover:flex w-full h-full top-0 left-0 bg-opacity-70 bg-gray-50 justify-center items-center gap-8 z-10">
 							<IoHeartOutline
 								onClick={() => handleAddToWishlist(product.id)}
@@ -206,12 +208,20 @@ const ProductCard = () => {
 						<RatingStars rating={product.rating_count} />
 					</div>
 					<div className="flex items-center justify-center gap-2">
-						<p className="text-primary text-xs md:text-sm font-semibold">
-							{formatVNCurrency(Number(product.promotional_price))}
-						</p>
-						<p className="text-[#9098B1] text-xs md:text-sm font-medium line-through">
-							{formatVNCurrency(Number(product.price))}
-						</p>
+						{product.promotional_price ? (
+							<>
+								<p className="text-primary text-xs md:text-sm font-semibold">
+									{formatVNCurrency(Number(product.promotional_price))}
+								</p>
+								<p className="text-[#9098B1] text-xs md:text-sm font-medium line-through">
+									{formatVNCurrency(Number(product.price))}
+								</p>
+							</>
+						) : (
+							<p className="text-primary text-xs md:text-sm font-semibold">
+								{formatVNCurrency(Number(product.price))}
+							</p>
+						)}
 					</div>
 				</div>
 			))}

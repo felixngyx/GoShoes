@@ -31,19 +31,19 @@ const productSchema = Joi.object({
 	}),
 	price: Joi.number().positive().required().messages({
 		'number.base': 'Price must be a number',
-		'number.positive': 'Price must be greater than 0',
 		'any.required': 'Price is required',
 	}),
-	promotional_price: Joi.number()
-		.positive()
-		.max(Joi.ref('price'))
-		.required()
-		.messages({
-			'number.base': 'Promotional price must be a number',
-			'number.positive': 'Promotional price must be greater than 0',
-			'number.max': 'Promotional price must be less than the original price',
-			'any.required': 'Promotional price is required',
-		}),
+	promotional_price: Joi.alternatives().try(
+		Joi.number()
+			.positive()
+			.max(Joi.ref('price'))
+			.messages({
+				'number.base': 'Promotional price must be a number',
+				'number.positive': 'Promotional price must be greater than 0',
+				'number.max': 'Promotional price must be less than the original price',
+			}),
+		Joi.valid(null, '')
+	),
 	status: Joi.string()
 		.valid('public', 'unpublic', 'hidden')
 		.required()
@@ -309,7 +309,7 @@ const UpdateProduct = () => {
 					name: productData.name,
 					description: productData.description,
 					price: Number(formatVNCurrency(productData.price)),
-					promotional_price: Number(formatVNCurrency(productData.promotional_price)),
+					promotional_price: productData.promotional_price ? Number(formatVNCurrency(productData.promotional_price)) : null,
 					status: productData.status,
 					sku: productData.sku,
 					hagtag: productData.hagtag,
@@ -501,18 +501,13 @@ const UpdateProduct = () => {
 		try {
 			setLoading(true);
 			setIsSubmitting(true);
-			let thumbnailName = '';
-			if (thumbnailFile instanceof File) {
-				thumbnailName = await uploadImageToCloudinary(thumbnailFile);
-			} else {
-				thumbnailName = data.thumbnail;
-			}
 
 			const formattedData = {
 				...data,
+				promotional_price: data.promotional_price === '' ? null : data.promotional_price,
 				is_deleted: false,
 				slug: generateSlug(data.name),
-				thumbnail: thumbnailName,
+				thumbnail: thumbnailFile,
 				description: description,
 				variants: await Promise.all(
 					data.variants.map(async (variant, index) => {
@@ -836,7 +831,9 @@ const UpdateProduct = () => {
 								</span>
 							</div>
 							<input
-								{...register('promotional_price')}
+								{...register('promotional_price', {
+									setValueAs: (value: string) => (value === '' ? null : Number(value)),
+								})}
 								type="number"
 								min="0"
 								step="any"
