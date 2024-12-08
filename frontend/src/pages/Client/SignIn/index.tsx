@@ -205,11 +205,11 @@ const SignIn = () => {
 										/>
 									)}
 								/>
-								<img
+								{/* <img
 									className="w-8"
 									src="images/google_logo.webp"
 									alt=""
-								/>
+								/> */}
 							</div>
 						</form>
 					</div>

@@ -72,7 +72,8 @@ const Product = () => {
 			try {
 				await productService.delete(id);
 				toast.success('Product deleted successfully');
-				fetchProducts();
+				fetchAllProducts();
+				// fetchProducts();
 			} catch (error) {
 				console.error(error);
 			}
