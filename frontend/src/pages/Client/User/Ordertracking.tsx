@@ -77,7 +77,7 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
         </div>
         <div className={`
           px-3 py-1 rounded-full text-sm inline-flex items-center justify-center
-          ${paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : ''}
+          ${paymentStatus === 'success' ? 'bg-green-100 text-green-800' : ''}
           ${paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
           ${paymentStatus === 'failed' ? 'bg-red-100 text-red-800' : ''}
         `}>

@@ -264,149 +264,160 @@ const CheckoutPage = () => {
     return address.find((item: any) => item.is_default) || null;
   }, [address]);
 
-  // Cập nhật hàm handleCheckout
-  const handleCheckout = async () => {
+  // Bỏ useEffect polling và thêm hàm kiểm tra giá
+  const checkPriceAndStock = async () => {
     try {
-      setIsLoading(true);
-      setHasOrdered(true);
-
-      if (!defaultAddress || !defaultAddress.id) {
-        toast.error("Please select a shipping address");
-        setHasOrdered(false);
-        setIsLoading(false);
-        return;
-      }
-
-      // Tạo mảng items theo đúng format
-      const items = orderState.items.map((item) => ({
-        product_id: Number(item.id || item.product_id),
-        quantity: Number(item.quantity),
-        ...((item.variant?.id || item.product_variant?.variant_id) && {
-          variant_id: Number(
-            item.variant?.id || item.product_variant?.variant_id
-          ),
-        }),
-      }));
-
-      // Tạo request body và chuyển thành JSON string
-      const requestData = JSON.stringify({
-        items: items,
-        shipping_id: Number(defaultAddress.id),
-        payment_method_id: Number(paymentMethod),
-        ...(discountInfo?.discount_info?.code && {
-          discount_code: discountInfo.discount_info.code,
-        }),
-      });
-
-      // Log để kiểm tra
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/orders`,
-        requestData,
-        {
-          headers: {
-            Authorization: `Bearer ${Cookies.get("access_token")}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      // Xử lý response thành công
-      if (paymentMethod === 1) {
-        // ZaloPay
-        const finalAmount = orderState.subtotal - calculateDiscount();
-        if (finalAmount > 0 && response.data.payment_url) {
-          // Add confirmation before redirecting
-          const willRedirect = window.confirm(
-            "You will be redirected to ZaloPay payment page. Do you want to continue?"
-          );
-
-          if (willRedirect) {
-            window.location.href = response.data.payment_url;
-          } else {
-            // If user declines, redirect to orders page
-            navigate("/account/my-order", {
-              replace: true,
-              state: {
-                message:
-                  "Order created! Please complete payment within 24 hours.",
-              },
-            });
-          }
-        } else {
-          navigate("/account/my-order", {
-            replace: true,
-            state: { message: "Order placed successfully!" },
-          });
-        }
-      } else {
-        // COD
-        navigate("/account/my-order", {
-          replace: true,
-          state: { message: "Order placed successfully!" },
+        const checkPromises = orderState.items.map(async (item) => {
+            const response = await axios.get(
+                `${import.meta.env.VITE_API_URL}/products/${item.id || item.product_id}`
+            );
+            return response.data.data;
         });
-      }
-    } catch (error: any) {
-      setHasOrdered(false);
-      setIsLoading(false);
 
-      // Xử lý lỗi từ backend
-      if (error.response?.data?.message) {
-        const errorMessage = error.response.data.message;
+        const currentProducts = await Promise.all(checkPromises);
 
-        // Xử lý các trường hợp lỗi cụ thể
-        if (
-          errorMessage.includes("không đủ") ||
-          errorMessage.includes("còn") ||
-          errorMessage.includes("hết hàng")
-        ) {
-          const productName = errorMessage.match(/'([^']+)'/)?.[1] || "Product";
-          const requestedItem = orderState.items.find(
-            (item) =>
-              item.name === productName || item.product?.name === productName
-          );
-
-          const size =
-            requestedItem?.size ||
-            requestedItem?.variant?.size?.size ||
-            requestedItem?.product_variant?.size?.size;
-          const color =
-            requestedItem?.color ||
-            requestedItem?.variant?.color?.color ||
-            requestedItem?.product_variant?.color?.color;
-
-          const variantInfo = size && color ? ` (${color}/${size})` : "";
-          const message = `${productName}${variantInfo} is out of stock`;
-
-          toast.error(message, {
-            position: "top-right",
-            duration: 5000,
-          });
-        } else {
-          toast.error(errorMessage, {
-            position: "top-right",
-            duration: 3000,
-          });
-        }
-      } else {
-        toast.error("Something went wrong. Please try again later.", {
-          position: "top-right",
-          duration: 3000,
+        let hasChanges = false;
+        const updatedItems = orderState.items.map((item, index) => {
+            const currentProduct = currentProducts[index];
+            const currentPrice = Number(currentProduct.promotional_price || currentProduct.price);
+            const itemPrice = Number(item.price);
+            
+            if (Math.abs(currentPrice - itemPrice) > 0.01) {
+                hasChanges = true;
+                return {
+                    ...item,
+                    price: currentProduct.price,
+                    promotional_price: currentProduct.promotional_price,
+                    total: item.quantity * (currentProduct.promotional_price || currentProduct.price)
+                };
+            }
+            return item;
         });
-      }
-      console.error("Order error:", error);
-    } finally {
-      setIsLoading(false);
+
+        return { hasChanges, updatedItems };
+    } catch (error) {
+        console.error("Error checking prices:", error);
+        throw error;
     }
   };
 
+  const handleCheckout = async () => {
+    try {
+        setIsLoading(true);
+        setHasOrdered(true);
+
+        if (!defaultAddress || !defaultAddress.id) {
+            toast.error("Please select a shipping address");
+            setHasOrdered(false);
+            setIsLoading(false);
+            return;
+        }
+
+        // Kiểm tra giá trước khi đặt hàng
+        const { hasChanges, updatedItems } = await checkPriceAndStock();
+
+        if (hasChanges) {
+            const willContinue = window.confirm(
+                "Product prices have changed. Do you want to continue with the updated prices?"
+            );
+
+            if (willContinue) {
+                // Cập nhật state với giá mới
+                setOrderState(prev => ({
+                    ...prev,
+                    items: updatedItems,
+                    subtotal: updatedItems.reduce((sum, item) => sum + item.total, 0)
+                }));
+
+                toast.info("Prices have been updated. Please review your order.", {
+                    duration: 5000,
+                });
+                setIsLoading(false);
+                setHasOrdered(false);
+                return;
+            } else {
+                navigate('/cart');
+                return;
+            }
+        }
+
+        // Tiếp tục xử lý đặt hàng nếu giá không thay đổi hoặc người dùng đồng ý với giá mới
+        const requestData = {
+            items: orderState.items.map((item) => ({
+                product_id: Number(item.id || item.product_id),
+                quantity: Number(item.quantity),
+                ...((item.variant?.id || item.product_variant?.variant_id) && {
+                    variant_id: Number(item.variant?.id || item.product_variant?.variant_id),
+                }),
+            })),
+            shipping_id: Number(defaultAddress.id),
+            payment_method_id: Number(paymentMethod),
+            ...(discountInfo?.discount_info?.code && {
+                discount_code: discountInfo.discount_info.code,
+            }),
+        };
+
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_URL}/orders`,
+            requestData,
+            {
+                headers: {
+                    Authorization: `Bearer ${Cookies.get("access_token")}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        if (response.status === 201) {
+            if (paymentMethod === 1) {
+                // ZaloPay
+                const finalAmount = orderState.subtotal - calculateDiscount();
+                if (finalAmount > 0 && response.data.payment_url) {
+                    const willRedirect = window.confirm(
+                        "You will be redirected to ZaloPay payment page. Do you want to continue?"
+                    );
+
+                    if (willRedirect) {
+                        window.location.href = response.data.payment_url;
+                    } else {
+                        toast.success("Order created successfully!");
+                        navigate("/account/my-order", {
+                            replace: true,
+                            state: {
+                                message: "Order created! Please complete payment within 24 hours.",
+                            },
+                        });
+                    }
+                }
+            } else {
+                // COD
+                toast.success("Order placed successfully!");
+                navigate("/account/my-order", {
+                    replace: true,
+                    state: { message: "Order placed successfully!" },
+                });
+            }
+        }
+    } catch (error: any) {
+        setHasOrdered(false);
+        if (error.response?.data?.message) {
+            toast.error(error.response.data.message);
+        } else {
+            toast.error("Something went wrong. Please try again later.");
+        }
+        console.error("Order error:", error);
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  // Sửa lại hàm handleConfirmOrder
   const handleConfirmOrder = () => {
     if (!isTermsAccepted) {
       alert("Please accept the terms and conditions");
       return;
     }
 
-    // Không cần check discount code nữa, chỉ cần gọi handleCheckout
     handleCheckout();
   };
 
@@ -539,7 +550,7 @@ const CheckoutPage = () => {
                   <button
                     onClick={async () => {
                       try {
-                        // Sửa lại API endpoint
+                        // Sửa l��i API endpoint
                         await axios.put(
                           `${import.meta.env.VITE_API_URL}/shipping/${item.id}`,
                           {
@@ -1001,7 +1012,7 @@ const CheckoutPage = () => {
               disabled={isLoading || !isTermsAccepted}
               className={`block w-full max-w-xs mx-auto ${
                 isLoading || !isTermsAccepted
-                  ? "bg-indigo-400 cursor-not-allowed"
+                  ? "bg-indigo-400 cursor-not-allowed" 
                   : "bg-indigo-500 hover:bg-indigo-700"
               } focus:bg-indigo-700 text-white rounded-lg px-3 py-2 font-semibold relative`}
             >

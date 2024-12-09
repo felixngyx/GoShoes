@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class VariantSize extends Model
 {
     use HasFactory;
-    protected $fillable = ['size', 'code'];
+    protected $fillable = ['size'];
 
     public function variants()
     {

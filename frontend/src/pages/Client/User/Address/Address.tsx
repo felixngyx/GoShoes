@@ -11,6 +11,7 @@ const AddressComponent: React.FC = () => {
     showPopup,
     showPopup1,
     addressLimit,
+    errors,
     setEditAddress,
     register,
     handleSubmit,
@@ -22,6 +23,8 @@ const AddressComponent: React.FC = () => {
     handleEdit,
     editAddress,
   } = useShipping();
+
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
 
   if (isLoading) return <p>Loading...</p>;
   return (
@@ -115,6 +118,11 @@ const AddressComponent: React.FC = () => {
                     editAddress ? editAddress.shipping_detail.name : ""
                   }
                 />
+                {errors.name && (
+                  <p className="text-red-500 text-sm mb-4">
+                    {errors.name.message}
+                  </p>
+                )}
                 <input
                   {...register("phone_number")}
                   placeholder="Phone"
@@ -124,6 +132,11 @@ const AddressComponent: React.FC = () => {
                     editAddress ? editAddress.shipping_detail.phone_number : ""
                   }
                 />
+                {errors.phone_number && (
+                  <p className="text-red-500 text-sm mb-4">
+                    {errors.phone_number.message}
+                  </p>
+                )}
               </div>
 
               <input
@@ -156,7 +169,9 @@ const AddressComponent: React.FC = () => {
                           <input
                             type="text"
                             className="grow"
-                            placeholder="Search"
+                            placeholder="Tìm kiếm tỉnh, quận, phường..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                           />
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -173,11 +188,17 @@ const AddressComponent: React.FC = () => {
                         </label>
                       </div>
                       <LocationSelect
+                        searchQuery={searchQuery}
                         onLocationSelect={handleLocationSelect}
                         onClose={() => setShowPopup1(false)}
                       />
                     </div>
                   </div>
+                )}
+                {errors.address && (
+                  <p className="text-red-500 text-sm mb-4">
+                    {errors.address.message}
+                  </p>
                 )}
                 <input
                   {...register("address_detail")}
@@ -190,6 +211,11 @@ const AddressComponent: React.FC = () => {
                       : ""
                   }
                 />
+                {errors.address_detail && (
+                  <p className="text-red-500 text-sm mb-4">
+                    {errors.address_detail.message}
+                  </p>
+                )}
                 <label className="font-medium flex items-center">
                   <span>Set as default address</span>
                   <input

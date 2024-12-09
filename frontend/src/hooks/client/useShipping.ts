@@ -8,6 +8,40 @@ import {
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
+import Joi from "joi";
+import { joiResolver } from "@hookform/resolvers/joi";
+
+const addressSchema = Joi.object({
+  name: Joi.string().min(3).max(50).required().messages({
+    "string.base": "Name must be a string",
+    "string.min": "Name must have at least 3 characters",
+    "string.max": "Name must not exceed 50 characters",
+    "any.required": "Name is required",
+  }),
+  phone_number: Joi.string()
+    .pattern(/^[0-9]{10,11}$/)
+    .required()
+    .messages({
+      "string.pattern.base": "Phone number must be 10 or 11 digits",
+      "any.required": "Phone number is required",
+    }),
+  address: Joi.string().required().messages({
+    "any.required": "Address is required",
+  }),
+  address_detail: Joi.string().min(5).required().messages({
+    "string.min": "Address detail must be at least 5 characters long",
+    "any.required": "Address detail is required",
+  }),
+  is_default: Joi.boolean(),
+});
+
+interface IAddress {
+  name: string;
+  phone_number: string;
+  address: string;
+  address_detail: string;
+  is_default: boolean;
+}
 
 export const useShipping = () => {
   const addressLimit = 6;
@@ -15,7 +49,15 @@ export const useShipping = () => {
   const [showPopup1, setShowPopup1] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [editAddress, setEditAddress] = useState<any | null>(null);
-  const { register, handleSubmit, setValue, reset } = useForm();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<IAddress>({
+    resolver: joiResolver(addressSchema),
+  });
   const queryClient = useQueryClient();
 
   // Lấy danh sách địa chỉ
@@ -40,6 +82,27 @@ export const useShipping = () => {
       toast.error(error.message || "Failed to create shipping address");
     },
   });
+
+  useEffect(() => {
+    if (editAddress) {
+      reset({
+        name: editAddress.shipping_detail.name,
+        phone_number: editAddress.shipping_detail.phone_number,
+        address: editAddress.shipping_detail.address,
+        address_detail: editAddress.shipping_detail.address_detail,
+        is_default: editAddress.is_default,
+      });
+    } else {
+      reset({
+        name: "",
+        phone_number: "",
+        address: "",
+        address_detail: "",
+        is_default: false,
+      });
+      setSelectedLocation(null);
+    }
+  }, [editAddress, reset]);
 
   // Xử lý việc cập nhật địa chỉ
   const updateMutation = useMutation({
@@ -111,6 +174,7 @@ export const useShipping = () => {
     showPopup,
     showPopup1,
     addressLimit,
+    errors,
     setEditAddress,
     register,
     handleSubmit,

@@ -229,21 +229,40 @@ const Navbar = () => {
 		const variants = Array.isArray(selectedProduct.variants)
 			? selectedProduct.variants
 			: JSON.parse(selectedProduct.variants);
+		
 		const selectedVariant = variants.find(
 			(variant: any) => variant.color === selectedColor
 		);
 
-		return selectedVariant?.sizes.map((sizeVariant: any) => (
-			<button
-				key={sizeVariant.product_variant_id}
-				className={`px-6 py-2 border rounded-md ${
-					selectedSize === sizeVariant.size ? 'bg-blue-500 text-white' : ''
-				}`}
-				onClick={() => setSelectedSize(sizeVariant.size)}
-			>
-				{sizeVariant.size}
-			</button>
-		));
+		const uniqueSizes = Array.from(new Set(
+			selectedVariant?.sizes.map((sizeVariant: any) => sizeVariant.size)
+		)).sort((a, b) => Number(a) - Number(b));
+
+		return uniqueSizes.map((size) => {
+			const sizeVariant = selectedVariant?.sizes.find(
+				(sv: any) => sv.size === size
+			);
+			const isAvailable = sizeVariant?.quantity > 0;
+
+			return (
+				<button
+					key={size}
+					className={`px-6 py-2 border rounded-md ${
+						selectedSize === size 
+							? 'bg-blue-500 text-white' 
+							: ''
+					} ${
+						!isAvailable 
+							? 'opacity-50 cursor-not-allowed line-through' 
+							: 'hover:border-blue-500'
+					}`}
+					onClick={() => isAvailable && setSelectedSize(size)}
+					disabled={!isAvailable}
+				>
+					{size}
+				</button>
+			);
+		});
 	};
 
 	return (
@@ -498,39 +517,42 @@ const Navbar = () => {
 												key={product.id}
 												className="bg-white rounded-lg shadow-md p-3"
 											>
-												<div className="relative w-full overflow-hidden">
+												<div className="relative w-full overflow-hidden group">
 													<img
 														src={product.thumbnail}
 														alt={product.name}
 														className="w-full h-40 object-cover transition-transform duration-300 transform group-hover:scale-105"
 													/>
 
-													<p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
-														{Math.round(
-															((Number(product.price) -
-																Number(
-																	product.promotional_price
-																)) /
-																Number(product.price)) *
+													{product.promotional_price && (
+														<p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
+															{Math.round(
+																((Number(product.price) -
+																	Number(
+																		product.promotional_price
+																	)
+																) /
+																	Number(product.price)) *
 																100
-														)}
-														%
-													</p>
+															)}
+															%
+														</p>
+													)}
 													<div className="absolute hidden group-hover:flex w-full h-full top-0 left-0 bg-opacity-70 bg-gray-50 justify-center items-center gap-4 z-10">
 														<IoHeartOutline
 															onClick={() =>
 																handleAddToWishlist(product.id)
 															}
-															className="cursor-pointer p-2 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
-															size={32}
+															className="cursor-pointer p-3 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
+															size={40}
 															color="#40BFFF"
 														/>
 														<IoCart
 															onClick={() =>
-																handleCheckAdd(product)
-															}
-															className="cursor-pointer p-2 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
-															size={32}
+																	handleCheckAdd(product)
+																}
+															className="cursor-pointer p-3 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
+															size={40}
 															color="#40BFFF"
 														/>
 													</div>
@@ -566,19 +588,20 @@ const Navbar = () => {
 
 													<div className="flex justify-between items-center mt-2">
 														<div className="flex items-center space-x-2">
-															<p className="font-bold text-blue-600 text-lg">
-																{formatVNCurrency(
-																	Number(
-																		product.promotional_price
-																	)
-																)}
-															</p>
-
-															<p className="text-gray-500 text-xs line-through">
-																{formatVNCurrency(
-																	Number(product.price)
-																)}
-															</p>
+															{product.promotional_price ? (
+																<>
+																	<p className="font-bold text-blue-600 text-lg">
+																		{formatVNCurrency(Number(product.promotional_price))}
+																	</p>
+																	<p className="text-gray-500 text-xs line-through">
+																		{formatVNCurrency(Number(product.price))}
+																	</p>
+																</>
+															) : (
+																<p className="font-bold text-blue-600 text-lg">
+																	{formatVNCurrency(Number(product.price))}
+																</p>
+															)}
 														</div>
 													</div>
 												</div>

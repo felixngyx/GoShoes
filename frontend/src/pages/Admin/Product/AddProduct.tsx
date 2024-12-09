@@ -17,28 +17,34 @@ import LoadingIcon from '../../../components/common/LoadingIcon';
 import RichTextEditor from '../../../components/admin/RichTextEditor';
 import generateSlug from '../../../common/generateSlug';
 
-
 // Add form validation schema
 const productSchema = Joi.object({
 	name: Joi.string().required().messages({
 		'string.empty': 'Name is required',
 		'any.required': 'Name is required',
 	}),
-	price: Joi.number().positive().required().messages({
-		'number.base': 'Price must be a number',
-		'number.positive': 'Price must be greater than 0',
-		'any.required': 'Price is required',
-	}),
-	promotional_price: Joi.number()
+	price: Joi.number()
 		.positive()
-		.max(Joi.ref('price'))
+		.max(99999999)
 		.required()
 		.messages({
-			'number.base': 'Promotional price must be a number',
-			'number.positive': 'Promotional price must be greater than 0',
-			'number.max': 'Promotional price must be less than the original price',
-			'any.required': 'Promotional price is required',
+			'number.base': 'Price must be a number',
+			'number.positive': 'Price must be greater than 0',
+			'number.max': 'Price cannot exceed 99,999,999₫',
+			'any.required': 'Price is required',
 		}),
+	promotional_price: Joi.alternatives().try(
+		Joi.number()
+			.positive()
+			.max(Joi.ref('price'))
+			.max(99999999)
+			.messages({
+				'number.base': 'Promotional price must be a number',
+				'number.positive': 'Promotional price must be greater than 0',
+				'number.max': 'Promotional price must be less than the original price and cannot exceed 99,999,999₫',
+			}),
+		Joi.valid(null)
+	),
 	status: Joi.string()
 		.valid('public', 'unpublic', 'hidden')
 		.required()
@@ -144,6 +150,7 @@ const AddProduct = () => {
 	const navigate = useNavigate();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
+	const [selectedColor, setSelectedColor] = useState<number[]>([]);
 
 	const {
 		register,
@@ -155,6 +162,7 @@ const AddProduct = () => {
 	} = useForm<PRODUCT>({
 		resolver: joiResolver(productSchema),
 		defaultValues: {
+			promotional_price: null,
 			variants: [
 				{
 					color_id: 0,
@@ -205,6 +213,9 @@ const AddProduct = () => {
 	const [previousValues, setPreviousValues] = useState<{
 		[key: string]: number;
 	}>({});
+
+	// Add loading state to track form submission
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	useEffect(() => {
 		(async () => {
@@ -349,7 +360,8 @@ const AddProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${variantIndex - 1
+							`variants.${
+								variantIndex - 1
 							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
@@ -385,6 +397,10 @@ const AddProduct = () => {
 			return newTerms;
 		});
 
+		setSelectedColor((prev) =>
+			prev.filter((colorId) => colorId !== currentVariant.color_id)
+		);
+
 		remove(index);
 	};
 
@@ -400,6 +416,7 @@ const AddProduct = () => {
 	const onSubmit = async (data: PRODUCT) => {
 		try {
 			setLoading(true);
+			setIsSubmitting(true);
 			const thumbnailName = await uploadImageToCloudinary(thumbnailFile!);
 
 			// Tính tổng stock_quantity từ tất cả các variant
@@ -466,13 +483,16 @@ const AddProduct = () => {
 		} catch (error: unknown) {
 			console.error('Error submitting form:', error);
 			if (error && typeof error === 'object' && 'response' in error) {
-				const apiError = error as { response: { data: { message: string } } };
+				const apiError = error as {
+					response: { data: { message: string } };
+				};
 				toast.error(apiError.response.data.message);
 			} else {
 				toast.error('An unexpected error occurred');
 			}
 		} finally {
 			setLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
@@ -511,8 +531,9 @@ const AddProduct = () => {
 		// Khởi tạo previousValues cho size mới với quantity = 0
 		setPreviousValues((prev) => ({
 			...prev,
-			[`variants.${variantIndex}.variant_details.${variantSizes[variantIndex]?.length || 0
-				}.quantity`]: 0,
+			[`variants.${variantIndex}.variant_details.${
+				variantSizes[variantIndex]?.length || 0
+			}.quantity`]: 0,
 		}));
 
 		setVariantSizes((prev) => ({
@@ -551,8 +572,9 @@ const AddProduct = () => {
 			const remainingSizes = currentVariant.variant_details.length;
 			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
 				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
-				const newKey = `variants.${variantIndex}.variant_details.${i - 1
-					}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${
+					i - 1
+				}.quantity`;
 				newPrev[newKey] = newPrev[oldKey];
 				delete newPrev[oldKey];
 			}
@@ -663,12 +685,13 @@ const AddProduct = () => {
 		}
 	};
 
-	// Hàm kiểm tra màu đã được chọn chưa
-	const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
-		return fields.some((field, index) =>
-			index !== currentVariantIndex && field.color_id === colorId
-		);
-	};
+	// // Hàm kiểm tra màu đã được chọn chưa
+	// const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
+	// 	return fields.some(
+	// 		(field, index) =>
+	// 			index !== currentVariantIndex && field.color_id === colorId
+	// 	);
+	// };
 
 	return loadingData ? (
 		<div className="flex justify-center items-center h-screen">
@@ -713,7 +736,7 @@ const AddProduct = () => {
 							</div>
 							<input
 								{...register('price')}
-								type="text"
+								type="number"
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
@@ -731,8 +754,10 @@ const AddProduct = () => {
 								</span>
 							</div>
 							<input
-								{...register('promotional_price')}
-								type="text"
+								{...register('promotional_price', {
+									setValueAs: (value: string) => (value === '' ? null : Number(value)),
+								})}
+								type="number"
 								placeholder="Type here"
 								className="input input-bordered w-full"
 							/>
@@ -979,8 +1004,10 @@ const AddProduct = () => {
 								) : (
 									<div className="flex flex-col gap-2">
 										<div
-											onClick={(e) => handleUploadClick(e)}
-											className="size-[200px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer"
+											onClick={(e) => !isSubmitting && handleUploadClick(e)}
+											className={`size-[200px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md ${
+												isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+											}`}
 										>
 											<Upload />
 											<p className="text-xs text-gray-500">
@@ -1085,9 +1112,19 @@ const AddProduct = () => {
 																	...prev,
 																	[index]: color.color,
 																}));
+																setSelectedColor((prev) => [
+																	...prev,
+																	color.id!,
+																]);
 															}}
-															className="flex items-center gap-2"
-															disabled={isSelectedColor(color.id!, index)}
+															className={`flex items-center gap-2 ${
+																selectedColor.includes(
+																	color.id!
+																) && 'opacity-50'
+															}`}
+															disabled={selectedColor.includes(
+																color.id!
+															)}
 														>
 															<img
 																src={color.link_image}
@@ -1145,8 +1182,9 @@ const AddProduct = () => {
 													>
 														<img
 															src={URL.createObjectURL(image)}
-															alt={`Variant ${index + 1} - ${imageIndex + 1
-																}`}
+															alt={`Variant ${index + 1} - ${
+																imageIndex + 1
+															}`}
 															className="w-full h-full object-cover rounded-md border border-gray-300"
 														/>
 														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -1247,26 +1285,49 @@ const AddProduct = () => {
 																	valueAsNumber: true,
 																	onChange: (e) => {
 																		const inputPath = `variants.${index}.variant_details.${sizeIndex}.quantity`;
-																		let newValue = parseInt(e.target.value);
+																		let newValue = parseInt(
+																			e.target.value
+																		);
 
 																		// Kiểm tra và giới hạn giá trị
-																		if (isNaN(newValue) || newValue < 0) {
+																		if (
+																			isNaN(newValue) ||
+																			newValue < 0
+																		) {
 																			newValue = 0;
-																		} else if (newValue > 999999) {
+																		} else if (
+																			newValue > 999999
+																		) {
 																			newValue = 999999;
-																			toast.error('Quantity cannot exceed 999,999');
+																			toast.error(
+																				'Quantity cannot exceed 999,999'
+																			);
 																		}
 
 																		// Cập nhật giá trị
-																		setValue(inputPath, newValue);
+																		setValue(
+																			inputPath as any,
+																			newValue
+																		);
 
 																		// Cập nhật tổng số lượng
-																		const oldValue = previousValues[inputPath] || 0;
-																		setStockQuantity((prev) => prev - oldValue + newValue);
-																		setPreviousValues((prev) => ({
-																			...prev,
-																			[inputPath]: newValue,
-																		}));
+																		const oldValue =
+																			previousValues[
+																				inputPath
+																			] || 0;
+																		setStockQuantity(
+																			(prev) =>
+																				prev -
+																				oldValue +
+																				newValue
+																		);
+																		setPreviousValues(
+																			(prev) => ({
+																				...prev,
+																				[inputPath]:
+																					newValue,
+																			})
+																		);
 																	},
 																}
 															)}
@@ -1279,33 +1340,35 @@ const AddProduct = () => {
 																	sizeIndex
 																)
 															}
-															className="btn btn-sm btn-error"
+															disabled={isSubmitting}
+															className="btn btn-sm btn-error disabled:opacity-50"
 														>
 															<TrashIcon
 																size={16}
 																color="white"
-																className="z-10"
+																 className="z-10"
 															/>
 														</button>
 													</div>
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.size_id && (
-															<span className="label-text text-red-500 text-xs ms-2">
-																{
-																	errors.variants[index]
-																		.variant_details[sizeIndex]
-																		?.size_id?.message
-																}
-															</span>
-														)}
+														<span className="label-text text-red-500 text-xs ms-2">
+															{
+																errors.variants[index]
+																	.variant_details[sizeIndex]
+																	?.size_id?.message
+															}
+														</span>
+													)}
 												</>
 											)
 										)}
 										<button
 											type="button"
 											onClick={() => handleAddSize(index)}
-											className="btn btn-sm w-fit ms-auto"
+											disabled={isSubmitting}
+											className="btn btn-sm w-fit ms-auto disabled:opacity-50"
 										>
 											Add size
 										</button>
@@ -1314,7 +1377,8 @@ const AddProduct = () => {
 								<button
 									type="button"
 									onClick={() => removeVariant(index)}
-									className="btn bg-red-500	 btn-sm col-span-3 text-white"
+									disabled={isSubmitting}
+									className="btn bg-red-500	 btn-sm col-span-3 text-white disabled:opacity-50"
 								>
 									<TrashIcon size={16} color="white" />
 									Delete Variant
@@ -1325,17 +1389,18 @@ const AddProduct = () => {
 						<button
 							type="button"
 							onClick={addVariant}
-							className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit"
+							disabled={isSubmitting}
+							className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit disabled:opacity-50"
 						>
 							Add Variant
 						</button>
 
 						<button
-							disabled={loading}
+							disabled={loading || isSubmitting}
 							type="submit"
-							className="btn mt-4 col-span-3 bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
+							className="btn mt-4 col-span-3 bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary disabled:opacity-50"
 						>
-							{loading ? (
+							{loading || isSubmitting ? (
 								<>
 									<span className="loading loading-spinner loading-sm text-info"></span>
 									Creating product...

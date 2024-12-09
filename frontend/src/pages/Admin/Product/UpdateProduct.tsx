@@ -22,28 +22,25 @@ import generateSlug from '../../../common/generateSlug';
 import axiosClient from '../../../apis/axiosClient';
 import { formatVNCurrency } from '../../../common/formatVNCurrency';
 
-
 // Add form validation schema
 const productSchema = Joi.object({
 	name: Joi.string().required().messages({
 		'string.empty': 'Name is required',
 		'any.required': 'Name is required',
 	}),
-	price: Joi.number().positive().required().messages({
+	price: Joi.number().positive().max(99999999).required().messages({
 		'number.base': 'Price must be a number',
-		'number.positive': 'Price must be greater than 0',
+		'number.max': 'Price cannot exceed 99,999,999₫',
 		'any.required': 'Price is required',
 	}),
-	promotional_price: Joi.number()
-		.positive()
-		.max(Joi.ref('price'))
-		.required()
-		.messages({
+	promotional_price: Joi.alternatives().try(
+		Joi.number().max(Joi.ref('price')).max(99999999).messages({
 			'number.base': 'Promotional price must be a number',
-			'number.positive': 'Promotional price must be greater than 0',
-			'number.max': 'Promotional price must be less than the original price',
-			'any.required': 'Promotional price is required',
+			'number.max':
+				'Promotional price must be less than the original price and cannot exceed 99,999,999₫',
 		}),
+		Joi.valid(null, '')
+	),
 	status: Joi.string()
 		.valid('public', 'unpublic', 'hidden')
 		.required()
@@ -153,6 +150,8 @@ const UpdateProduct = () => {
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const editorRef = useRef(null);
+	const [selectedColor, setSelectedColor] = useState<number[]>([]);
+
 	const {
 		register,
 		handleSubmit,
@@ -225,12 +224,13 @@ const UpdateProduct = () => {
 				setLoadingData(true);
 
 				// Fetch reference data first
-				const [brandsRes, categoriesRes, colorsRes, sizesRes] = await Promise.all([
-					brandService.getAll(),
-					categoryService.getAll(),
-					colorService.getAll(),
-					sizeService.getAll(),
-				]);
+				const [brandsRes, categoriesRes, colorsRes, sizesRes] =
+					await Promise.all([
+						brandService.getAll(),
+						categoryService.getAll(),
+						colorService.getAll(),
+						sizeService.getAll(),
+					]);
 
 				// Set reference data with correct data structure
 				const brandsData = brandsRes.data.data.brands || [];
@@ -253,15 +253,17 @@ const UpdateProduct = () => {
 
 				// Set product data
 				setProduct(productData);
+				console.log(productData);
 
 				// Process variants data
-				const processedVariants = productData.variants?.map((variant: Variant) => {
-					return {
-						color_id: variant.color_id,
-						image: variant.image,
-						variant_details: variant.variant_details || []
-					};
-				}) || [];
+				const processedVariants =
+					productData.variants?.map((variant: Variant) => {
+						return {
+							color_id: variant.color_id,
+							image: variant.image,
+							variant_details: variant.variant_details || [],
+						};
+					}) || [];
 
 				// Set variant images
 				const variantImagesMap: { [key: number]: (string | File)[] } = {};
@@ -274,7 +276,9 @@ const UpdateProduct = () => {
 				// Set color search terms
 				const colorTermsMap: { [key: number]: string } = {};
 				productData.variants?.forEach((variant: Variant, index: number) => {
-					const color = colorsData.find((c: COLOR) => c.id === variant.color_id);
+					const color = colorsData.find(
+						(c: COLOR) => c.id === variant.color_id
+					);
 					if (color) {
 						colorTermsMap[index] = color.color;
 					}
@@ -296,20 +300,32 @@ const UpdateProduct = () => {
 
 				// Set previous values for quantities
 				const prevValues: { [key: string]: number } = {};
-				productData.variants?.forEach((variant: Variant, variantIndex: number) => {
-					variant.variant_details?.forEach((detail: VariantSize, detailIndex: number) => {
-						const key = `variants.${variantIndex}.variant_details.${detailIndex}.quantity`;
-						prevValues[key] = detail.quantity;
-					});
-				});
+				productData.variants?.forEach(
+					(variant: Variant, variantIndex: number) => {
+						variant.variant_details?.forEach(
+							(detail: VariantSize, detailIndex: number) => {
+								const key = `variants.${variantIndex}.variant_details.${detailIndex}.quantity`;
+								prevValues[key] = detail.quantity;
+							}
+						);
+					}
+				);
 				setPreviousValues(prevValues);
+
+				// Set selected colors
+				const selectedColors = productData.variants?.map(
+					(variant: Variant) => variant.color_id
+				);
+				setSelectedColor(selectedColors || []);
 
 				// Update form with new data
 				reset({
 					name: productData.name,
 					description: productData.description,
 					price: Number(formatVNCurrency(productData.price)),
-					promotional_price: Number(formatVNCurrency(productData.promotional_price)),
+					promotional_price: productData.promotional_price
+						? Number(formatVNCurrency(productData.promotional_price))
+						: null,
 					status: productData.status,
 					sku: productData.sku,
 					hagtag: productData.hagtag,
@@ -323,7 +339,6 @@ const UpdateProduct = () => {
 				setDescription(productData.description);
 				setThumbnailFile(productData.thumbnail);
 				setStockQuantity(productData.stock_quantity);
-
 			} catch (error) {
 				console.error('Error fetching data:', error);
 				toast.error('Failed to fetch product data');
@@ -449,7 +464,8 @@ const UpdateProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${variantIndex - 1
+							`variants.${
+								variantIndex - 1
 							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
@@ -485,6 +501,10 @@ const UpdateProduct = () => {
 			return newTerms;
 		});
 
+		setSelectedColor((prev) =>
+			prev.filter((colorId) => colorId !== currentVariant.color_id)
+		);
+
 		remove(index);
 	};
 
@@ -501,18 +521,32 @@ const UpdateProduct = () => {
 		try {
 			setLoading(true);
 			setIsSubmitting(true);
-			let thumbnailName = '';
-			if (thumbnailFile instanceof File) {
-				thumbnailName = await uploadImageToCloudinary(thumbnailFile);
-			} else {
-				thumbnailName = data.thumbnail;
-			}
+
+			const processPrice = (price: string | number) => {
+				if (typeof price === 'string') {
+					const processedPrice = Number(price.replace(/[.,đ₫]/g, ''));
+					// Kiểm tra giới hạn giá
+					if (processedPrice > 99000000) {
+						throw new Error('Price cannot exceed 99,000,000₫');
+					}
+					return processedPrice;
+				}
+				// Kiểm tra giới hạn giá cho number
+				if (price > 99000000) {
+					throw new Error('Price cannot exceed 99,000,000₫');
+				}
+				return price;
+			};
 
 			const formattedData = {
 				...data,
+				price: processPrice(data.price),
+				promotional_price: data.promotional_price
+					? processPrice(data.promotional_price)
+					: null,
 				is_deleted: false,
 				slug: generateSlug(data.name),
-				thumbnail: thumbnailName,
+				thumbnail: thumbnailFile,
 				description: description,
 				variants: await Promise.all(
 					data.variants.map(async (variant, index) => {
@@ -534,19 +568,15 @@ const UpdateProduct = () => {
 						return {
 							...variant,
 							variant_details: variant.variant_details.map((detail) => {
-								// Tìm size name cho từng variant detail
 								const size = sizes.find(
 									(s) => Number(s.id) === Number(detail.size_id)
 								);
 								const sizeName = size ? size.size : '';
-
-								// Tạo SKU riêng cho từng combination của color và size
 								const variantSKU = generateVariantSKU(
 									data.sku,
 									colorName,
 									sizeName
 								);
-
 								return {
 									...detail,
 									sku: variantSKU,
@@ -560,14 +590,18 @@ const UpdateProduct = () => {
 
 			formattedData.stock_quantity = stockQuantity;
 
-			const response = await axiosClient.put(`/products/${id}`, formattedData);
+			const response = await axiosClient.put(
+				`/products/${id}`,
+				formattedData
+			);
 			console.log('Response:', response);
 			if (response.status.toString() === '201') {
 				toast.success('Update product successfully!');
 			}
 		} catch (error: unknown) {
 			console.error('Error submitting form:', error);
-			const errorMessage = error instanceof Error ? error.message : 'Failed to update product';
+			const errorMessage =
+				error instanceof Error ? error.message : 'Failed to update product';
 			toast.error(errorMessage);
 		} finally {
 			setLoading(false);
@@ -652,8 +686,9 @@ const UpdateProduct = () => {
 			const remainingSizes = currentVariant.variant_details.length;
 			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
 				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
-				const newKey = `variants.${variantIndex}.variant_details.${i - 1
-					}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${
+					i - 1
+				}.quantity`;
 				newPrev[newKey] = newPrev[oldKey];
 				delete newPrev[oldKey];
 			}
@@ -758,8 +793,9 @@ const UpdateProduct = () => {
 	// Update the description state handler
 	// Hàm kiểm tra màu đã được chọn chưa
 	const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
-		return fields.some((field, index) =>
-			index !== currentVariantIndex && field.color_id === colorId
+		return fields.some(
+			(field, index) =>
+				index !== currentVariantIndex && field.color_id === colorId
 		);
 	};
 
@@ -836,7 +872,10 @@ const UpdateProduct = () => {
 								</span>
 							</div>
 							<input
-								{...register('promotional_price')}
+								{...register('promotional_price', {
+									setValueAs: (value: string) =>
+										value === '' ? null : Number(value),
+								})}
 								type="number"
 								min="0"
 								step="any"
@@ -876,7 +915,9 @@ const UpdateProduct = () => {
 								className="input input-bordered w-full uppercase"
 								onChange={(e) => {
 									// Chỉ cho phép chữ cái không dấu, số và dấu gạch ngang
-									const value = e.target.value.replace(/[^A-Za-z0-9-]/g, '').toUpperCase();
+									const value = e.target.value
+										.replace(/[^A-Za-z0-9-]/g, '')
+										.toUpperCase();
 									e.target.value = value;
 									setValue('sku', value);
 								}}
@@ -934,17 +975,16 @@ const UpdateProduct = () => {
 							<select
 								{...register('brand_id')}
 								className="select select-bordered w-full"
-								value={product?.brand_id || ""}
+								value={product?.brand_id || ''}
 							>
 								<option value="">Select Brand</option>
-								{brands && brands.length > 0 && brands.map((brand) => (
-									<option
-										key={brand.id}
-										value={brand.id}
-									>
-										{brand.name}
-									</option>
-								))}
+								{brands &&
+									brands.length > 0 &&
+									brands.map((brand) => (
+										<option key={brand.id} value={brand.id}>
+											{brand.name}
+										</option>
+									))}
 							</select>
 							{errors.brand_id && (
 								<p className="text-red-500 text-xs">
@@ -966,25 +1006,29 @@ const UpdateProduct = () => {
 								>
 									<div className="flex justify-between gap-2">
 										<div className="w-full min-h-12 border-2 border-gray-300 rounded-md p-2 flex flex-wrap gap-1">
-											{selectedCategories && selectedCategories.length > 0 && selectedCategories.map((category) => (
-												<div
-													key={category.id}
-													className="bg-[#BCDDFE] text-primary px-2 py-1 rounded-md flex items-center gap-1 text-xs"
-												>
-													<span>{category.name}</span>
-													<button
-														type="button"
-														onClick={(e) => {
-															e.preventDefault();
-															e.stopPropagation();
-															removeCategory(Number(category.id));
-														}}
-														className="hover:text-primary/80"
+											{selectedCategories &&
+												selectedCategories.length > 0 &&
+												selectedCategories.map((category) => (
+													<div
+														key={category.id}
+														className="bg-[#BCDDFE] text-primary px-2 py-1 rounded-md flex items-center gap-1 text-xs"
 													>
-														<X size={14} />
-													</button>
-												</div>
-											))}
+														<span>{category.name}</span>
+														<button
+															type="button"
+															onClick={(e) => {
+																e.preventDefault();
+																e.stopPropagation();
+																removeCategory(
+																	Number(category.id)
+																);
+															}}
+															className="hover:text-primary/80"
+														>
+															<X size={14} />
+														</button>
+													</div>
+												))}
 										</div>
 										<div
 											role="button"
@@ -1002,26 +1046,37 @@ const UpdateProduct = () => {
 									{isDropdownOpen && (
 										<div className="absolute top-full left-0 w-full mt-1 p-2 shadow border border-gray-300 rounded-md z-[1] bg-base-100 max-h-[200px] overflow-y-auto overflow-x-hidden">
 											<ul className="menu">
-												{categories && categories.length > 0 && categories
-													.filter((category) => !selectedCategories.some((selected) => selected.id === category.id))
-													.map((category) => (
-														<li
-															className="hover:bg-gray-100 rounded-none w-full whitespace-normal"
-															key={category.id}
-															onClick={(e) => {
-																e.preventDefault();
-																e.stopPropagation();
-																handleCategoryChange(Number(category.id));
-															}}
-														>
-															<button
-																type="button"
-																className="w-full text-left whitespace-normal"
+												{categories &&
+													categories.length > 0 &&
+													categories
+														.filter(
+															(category) =>
+																!selectedCategories.some(
+																	(selected) =>
+																		selected.id ===
+																		category.id
+																)
+														)
+														.map((category) => (
+															<li
+																className="hover:bg-gray-100 rounded-none w-full whitespace-normal"
+																key={category.id}
+																onClick={(e) => {
+																	e.preventDefault();
+																	e.stopPropagation();
+																	handleCategoryChange(
+																		Number(category.id)
+																	);
+																}}
 															>
-																{category.name}
-															</button>
-														</li>
-													))}
+																<button
+																	type="button"
+																	className="w-full text-left whitespace-normal"
+																>
+																	{category.name}
+																</button>
+															</li>
+														))}
 											</ul>
 										</div>
 									)}
@@ -1068,8 +1123,8 @@ const UpdateProduct = () => {
 													openModal(
 														thumbnailFile instanceof File
 															? URL.createObjectURL(
-																thumbnailFile
-															)
+																	thumbnailFile
+															  )
 															: thumbnailFile
 													);
 												}}
@@ -1195,14 +1250,27 @@ const UpdateProduct = () => {
 														<button
 															type="button"
 															onClick={() => {
-																setValue(`variants.${index}.color_id`, color.id!);
+																setValue(
+																	`variants.${index}.color_id`,
+																	color.id!
+																);
 																setColorSearchTerms((prev) => ({
 																	...prev,
 																	[index]: color.color,
 																}));
+																setSelectedColor((prev) => [
+																	...prev,
+																	color.id!,
+																]);
 															}}
-															className="flex items-center gap-2"
-															disabled={isSelectedColor(color.id!, index)}
+															className={`flex items-center gap-2 ${
+																selectedColor.includes(
+																	color.id!
+																) && 'opacity-50'
+															}`}
+															disabled={selectedColor.includes(
+																color.id!
+															)}
 														>
 															<img
 																src={color.link_image}
@@ -1264,8 +1332,9 @@ const UpdateProduct = () => {
 																	? URL.createObjectURL(image)
 																	: image
 															}
-															alt={`Variant ${index + 1} - ${imageIndex + 1
-																}`}
+															alt={`Variant ${index + 1} - ${
+																imageIndex + 1
+															}`}
 															className="w-full h-full object-cover rounded-md border border-gray-300"
 														/>
 														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -1276,8 +1345,8 @@ const UpdateProduct = () => {
 																	openModal(
 																		image instanceof File
 																			? URL.createObjectURL(
-																				image
-																			)
+																					image
+																			  )
 																			: image
 																	);
 																}}
@@ -1408,25 +1477,25 @@ const UpdateProduct = () => {
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.size_id && (
-															<span className="label-text text-red-500 text-xs ms-2">
-																{
-																	errors.variants[index]
-																		.variant_details[sizeIndex]
-																		?.size_id?.message
-																}
-															</span>
-														)}
+														<span className="label-text text-red-500 text-xs ms-2">
+															{
+																errors.variants[index]
+																	.variant_details[sizeIndex]
+																	?.size_id?.message
+															}
+														</span>
+													)}
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.quantity && (
-															<span className="label-text text-red-500 text-xs ms-2">
-																{
-																	errors.variants[index]
-																		.variant_details[sizeIndex]
-																		?.quantity?.message
-																}
-															</span>
-														)}
+														<span className="label-text text-red-500 text-xs ms-2">
+															{
+																errors.variants[index]
+																	.variant_details[sizeIndex]
+																	?.quantity?.message
+															}
+														</span>
+													)}
 												</>
 											)
 										)}
@@ -1440,18 +1509,15 @@ const UpdateProduct = () => {
 										</button>
 									</div>
 								</div>
-								{!product?.variants?.[index]?.sizes?.[0]
-									?.product_variant_id && (
-										<button
-											type="button"
-											onClick={() => removeVariant(index)}
-											className="btn bg-red-500	 btn-sm col-span-3 text-white"
-											disabled={isSubmitting}
-										>
-											<TrashIcon size={16} color="white" /> Delete
-											Variant
-										</button>
-									)}
+								<button
+									type="button"
+									onClick={() => removeVariant(index)}
+									className="btn bg-red-500	 btn-sm col-span-3 text-white"
+									disabled={isSubmitting}
+								>
+									<TrashIcon size={16} color="white" />{' '}
+									<span className="text-xs">Delete Variant</span>
+								</button>
 							</div>
 						))}
 

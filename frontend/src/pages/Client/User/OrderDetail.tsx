@@ -133,15 +133,7 @@ const OrderDetail: React.FC = () => {
                 </Typography>
               </Box>
             </Box>
-            <Chip
-              label={
-                orderData.payment.status.charAt(0).toUpperCase() +
-                orderData.payment.status.slice(1)
-              }
-              color={
-                orderData.payment.status === "paid" ? "success" : "default"
-              }
-            />
+            
           </Box>
           <OrderTracking
             status={orderData.status}

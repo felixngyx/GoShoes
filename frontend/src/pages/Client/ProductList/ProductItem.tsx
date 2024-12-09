@@ -109,9 +109,16 @@ const ProductItems = ({
 	const getVariantsForColor = (color: string) => {
 		if (!product) return [];
 
-		return parseVariants(product.variants)
-			.filter((variant: any) => variant.color === color)
-			.flatMap((variant: any) => variant.sizes);
+		const variants = parseVariants(product.variants);
+		const selectedVariant = variants.find((variant: any) => variant.color === color);
+		
+		const uniqueSizes = Array.from(new Set(
+			selectedVariant?.sizes.map((size: any) => size.size)
+		)).map(size => {
+			return selectedVariant.sizes.find((s: any) => s.size === size);
+		}).sort((a: any, b: any) => Number(a.size) - Number(b.size));
+
+		return uniqueSizes;
 	};
 
 	const closeModal = () => {
@@ -153,26 +160,28 @@ const ProductItems = ({
 						alt={product.name}
 					/>
 
-					<p className="absolute top-2 right-2 text-white bg-red-600 text-xs sm:text-sm font-semibold px-2 py-1 rounded-full z-10">
-						{Math.round(
-							((Number(product.price) -
-								Number(product.promotional_price)) /
-								Number(product.price)) *
-								100
-						)}
-						%
-					</p>
+					{product.promotional_price && (
+						<p className="absolute top-2 right-2 text-white bg-red-600 text-xs sm:text-sm font-semibold px-2 py-1 rounded-full z-10">
+							{Math.round(
+								((Number(product.price) -
+									Number(product.promotional_price)) /
+									Number(product.price)) *
+									100
+							)}
+							%
+						</p>
+					)}
 					<div className="absolute hidden group-hover:flex w-full h-full top-0 left-0 bg-opacity-70 bg-gray-50 justify-center items-center gap-4 sm:gap-8 z-10">
 						<IoHeartOutline
 							onClick={() => handleAddToWishlist(product.id)}
 							className="cursor-pointer p-2 sm:p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
-							size={36}
+							size={46}
 							color="#40BFFF"
 						/>
 						<IoCart
 							onClick={() => handleCheckAdd()}
 							className="cursor-pointer p-2 sm:p-4 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
-							size={36}
+							size={46}
 							color="#40BFFF"
 						/>
 					</div>
@@ -186,12 +195,20 @@ const ProductItems = ({
 					<RatingStars rating={product.rating_count} />
 				</div>
 				<div className="flex items-center justify-center gap-2 mt-1 mb-3">
-					<p className="text-primary text-base sm:text-lg font-semibold">
-						{formatVNCurrency(Number(product.promotional_price))}
-					</p>
-					<p className="text-[#9098B1] text-xs sm:text-sm font-medium line-through">
-						{formatVNCurrency(Number(product.price))}
-					</p>
+					{product.promotional_price ? (
+						<>
+							<p className="text-primary text-base sm:text-lg font-semibold">
+								{formatVNCurrency(Number(product.promotional_price))}
+							</p>
+							<p className="text-[#9098B1] text-xs sm:text-sm font-medium line-through">
+								{formatVNCurrency(Number(product.price))}
+							</p>
+						</>
+					) : (
+						<p className="text-primary text-base sm:text-lg font-semibold">
+							{formatVNCurrency(Number(product.price))}
+						</p>
+					)}
 				</div>
 			</div>
 

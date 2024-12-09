@@ -72,7 +72,8 @@ const Product = () => {
 			try {
 				await productService.delete(id);
 				toast.success('Product deleted successfully');
-				fetchProducts();
+				fetchAllProducts();
+				// fetchProducts();
 			} catch (error) {
 				console.error(error);
 			}
@@ -387,9 +388,9 @@ const Product = () => {
 											{formatVNCurrency(Number(product.price))}
 										</td>
 										<td className="px-4 py-3 hidden md:table-cell">
-											{formatVNCurrency(
-												Number(product.promotional_price)
-											)}
+											{product.promotional_price 
+												? formatVNCurrency(Number(product.promotional_price))
+												: 'None'}
 										</td>
 										<td className="px-4 py-3 hidden lg:table-cell">
 											{product.stock_quantity}

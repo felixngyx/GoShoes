@@ -1,19 +1,29 @@
-import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import Cookies from 'js-cookie';
+import toast from 'react-hot-toast';
+import { useEffect } from 'react';
 interface AdminRouteProps {
 	children: React.ReactNode;
 }
 
 const AdminRoute = ({ children }: AdminRouteProps) => {
-	const { role } = useSelector((state: RootState) => state.client.user);
+	const user = useSelector((state: RootState) => state.client.user);
 	const roles = ['super-admin', 'admin'];
-	const accessToken = Cookies.get('access_token');
+	const navigate = useNavigate();
 
-	if (!roles.includes(role) || !accessToken) {
-		return <Navigate to="/admin/signin" />;
-	}
+	useEffect(() => {
+		if (!user.name) {
+			navigate('/admin/signin');
+			return;
+		}
+		if (!roles.includes(user.role)) {
+			navigate('/');
+			toast.error('You are not authorized to access this page');
+			return;
+		}
+	}, []);
 
 	return <>{children}</>;
 };
