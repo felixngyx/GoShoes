@@ -676,7 +676,7 @@ const ProductDetail = () => {
 										{sizeInfo.size}
 										{sizeInfo.disabled && (
 											<span className="block text-xs text-gray-500">
-												Hết hàng
+												(Out of stock)
 											</span>
 										)}
 									</button>
