@@ -23,26 +23,19 @@ const productSchema = Joi.object({
 		'string.empty': 'Name is required',
 		'any.required': 'Name is required',
 	}),
-	price: Joi.number()
-		.positive()
-		.max(99999999)
-		.required()
-		.messages({
-			'number.base': 'Price must be a number',
-			'number.positive': 'Price must be greater than 0',
-			'number.max': 'Price cannot exceed 99,999,999₫',
-			'any.required': 'Price is required',
-		}),
+	price: Joi.number().positive().max(99999999).required().messages({
+		'number.base': 'Price must be a number',
+		'number.positive': 'Price must be greater than 0',
+		'number.max': 'Price cannot exceed 99,999,999₫',
+		'any.required': 'Price is required',
+	}),
 	promotional_price: Joi.alternatives().try(
-		Joi.number()
-			.positive()
-			.max(Joi.ref('price'))
-			.max(99999999)
-			.messages({
-				'number.base': 'Promotional price must be a number',
-				'number.positive': 'Promotional price must be greater than 0',
-				'number.max': 'Promotional price must be less than the original price and cannot exceed 99,999,999₫',
-			}),
+		Joi.number().positive().max(Joi.ref('price')).max(99999999).messages({
+			'number.base': 'Promotional price must be a number',
+			'number.positive': 'Promotional price must be greater than 0',
+			'number.max':
+				'Promotional price must be less than the original price and cannot exceed 99,999,999₫',
+		}),
 		Joi.valid(null)
 	),
 	status: Joi.string()
@@ -162,7 +155,7 @@ const AddProduct = () => {
 	} = useForm<PRODUCT>({
 		resolver: joiResolver(productSchema),
 		defaultValues: {
-			promotional_price: null,
+			promotional_price: undefined,
 			variants: [
 				{
 					color_id: 0,
@@ -755,7 +748,8 @@ const AddProduct = () => {
 							</div>
 							<input
 								{...register('promotional_price', {
-									setValueAs: (value: string) => (value === '' ? null : Number(value)),
+									setValueAs: (value: string) =>
+										value === '' ? null : Number(value),
 								})}
 								type="number"
 								placeholder="Type here"
@@ -1004,9 +998,13 @@ const AddProduct = () => {
 								) : (
 									<div className="flex flex-col gap-2">
 										<div
-											onClick={(e) => !isSubmitting && handleUploadClick(e)}
+											onClick={(e) =>
+												!isSubmitting && handleUploadClick(e)
+											}
 											className={`size-[200px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md ${
-												isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+												isSubmitting
+													? 'opacity-50 cursor-not-allowed'
+													: 'cursor-pointer'
 											}`}
 										>
 											<Upload />
@@ -1346,7 +1344,7 @@ const AddProduct = () => {
 															<TrashIcon
 																size={16}
 																color="white"
-																 className="z-10"
+																className="z-10"
 															/>
 														</button>
 													</div>
