@@ -45,7 +45,7 @@ const ContactList = () => {
         <table className="table-auto w-full">
           <thead>
             <tr>
-              <th className="px-4 py-2">ID</th>
+              <th className="px-4 py-2">No.</th>
               <th className="px-4 py-2">Full Name</th>
               <th className="px-4 py-2">Email</th>
               <th className="px-4 py-2">Subject</th>
@@ -53,9 +53,9 @@ const ContactList = () => {
             </tr>
           </thead>
           <tbody>
-            {contacts.map((contact) => (
+            {contacts.map((contact, index) => (
               <tr key={contact.id}>
-                <td className="border px-4 py-2">{contact.id}</td>
+                <td className="border px-4 py-2">{index + 1}</td>
                 <td className="border px-4 py-2">{contact.full_name}</td>
                 <td className="border px-4 py-2">{contact.email}</td>
                 <td className="border px-4 py-2">{contact.subject}</td>
