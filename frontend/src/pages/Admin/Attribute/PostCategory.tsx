@@ -276,7 +276,7 @@ const PostCategory = () => {
 						onClick={openAddModal}
 					>
 						<Plus size={16} />
-						Add Category
+						Add Category Post
 					</button>
 				</div>
 			</div>
