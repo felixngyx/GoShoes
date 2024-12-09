@@ -217,9 +217,9 @@ const AddProduct = () => {
 				const [resCategory, resSize, resBrand, resColor] =
 					await Promise.all([
 						categoryService.getAll(),
-						sizeService.getAll(),
+						sizeService.getAll(1, 1000),
 						brandService.getAll(),
-						colorService.getAll(),
+						colorService.getAll(1, 1000),
 					]);
 
 				setCategories(resCategory.data?.categories?.data || []);
@@ -1083,57 +1083,58 @@ const AddProduct = () => {
 												onClick={(e) => e.stopPropagation()}
 											/>
 										</div>
-										<ul
-											tabIndex={0}
-											className="dropdown-content menu p-2 shadow bg-base-100 w-full max-h-[200px] overflow-y-auto"
-										>
-											{colors
-												.filter((color) =>
-													color.color
-														.toLowerCase()
-														.includes(
-															(
-																colorSearchTerms[index] || ''
-															).toLowerCase()
-														)
-												)
-												.map((color) => (
-													<li key={color.id}>
-														<button
-															type="button"
-															onClick={() => {
-																setValue(
-																	`variants.${index}.color_id`,
+										<div className="dropdown-content p-2 shadow bg-base-100 w-full max-h-[200px] overflow-y-auto">
+											<ul className="menu" tabIndex={0}>
+												{colors
+													.filter((color) =>
+														color.color
+															.toLowerCase()
+															.includes(
+																(
+																	colorSearchTerms[index] || ''
+																).toLowerCase()
+															)
+													)
+													.map((color) => (
+														<li key={color.id}>
+															<button
+																type="button"
+																onClick={() => {
+																	setValue(
+																		`variants.${index}.color_id`,
+																		color.id!
+																	);
+																	setColorSearchTerms(
+																		(prev) => ({
+																			...prev,
+																			[index]: color.color,
+																		})
+																	);
+																	setSelectedColor((prev) => [
+																		...prev,
+																		color.id!,
+																	]);
+																}}
+																className={`flex items-center gap-2 ${
+																	selectedColor.includes(
+																		color.id!
+																	) && 'opacity-50'
+																}`}
+																disabled={selectedColor.includes(
 																	color.id!
-																);
-																setColorSearchTerms((prev) => ({
-																	...prev,
-																	[index]: color.color,
-																}));
-																setSelectedColor((prev) => [
-																	...prev,
-																	color.id!,
-																]);
-															}}
-															className={`flex items-center gap-2 ${
-																selectedColor.includes(
-																	color.id!
-																) && 'opacity-50'
-															}`}
-															disabled={selectedColor.includes(
-																color.id!
-															)}
-														>
-															<img
-																src={color.link_image}
-																alt={color.color}
-																className="size-4 rounded-full"
-															/>
-															{color.color}
-														</button>
-													</li>
-												))}
-										</ul>
+																)}
+															>
+																<img
+																	src={color.link_image}
+																	alt={color.color}
+																	className="size-4 rounded-full"
+																/>
+																{color.color}
+															</button>
+														</li>
+													))}
+											</ul>
+										</div>
 									</div>
 								</div>
 								<div className="col-span-1 p-2 border border-gray-300 rounded-md">
@@ -1273,7 +1274,7 @@ const AddProduct = () => {
 														</select>
 														<input
 															type="number"
-															min="1"
+															min="0"
 															max="999999"
 															placeholder="Enter a quantity between 1 and 999,999"
 															className="input input-bordered input-sm w-full"
