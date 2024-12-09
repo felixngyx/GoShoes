@@ -95,9 +95,9 @@ const productSchema = Joi.object({
 								'number.min': 'Please select a size',
 								'any.required': 'Please select a size',
 							}),
-							quantity: Joi.number().min(1).required().messages({
+							quantity: Joi.number().min(0).required().messages({
 								'number.base': 'Quantity must be a number',
-								'number.min': 'Quantity must be greater than 0',
+								'number.min': 'Quantity must be positive number',
 								'any.required': 'Quantity is required',
 							}),
 							sku: Joi.string().allow('').optional(),
@@ -151,8 +151,6 @@ const UpdateProduct = () => {
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const editorRef = useRef(null);
 	const [selectedColor, setSelectedColor] = useState<number[]>([]);
-
-	const navigate = useNavigate();
 
 	const {
 		register,
@@ -230,14 +228,15 @@ const UpdateProduct = () => {
 					await Promise.all([
 						brandService.getAll(),
 						categoryService.getAll(),
-						colorService.getAll(),
-						sizeService.getAll(),
+						colorService.getAll(1, 1000),
+						sizeService.getAll(1, 1000),
 					]);
 
 				// Set reference data with correct data structure
 				const brandsData = brandsRes.data.data.brands || [];
 				const categoriesData = categoriesRes.data.categories.data || [];
 				const colorsData = colorsRes.data.clors.data || [];
+				console.log(colorsData);
 				const sizesData = sizesRes.data.sizes.data || [];
 
 				setBrands(brandsData);
@@ -599,7 +598,6 @@ const UpdateProduct = () => {
 			console.log('Response:', response);
 			if (response.status.toString() === '201') {
 				toast.success('Update product successfully!');
-				navigate('/admin/product');
 			}
 		} catch (error: unknown) {
 			console.error('Error submitting form:', error);
@@ -1240,57 +1238,58 @@ const UpdateProduct = () => {
 												onClick={(e) => e.stopPropagation()}
 											/>
 										</div>
-										<ul
-											tabIndex={0}
-											className="dropdown-content menu p-2 shadow bg-base-100 w-full max-h-[200px] overflow-y-auto"
-										>
-											{colors
-												.filter((color) =>
-													color.color
-														.toLowerCase()
-														.includes(
-															(
-																colorSearchTerms[index] || ''
-															).toLowerCase()
-														)
-												)
-												.map((color) => (
-													<li key={color.id}>
-														<button
-															type="button"
-															onClick={() => {
-																setValue(
-																	`variants.${index}.color_id`,
+										<div className="dropdown-content p-2 shadow bg-base-100 w-full max-h-[200px] overflow-y-auto">
+											<ul className="menu" tabIndex={0}>
+												{colors
+													.filter((color) =>
+														color.color
+															.toLowerCase()
+															.includes(
+																(
+																	colorSearchTerms[index] || ''
+																).toLowerCase()
+															)
+													)
+													.map((color) => (
+														<li key={color.id}>
+															<button
+																type="button"
+																onClick={() => {
+																	setValue(
+																		`variants.${index}.color_id`,
+																		color.id!
+																	);
+																	setColorSearchTerms(
+																		(prev) => ({
+																			...prev,
+																			[index]: color.color,
+																		})
+																	);
+																	setSelectedColor((prev) => [
+																		...prev,
+																		color.id!,
+																	]);
+																}}
+																className={`flex items-center gap-2 ${
+																	selectedColor.includes(
+																		color.id!
+																	) && 'opacity-50'
+																}`}
+																disabled={selectedColor.includes(
 																	color.id!
-																);
-																setColorSearchTerms((prev) => ({
-																	...prev,
-																	[index]: color.color,
-																}));
-																setSelectedColor((prev) => [
-																	...prev,
-																	color.id!,
-																]);
-															}}
-															className={`flex items-center gap-2 ${
-																selectedColor.includes(
-																	color.id!
-																) && 'opacity-50'
-															}`}
-															disabled={selectedColor.includes(
-																color.id!
-															)}
-														>
-															<img
-																src={color.link_image}
-																alt={color.color}
-																className="size-4 rounded-full"
-															/>
-															{color.color}
-														</button>
-													</li>
-												))}
-										</ul>
+																)}
+															>
+																<img
+																	src={color.link_image}
+																	alt={color.color}
+																	className="size-4 rounded-full"
+																/>
+																{color.color}
+															</button>
+														</li>
+													))}
+											</ul>
+										</div>
 									</div>
 								</div>
 								<div className="col-span-1 p-2 border border-gray-300 rounded-md">
@@ -1475,6 +1474,17 @@ const UpdateProduct = () => {
 															}}
 														/>
 														<button
+															disabled={
+																isSubmitting ||
+																(product?.variants[index]
+																	?.variant_details?.[
+																	sizeIndex
+																]?.size_id !== 0 &&
+																	product?.variants[index]
+																		?.variant_details?.[
+																		sizeIndex
+																	]?.size_id !== undefined)
+															}
 															type="button"
 															onClick={() =>
 																handleRemoveSize(
@@ -1483,7 +1493,6 @@ const UpdateProduct = () => {
 																)
 															}
 															className="btn btn-sm btn-error"
-															disabled={isSubmitting}
 														>
 															<TrashIcon
 																size={16}
