@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 import Joi from 'joi';
 import { joiResolver } from '@hookform/resolvers/joi';
 import uploadImageToCloudinary from '../../../common/uploadCloudinary';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { COLOR } from '../../../services/admin/color';
 import colorService from '../../../services/admin/color';
 import { Eye, TrashIcon, Logs, Upload, X, ArrowLeft } from 'lucide-react';
@@ -151,6 +151,8 @@ const UpdateProduct = () => {
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const editorRef = useRef(null);
 	const [selectedColor, setSelectedColor] = useState<number[]>([]);
+
+	const navigate = useNavigate();
 
 	const {
 		register,
@@ -325,7 +327,7 @@ const UpdateProduct = () => {
 					price: Number(formatVNCurrency(productData.price)),
 					promotional_price: productData.promotional_price
 						? Number(formatVNCurrency(productData.promotional_price))
-						: null,
+						: undefined,
 					status: productData.status,
 					sku: productData.sku,
 					hagtag: productData.hagtag,
@@ -416,7 +418,7 @@ const UpdateProduct = () => {
 		// Khởi tạo previousValues cho variant mới
 		setPreviousValues((prev) => ({
 			...prev,
-			[`variants.${newIndex}.size.0.quantity`]: 0,
+			[`variants.${newIndex}.variant_details.0.quantity`]: 0,
 		}));
 
 		setColorSearchTerms((prev) => ({
@@ -597,6 +599,7 @@ const UpdateProduct = () => {
 			console.log('Response:', response);
 			if (response.status.toString() === '201') {
 				toast.success('Update product successfully!');
+				navigate('/admin/product');
 			}
 		} catch (error: unknown) {
 			console.error('Error submitting form:', error);
@@ -792,12 +795,12 @@ const UpdateProduct = () => {
 
 	// Update the description state handler
 	// Hàm kiểm tra màu đã được chọn chưa
-	const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
-		return fields.some(
-			(field, index) =>
-				index !== currentVariantIndex && field.color_id === colorId
-		);
-	};
+	// const isSelectedColor = (colorId: number, currentVariantIndex: number) => {
+	// 	return fields.some(
+	// 		(field, index) =>
+	// 			index !== currentVariantIndex && field.color_id === colorId
+	// 	);
+	// };
 
 	// Thêm hàm xử lý input số
 	const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1219,6 +1222,12 @@ const UpdateProduct = () => {
 												tabIndex={0}
 												role="button"
 												type="text"
+												disabled={
+													product?.variants[index]?.color_id !==
+														0 &&
+													product?.variants[index]?.color_id !==
+														undefined
+												}
 												placeholder="Select color"
 												className="input input-bordered input-sm w-full"
 												value={colorSearchTerms[index] || ''}
@@ -1404,7 +1413,16 @@ const UpdateProduct = () => {
 															{...register(
 																`variants.${index}.variant_details.${sizeIndex}.size_id`
 															)}
-															disabled={isSubmitting}
+															disabled={
+																product?.variants[index]
+																	?.variant_details?.[
+																	sizeIndex
+																]?.size_id !== 0 &&
+																product?.variants[index]
+																	?.variant_details?.[
+																	sizeIndex
+																]?.size_id !== undefined
+															}
 														>
 															<option value="0">
 																Select size
@@ -1509,15 +1527,19 @@ const UpdateProduct = () => {
 										</button>
 									</div>
 								</div>
-								<button
-									type="button"
-									onClick={() => removeVariant(index)}
-									className="btn bg-red-500	 btn-sm col-span-3 text-white"
-									disabled={isSubmitting}
-								>
-									<TrashIcon size={16} color="white" />{' '}
-									<span className="text-xs">Delete Variant</span>
-								</button>
+								{product?.variants[index]?.color_id === 0 ||
+									(product?.variants[index]?.color_id ===
+										undefined && (
+										<button
+											type="button"
+											onClick={() => removeVariant(index)}
+											className="btn bg-red-500	 btn-sm col-span-3 text-white"
+											disabled={isSubmitting}
+										>
+											<TrashIcon size={16} color="white" />{' '}
+											<span className="text-xs">Delete Variant</span>
+										</button>
+									))}
 							</div>
 						))}
 

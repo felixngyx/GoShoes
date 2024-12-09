@@ -7,8 +7,9 @@ import Footer from '../../../components/client/Footer';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai'; // Import các icon mắt
 import axios from 'axios';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store';
+import { login, setUser } from '../../../store/client/userSlice';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -25,6 +26,8 @@ const VerifyEmail: React.FC = () => {
 	const [newPhone, setNewPhone] = useState('');
 	const access_token = Cookies.get('access_token');
 	const user = useSelector((state: RootState) => state.client.user);
+	const user_data = JSON.parse(Cookies.get('user') || '{}');
+	const dispatch = useDispatch();
 
 	// State for showing password
 	const [showPassword, setShowPassword] = useState(false);
@@ -98,8 +101,12 @@ const VerifyEmail: React.FC = () => {
 			const res = await axios.post(`${BASE_URL}/auth/register-verify`, {
 				token,
 			});
-			console.log(res);
-			if (res.status === 200) setStatus(true);
+			if (res.status === 200) {
+				setStatus(true);
+				user_data.email_is_verified = true;
+				Cookies.set('user', JSON.stringify(user_data));
+				dispatch(setUser(user_data));
+			}
 		} catch (error: any) {
 			if (error?.response?.status === 400) setStatus(false);
 			console.log(error);
