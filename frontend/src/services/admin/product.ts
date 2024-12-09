@@ -80,6 +80,12 @@ export interface PRODUCT_DETAIL {
 			quantity: number;
 			product_variant_id?: number;
 		}[];
+		variant_details?: {
+			size_id: number;
+			quantity: number;
+			sku: string;
+			product_variant_id?: number;
+		}[];
 	}[];
 }
 
