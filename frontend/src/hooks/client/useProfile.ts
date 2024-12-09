@@ -9,7 +9,6 @@ import {
   verifyTokenChangePhone
 } from "../../services/client/profile";
 import { ProfileParams, Profile } from '../../types/client/profile';
-import { useShipping } from './useShipping';
 
 const useProfile = () => {
   // Lấy dữ liệu Profile
@@ -27,6 +26,10 @@ const useProfile = () => {
     mutationFn: updateProfile,
     onSuccess: () => {
       toast.success('Profile updated successfully');
+      // Reload trang sau 1 giây
+      setTimeout(() => {
+        window.location.reload(); // Reload trang sau 1 giây
+      }, 1000);
     },
     onError: (error: any) => {
       console.error('Error while updating profile:', error);
@@ -117,7 +120,7 @@ const useProfile = () => {
       toast.error('Please check the information');
       return;
     }
-    updateProfileMutation({ ...params, address: selectedLocation || undefined });
+    updateProfileMutation({ ...params });
   };
 
   // avt
@@ -131,7 +134,6 @@ const useProfile = () => {
       gender: profile?.gender || '', // Đảm bảo 'gender' không rỗng
       phone: profile?.phone ? profile.phone.toString() : '',
       bio: profile?.bio || '',
-      address: profile?.address || undefined,
     };
 
     try {
@@ -152,9 +154,6 @@ const useProfile = () => {
     });
   };
 
-  // Xử lý địa chỉ
-  const { selectedLocation, handleLocationSelect, handleEdit, showPopup, setShowPopup, editAddress } = useShipping();
-
   return {
     profile,
     isLoading,
@@ -165,12 +164,6 @@ const useProfile = () => {
     handleVerifyTokenChangeEmail,
     handleSendPhoneChangeRequest,
     handleVerifyTokenChangePhone,
-    selectedLocation,
-    handleLocationSelect,
-    handleEdit,
-    showPopup,
-    setShowPopup,
-    editAddress,
   };
 };
 
