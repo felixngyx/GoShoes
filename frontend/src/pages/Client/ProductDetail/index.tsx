@@ -504,7 +504,7 @@ const ProductDetail = () => {
 				},
 			});
 		} else {
-			toast.error('Không tìm thấy phiên b��n sản phẩm phù hợp');
+			toast.error('Không tìm thấy phiên bản sản phẩm phù hợp');
 		}
 	};
 
@@ -656,34 +656,34 @@ const ProductDetail = () => {
 						<span className="mb-2 text-lg font-semibold">Size:</span>
 						<div className="grid grid-cols-3 gap-2">
 							{uniqueSizes.length > 0 ? (
-								uniqueSizes.map((sizeInfo: any) => {
-									const isSelected = selectedSize === sizeInfo.size;
-									const isDisabled = sizeInfo.disabled;
-
-									return (
-										<button
-											key={sizeInfo.size}
-											onClick={() => handleSizeChange(sizeInfo.size)}
-											className={`py-2 text-center text-sm font-medium border rounded-md w-full 
-												${
-													selectedSize === sizeInfo.size
-														? 'border-theme-color-primary ring-2 ring-theme-color-primary'
-														: 'bg-white text-gray-700 border-gray-300'
-												}
-												${
-													sizeInfo.disabled
-														? 'cursor-not-allowed opacity-50 line-through'
-														: 'focus:outline-none focus:ring-2 focus:ring-theme-color-primary'
-												}`}
-											disabled={sizeInfo.disabled}
-										>
-											{sizeInfo.size}
-										</button>
-									);
-								})
+								uniqueSizes.map((sizeInfo: any) => (
+									<button
+										key={sizeInfo.size}
+										onClick={() => !sizeInfo.disabled && handleSizeChange(sizeInfo.size)}
+										className={`py-2 text-center text-sm font-medium border rounded-md w-full 
+											${
+												selectedSize === sizeInfo.size
+													? 'border-theme-color-primary ring-2 ring-theme-color-primary'
+													: 'bg-white text-gray-700 border-gray-300'
+											}
+											${
+												sizeInfo.disabled
+													? 'cursor-not-allowed opacity-50 line-through bg-gray-100'
+													: 'hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary'
+											}`}
+										disabled={sizeInfo.disabled}
+									>
+										{sizeInfo.size}
+										{sizeInfo.disabled && (
+											<span className="block text-xs text-gray-500">
+												Hết hàng
+											</span>
+										)}
+									</button>
+								))
 							) : (
 								<p className="text-gray-500 text-sm italic">
-									No sizes available
+										No sizes available
 								</p>
 							)}
 						</div>
@@ -693,30 +693,45 @@ const ProductDetail = () => {
 						<h3 className="mb-2 text-lg font-semibold">Color:</h3>
 						<div className="flex flex-wrap gap-3">
 							{uniqueColors.length > 0 ? (
-								uniqueColors.map((colorInfo: any) => (
-									<button
-										key={colorInfo.id}
-										onClick={() =>
-											handleColorChange(
-												colorInfo.id,
-												colorInfo.image || product?.thumbnail
-											)
-										}
-										className={`flex items-center gap-3 px-4 py-2 border rounded-md text-sm font-medium transition-all 
-											${
-												selectedColor === colorInfo.id
-													? 'bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary'
-													: 'bg-white text-gray-700 border-gray-300 hover:border-theme-color-primary'
-											}`}
-									>
-										<img
-											className="w-8 h-8 rounded-full border border-gray-300 object-cover"
-											src={colorInfo.image || product?.thumbnail}
-											alt={colorInfo.color}
-										/>
-										<span>{colorInfo.color}</span>
-									</button>
-								))
+								uniqueColors.map((colorInfo: any) => {
+									const hasAvailableSize = colorInfo.sizes.some(
+										(size: any) => size.quantity > 0
+									);
+									
+									return (
+										<button
+											key={colorInfo.id}
+											onClick={() => 
+												hasAvailableSize && 
+												handleColorChange(colorInfo.id, colorInfo.image || product?.thumbnail)
+											}
+											className={`flex items-center gap-3 px-4 py-2 border rounded-md text-sm font-medium transition-all 
+												${
+													selectedColor === colorInfo.id
+														? 'bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary'
+														: 'bg-white text-gray-700 border-gray-300 hover:border-theme-color-primary'
+												}
+												${
+													!hasAvailableSize
+														? 'cursor-not-allowed opacity-50 bg-gray-100'
+														: ''
+												}`}
+											disabled={!hasAvailableSize}
+										>
+											<img
+												className="w-8 h-8 rounded-full border border-gray-300 object-cover"
+												src={colorInfo.image || product?.thumbnail}
+												alt={colorInfo.color}
+											/>
+											<span>{colorInfo.color}</span>
+											{!hasAvailableSize && (
+												<span className="text-xs text-gray-500">
+													(Out of stock)
+												</span>
+											)}
+										</button>
+									);
+								})
 							) : (
 								<p className="text-gray-500 text-sm italic">
 									No colors available
