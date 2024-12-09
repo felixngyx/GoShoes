@@ -339,7 +339,7 @@ const Color = () => {
 						onClick={openAddModal}
 					>
 						<Plus size={16} />
-						Add Category
+						Add Color
 					</button>
 				</div>
 			</div>

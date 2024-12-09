@@ -49,6 +49,13 @@ const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
+const formatToVND = (price: string) => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND'
+  }).format(parseFloat(price));
+};
+
 const RefundDetail = () => {
   const { id } = useParams();
   const [refund, setRefund] = useState<RefundDetail | null>(null);
@@ -188,8 +195,8 @@ const RefundDetail = () => {
             <p className="text-gray-400">Status: {refund?.order.status}</p>
           </div>
           <div>
-            <p className="text-gray-400">Total: ${refund?.order.total}</p>
-            <p className="text-gray-400">Original Total: ${refund?.order.original_total}</p>
+            <p className="text-gray-400">Total: {formatToVND(refund?.order.total)}</p>
+            <p className="text-gray-400">Original Total: {formatToVND(refund?.order.original_total)}</p>
           </div>
         </div>
       </div>
@@ -204,7 +211,7 @@ const RefundDetail = () => {
               <div>
                 <p className="text-white">{item.product.name}</p>
                 <p className="text-gray-400">Quantity: {item.quantity}</p>
-                <p className="text-gray-400">Price: ${item.price}</p>
+                <p className="text-gray-400">Price: {formatToVND(item.price)}</p>
               </div>
             </div>
           ))}
