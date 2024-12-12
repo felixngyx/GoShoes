@@ -137,7 +137,7 @@ Route::get('/randdis', [DiscountController::class, 'getRandDiscount']);
 
 // This route is Authenticated
 Route::group([
-    'middleware' => 'jwt.auth',
+    'middleware' => 'jwt.access.token',
 ], function () {
 
     Route::group(['prefix' => 'profile'], function () {
@@ -189,8 +189,6 @@ Route::group([
     Route::put('/reviews/{id}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
     Route::get('/user/reviews', [ReviewController::class, 'userReviews']);
-
-
 
     Route::post('categories', [CategoryController::class, 'store']);
     Route::get('categories/{id}', [CategoryController::class, 'show']);
