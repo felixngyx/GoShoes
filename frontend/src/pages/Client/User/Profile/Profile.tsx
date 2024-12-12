@@ -8,16 +8,11 @@ const Profile = () => {
   const {
     profile,
     isLoading,
-    selectedLocation,
     handleUpdateProfile,
-    handleLocationSelect,
     handleSendEmailChangeRequest,
     handleVerifyTokenChangeEmail,
     handleVerifyTokenChangePhone,
     handleSendPhoneChangeRequest,
-    isSendingEmail,
-    isSendingPhone,
-    isVerifyingPhoneToken,
   } = useProfile();
 
   if (isLoading) return <div>Loading...</div>;
@@ -30,15 +25,11 @@ const Profile = () => {
           <h2 className="text-2xl font-semibold">Basic Information</h2>
           <BasicInfoForm
             profile={profile}
-            selectedLocation={selectedLocation}
             handleUpdateProfile={handleUpdateProfile}
-            handleLocationSelect={handleLocationSelect}
             handleSendEmailChangeRequest={handleSendEmailChangeRequest}
             handleVerifyTokenChangeEmail={handleVerifyTokenChangeEmail}
             handleVerifyTokenChangePhone={handleVerifyTokenChangePhone}
             handleSendPhoneChangeRequest={handleSendPhoneChangeRequest}
-            isSendingPhone={isSendingPhone}
-            isVerifyingPhoneToken={isVerifyingPhoneToken}
           />
         </div>
 

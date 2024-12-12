@@ -29,11 +29,11 @@ const Sidebar = () => {
   };
 
   const menuItems = [
-    { path: '/account', icon: <FaUser />, text: 'Basic information' },
-    { path: '/account/my-order', icon: <FaShoppingCart />, text: 'Orders' },
-    { path: '/account/my-address', icon: <FaMapMarkedAlt />, text: 'Address' },
-    { path: '/account/notifications', icon: <FaBell />, text: 'Notifications' },
-    { path: '/account/whish-list', icon: <FaHeart />, text: 'Wishlist' },
+    { path: '/account', icon: <FaUser />, text: 'Thông tin cơ bản' },
+    { path: '/account/my-order', icon: <FaShoppingCart />, text: 'Đơn hàng' },
+    { path: '/account/my-address', icon: <FaMapMarkedAlt />, text: 'Địa chỉ' },
+    { path: '/account/notifications', icon: <FaBell />, text: 'Thông báo' },
+    { path: '/account/whish-list', icon: <FaHeart />, text: 'Danh sách yêu thích' },
   ];
 
   return (

@@ -11,6 +11,7 @@ const ChangeAvatar: React.FC<ChangeAvatarProps> = ({ profile }) => {
 	const { handleUpdateAvatar } = useProfile();
 	const [avatarFile, setAvatarFile] = useState<File | null>(null);
 	const [isUploading, setIsUploading] = useState(false);
+	const [currentAvatar, setCurrentAvatar] = useState(profile?.avt || '/path/to/default-avatar.jpg');
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -61,6 +62,7 @@ const ChangeAvatar: React.FC<ChangeAvatarProps> = ({ profile }) => {
 		try {
 			const uploadedImageUrl = await handleUploadToCloudinary(avatarFile);
 			await handleUpdateAvatar(uploadedImageUrl); // Cập nhật avatar với URL từ Cloudinary
+			setCurrentAvatar(uploadedImageUrl); // Cập nhật URL avatar trong state
 			toast.success('Avatar updated successfully');
 			setAvatarFile(null); // Reset sau khi cập nhật thành công
 		} catch (error) {
@@ -76,7 +78,7 @@ const ChangeAvatar: React.FC<ChangeAvatarProps> = ({ profile }) => {
 				<div className="relative flex-shrink-0">
 					<div className="w-24 h-24 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100">
 						<img
-							src={profile?.avt || '/path/to/default-avatar.jpg'}
+							src={currentAvatar} // Sử dụng avatar hiện tại từ state
 							alt="Avatar"
 							className="w-full h-full object-cover rounded-full"
 						/>
