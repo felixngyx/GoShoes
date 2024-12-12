@@ -22,11 +22,11 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'string|max:191',
-            'bio' => 'string|max:191',
-            'birth_date' => 'date|date_format:Y-m-d|before:today',
-            'gender' => 'string|in:male,female,other',
-            'avt' => 'string'
+            'name' => 'nullable|string|max:191',
+            'bio' => 'nullable|string|max:191',
+            'birth_date' => 'nullable|date|date_format:Y-m-d|before:today',
+            'gender' => 'nullable|string|in:male,female,other',
+            'avt' => 'nullable|string'
         ];
     }
 

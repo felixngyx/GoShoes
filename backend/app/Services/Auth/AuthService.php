@@ -373,6 +373,20 @@ class AuthService implements AuthServiceInterface
         try {
             $user = JWTAuth::parseToken()->authenticate();
 
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            if ($user->is_deleted) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User is deleted'
+                ], 403);
+            }
+
             $accessToken = JWTAuth::claims(['token_type' => 'access'])->fromUser($user);
             if (!$user) {
                 return response()->json([
