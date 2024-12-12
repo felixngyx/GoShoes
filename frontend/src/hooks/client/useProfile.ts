@@ -9,7 +9,10 @@ import {
 	verifyTokenChangePhone,
 } from '../../services/client/profile';
 import { ProfileParams, Profile } from '../../types/client/profile';
+<<<<<<< HEAD
 import { useNavigate } from 'react-router-dom';
+=======
+>>>>>>> 205e8f3cb3e59fd702ab8b36a96680dfd16e3930
 
 const useProfile = () => {
 	const navigate = useNavigate();
@@ -27,6 +30,7 @@ const useProfile = () => {
 		},
 	});
 
+<<<<<<< HEAD
 	// Cập nhật Profile
 	const { mutate: updateProfileMutation, isLoading: isUpdating } = useMutation(
 		{
@@ -40,6 +44,23 @@ const useProfile = () => {
 			},
 		}
 	);
+=======
+  // Cập nhật Profile
+  const { mutate: updateProfileMutation, isLoading: isUpdating } = useMutation({
+    mutationFn: updateProfile,
+    onSuccess: () => {
+      toast.success('Profile updated successfully');
+      // Reload trang sau 1 giây
+      setTimeout(() => {
+        window.location.reload(); // Reload trang sau 1 giây
+      }, 1000);
+    },
+    onError: (error: any) => {
+      console.error('Error while updating profile:', error);
+      toast.error('Failed to update profile');
+    },
+  });
+>>>>>>> 205e8f3cb3e59fd702ab8b36a96680dfd16e3930
 
 	// Gửi yêu cầu thay đổi email
 	const { mutate: sendEmailChangeMutation, isLoading: isSendingEmail } =
@@ -137,6 +158,7 @@ const useProfile = () => {
 			bio: profile?.bio || '',
 		};
 
+<<<<<<< HEAD
 		try {
 			await updateProfileMutation(updatedProfile);
 		} catch (error) {
@@ -165,6 +187,60 @@ const useProfile = () => {
 		handleSendPhoneChangeRequest,
 		handleVerifyTokenChangePhone,
 	};
+=======
+  // Xử lý cập nhật profile
+  const handleUpdateProfile = (params: ProfileParams) => {
+    if (!params.name || !params.avt || !params.birth_date || !params.gender) {
+      console.error('Invalid data for updating profile:', params);
+      toast.error('Please check the information');
+      return;
+    }
+    updateProfileMutation({ ...params });
+  };
+
+  // avt
+  // Xử lý thay đổi avatar
+  const handleUpdateAvatar = async (base64Image: string) => {
+    const updatedProfile = {
+      avt: base64Image, // Sử dụng chuỗi base64 của avatar
+      name: profile?.name || '', // Đảm bảo 'name' không rỗng
+      email: profile?.email || '', // Đảm bảo 'email' không rỗng
+      birth_date: profile?.birth_date || '', // Đảm bảo 'birth_date' không rỗng
+      gender: profile?.gender || '', // Đảm bảo 'gender' không rỗng
+      phone: profile?.phone ? profile.phone.toString() : '',
+      bio: profile?.bio || '',
+    };
+
+    try {
+      // Gọi API cập nhật profile
+      await updateProfileMutation(updatedProfile);
+    } catch (error) {
+      throw new Error('Failed to update profile');
+    }
+  };
+
+  // Hàm chuyển file ảnh thành base64
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  return {
+    profile,
+    isLoading,
+    isUpdating,
+    handleUpdateProfile,
+    handleUpdateAvatar,
+    handleSendEmailChangeRequest,
+    handleVerifyTokenChangeEmail,
+    handleSendPhoneChangeRequest,
+    handleVerifyTokenChangePhone,
+  };
+>>>>>>> 205e8f3cb3e59fd702ab8b36a96680dfd16e3930
 };
 
 export default useProfile;
