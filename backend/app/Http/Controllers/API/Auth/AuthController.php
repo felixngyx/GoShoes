@@ -82,6 +82,6 @@ class AuthController extends Controller
 
     public function refreshTokenController(Request $request): \Illuminate\Http\JsonResponse
     {
-        return $this->authService->refreshTokenService($request->all());
+        return $this->authService->refreshTokenService();
     }
 }
