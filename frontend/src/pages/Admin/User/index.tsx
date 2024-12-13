@@ -11,7 +11,7 @@ import Pagination from '../../../components/admin/Pagination';
 const User = () => {
 	const [users, setUsers] = useState<UserType[]>([]);
 	const [allUsers, setAllUsers] = useState<UserType[]>([]);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(0);
 	const [previewUser, setPreviewUser] = useState<UserType | null>(null);
@@ -21,7 +21,6 @@ const User = () => {
 
 	const fetchAllUsers = async () => {
 		try {
-			setLoading(true);
 			const response = await userService.getAll(1, 1000);
 			setAllUsers(response.data.data);
 		} catch (error) {
@@ -33,7 +32,6 @@ const User = () => {
 
 	const fetchUsers = async (page: number) => {
 		try {
-			setLoading(true);
 			const response = await userService.getAll(page, 10);
 			setUsers(response.data.data);
 			setTotalPages(response.data.total_pages);
@@ -71,14 +69,11 @@ const User = () => {
 	const handleDelete = async (id: number) => {
 		if (confirm('Are you sure you want to delete this user?')) {
 			try {
-				setLoading(true);
 				await userService.delete(id);
 				fetchUsers(currentPage);
 				toast.success('Delete user success');
 			} catch (error) {
 				console.error('Error deleting user:', error);
-			} finally {
-				setLoading(false);
 			}
 		}
 	};
@@ -87,7 +82,6 @@ const User = () => {
 		if (!status) {
 			if (confirm('Are you sure you want to restore this user?')) {
 				try {
-					setLoading(true);
 					await userService.update(id, {
 						is_deleted: status,
 					});
@@ -95,21 +89,16 @@ const User = () => {
 					toast.success('Restore user success');
 				} catch (error) {
 					console.error('Error restoring user:', error);
-				} finally {
-					setLoading(false);
 				}
 			}
 		} else {
 			if (confirm('Are you sure you want to delete this user?')) {
 				try {
-					setLoading(true);
 					await userService.delete(id);
 					fetchUsers(currentPage);
 					toast.success('Delete user success');
 				} catch (error) {
 					console.error('Error deleting user:', error);
-				} finally {
-					setLoading(false);
 				}
 			}
 		}
@@ -139,10 +128,10 @@ const User = () => {
 
 	const filteredUsers = searchTerm
 		? allUsers.filter(user =>
-				user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
-			)
+			user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+		)
 		: users;
 
 	const sortedAndFilteredUsers = sortUsers(filteredUsers);
@@ -153,22 +142,32 @@ const User = () => {
 				<h4 className="text-xl font-semibold text-black dark:text-white">
 					User List ({filteredUsers.length} users)
 				</h4>
-				
-				<div className="flex items-center gap-4">
+
+				<label className="input input-sm input-bordered flex items-center gap-2 w-80">
+					<input
+						placeholder="Search by name, email, phone..."
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+						type="text" className="grow" />
+					<Search size={20} />
+
+				</label>
+
+				{/* <div className="flex items-center gap-4">
 					<div className="relative">
 						<input
 							type="text"
 							placeholder="Search by name, email, phone..."
 							value={searchTerm}
 							onChange={(e) => setSearchTerm(e.target.value)}
-							className="input input-bordered w-full max-w-xs pl-10"
+							className="input input-sm input-bordered"
 						/>
 						<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
 					</div>
 					<button onClick={toggleSortOrder} className="btn btn-sm btn-primary">
 						Sort by Name ({sortOrder})
 					</button>
-				</div>
+				</div> */}
 			</div>
 
 			<div className="relative overflow-x-auto border border-stroke">
@@ -176,7 +175,11 @@ const User = () => {
 					<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
 						<tr>
 							<th scope="col" className="px-6 py-3">
-								Name
+								<div className="flex items-center">
+									Name
+									<FaSort className='cursor-pointer ms-1' onClick={toggleSortOrder} />
+								</div>
+
 							</th>
 							{/* <th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
@@ -257,11 +260,10 @@ const User = () => {
 									<td className="px-6 py-4">
 										<select
 											defaultValue={user.role}
-											className={`select select-bordered select-xs text-xs font-bold ${
-												user.role === 'super-admin'
-													? 'select-disabled text-info'
-													: ''
-											}`}
+											className={`select select-bordered select-xs text-xs font-bold ${user.role === 'super-admin'
+												? 'select-disabled text-info'
+												: ''
+												}`}
 											disabled={loadingUpdate}
 											onChange={(e) => handleRoleChange(e, user.id!)}
 										>
@@ -280,11 +282,10 @@ const User = () => {
 									</td>
 									<td className="px-6 py-4">
 										<span
-											className={`px-2 py-1 rounded-full text-xs ${
-												user.is_deleted
-													? 'bg-danger/10 text-danger'
-													: 'bg-success/10 text-success'
-											}`}
+											className={`px-2 py-1 rounded-full text-xs ${user.is_deleted
+												? 'bg-danger/10 text-danger'
+												: 'bg-success/10 text-success'
+												}`}
 										>
 											{user.is_deleted ? 'Inactive' : 'Active'}
 										</span>
@@ -292,8 +293,8 @@ const User = () => {
 									<td className="px-6 py-4">
 										{user.created_at
 											? new Date(
-													user.created_at
-											  ).toLocaleDateString()
+												user.created_at
+											).toLocaleDateString()
 											: ''}
 									</td>
 									<td className="px-6 py-4">
@@ -409,8 +410,8 @@ const User = () => {
 									<p className="font-medium">
 										{previewUser.birth_date
 											? new Date(
-													previewUser.birth_date
-											  ).toLocaleDateString()
+												previewUser.birth_date
+											).toLocaleDateString()
 											: 'N/A'}
 									</p>
 								</div>
@@ -420,11 +421,10 @@ const User = () => {
 										Status:
 									</p>
 									<span
-										className={`px-2 py-1 rounded-full text-xs ${
-											previewUser.is_deleted
-												? 'bg-danger/10 text-danger'
-												: 'bg-success/10 text-success'
-										}`}
+										className={`px-2 py-1 rounded-full text-xs ${previewUser.is_deleted
+											? 'bg-danger/10 text-danger'
+											: 'bg-success/10 text-success'
+											}`}
 									>
 										{previewUser.is_deleted ? 'Inactive' : 'Active'}
 									</span>
@@ -437,8 +437,8 @@ const User = () => {
 									<p className="font-medium">
 										{previewUser.email_verified_at
 											? new Date(
-													previewUser.email_verified_at
-											  ).toLocaleDateString()
+												previewUser.email_verified_at
+											).toLocaleDateString()
 											: 'Not verified'}
 									</p>
 								</div>
@@ -450,8 +450,8 @@ const User = () => {
 									<p className="font-medium">
 										{previewUser.created_at
 											? new Date(
-													previewUser.created_at
-											  ).toLocaleDateString()
+												previewUser.created_at
+											).toLocaleDateString()
 											: 'N/A'}
 									</p>
 								</div>
