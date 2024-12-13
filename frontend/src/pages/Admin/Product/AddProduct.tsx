@@ -216,9 +216,9 @@ const AddProduct = () => {
 				setLoadingData(true);
 				const [resCategory, resSize, resBrand, resColor] =
 					await Promise.all([
-						categoryService.getAll(),
+						categoryService.getAll(1, 1000),
 						sizeService.getAll(1, 1000),
-						brandService.getAll(),
+						brandService.getAll(1, 1000),
 						colorService.getAll(1, 1000),
 					]);
 

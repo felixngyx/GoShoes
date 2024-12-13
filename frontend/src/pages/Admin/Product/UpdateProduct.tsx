@@ -226,8 +226,8 @@ const UpdateProduct = () => {
 				// Fetch reference data first
 				const [brandsRes, categoriesRes, colorsRes, sizesRes] =
 					await Promise.all([
-						brandService.getAll(),
-						categoryService.getAll(),
+						brandService.getAll(1, 1000),
+						categoryService.getAll(1, 1000),
 						colorService.getAll(1, 1000),
 						sizeService.getAll(1, 1000),
 					]);
