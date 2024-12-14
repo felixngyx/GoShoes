@@ -39,7 +39,7 @@ const Post = () => {
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+
   // Fetch tất cả posts
   const { data: allPostsData, isLoading } = useQuery({
     queryKey: ['all-posts'],
@@ -84,7 +84,7 @@ const Post = () => {
   // Lọc posts theo search term
   const filteredPosts = useMemo(() => {
     if (!sortedPosts) return [];
-    return sortedPosts.filter(post => 
+    return sortedPosts.filter(post =>
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -103,7 +103,7 @@ const Post = () => {
   // Cập nhật lại renderPagination để sử dụng totalPages mới
   const renderPagination = () => {
     const pages = [];
-    
+
     pages.push(
       <button
         key="prev"
@@ -115,16 +115,15 @@ const Post = () => {
       </button>
     );
 
-    for (let i = 1; i <= totalPages; i++) {
+    for (let i = 1;i <= totalPages;i++) {
       pages.push(
         <button
           key={i}
           onClick={() => setCurrentPage(i)}
-          className={`px-3 py-1 rounded-md ${
-            currentPage === i 
-              ? 'bg-[#3C50E0] text-white' 
+          className={`px-3 py-1 rounded-md ${currentPage === i
+              ? 'bg-[#3C50E0] text-white'
               : 'bg-white/5 text-gray-400 hover:bg-white/10'
-          }`}
+            }`}
         >
           {i}
         </button>
@@ -151,12 +150,12 @@ const Post = () => {
         setIsDeleting(true);
         setSelectedPostId(postId);
         const loadingToast = toast.loading('Deleting post...');
-        
+
         await deletePost(postId);
-        
+
         // Invalidate and refetch
         await queryClient.invalidateQueries(['posts']);
-        
+
         toast.dismiss(loadingToast);
         toast.success('Post deleted successfully');
       } catch (error: any) {
@@ -171,36 +170,36 @@ const Post = () => {
   return (
     <div className="p-6 bg-[#1C2434]">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white">Post Management</h1>
+        <h1 className="text-2xl font-bold text-white">Quản lý bài viết</h1>
         <div className="flex gap-4">
           <div className="relative">
             <input
               type="text"
-              placeholder="Search posts..."
+              placeholder="Tìm kiếm bài viết..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="bg-white/5 text-gray-400 px-4 py-2 rounded-lg pl-10 w-64"
             />
             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           </div>
-          <select 
+          <select
             className="bg-white/5 text-gray-400 px-4 py-2 rounded-lg"
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
           >
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
+            <option value="newest">Mới nhất</option>
+            <option value="oldest">Cũ nhất</option>
           </select>
-          <button 
+          <button
             onClick={() => navigate('/admin/post/create')}
             className="bg-[#3C50E0] hover:bg-[#3C50E0]/80 text-white px-4 py-2 rounded-lg transition"
           >
-            Create post
+            Tạo bài viết
           </button>
         </div>
       </div>
 
-      <motion.div 
+      <motion.div
         className="grid gap-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -243,7 +242,7 @@ const Post = () => {
                             className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 w-full text-left"
                           >
                             <Pencil className="w-4 h-4" />
-                            <span>Edit</span>
+                            <span>Chỉnh sửa</span>
                           </button>
                           <button
                             onClick={() => handleDelete(post.id)}
@@ -251,21 +250,21 @@ const Post = () => {
                             className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 w-full text-left text-red-500 disabled:opacity-50"
                           >
                             <Trash className="w-4 h-4" />
-                            <span>{isDeleting && selectedPostId === post.id ? 'Deleting...' : 'Delete'}</span>
+                            <span>{isDeleting && selectedPostId === post.id ? 'Đang xóa...' : 'Xóa'}</span>
                           </button>
                         </div>
                       </div>
                     </div>
                     <div className="mt-2 text-sm text-gray-400">
-                      <div dangerouslySetInnerHTML={{ 
-                        __html: post.content.length > 150 
-                          ? post.content.substring(0, 150) + '...' 
-                          : post.content 
+                      <div dangerouslySetInnerHTML={{
+                        __html: post.content.length > 150
+                          ? post.content.substring(0, 150) + '...'
+                          : post.content
                       }} />
                     </div>
                     <div className="mt-4 text-sm text-gray-500">
-                      Created: {new Date(post.created_at).toLocaleDateString()}
-                      {post.published_at && ` | Published: ${new Date(post.published_at).toLocaleDateString()}`}
+                      Tạo ngày: {new Date(post.created_at).toLocaleDateString()}
+                      {post.published_at && ` | Xuất bản: ${new Date(post.published_at).toLocaleDateString()}`}
                     </div>
                   </div>
                 </div>

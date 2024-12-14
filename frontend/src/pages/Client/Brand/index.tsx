@@ -45,11 +45,11 @@ const BrandPage: React.FC = () => {
 	);
 
 	const sortedBrands = filteredBrands.sort((a: any, b: any) => {
-		if (sortType === 'Name (A-Z)') return a.name.localeCompare(b.name);
-		if (sortType === 'Name (Z-A)') return b.name.localeCompare(a.name);
-		if (sortType === 'Rating (High to Low)')
+		if (sortType === 'Tên (A-Z)') return a.name.localeCompare(b.name);
+		if (sortType === 'Tên (Z-A)') return b.name.localeCompare(a.name);
+		if (sortType === 'Đánh giá (Cao đến Thấp)')
 			return b.average_rating - a.average_rating;
-		if (sortType === 'Rating (Low to High)')
+		if (sortType === 'Đánh giá (Thấp đến Cao)')
 			return a.average_rating - b.average_rating;
 		return 0;
 	});
@@ -76,38 +76,38 @@ const BrandPage: React.FC = () => {
 							onChange={handleSort}
 						>
 							<option disabled value="">
-								Sort By
+								Sắp xếp theo
 							</option>
-							<option>Name (A-Z)</option>
-							<option>Name (Z-A)</option>
-							<option>Rating (High to Low)</option>
-							<option>Rating (Low to High)</option>
+							<option>Tên (A-Z)</option>
+							<option>Tên (Z-A)</option>
+							<option>Đánh giá (Cao đến Thấp)</option>
+							<option>Đánh giá (Thấp đến Cao)</option>
 						</select>
 						<select
 							className="select select-sm lg:select-md select-bordered bg-white text-gray-800"
 							value={itemsToShow}
 							onChange={handleItemsToShow}
 						>
-							<option value={8}>Show 8</option>
-							<option value={14}>Show 14</option>
+							<option value={8}>Hiển thị 8</option>
+							<option value={14}>Hiển thị 14</option>
 						</select>
 					</div>
 
 					{/* <div className="flex items-center space-x-2">
-            <button className="btn btn-square bg-[#40BFFF] text-white">
-              <FaTh />
-            </button>
-            <button className="btn btn-square bg-white text-gray-800 border border-gray-300">
-              <FaBars />
-            </button>
-          </div> */}
+			<button className="btn btn-square bg-[#40BFFF] text-white">
+			  <FaTh />
+			</button>
+			<button className="btn btn-square bg-white text-gray-800 border border-gray-300">
+			  <FaBars />
+			</button>
+		  </div> */}
 
 					{/* Search Bar */}
 					<label className="input input-sm lg:input-md input-bordered flex items-center">
 						<input
 							className="w-64"
 							type="text"
-							placeholder="Search"
+							placeholder="Tìm kiếm"
 							value={searchTerm}
 							onChange={handleSearch}
 						/>
@@ -148,10 +148,10 @@ const BrandPage: React.FC = () => {
 											<FaStar className="text-yellow-400 mr-1" />
 											<span>{brand.average_rating}</span>
 										</div>
-										<p>{brand.products_count} products</p>
+										<p>{brand.products_count} sản phẩm</p>
 										<div className="card-actions">
 											<button className="btn bg-[#40BFFF] hover:bg-[#3389cc] text-white border-none">
-												View Products
+												Xem sản phẩm
 											</button>
 										</div>
 									</div>

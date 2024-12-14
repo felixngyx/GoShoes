@@ -54,15 +54,15 @@ const ProductListBrand = () => {
 
 	// Sort filtered products based on sortType
 	const sortedProducts = filterProduct.sort((a: any, b: any) => {
-		if (sortType === 'Name (A-Z)') return a.name.localeCompare(b.name);
-		if (sortType === 'Name (Z-A)') return b.name.localeCompare(a.name);
-		if (sortType === 'Rating (High to Low)')
+		if (sortType === 'Tên (A-Z)') return a.name.localeCompare(b.name);
+		if (sortType === 'Tên (Z-A)') return b.name.localeCompare(a.name);
+		if (sortType === 'Đánh giá (High to Low)')
 			return b.rating_count - a.rating_count;
-		if (sortType === 'Rating (Low to High)')
+		if (sortType === 'Đánh giá (Low to High)')
 			return a.rating_count - b.rating_count;
-		if (sortType === 'Price (Low to High)')
+		if (sortType === 'Giá (Low to High)')
 			return a.promotional_price - b.promotional_price;
-		if (sortType === 'Price (High to Low)')
+		if (sortType === 'Giá (High to Low)')
 			return b.promotional_price - a.promotional_price;
 		return 0;
 	});
@@ -106,7 +106,7 @@ const ProductListBrand = () => {
 
 	return (
 		<div className="container mx-auto px-4 py-8">
-			{/* Brand List - New Section */}
+			{/* Danh sách thương hiệu - Phần mới */}
 			<div className="relative mb-4" ref={dropdownRef}>
 				{/* Tiêu đề Button */}
 				<label
@@ -116,10 +116,9 @@ const ProductListBrand = () => {
 				>
 					<span className="text-lg font-medium">
 						{selectedBrand
-							? `Selected: ${
-									brands.find((b: any) => b.id === selectedBrand)?.name
-							  }`
-							: 'Select a Brand'}
+							? `Đã chọn: ${brands.find((b: any) => b.id === selectedBrand)?.name
+							}`
+							: 'Chọn thương hiệu'}
 					</span>
 					{/* Biểu tượng mũi tên chỉ xuống */}
 					<svg
@@ -149,11 +148,10 @@ const ProductListBrand = () => {
 								<Link
 									to={`/brand/${item.id}`}
 									onClick={() => handleSelectBrand(item.id)} // Chọn brand và đóng dropdown
-									className={`block p-4 text-gray-800 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all duration-200 ease-in-out ${
-										selectedBrand === item.id
+									className={`block p-4 text-gray-800 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all duration-200 ease-in-out ${selectedBrand === item.id
 											? 'bg-blue-100 text-blue-600'
 											: ''
-									}`}
+										}`}
 								>
 									{item.name}
 								</Link>
@@ -163,25 +161,25 @@ const ProductListBrand = () => {
 				)}
 			</div>
 
-			{/* Filters */}
+			{/* Bộ lọc */}
 			<div className="flex flex-col lg:flex-row justify-between items-center mb-6 space-y-4 lg:space-y-0">
 				<div className="flex items-center space-x-4">
-					<span>{sortedProducts.length} Items</span>
+					<span>{sortedProducts.length} Sản phẩm</span>
 					<select
 						className="select select-bordered bg-white text-gray-800"
 						value={sortType}
 						onChange={handleSort}
 					>
 						<option disabled value="">
-							Sort By
+							Sắp xếp theo
 						</option>
-						<option>Name (A-Z)</option>
-						<option>Name (Z-A)</option>
-						<option>Rating (High to Low)</option>
-						<option>Rating (Low to High)</option>
-						<option>Price (Low to High)</option>{' '}
+						<option>Tên (A-Z)</option>
+						<option>Tên (Z-A)</option>
+						<option>Đánh giá (Cao đến Thấp)</option>
+						<option>Đánh giá (Thấp đến Cao)</option>
+						<option>Giá (Thấp đến Cao)</option>{' '}
 						{/* Thêm sắp xếp theo giá tăng dần */}
-						<option>Price (High to Low)</option>{' '}
+						<option>Giá (Cao đến Thấp)</option>{' '}
 						{/* Thêm sắp xếp theo giá giảm dần */}
 					</select>
 					<select
@@ -189,18 +187,18 @@ const ProductListBrand = () => {
 						value={perPage}
 						onChange={handleShowCountChange}
 					>
-						<option value={9}>Show 9</option>
-						<option value={15}>Show 15</option>
+						<option value={9}>Hiển thị 9</option>
+						<option value={15}>Hiển thị 15</option>
 					</select>
 				</div>
 
-				{/* Search Bar */}
+				{/* Thanh tìm kiếm */}
 				<div className="w-180 flex justify-center mb-8 px-4">
 					<div className="form-control w-full max-w-5xl">
 						<div className="input-group flex items-center w-full bg-gray-100 rounded-full px-6 py-3">
 							<input
 								type="text"
-								placeholder="Search brands..."
+								placeholder="Tìm kiếm thương hiệu..."
 								className="input input-bordered w-full bg-transparent border-none text-black focus:outline-none focus:ring-0"
 								value={searchTerm}
 								onChange={handleSearch}
@@ -213,25 +211,23 @@ const ProductListBrand = () => {
 				</div>
 
 				<div className="items-center space-x-2 ml-auto">
-					{/* Button Grid Layout */}
+					{/* Nút bố cục lưới */}
 					<button
-						className={`btn btn-square ${
-							layout === 'grid'
+						className={`btn btn-square ${layout === 'grid'
 								? 'bg-[#40BFFF] text-white'
 								: 'bg-white text-gray-800 border border-gray-300'
-						}`}
+							}`}
 						onClick={() => setLayout('grid')}
 					>
 						<FaTh />
 					</button>
 
-					{/* Button List Layout */}
+					{/* Nút bố cục danh sách */}
 					<button
-						className={`btn btn-square ${
-							layout === 'list'
+						className={`btn btn-square ${layout === 'list'
 								? 'bg-[#40BFFF] text-white'
 								: 'bg-white text-gray-800 border border-gray-300'
-						}`}
+							}`}
 						onClick={() => setLayout('list')}
 					>
 						<FaBars />
@@ -239,11 +235,10 @@ const ProductListBrand = () => {
 				</div>
 			</div>
 
-			{/* Product List */}
+			{/* Danh sách sản phẩm */}
 			<div
-				className={`grid ${
-					layout === 'grid' ? 'grid-cols-3' : 'grid-cols-1'
-				} gap-5`}
+				className={`grid ${layout === 'grid' ? 'grid-cols-3' : 'grid-cols-1'
+					} gap-5`}
 			>
 				{isLoading ? (
 					<>
@@ -283,12 +278,12 @@ const ProductListBrand = () => {
 					)
 				) : (
 					<div className="col-span-full text-center">
-						<p>There are no products</p>
+						<p>Không có sản phẩm nào</p>
 					</div>
 				)}
 			</div>
 
-			{/* Pagination */}
+			{/* Phân trang */}
 			<Pagination
 				currentPage={page}
 				totalPages={totalPages}

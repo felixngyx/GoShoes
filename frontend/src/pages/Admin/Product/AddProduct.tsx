@@ -20,21 +20,21 @@ import generateSlug from '../../../common/generateSlug';
 // Add form validation schema
 const productSchema = Joi.object({
 	name: Joi.string().required().messages({
-		'string.empty': 'Name is required',
-		'any.required': 'Name is required',
+		'string.empty': 'Tên sản phẩm không được để trống',
+		'any.required': 'Tên sản phẩm không được để trống',
 	}),
 	price: Joi.number().positive().max(99999999).required().messages({
-		'number.base': 'Price must be a number',
-		'number.positive': 'Price must be greater than 0',
-		'number.max': 'Price cannot exceed 99,999,999₫',
-		'any.required': 'Price is required',
+		'number.base': 'Giá phải là một số',
+		'number.positive': 'Giá phải lớn hơn 0',
+		'number.max': 'Giá không được vượt quá 99,999,999₫',
+		'any.required': 'Giá không được để trống',
 	}),
 	promotional_price: Joi.alternatives().try(
 		Joi.number().positive().max(Joi.ref('price')).max(99999999).messages({
-			'number.base': 'Promotional price must be a number',
-			'number.positive': 'Promotional price must be greater than 0',
+			'number.base': 'Giá khuyến mãi phải là một số',
+			'number.positive': 'Giá khuyến mãi phải lớn hơn 0',
 			'number.max':
-				'Promotional price must be less than the original price and cannot exceed 99,999,999₫',
+				'Giá khuyến mãi phải nhỏ hơn giá gốc và không được vượt quá 99,999,999₫',
 		}),
 		Joi.valid(null)
 	),
@@ -42,65 +42,65 @@ const productSchema = Joi.object({
 		.valid('public', 'unpublic', 'hidden')
 		.required()
 		.messages({
-			'string.empty': 'Status cannot be empty',
-			'any.only': 'Status is invalid',
-			'any.required': 'Status is required',
+			'string.empty': 'Trạng thái không được để trống',
+			'any.only': 'Trạng thái không hợp lệ',
+			'any.required': 'Trạng thái không được để trống',
 		}),
 	sku: Joi.string().required().messages({
-		'string.empty': 'SKU cannot be empty',
-		'any.required': 'SKU is required',
+		'string.empty': 'SKU không được để trống',
+		'any.required': 'SKU không được để trống',
 	}),
 	hagtag: Joi.string().required().messages({
-		'string.empty': 'Hashtag cannot be empty',
-		'any.required': 'Hashtag is required',
+		'string.empty': 'Hashtag không được để trống',
+		'any.required': 'Hashtag không được để trống',
 	}),
 	category_ids: Joi.array().items(Joi.number()).min(1).required().messages({
-		'array.base': 'Category must be an array',
-		'array.min': 'Must select at least one category',
-		'any.required': 'Category is required',
+		'array.base': 'Danh mục phải là một mảng',
+		'array.min': 'Phải chọn ít nhất một danh mục',
+		'any.required': 'Danh mục không được để trống',
 	}),
 	brand_id: Joi.number().required().messages({
-		'number.base': 'Brand must be a number',
-		'any.required': 'Brand is required',
+		'number.base': 'Thương hiệu phải là một số',
+		'any.required': 'Thương hiệu không được để trống',
 	}),
 	thumbnail: Joi.string().required().messages({
-		'string.empty': 'Thumbnail cannot be empty',
-		'any.required': 'Thumbnail is required',
+		'string.empty': 'thumbnail không được để trống',
+		'any.required': 'thumbnail không được để trống',
 	}),
 	description: Joi.string().required().messages({
-		'string.empty': 'Description cannot be empty',
-		'any.required': 'Description is required',
+		'string.empty': 'Mô tả không được để trống',
+		'any.required': 'Mô tả không được để trống',
 	}),
 	variants: Joi.array()
 		.items(
 			Joi.object({
 				color_id: Joi.number().invalid(0).required().messages({
-					'number.invalid': 'Please select a color',
-					'any.required': 'Color is required',
-					'number.base': 'Please select a color',
-					'any.invalid': 'Please select a color',
+					'number.invalid': 'Vui lòng chọn màu sắc',
+					'any.required': 'Màu sắc không được để trống',
+					'number.base': 'Vui lòng chọn màu sắc',
+					'any.invalid': 'Vui lòng chọn màu sắc',
 				}),
 				image: Joi.string().required().messages({
-					'string.empty': 'Variant image cannot be empty',
-					'any.required': 'Variant image is required',
+					'string.empty': 'Ảnh biến thể không được để trống',
+					'any.required': 'Ảnh biến thể không được để trống',
 				}),
 				variant_details: Joi.array()
 					.items(
 						Joi.object({
 							size_id: Joi.number().min(1).required().messages({
-								'number.base': 'Please select a size',
-								'number.min': 'Please select a size',
-								'any.required': 'Please select a size',
+								'number.base': 'Vui lòng chọn kích thước',
+								'number.min': 'Vui lòng chọn kích thước',
+								'any.required': 'Vui lòng chọn kích thước',
 							}),
 							quantity: Joi.number()
 								.min(1)
 								.max(999999)
 								.required()
 								.messages({
-									'number.base': 'Quantity must be a number',
-									'number.min': 'Quantity must be greater than 0',
-									'number.max': 'Quantity cannot exceed 999,999',
-									'any.required': 'Quantity is required',
+									'number.base': 'Số lượng phải là một số',
+									'number.min': 'Số lượng phải lớn hơn 0',
+									'number.max': 'Số lượng không được vượt quá 999,999',
+									'any.required': 'Số lượng không được để trống',
 								}),
 							sku: Joi.string().allow('').optional(),
 						})
@@ -108,18 +108,18 @@ const productSchema = Joi.object({
 					.min(1)
 					.required()
 					.messages({
-						'array.min': 'Must have at least one size',
-						'any.required': 'Size is required',
-						'array.base': 'Please select a size',
+						'array.min': 'Phải có ít nhất một kích thước',
+						'any.required': 'Kích thước không được để trống',
+						'array.base': 'Vui lòng chọn kích thước',
 					}),
 			})
 		)
 		.required()
 		.min(1)
 		.messages({
-			'array.base': 'Variant must be an array',
-			'array.min': 'Must have at least one variant',
-			'any.required': 'Variant is required',
+			'array.base': 'Biến thể phải là một mảng',
+			'array.min': 'Phải có ít nhất một biến thể',
+			'any.required': 'Biến thể không được để trống',
 		}),
 });
 
@@ -353,8 +353,7 @@ const AddProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${
-								variantIndex - 1
+							`variants.${variantIndex - 1
 							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
@@ -524,9 +523,8 @@ const AddProduct = () => {
 		// Khởi tạo previousValues cho size mới với quantity = 0
 		setPreviousValues((prev) => ({
 			...prev,
-			[`variants.${variantIndex}.variant_details.${
-				variantSizes[variantIndex]?.length || 0
-			}.quantity`]: 0,
+			[`variants.${variantIndex}.variant_details.${variantSizes[variantIndex]?.length || 0
+				}.quantity`]: 0,
 		}));
 
 		setVariantSizes((prev) => ({
@@ -563,11 +561,10 @@ const AddProduct = () => {
 
 			// Cập nhật lại index cho các size phía sau
 			const remainingSizes = currentVariant.variant_details.length;
-			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
+			for (let i = sizeIndex + 1;i < remainingSizes;i++) {
 				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
-				const newKey = `variants.${variantIndex}.variant_details.${
-					i - 1
-				}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${i - 1
+					}.quantity`;
 				newPrev[newKey] = newPrev[oldKey];
 				delete newPrev[oldKey];
 			}
@@ -697,7 +694,7 @@ const AddProduct = () => {
 					<Link to="/admin/product">
 						<ArrowLeft size={20} />
 					</Link>
-					<h3 className="font-bold text-2xl">Add Product</h3>
+					<h3 className="font-bold text-2xl">Thêm sản phẩm</h3>
 				</div>
 				<div className="w-full">
 					<form
@@ -707,13 +704,13 @@ const AddProduct = () => {
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text font-semibold">
-									Product Name
+									Tên sản phẩm
 								</span>
 							</div>
 							<input
 								{...register('name')}
 								type="text"
-								placeholder="Type here"
+								placeholder="Nhập tên sản phẩm"
 								className="input input-bordered w-full"
 							/>
 							{errors.name && (
@@ -725,12 +722,12 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text font-semibold">Price</span>
+								<span className="label-text font-semibold">Giá</span>
 							</div>
 							<input
 								{...register('price')}
 								type="number"
-								placeholder="Type here"
+								placeholder="Nhập giá"
 								className="input input-bordered w-full"
 							/>
 							{errors.price && (
@@ -743,7 +740,7 @@ const AddProduct = () => {
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text font-semibold">
-									Promotion Price
+									Giá khuyến mãi
 								</span>
 							</div>
 							<input
@@ -752,7 +749,7 @@ const AddProduct = () => {
 										value === '' ? null : Number(value),
 								})}
 								type="number"
-								placeholder="Type here"
+								placeholder="Nhập giá khuyến mãi"
 								className="input input-bordered w-full"
 							/>
 							{errors.promotional_price && (
@@ -765,13 +762,13 @@ const AddProduct = () => {
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text font-semibold">
-									Stock Quantity
+									Số lượng tồn kho
 								</span>
 							</div>
 							<input
 								value={stockQuantity}
 								type="disabled"
-								placeholder="Type here"
+								placeholder="Nhập số lượng tồn kho"
 								className="input input-bordered w-full bg-gray-200"
 							/>
 						</label>
@@ -783,7 +780,7 @@ const AddProduct = () => {
 							<input
 								{...register('sku')}
 								type="text"
-								placeholder="Type here"
+								placeholder="Nhập SKU"
 								className="input input-bordered w-full"
 							/>
 							{errors.sku && (
@@ -802,7 +799,7 @@ const AddProduct = () => {
 							<input
 								{...register('hagtag')}
 								type="text"
-								placeholder="Type here"
+								placeholder="Nhập hashtag"
 								className="input input-bordered w-full"
 							/>
 							{errors.hagtag && (
@@ -814,16 +811,16 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text font-semibold">Status</span>
+								<span className="label-text font-semibold">Trạng thái</span>
 							</div>
 							<select
 								{...register('status')}
 								className="select select-bordered w-full"
 							>
-								<option>Select Status</option>
-								<option value={Status.PUBLIC}>Public</option>
-								<option value={Status.UNPUBLIC}>Unpublic</option>
-								<option value={Status.HIDDEN}>Hidden</option>
+								<option>Chọn trạng thái</option>
+								<option value={Status.PUBLIC}>Công khai</option>
+								<option value={Status.UNPUBLIC}>Không công khai</option>
+								<option value={Status.HIDDEN}>Ẩn</option>
 							</select>
 							{errors.status && (
 								<p className="text-red-500 text-xs">
@@ -834,14 +831,14 @@ const AddProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text font-semibold">Brand</span>
+								<span className="label-text font-semibold">Thương hiệu</span>
 							</div>
 							<select
 								{...register('brand_id')}
 								className="select select-bordered w-full"
 							>
-								<option defaultValue="Select Brand">
-									Select Brand
+								<option defaultValue="Chọn thương hiệu">
+									Chọn thương hiệu
 								</option>
 								{brands.map((brand) => (
 									<option key={brand.id} value={brand.id}>
@@ -859,7 +856,7 @@ const AddProduct = () => {
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text font-semibold">
-									Select Categories
+									Chọn danh mục
 								</span>
 							</div>
 							<div className="flex flex-col gap-2">
@@ -967,7 +964,7 @@ const AddProduct = () => {
 									<div className="relative size-[200px] group">
 										<img
 											src={URL.createObjectURL(thumbnailFile)}
-											alt="Thumbnail"
+											alt="Ảnh đại diện"
 											className="w-full h-full object-cover rounded-md border border-gray-300"
 										/>
 										<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -1001,15 +998,14 @@ const AddProduct = () => {
 											onClick={(e) =>
 												!isSubmitting && handleUploadClick(e)
 											}
-											className={`size-[200px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md ${
-												isSubmitting
-													? 'opacity-50 cursor-not-allowed'
-													: 'cursor-pointer'
-											}`}
+											className={`size-[200px] flex flex-col gap-2 items-center justify-center border-2 border-dashed border-gray-300 rounded-md ${isSubmitting
+												? 'opacity-50 cursor-not-allowed'
+												: 'cursor-pointer'
+												}`}
 										>
 											<Upload />
 											<p className="text-xs text-gray-500">
-												Upload Image
+												Tải lên ảnh
 											</p>
 										</div>
 										{errors.thumbnail && (
@@ -1025,7 +1021,7 @@ const AddProduct = () => {
 						<label className="form-control col-span-2 z-[0]">
 							<div className="label">
 								<span className="label-text font-semibold">
-									Description
+									Mô tả
 								</span>
 							</div>
 							<RichTextEditor
@@ -1040,7 +1036,7 @@ const AddProduct = () => {
 						</label>
 
 						<div className="col-span-3">
-							<h3 className="text-lg font-bold">Variant</h3>
+							<h3 className="text-lg font-bold">Biến thể</h3>
 							{errors.variants && (
 								<span className="label-text text-red-500 text-xs ms-2">
 									{errors.variants.root?.message ||
@@ -1057,7 +1053,7 @@ const AddProduct = () => {
 								<div className="col-span-1 p-2 border border-gray-300 rounded-md">
 									<div className="label">
 										<span className="label-text font-bold">
-											Color
+											Màu sắc
 										</span>
 										{errors.variants?.[index]?.color_id && (
 											<span className="label-text text-red-500 text-xs">
@@ -1071,7 +1067,7 @@ const AddProduct = () => {
 												tabIndex={0}
 												role="button"
 												type="text"
-												placeholder="Select color"
+												placeholder="Chọn màu sắc"
 												className="input input-bordered input-sm w-full"
 												value={colorSearchTerms[index] || ''}
 												onChange={(e) =>
@@ -1115,11 +1111,10 @@ const AddProduct = () => {
 																		color.id!,
 																	]);
 																}}
-																className={`flex items-center gap-2 ${
-																	selectedColor.includes(
-																		color.id!
-																	) && 'opacity-50'
-																}`}
+																className={`flex items-center gap-2 ${selectedColor.includes(
+																	color.id!
+																) && 'opacity-50'
+																	}`}
 																disabled={selectedColor.includes(
 																	color.id!
 																)}
@@ -1141,7 +1136,7 @@ const AddProduct = () => {
 									<label className="form-control col-span-1 w-fit">
 										<div className="label flex justify-between">
 											<span className="label-text font-bold">
-												Images
+												Hình ảnh
 											</span>
 											{errors.variants?.[index]?.image && (
 												<span className="label-text text-red-500 text-xs ms-2">
@@ -1170,7 +1165,7 @@ const AddProduct = () => {
 											>
 												<Upload />
 												<p className="text-xs text-gray-500">
-													Add Images
+													Thêm hình ảnh
 												</p>
 											</div>
 											{variantImageFiles[index]?.map(
@@ -1181,9 +1176,8 @@ const AddProduct = () => {
 													>
 														<img
 															src={URL.createObjectURL(image)}
-															alt={`Variant ${index + 1} - ${
-																imageIndex + 1
-															}`}
+															alt={`Biến thể ${index + 1} - ${imageIndex + 1
+																}`}
 															className="w-full h-full object-cover rounded-md border border-gray-300"
 														/>
 														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -1225,7 +1219,7 @@ const AddProduct = () => {
 								<div className="col-span-1 flex flex-col gap-2 p-2 border border-gray-300 rounded-md">
 									<div className="label">
 										<span className="label-text font-bold">
-											Size and Quantity
+											Kích thước và số lượng
 										</span>
 										{errors.variants?.[index]?.variant_details && (
 											<span className="label-text text-red-500 text-xs ms-2">
@@ -1251,7 +1245,7 @@ const AddProduct = () => {
 															)}
 														>
 															<option value="0">
-																Select size
+																Chọn kích thước
 															</option>
 															{sizes.map((size) => {
 																const isDisabled =
@@ -1276,7 +1270,7 @@ const AddProduct = () => {
 															type="number"
 															min="0"
 															max="999999"
-															placeholder="Enter a quantity between 1 and 999,999"
+															placeholder="Nhập số lượng từ 1 đến 999,999"
 															className="input input-bordered input-sm w-full"
 															{...register(
 																`variants.${index}.variant_details.${sizeIndex}.quantity`,
@@ -1299,7 +1293,7 @@ const AddProduct = () => {
 																		) {
 																			newValue = 999999;
 																			toast.error(
-																				'Quantity cannot exceed 999,999'
+																				'Số lượng không được vượt quá 999,999'
 																			);
 																		}
 
@@ -1312,7 +1306,7 @@ const AddProduct = () => {
 																		// Cập nhật tổng số lượng
 																		const oldValue =
 																			previousValues[
-																				inputPath
+																			inputPath
 																			] || 0;
 																		setStockQuantity(
 																			(prev) =>
@@ -1352,14 +1346,14 @@ const AddProduct = () => {
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.size_id && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.size_id?.message
-															}
-														</span>
-													)}
+															<span className="label-text text-red-500 text-xs ms-2">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.size_id?.message
+																}
+															</span>
+														)}
 												</>
 											)
 										)}
@@ -1369,7 +1363,7 @@ const AddProduct = () => {
 											disabled={isSubmitting}
 											className="btn btn-sm w-fit ms-auto disabled:opacity-50"
 										>
-											Add size
+											Thêm kích thước
 										</button>
 									</div>
 								</div>
@@ -1380,7 +1374,7 @@ const AddProduct = () => {
 									className="btn bg-red-500	 btn-sm col-span-3 text-white disabled:opacity-50"
 								>
 									<TrashIcon size={16} color="white" />
-									Delete Variant
+									Xóa biến thể
 								</button>
 							</div>
 						))}
@@ -1391,7 +1385,7 @@ const AddProduct = () => {
 							disabled={isSubmitting}
 							className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit disabled:opacity-50"
 						>
-							Add Variant
+							Thêm biến thể
 						</button>
 
 						<button
@@ -1402,10 +1396,10 @@ const AddProduct = () => {
 							{loading || isSubmitting ? (
 								<>
 									<span className="loading loading-spinner loading-sm text-info"></span>
-									Creating product...
+									Đang tạo sản phẩm...
 								</>
 							) : (
-								'Add product'
+								'Thêm sản phẩm'
 							)}
 						</button>
 					</form>
@@ -1416,7 +1410,7 @@ const AddProduct = () => {
 			<dialog ref={modalRef} className="modal">
 				{previewImage && (
 					<div className="modal-box">
-						<img src={previewImage} alt="Preview" className="w-full" />
+						<img src={previewImage} alt="Xem trước" className="w-full" />
 						<button
 							onClick={closeModal}
 							className="btn btn-sm absolute right-2 top-2 border border-gray-300 rounded-md"

@@ -124,7 +124,7 @@ const OrderDetail: React.FC = () => {
           >
             <Box>
               <Typography variant="h5" component="h1" gutterBottom>
-                Order #{orderData.sku}
+                Đơn hàng #{orderData.sku}
               </Typography>
               <Box display="flex" alignItems="center">
                 <CalendarClock size={16} style={{ marginRight: "8px" }} />
@@ -133,7 +133,7 @@ const OrderDetail: React.FC = () => {
                 </Typography>
               </Box>
             </Box>
-            
+
           </Box>
           <OrderTracking
             status={orderData.status}
@@ -148,7 +148,7 @@ const OrderDetail: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Order Items
+                Sản phẩm trong đơn hàng
               </Typography>
               <Box sx={{ maxHeight: 400, overflowY: "auto", pr: 2 }}>
                 {orderData.items.map((item, index) => (
@@ -191,10 +191,10 @@ const OrderDetail: React.FC = () => {
                       {item.variant && (
                         <Box mt={1}>
                           <Typography variant="body2" color="text.secondary">
-                            Size: {item.variant.size}
+                            Kích thước: {item.variant.size}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Color: {item.variant.color}
+                            Màu sắc: {item.variant.color}
                           </Typography>
                         </Box>
                       )}
@@ -205,7 +205,7 @@ const OrderDetail: React.FC = () => {
                         alignItems="center"
                       >
                         <Typography variant="body2" color="text.secondary">
-                          Quantity: {item.quantity}
+                          Số lượng: {item.quantity}
                         </Typography>
                         <Typography variant="body1" fontWeight="medium">
                           {new Intl.NumberFormat("vi-VN", {
@@ -224,14 +224,14 @@ const OrderDetail: React.FC = () => {
           <Card sx={{ mt: 4 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Order Summary
+                Tóm tắt đơn hàng
               </Typography>
               <Box
                 display="flex"
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <Typography variant="subtitle1">Total</Typography>
+                <Typography variant="subtitle1">Tổng cộng</Typography>
                 <Typography variant="subtitle1" fontWeight="bold">
                   {new Intl.NumberFormat("vi-VN", {
                     style: "currency",
@@ -247,7 +247,7 @@ const OrderDetail: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Customer Information
+                Thông tin khách hàng
               </Typography>
               <Box mb={2}>
                 <Typography variant="subtitle1">
@@ -268,8 +268,8 @@ const OrderDetail: React.FC = () => {
                     style={{ marginRight: "8px", marginTop: "4px" }}
                   />
                   <Typography variant="body2">
-                    {shippingDetail.address_detail && 
-                        `${shippingDetail.address_detail}, `}
+                    {shippingDetail.address_detail &&
+                      `${shippingDetail.address_detail}, `}
                     {shippingDetail.address}
                   </Typography>
                 </Box>
@@ -286,7 +286,7 @@ const OrderDetail: React.FC = () => {
           <Card sx={{ mt: 4 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Payment Details
+                Chi tiết thanh toán
               </Typography>
               <Box
                 display="flex"
@@ -295,7 +295,7 @@ const OrderDetail: React.FC = () => {
                 mb={1}
               >
                 <Typography variant="body2" color="text.secondary">
-                  Method
+                  Phương thức
                 </Typography>
                 <Typography variant="body1">
                   {orderData.payment.method}
@@ -307,7 +307,7 @@ const OrderDetail: React.FC = () => {
                 alignItems="center"
               >
                 <Typography variant="body2" color="text.secondary">
-                  Status
+                  Trạng thái
                 </Typography>
                 <Chip
                   label={

@@ -224,12 +224,11 @@ const renewPaymentLink = async (
 					console.error('Server error details:', errorData);
 					throw new Error(
 						errorData.message ||
-							'Server error. Please try again later or contact support'
+						'Server error. Please try again later or contact support'
 					);
 				default:
 					throw new Error(
-						`Failed to renew payment: ${
-							errorData.message || 'Unknown error occurred'
+						`Failed to renew payment: ${errorData.message || 'Unknown error occurred'
 						}`
 					);
 			}
@@ -306,8 +305,7 @@ const updateOrderStatus = async (
 					);
 				default:
 					throw new Error(
-						`Failed to update status: ${
-							errorData.message || 'Unknown error occurred'
+						`Failed to update status: ${errorData.message || 'Unknown error occurred'
 						}`
 					);
 			}
@@ -336,7 +334,7 @@ const parseShippingDetail = (shippingDetail: any): ShippingDetail | null => {
 		if (typeof shippingDetail === 'object' && shippingDetail !== null) {
 			return shippingDetail as ShippingDetail;
 		}
-		
+
 		// Nếu là string thì mới parse
 		if (typeof shippingDetail === 'string') {
 			return JSON.parse(shippingDetail);
@@ -367,7 +365,7 @@ const OrderDetails = () => {
 		open: false,
 		title: '',
 		message: '',
-		onConfirm: () => {},
+		onConfirm: () => { },
 	});
 
 	const handlePrint = () => {
@@ -560,15 +558,15 @@ const OrderDetails = () => {
 					className="flex items-center gap-1 hover:text-blue-600"
 				>
 					<ArrowLeft className="h-4 w-4" />
-					Order / Order Details
+					Đơn hàng / Chi tiết đơn hàng
 				</Link>
 				<span>/</span>
-				<span>Order #{order.sku}</span>
+				<span>Đơn hàng #{order.sku}</span>
 			</div>
 
 			<div className="flex items-start justify-between">
 				<div>
-					<h1 className="text-2xl font-semibold">Order #{order.sku}</h1>
+					<h1 className="text-2xl font-semibold">Đơn hàng #{order.sku}</h1>
 					<span className="text-sm text-blue-500">{order.status}</span>
 					<div className="mt-2 text-sm text-gray-500">
 						<span>
@@ -580,8 +578,8 @@ const OrderDetails = () => {
 					<Tooltip
 						title={
 							order.status === 'cancelled' ||
-							order.status === 'completed'
-								? 'Cannot change status while completed'
+								order.status === 'completed'
+								? 'Không thể thay đổi trạng thái khi đã hoàn thành'
 								: ''
 						}
 					>
@@ -593,7 +591,7 @@ const OrderDetails = () => {
 								startIcon={<RefreshCcw className="h-4 w-4" />}
 								onClick={() => handleStatusUpdate('cancelled')}
 							>
-								Change To Cancel
+								Chuyển sang Hủy
 							</Button>
 						</span>
 					</Tooltip>
@@ -601,7 +599,7 @@ const OrderDetails = () => {
 					<Tooltip
 						title={
 							order.status === 'shipping' || order.status === 'completed'
-								? 'Cannot change status while shipping'
+								? 'Không thể thay đổi trạng thái khi đang giao hàng'
 								: ''
 						}
 					>
@@ -616,7 +614,7 @@ const OrderDetails = () => {
 								startIcon={<Truck className="h-4 w-4" />}
 								onClick={() => handleStatusUpdate('shipping')}
 							>
-								Change To Shipping
+								Chuyển sang Đang giao hàng
 							</Button>
 						</span>
 					</Tooltip>
@@ -624,7 +622,7 @@ const OrderDetails = () => {
 					<Tooltip
 						title={
 							order.status === 'shipping' || order.status === 'completed'
-								? 'Cannot change status while shipping'
+								? 'Không thể thay đổi trạng thái khi đang giao hàng'
 								: ''
 						}
 					>
@@ -639,7 +637,7 @@ const OrderDetails = () => {
 								startIcon={<Truck className="h-4 w-4" />}
 								onClick={() => handleStatusUpdate('expired')}
 							>
-								Change To Expired
+								Chuyển sang Hết hạn
 							</Button>
 						</span>
 					</Tooltip>
@@ -647,10 +645,10 @@ const OrderDetails = () => {
 					<Tooltip
 						title={
 							order.status === 'shipping' ||
-							order.status === 'completed' ||
-							order.status === 'pending' ||
-							order.payment.method === 'Ship COD'
-								? 'Cannot renew link while pending and order payment ship COD'
+								order.status === 'completed' ||
+								order.status === 'pending' ||
+								order.payment.method === 'Ship COD'
+								? 'Không thể gia hạn liên kết khi đang chờ và đơn hàng thanh toán Ship COD'
 								: ''
 						}
 					>
@@ -667,7 +665,7 @@ const OrderDetails = () => {
 								startIcon={<ListRestart className="h-4 w-4" />}
 								onClick={handleRenewLink}
 							>
-								Renew Link
+								Gia hạn liên kết
 							</Button>
 						</span>
 					</Tooltip>
@@ -675,7 +673,7 @@ const OrderDetails = () => {
 					<Tooltip
 						title={
 							order.status === 'completed'
-								? 'Cannot change status while completed'
+								? 'Không thể thay đổi trạng thái khi đã hoàn thành'
 								: ''
 						}
 					>
@@ -686,14 +684,14 @@ const OrderDetails = () => {
 							startIcon={<CheckCheck className="h-4 w-4" />}
 							onClick={() => handleStatusUpdate('completed')}
 						>
-							Completed
+							Hoàn thành
 						</Button>
 					</Tooltip>
 
 					<Tooltip
 						title={
 							order.status !== 'shipping'
-								? 'Can only print invoice when order is shipping'
+								? 'Chỉ có thể in hóa đơn khi đơn hàng đang giao hàng'
 								: ''
 						}
 					>
@@ -706,7 +704,7 @@ const OrderDetails = () => {
 								onClick={handlePrint}
 								disabled={order.status !== 'shipping'}
 							>
-								Print Invoice
+								In hóa đơn
 							</Button>
 						</span>
 					</Tooltip>
@@ -716,69 +714,71 @@ const OrderDetails = () => {
 			<div className="grid md:grid-cols-3 gap-6">
 				{[
 					{
-						title: 'CUSTOMER INFORMATION',
+						title: 'THÔNG TIN KHÁCH HÀNG',
 						content: [
-							{ label: 'Name', value: order.customer.name },
+							{ label: 'Tên', value: order.customer.name },
 							{ label: 'Email', value: order.customer.email },
-							{ label: 'Phone', value: order.customer.phone || 'N/A' },
+							{ label: 'Số điện thoại', value: order.customer.phone || 'N/A' },
 						],
 					},
 					{
-						title: 'PAYMENT INFORMATION',
+						title: 'THÔNG TIN THANH TOÁN',
 						content: [
-							{ label: 'Payment Method', value: order.payment.method },
-							{ label: 'Status Payment', value: order.payment.status },
-							{ label: 'Total Amount', value: `${new Intl.NumberFormat('de-DE', {
-								style: 'decimal',
-							}).format(Number(order.total))}đ` },
-							{ label: 'Created At', value: new Date(order.created_at).toLocaleString() },
+							{ label: 'Phương thức thanh toán', value: order.payment.method },
+							{ label: 'Trạng thái thanh toán', value: order.payment.status },
+							{
+								label: 'Tổng số tiền', value: `${new Intl.NumberFormat('de-DE', {
+									style: 'decimal',
+								}).format(Number(order.total))}đ`
+							},
+							{ label: 'Ngày tạo', value: new Date(order.created_at).toLocaleString() },
 							order.payment.url && {
-								label: 'Payment URL',
-								value: <a href={order.payment.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">View Payment Link</a>
+								label: 'Liên kết thanh toán',
+								value: <a href={order.payment.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Xem liên kết thanh toán</a>
 							},
 						].filter(Boolean),
 					},
 					{
-						title: 'SHIPPING INFORMATION',
+						title: 'THÔNG TIN GIAO HÀNG',
 						content: order.shipping?.shipping_detail
 							? (() => {
-									const shippingDetail = parseShippingDetail(order.shipping.shipping_detail);
-									return shippingDetail
-										? [
-												{
-													label: 'Recipient',
-													value: shippingDetail.name,
-												},
-												{
-													label: 'Phone',
-													value: shippingDetail.phone_number,
-												},
-												{
-													label: 'Address',
-													value: shippingDetail.address_detail,
-												},
-												{
-													label: 'City/Province',
-													value: shippingDetail.address,
-												},
-												{
-													label: 'Default Address',
-													value: shippingDetail.is_default ? 'Yes' : 'No',
-												},
-										  ]
-										: [
-												{
-													label: 'Error',
-													value: 'Invalid shipping details',
-												},
-										  ];
-								})()
+								const shippingDetail = parseShippingDetail(order.shipping.shipping_detail);
+								return shippingDetail
+									? [
+										{
+											label: 'Người nhận',
+											value: shippingDetail.name,
+										},
+										{
+											label: 'Số điện thoại',
+											value: shippingDetail.phone_number,
+										},
+										{
+											label: 'Địa chỉ',
+											value: shippingDetail.address_detail,
+										},
+										{
+											label: 'Thành phố/Tỉnh',
+											value: shippingDetail.address,
+										},
+										{
+											label: 'Địa chỉ mặc định',
+											value: shippingDetail.is_default ? 'Có' : 'Không',
+										},
+									]
+									: [
+										{
+											label: 'Lỗi',
+											value: 'Chi tiết giao hàng không hợp lệ',
+										},
+									];
+							})()
 							: [
-									{
-										label: 'No shipping details available',
-										value: 'N/A',
-									},
-							  ],
+								{
+									label: 'Không có chi tiết giao hàng',
+									value: 'N/A',
+								},
+							],
 					},
 				].map((card, index) => (
 					<div
@@ -809,17 +809,17 @@ const OrderDetails = () => {
 
 			<div className="bg-white p-4 rounded-lg shadow bg-white/80 dark:bg-gray-800/80">
 				<div className="flex justify-between items-center mb-4">
-					<h3 className="font-semibold">Products</h3>
+					<h3 className="font-semibold">Sản phẩm</h3>
 				</div>
 				<div className="overflow-x-auto">
 					<table className="min-w-full">
 						<thead>
 							<tr className="border-b">
-								<th className="text-left py-2">Product Name</th>
-								<th className="text-left py-2">Variant</th>
-								<th className="text-left py-2">Quantity</th>
-								<th className="text-right py-2">Price</th>
-								<th className="text-right py-2">Total Price</th>
+								<th className="text-left py-2">Tên sản phẩm</th>
+								<th className="text-left py-2">Biến thể</th>
+								<th className="text-left py-2">Số lượng</th>
+								<th className="text-right py-2">Giá</th>
+								<th className="text-right py-2">Tổng giá</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -839,19 +839,19 @@ const OrderDetails = () => {
 										{item.variant ? (
 											<div className="text-sm text-gray-600">
 												{item.variant.size && (
-													<span>Size: {item.variant.size}</span>
+													<span>Kích thước: {item.variant.size}</span>
 												)}
 												{item.variant.size &&
 													item.variant.color && (
 														<span className="mx-1">|</span>
 													)}
 												{item.variant.color && (
-													<span>Color: {item.variant.color}</span>
+													<span>Màu sắc: {item.variant.color}</span>
 												)}
 											</div>
 										) : (
 											<span className="text-sm text-gray-400">
-												Non Variable
+												Không có biến thể
 											</span>
 										)}
 									</td>
@@ -876,7 +876,7 @@ const OrderDetails = () => {
 
 				<div className="mt-6 space-y-2">
 					<div className="flex justify-between font-semibold">
-						<span>Final Total</span>
+						<span>Tổng cuối cùng</span>
 						<span>
 							{new Intl.NumberFormat('de-DE', {
 								style: 'decimal',

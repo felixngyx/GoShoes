@@ -228,9 +228,8 @@ const Size = () => {
 		buttons.push(
 			<button
 				key="first"
-				className={`join-item btn btn-sm ${
-					pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
-				}`}
+				className={`join-item btn btn-sm ${pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
+					}`}
 				onClick={() => handlePageChange(1)}
 			>
 				1
@@ -260,11 +259,10 @@ const Size = () => {
 					buttons.push(
 						<button
 							key={i}
-							className={`join-item btn btn-sm ${
-								pagination.page === i
-									? 'btn-active bg-primary text-white'
-									: ''
-							}`}
+							className={`join-item btn btn-sm ${pagination.page === i
+								? 'btn-active bg-primary text-white'
+								: ''
+								}`}
 							onClick={() => handlePageChange(i)}
 						>
 							{i}
@@ -289,11 +287,10 @@ const Size = () => {
 			buttons.push(
 				<button
 					key="last"
-					className={`join-item btn btn-sm ${
-						pagination.page === totalPages
-							? 'btn-active bg-primary text-white'
-							: ''
-					}`}
+					className={`join-item btn btn-sm ${pagination.page === totalPages
+						? 'btn-active bg-primary text-white'
+						: ''
+						}`}
 					onClick={() => handlePageChange(totalPages)}
 				>
 					{totalPages}
@@ -308,25 +305,24 @@ const Size = () => {
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
-					Size List
+					Danh sách size
 				</h4>
 				<div className="flex items-center gap-2">
 					<button
-						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${
-							selectedItems.length > 0
-								? 'flex items-center gap-2'
-								: 'hidden'
-						}`}
+						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${selectedItems.length > 0
+							? 'flex items-center gap-2'
+							: 'hidden'
+							}`}
 					>
 						<Trash2 size={16} />
-						<p>Delete {selectedItems.length} items</p>
+						<p>Xóa {selectedItems.length} mục</p>
 					</button>
 					<button
 						className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 						onClick={openAddModal}
 					>
 						<Plus size={16} />
-						Add Size
+						Thêm size
 					</button>
 				</div>
 			</div>
@@ -353,10 +349,10 @@ const Size = () => {
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3 w-2/3">
-								Size
+								size
 							</th>
 							<th scope="col" className="px-6 py-3 w-1/3">
-								Action
+								Thao tác
 							</th>
 						</tr>
 					</thead>
@@ -376,11 +372,10 @@ const Size = () => {
 						) : (
 							sizeData.map((size, key) => (
 								<tr
-									className={`bg-white dark:bg-slate-800 ${
-										key !== sizeData.length - 1
-											? 'border-b border-stroke'
-											: ''
-									}`}
+									className={`bg-white dark:bg-slate-800 ${key !== sizeData.length - 1
+										? 'border-b border-stroke'
+										: ''
+										}`}
 									key={key}
 								>
 									<td className="w-4 p-4">
@@ -424,7 +419,7 @@ const Size = () => {
 
 			<div className="join ms-auto mt-auto">{renderPaginationButtons()}</div>
 
-			{/* Add/Edit Brand Modal */}
+			{/* Thêm/Sửa size Modal */}
 			{isModalOpen && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
 					<div
@@ -432,13 +427,13 @@ const Size = () => {
 						className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/3"
 					>
 						<h2 className="text-xl font-semibold mb-4">
-							{editingSize ? 'Edit Size' : 'Add Size'}
+							{editingSize ? 'Sửa size' : 'Thêm size'}
 						</h2>
 						<form onSubmit={handleSubmit(onSubmit)}>
 							<input
 								type="text"
 								className="w-full p-2 border rounded mb-2"
-								placeholder="Size name"
+								placeholder="Tên size"
 								{...register('size')}
 							/>
 							{errors.size && (
@@ -453,13 +448,13 @@ const Size = () => {
 									className="btn btn-sm bg-gray-200 hover:bg-gray-300 text-gray-800"
 									onClick={closeModal}
 								>
-									Cancel
+									Hủy
 								</button>
 								<button
 									type="submit"
 									className="btn btn-sm bg-blue-500 hover:bg-blue-600 text-white"
 								>
-									{editingSize ? 'Save Changes' : 'Add Size'}
+									{editingSize ? 'Lưu Thay Đổi' : 'Thêm size'}
 								</button>
 							</div>
 						</form>

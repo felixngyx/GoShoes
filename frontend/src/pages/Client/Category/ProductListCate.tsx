@@ -120,9 +120,8 @@ const ProductListCate = () => {
 				>
 					<span className="text-lg font-medium">
 						{selectedCate
-							? `Selected: ${
-									cate.find((b: any) => b.id === selectedCate)?.name
-							  }`
+							? `Selected: ${cate.find((b: any) => b.id === selectedCate)?.name
+							}`
 							: 'Select a Brand'}
 					</span>
 					{/* Biểu tượng mũi tên chỉ xuống */}
@@ -153,11 +152,10 @@ const ProductListCate = () => {
 								<Link
 									to={`/category/${item.id}`}
 									onClick={() => handleSelectBrand(item.id)} // Chọn brand và đóng dropdown
-									className={`block p-4 text-gray-800 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all duration-200 ease-in-out ${
-										selectedCate === item.id
-											? 'bg-blue-100 text-blue-600'
-											: ''
-									}`}
+									className={`block p-4 text-gray-800 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all duration-200 ease-in-out ${selectedCate === item.id
+										? 'bg-blue-100 text-blue-600'
+										: ''
+										}`}
 								>
 									{item.name}
 								</Link>
@@ -170,31 +168,29 @@ const ProductListCate = () => {
 			{/* Filters */}
 			<div className="flex flex-col lg:flex-row justify-between items-center mb-6 space-y-4 lg:space-y-0">
 				<div className="flex items-center space-x-4">
-					<span>{sortedProducts.length} Items</span>
+					<span>{sortedProducts.length} Sản phẩm</span>
 					<select
 						className="select select-bordered bg-white text-gray-800"
 						value={sortType}
 						onChange={handleSort}
 					>
 						<option disabled value="">
-							Sort By
+							Sắp xếp theo
 						</option>
-						<option>Name (A-Z)</option>
-						<option>Name (Z-A)</option>
-						<option>Rating (High to Low)</option>
-						<option>Rating (Low to High)</option>
-						<option>Price (Low to High)</option>{' '}
-						{/* Thêm sắp xếp theo giá tăng dần */}
-						<option>Price (High to Low)</option>{' '}
-						{/* Thêm sắp xếp theo giá giảm dần */}
+						<option>Tên (A-Z)</option>
+						<option>Tên (Z-A)</option>
+						<option>Đánh giá (Cao đến Thấp)</option>
+						<option>Đánh giá (Thấp đến Cao)</option>
+						<option>Giá (Thấp đến Cao)</option>
+						<option>Giá (Cao đến Thấp)</option>
 					</select>
 					<select
 						className="select select-bordered bg-white text-gray-800"
 						value={perPage}
 						onChange={handleItemsToShow}
 					>
-						<option value={9}>Show 9</option>
-						<option value={15}>Show 15</option>
+						<option value={9}>Hiển thị 9</option>
+						<option value={15}>Hiển thị 15</option>
 					</select>
 				</div>
 
@@ -204,7 +200,7 @@ const ProductListCate = () => {
 						<div className="input-group flex items-center w-full bg-gray-100 rounded-full px-6 py-3">
 							<input
 								type="text"
-								placeholder="Search brands..."
+								placeholder="Tìm kiếm sản phẩm..."
 								className="input input-bordered w-full bg-transparent border-none text-black focus:outline-none focus:ring-0"
 								value={searchTerm}
 								onChange={handleSearch}
@@ -217,25 +213,23 @@ const ProductListCate = () => {
 				</div>
 
 				<div className="items-center space-x-2 ml-auto">
-					{/* Button Grid Layout */}
+					{/* Nút bố cục dạng lưới */}
 					<button
-						className={`btn btn-square ${
-							layout === 'grid'
-								? 'bg-[#40BFFF] text-white'
-								: 'bg-white text-gray-800 border border-gray-300'
-						}`}
+						className={`btn btn-square ${layout === 'grid'
+							? 'bg-[#40BFFF] text-white'
+							: 'bg-white text-gray-800 border border-gray-300'
+							}`}
 						onClick={() => setLayout('grid')}
 					>
 						<FaTh />
 					</button>
 
-					{/* Button List Layout */}
+					{/* Nút bố cục dạng danh sách */}
 					<button
-						className={`btn btn-square ${
-							layout === 'list'
-								? 'bg-[#40BFFF] text-white'
-								: 'bg-white text-gray-800 border border-gray-300'
-						}`}
+						className={`btn btn-square ${layout === 'list'
+							? 'bg-[#40BFFF] text-white'
+							: 'bg-white text-gray-800 border border-gray-300'
+							}`}
 						onClick={() => setLayout('list')}
 					>
 						<FaBars />
@@ -245,9 +239,8 @@ const ProductListCate = () => {
 
 			{/* Product List */}
 			<div
-				className={`grid ${
-					layout === 'grid' ? 'grid-cols-3' : 'grid-cols-1'
-				} gap-5`}
+				className={`grid ${layout === 'grid' ? 'grid-cols-3' : 'grid-cols-1'
+					} gap-5`}
 			>
 				{isLoading ? (
 					<>
@@ -287,7 +280,7 @@ const ProductListCate = () => {
 					)
 				) : (
 					<div className="col-span-full text-center">
-						<p>There are no products</p>
+						<p>Không có sản phẩm nào</p>
 					</div>
 				)}
 			</div>

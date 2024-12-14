@@ -16,12 +16,12 @@ export default function Wishlist() {
   } = useWishlist()
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading...</div>
+    return <div className="text-center py-8">Đang tải...</div>
   }
 
   const handleAddProductToCart = (item: any) => {
     if (!item?.id) {
-      toast.error('Product ID is missing!')
+      toast.error('Thiếu ID sản phẩm!')
       return
     }
     const productId = item.id
@@ -32,16 +32,16 @@ export default function Wishlist() {
   const handleDelete = (itemId: number) => {
     try {
       handleDeleteFromWishlist(itemId)
-      toast.success('Product removed from wishlist!')
+      toast.success('Đã xóa sản phẩm khỏi danh sách yêu thích!')
     } catch (error) {
-      toast.error('Failed to remove product from wishlist!')
+      toast.error('Không thể xóa sản phẩm khỏi danh sách yêu thích!')
     }
   }
 
   const formatScheduledDate = (dateString: string) => {
     const date = new Date(dateString)
     if (isNaN(date.getTime())) {
-      return 'Invalid date'
+      return 'Ngày không hợp lệ'
     }
     return format(date, 'MM/dd/yyyy')
   }
@@ -49,7 +49,7 @@ export default function Wishlist() {
   return (
     <div className="Wishlist-all col-span-9 space-y-8 p-4 md:p-8">
       <h2 className="title-wishlist text-[#40BFFF] font-semibold text-xl md:text-2xl">
-        Wishlist
+        Danh sách yêu thích
       </h2>
 
       <div className="wishlist-list rounded-xl w-full border border-gray-200 shadow-lg overflow-hidden">
@@ -57,9 +57,9 @@ export default function Wishlist() {
           <table className="table-auto w-full min-w-[640px]">
             <thead>
               <tr className="text-left">
-                <th className="font-medium text-base md:text-lg leading-8 text-gray-600 p-2 md:p-4">Product</th>
-                <th className="font-medium text-base md:text-lg leading-8 text-gray-600 p-2 md:p-4 text-center">Price</th>
-                <th className="font-medium text-base md:text-lg leading-8 text-gray-600 p-2 md:p-4 text-center">Actions</th>
+                <th className="font-medium text-base md:text-lg leading-8 text-gray-600 p-2 md:p-4">Sản phẩm</th>
+                <th className="font-medium text-base md:text-lg leading-8 text-gray-600 p-2 md:p-4 text-center">Giá</th>
+                <th className="font-medium text-base md:text-lg leading-8 text-gray-600 p-2 md:p-4 text-center">Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -78,13 +78,13 @@ export default function Wishlist() {
                             {item.name}
                           </h5>
                           <p className="added-time text-xs md:text-sm text-[#5C5F6A]">
-                            Added on: {formatScheduledDate(item.scheduled_at)}
+                            Thêm vào: {formatScheduledDate(item.scheduled_at)}
                           </p>
                           <button
                             className="font-semibold text-xs md:text-sm mt-1 text-[#5C5F6A] hover:text-red-500"
                             onClick={() => handleDelete(item.id)}
                           >
-                            Remove Item
+                            Xóa sản phẩm
                           </button>
                         </div>
                       </div>
@@ -97,7 +97,7 @@ export default function Wishlist() {
                         className="btn btn-sm md:btn-md bg-[#40BFFF] text-white hover:bg-[#2EA8E5] px-2 py-1 md:px-4 md:py-2 rounded transition duration-300"
                         onClick={() => handleAddProductToCart(item)}
                       >
-                        Add to cart
+                        Thêm vào giỏ hàng
                       </button>
                     </td>
                   </tr>
@@ -105,12 +105,12 @@ export default function Wishlist() {
               ) : (
                 <tr>
                   <td colSpan={3} className="text-center py-8 md:py-12">
-                    <h3 className="text-lg md:text-xl font-semibold mb-2">Your wishlist is empty</h3>
+                    <h3 className="text-lg md:text-xl font-semibold mb-2">Danh sách yêu thích của bạn trống</h3>
                     <p className="text-gray-500 text-sm md:text-base">
-                      Browse our products and add items to your wishlist
+                      Duyệt sản phẩm của chúng tôi và thêm vào danh sách yêu thích
                     </p>
                     <Link to="/products" className="btn btn-primary mt-4 inline-block px-4 py-2 bg-[#40BFFF] text-white rounded hover:bg-[#2EA8E5] transition duration-300">
-                      Browse Products
+                      Duyệt sản phẩm
                     </Link>
                   </td>
                 </tr>

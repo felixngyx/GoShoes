@@ -77,7 +77,7 @@ const ChangeAvatar: React.FC<ChangeAvatarProps> = ({ profile }) => {
 					<div className="w-24 h-24 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100">
 						<img
 							src={profile?.avt || '/path/to/default-avatar.jpg'}
-							alt="Avatar"
+							alt="Ảnh đại diện"
 							className="w-full h-full object-cover rounded-full"
 						/>
 					</div>
@@ -91,15 +91,14 @@ const ChangeAvatar: React.FC<ChangeAvatarProps> = ({ profile }) => {
 						disabled={isUploading}
 					/>
 					<button
-						className={`btn btn-xs text-white w-full max-w-[180px] ${
-							isUploading
+						className={`btn btn-xs text-white w-full max-w-[180px] ${isUploading
 								? 'bg-gray-400 cursor-not-allowed'
 								: 'bg-[#40BFFF] hover:bg-[#259CFA]'
-						}`}
+							}`}
 						onClick={handleUpdate}
 						disabled={isUploading || !avatarFile}
 					>
-						{isUploading ? 'Uploading...' : 'Update Avatar'}
+						{isUploading ? 'Đang tải lên...' : 'Cập nhật ảnh đại diện'}
 					</button>
 				</div>
 			</div>

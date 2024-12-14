@@ -120,12 +120,12 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 				<label className="form-control col-span-2 sm:col-span-1">
 					<div className="label">
 						<span className="label-text font-medium text-base">
-							UserName
+							Tên người dùng
 						</span>
 					</div>
 					<input
 						type="text"
-						placeholder="Type here"
+						placeholder="Nhập vào đây"
 						className="input input-bordered w-full"
 						{...register('name')}
 					/>
@@ -143,7 +143,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 					</div>
 					<input
 						type="email"
-						placeholder="Type here"
+						placeholder="Nhập vào đây"
 						className="input input-bordered w-full"
 						{...register('email')}
 					/>
@@ -152,16 +152,16 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 					)}
 				</label>
 
-				{/* Phone */}
+				{/* Số điện thoại */}
 				<label className="form-control col-span-2 sm:col-span-1">
 					<div className="label">
 						<span className="label-text font-medium text-base">
-							Phone number
+							Số điện thoại
 						</span>
 					</div>
 					<input
 						type="text"
-						placeholder="Type here"
+						placeholder="Nhập vào đây"
 						className="input input-bordered w-full"
 						{...register('phone')}
 					/>
@@ -170,31 +170,31 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 					)}
 				</label>
 
-				{/* Gender */}
+				{/* Giới tính */}
 				<label className="form-control col-span-2 sm:col-span-1">
 					<div className="label">
 						<span className="label-text font-medium text-base">
-							Gender
+							Giới tính
 						</span>
 					</div>
 					<select
 						className="select select-bordered w-full"
 						{...register('gender')}
 					>
-						<option value="male">Male</option>
-						<option value="female">Female</option>
-						<option value="other">Other</option>
+						<option value="male">Nam</option>
+						<option value="female">Nữ</option>
+						<option value="other">Khác</option>
 					</select>
 					{errors.gender && (
 						<p className="text-red-500">{errors.gender?.message}</p>
 					)}
 				</label>
 
-				{/* Birth date */}
+				{/* Ngày sinh */}
 				<label className="form-control col-span-2 sm:col-span-1">
 					<div className="label">
 						<span className="label-text font-medium text-base">
-							Birth date
+							Ngày sinh
 						</span>
 					</div>
 					<input
@@ -208,13 +208,13 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 					)}
 				</label>
 
-				{/* Bio */}
+				{/* Tiểu sử */}
 				<label className="form-control col-span-2">
 					<div className="label">
-						<span className="label-text font-medium text-base">Bio</span>
+						<span className="label-text font-medium text-base">Tiểu sử</span>
 					</div>
 					<textarea
-						placeholder="Type here"
+						placeholder="Nhập vào đây"
 						className="textarea textarea-bordered w-full"
 						{...register('bio')}
 					/>
@@ -226,13 +226,12 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 				<button
 					type="submit"
 					disabled={!user.email_is_verified}
-					className={`btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] col-span-2 mt-5 ${
-						user.email_is_verified ? '' : 'btn-disabled'
-					}`}
+					className={`btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] col-span-2 mt-5 ${user.email_is_verified ? '' : 'btn-disabled'
+						}`}
 				>
 					{user.email_is_verified
-						? 'Update'
-						: 'Please verify your email first to update your profile'}
+						? 'Cập nhật'
+						: 'Vui lòng xác minh email của bạn trước khi cập nhật hồ sơ của bạn'}
 				</button>
 			</form>
 		</div>

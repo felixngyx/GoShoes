@@ -162,9 +162,8 @@ const Category = () => {
 		buttons.push(
 			<button
 				key="first"
-				className={`join-item btn btn-sm ${
-					pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
-				}`}
+				className={`join-item btn btn-sm ${pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
+					}`}
 				onClick={() => handlePageChange(1)}
 			>
 				1
@@ -194,11 +193,10 @@ const Category = () => {
 					buttons.push(
 						<button
 							key={i}
-							className={`join-item btn btn-sm ${
-								pagination.page === i
-									? 'btn-active bg-primary text-white'
-									: ''
-							}`}
+							className={`join-item btn btn-sm ${pagination.page === i
+								? 'btn-active bg-primary text-white'
+								: ''
+								}`}
 							onClick={() => handlePageChange(i)}
 						>
 							{i}
@@ -223,11 +221,10 @@ const Category = () => {
 			buttons.push(
 				<button
 					key="last"
-					className={`join-item btn btn-sm ${
-						pagination.page === totalPages
-							? 'btn-active bg-primary text-white'
-							: ''
-					}`}
+					className={`join-item btn btn-sm ${pagination.page === totalPages
+						? 'btn-active bg-primary text-white'
+						: ''
+						}`}
 					onClick={() => handlePageChange(totalPages)}
 				>
 					{totalPages}
@@ -265,25 +262,24 @@ const Category = () => {
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5 col-span-1">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
-					Category List
+					Danh sách danh mục
 				</h4>
 				<div className="flex items-center gap-2">
 					<button
-						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${
-							selectedItems.length > 0
-								? 'flex items-center gap-2'
-								: 'hidden'
-						}`}
+						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${selectedItems.length > 0
+							? 'flex items-center gap-2'
+							: 'hidden'
+							}`}
 					>
 						<Trash2 size={16} />
-						<p>Delete {selectedItems.length} items</p>
+						<p>Xóa {selectedItems.length} mục</p>
 					</button>
 					<button
 						className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 						onClick={openAddModal}
 					>
 						<Plus size={16} />
-						Add Category
+						Thêm danh mục
 					</button>
 				</div>
 			</div>
@@ -310,10 +306,10 @@ const Category = () => {
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3 w-2/3">
-								Name
+								Tên
 							</th>
 							<th scope="col" className="px-6 py-3 w-1/3">
-								Action
+								Thao tác
 							</th>
 						</tr>
 					</thead>
@@ -333,11 +329,10 @@ const Category = () => {
 						) : (
 							categories.map((category, key) => (
 								<tr
-									className={`bg-white dark:bg-slate-800 ${
-										key !== categories.length - 1
-											? 'border-b border-stroke'
-											: ''
-									}`}
+									className={`bg-white dark:bg-slate-800 ${key !== categories.length - 1
+										? 'border-b border-stroke'
+										: ''
+										}`}
 									key={key}
 								>
 									<td className="w-4 p-4">
@@ -390,19 +385,19 @@ const Category = () => {
 						className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/3"
 					>
 						<h2 className="text-xl font-semibold mb-4">
-							{editingCategory ? 'Edit Category' : 'Add Category'}
+							{editingCategory ? 'Chỉnh sửa danh mục' : 'Thêm danh mục'}
 						</h2>
 						<form onSubmit={handleSubmit(onSubmit)}>
 							<label className="form-control">
 								<div className="label">
 									<span className="label-text font-semibold">
-										Name
+										Tên
 									</span>
 								</div>
 								<input
 									type="text"
 									className="input input-bordered w-full"
-									placeholder="Category name"
+									placeholder="Tên danh mục"
 									{...register('name')}
 								/>
 								{errors.name && (
@@ -414,12 +409,12 @@ const Category = () => {
 							<label className="form-control mt-4">
 								<div className="label">
 									<span className="label-text font-semibold">
-										Description
+										Mô tả
 									</span>
 								</div>
 								<textarea
 									className="textarea textarea-bordered w-full"
-									placeholder="Description"
+									placeholder="Mô tả"
 									{...register('description')}
 								></textarea>
 								{errors.description && (
@@ -435,7 +430,7 @@ const Category = () => {
 									className="btn btn-sm bg-gray-200 hover:bg-gray-300 text-gray-800"
 									onClick={closeModal}
 								>
-									Cancel
+									Hủy
 								</button>
 								<button
 									disabled={loading}
@@ -449,9 +444,9 @@ const Category = () => {
 											color="info"
 										/>
 									) : editingCategory ? (
-										'Save Changes'
+										'Lưu thay đổi'
 									) : (
-										'Add Category'
+										'Thêm danh mục'
 									)}
 								</button>
 							</div>

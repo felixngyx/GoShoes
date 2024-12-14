@@ -140,34 +140,18 @@ const User = () => {
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
-					User List ({filteredUsers.length} users)
+					Danh sách ({allUsers.length} người dùng)
 				</h4>
 
-				<label className="input input-sm input-bordered flex items-center gap-2 w-80">
+				<label className="input input-sm input-bordered flex items-center gap-2 w-96">
 					<input
-						placeholder="Search by name, email, phone..."
+						placeholder="Tìm kiếm theo tên, email, số điện thoại..."
 						value={searchTerm}
 						onChange={(e) => setSearchTerm(e.target.value)}
 						type="text" className="grow" />
 					<Search size={20} />
 
 				</label>
-
-				{/* <div className="flex items-center gap-4">
-					<div className="relative">
-						<input
-							type="text"
-							placeholder="Search by name, email, phone..."
-							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
-							className="input input-sm input-bordered"
-						/>
-						<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-					</div>
-					<button onClick={toggleSortOrder} className="btn btn-sm btn-primary">
-						Sort by Name ({sortOrder})
-					</button>
-				</div> */}
 			</div>
 
 			<div className="relative overflow-x-auto border border-stroke">
@@ -176,46 +160,30 @@ const User = () => {
 						<tr>
 							<th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
-									Name
+									Tên
 									<FaSort className='cursor-pointer ms-1' onClick={toggleSortOrder} />
 								</div>
 
 							</th>
-							{/* <th scope="col" className="px-6 py-3">
+							<th scope="col" className="px-6 py-3">
+								Xác minh
+							</th>
+							<th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
-									Email
+									Quản trị viên
 									<a>
 										<FaSort />
 									</a>
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
-									Phone
-									<a>
-										<FaSort />
-									</a>
-								</div>
-							</th> */}
-							<th scope="col" className="px-6 py-3">
-								Is verified
+								<div className="flex items-center">Trạng thái</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
-									Admin
-									<a>
-										<FaSort />
-									</a>
-								</div>
+								Ngày tạo
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">Status</div>
-							</th>
-							<th scope="col" className="px-6 py-3">
-								Created At
-							</th>
-							<th scope="col" className="px-6 py-3">
-								Action
+								Thao tác
 							</th>
 						</tr>
 					</thead>
@@ -233,7 +201,7 @@ const User = () => {
 						) : sortedAndFilteredUsers.length === 0 ? (
 							<tr>
 								<td colSpan={5} className="text-center py-4">
-									No users found
+									Không tìm thấy người dùng
 								</td>
 							</tr>
 						) : (
@@ -250,8 +218,6 @@ const User = () => {
 										/>
 										{user.name}
 									</td>
-									{/* <td className="px-6 py-4">{user.email}</td>
-									<td className="px-6 py-4">{user.phone}</td> */}
 									<td className="px-6 py-4">
 										{new Date(
 											user.email_verified_at
@@ -274,8 +240,8 @@ const User = () => {
 											)}
 											{user.role !== 'super-admin' && (
 												<>
-													<option value="admin">Admin</option>
-													<option value="user">User</option>
+													<option value="admin">Quản trị viên</option>
+													<option value="user">Người dùng</option>
 												</>
 											)}
 										</select>
@@ -287,7 +253,7 @@ const User = () => {
 												: 'bg-success/10 text-success'
 												}`}
 										>
-											{user.is_deleted ? 'Inactive' : 'Active'}
+											{user.is_deleted ? 'Không hoạt động' : 'Hoạt động'}
 										</span>
 									</td>
 									<td className="px-6 py-4">
@@ -349,7 +315,7 @@ const User = () => {
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 					<div className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/2">
 						<div className="flex justify-between items-center mb-4">
-							<h2 className="text-xl font-semibold">User Details</h2>
+							<h2 className="text-xl font-semibold">Chi tiết người dùng</h2>
 							<button
 								onClick={closeUserDetailModal}
 								className="btn btn-sm btn-ghost"
@@ -385,7 +351,7 @@ const User = () => {
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Phone:
+										Số điện thoại:
 									</p>
 									<p className="font-medium">
 										{previewUser.phone || 'N/A'}
@@ -394,7 +360,7 @@ const User = () => {
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Gender:
+										Giới tính:
 									</p>
 									<p className="font-medium capitalize">
 										{previewUser.gender || 'N/A'}
@@ -405,7 +371,7 @@ const User = () => {
 							<div className="flex flex-col gap-2">
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Birth Date:
+										Ngày sinh:
 									</p>
 									<p className="font-medium">
 										{previewUser.birth_date
@@ -418,7 +384,7 @@ const User = () => {
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Status:
+										Trạng thái:
 									</p>
 									<span
 										className={`px-2 py-1 rounded-full text-xs ${previewUser.is_deleted
@@ -426,26 +392,26 @@ const User = () => {
 											: 'bg-success/10 text-success'
 											}`}
 									>
-										{previewUser.is_deleted ? 'Inactive' : 'Active'}
+										{previewUser.is_deleted ? 'Không hoạt động' : 'Hoạt động'}
 									</span>
 								</div>
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Email Verified:
+										Email đã xác minh:
 									</p>
 									<p className="font-medium">
 										{previewUser.email_verified_at
 											? new Date(
 												previewUser.email_verified_at
 											).toLocaleDateString()
-											: 'Not verified'}
+											: 'Chưa xác minh'}
 									</p>
 								</div>
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Created At:
+										Ngày tạo:
 									</p>
 									<p className="font-medium">
 										{previewUser.created_at
@@ -458,7 +424,7 @@ const User = () => {
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Bio:
+										Tiểu sử:
 									</p>
 									<p className="font-medium">
 										{previewUser.bio || 'N/A'}

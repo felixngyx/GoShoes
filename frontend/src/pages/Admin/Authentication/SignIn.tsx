@@ -339,11 +339,10 @@ const SignIn: React.FC = () => {
 									<button
 										type="submit"
 										disabled={loading}
-										className={`w-full cursor-pointer rounded-lg border ${
-											loading
+										className={`w-full cursor-pointer rounded-lg border ${loading
 												? 'bg-primary/50 border-primary/50'
 												: 'bg-primary border-primary'
-										} p-4 text-white transition hover:bg-opacity-90 flex items-center justify-center gap-2`}
+											} p-4 text-white transition hover:bg-opacity-90 flex items-center justify-center gap-2`}
 									>
 										{loading ? (
 											<>

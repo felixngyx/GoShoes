@@ -58,15 +58,15 @@ const DiscountChatWidget: React.FC = () => {
 					[];
 
 				if (data.length === 0) {
-					setError('No discounts found');
+					setError('Không tìm thấy mã giảm giá');
 				} else {
 					setDiscounts(data);
 				}
 			} catch (error) {
-				console.error('Error fetching discounts:', error);
-				setError('Failed to fetch discounts');
+				console.error('Lỗi khi lấy mã giảm giá:', error);
+				setError('Không thể lấy mã giảm giá');
 				setDiscounts([]);
-				toast.error('Could not load discounts');
+				toast.error('Không thể tải mã giảm giá');
 			} finally {
 				setIsLoading(false);
 			}
@@ -80,11 +80,11 @@ const DiscountChatWidget: React.FC = () => {
 			.writeText(code)
 			.then(() => {
 				setCopiedCode(code);
-				toast.success('Discount code copied!');
+				toast.success('Đã sao chép mã giảm giá!');
 			})
 			.catch((err) => {
-				console.error('Failed to copy: ', err);
-				toast.error('Failed to copy code.');
+				console.error('Không thể sao chép: ', err);
+				toast.error('Không thể sao chép mã.');
 			});
 
 		// Reset copied state after 2 seconds
@@ -130,7 +130,7 @@ const DiscountChatWidget: React.FC = () => {
 		if (isLoading) {
 			return (
 				<div className="text-center py-4 text-gray-500">
-					Loading discount codes...
+					Đang tải mã giảm giá...
 				</div>
 			);
 		}
@@ -147,7 +147,7 @@ const DiscountChatWidget: React.FC = () => {
 		if (discounts.length === 0) {
 			return (
 				<div className="text-center py-4 text-gray-500">
-					No discount codes available
+					Không có mã giảm giá nào
 				</div>
 			);
 		}
@@ -158,13 +158,12 @@ const DiscountChatWidget: React.FC = () => {
 				onMouseEnter={() => setHoveredDiscountId(discount.id)}
 				onMouseLeave={() => setHoveredDiscountId(null)}
 				className={`
-                    p-3 rounded-lg transition-all duration-300
-                    ${
-								hoveredDiscountId === discount.id
-									? 'bg-blue-50 shadow-md'
-									: 'bg-gray-100'
-							}
-                `}
+					p-3 rounded-lg transition-all duration-300
+					${hoveredDiscountId === discount.id
+						? 'bg-blue-50 shadow-md'
+						: 'bg-gray-100'
+					}
+				`}
 			>
 				<p className="font-medium mb-2">{discount.description}</p>
 				<div className="flex items-center justify-between">
@@ -173,21 +172,20 @@ const DiscountChatWidget: React.FC = () => {
 							{discount.code}
 						</code>
 						<span className="text-sm text-gray-600">
-							{discount.percent}% OFF
+							{discount.percent}% GIẢM
 						</span>
 					</div>
 					<button
 						onClick={() => handleCopy(discount.code)}
 						className={`
-                            transition-all duration-300
-                            ${
-											hoveredDiscountId === discount.id
-												? 'text-blue-700 scale-110'
-												: 'text-blue-500'
-										}
-                            hover:text-blue-700 hover:scale-110
-                        `}
-						aria-label={`Copy code ${discount.code}`}
+							transition-all duration-300
+							${hoveredDiscountId === discount.id
+								? 'text-blue-700 scale-110'
+								: 'text-blue-500'
+							}
+							hover:text-blue-700 hover:scale-110
+						`}
+						aria-label={`Sao chép mã ${discount.code}`}
 					>
 						{copiedCode === discount.code ? (
 							<Check size={20} color="green" />
@@ -197,8 +195,8 @@ const DiscountChatWidget: React.FC = () => {
 					</button>
 				</div>
 				<div className="text-xs text-gray-500 mt-1">
-					Valid from: {new Date(discount.valid_from).toLocaleDateString()}{' '}
-					to {new Date(discount.valid_to).toLocaleDateString()}
+					Có hiệu lực từ: {new Date(discount.valid_from).toLocaleDateString()}{' '}
+					đến {new Date(discount.valid_to).toLocaleDateString()}
 				</div>
 				{discount.products && discount.products.length > 0 && (
 					<div className="mt-2 text-xs text-gray-600">
@@ -209,12 +207,12 @@ const DiscountChatWidget: React.FC = () => {
 							{expandedDiscounts.includes(discount.id) ? (
 								<>
 									<ChevronUp size={16} />
-									Hide products
+									Ẩn sản phẩm
 								</>
 							) : (
 								<>
 									<ChevronDown size={16} />
-									Show products ({discount.products.length})
+									Hiển thị sản phẩm ({discount.products.length})
 								</>
 							)}
 						</button>
@@ -278,10 +276,10 @@ const DiscountChatWidget: React.FC = () => {
 							className="bg-white rounded-lg shadow-lg p-4 mb-4 w-80"
 						>
 							<div className="flex justify-between items-center mb-4">
-								<h2 className="text-lg font-bold">Discount Codes</h2>
+								<h2 className="text-lg font-bold">Mã Giảm Giá</h2>
 								<div
 									className="drag-handle cursor-move"
-									title="Move widget"
+									title="Di chuyển tiện ích"
 								>
 									<Move size={20} />
 								</div>
@@ -307,12 +305,12 @@ const DiscountChatWidget: React.FC = () => {
 					}}
 					onClick={() => !isDragging && setIsOpen(!isOpen)}
 					className={`
-                        bg-blue-500 text-white p-3 rounded-full shadow-lg 
-                        transition-all duration-300
-                        ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}
-                        hover:bg-blue-600 active:bg-blue-700
-                    `}
-					aria-label="Toggle discount widget"
+						bg-blue-500 text-white p-3 rounded-full shadow-lg 
+						transition-all duration-300
+						${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}
+						hover:bg-blue-600 active:bg-blue-700
+					`}
+					aria-label="Chuyển đổi tiện ích giảm giá"
 				>
 					<Percent size={24} />
 				</motion.button>
