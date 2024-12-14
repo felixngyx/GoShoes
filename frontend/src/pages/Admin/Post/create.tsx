@@ -40,18 +40,18 @@ interface CategoryResponse {
 
 const postSchema = Joi.object({
     title: Joi.string().required().max(255).messages({
-        'string.empty': 'Title is required',
-        'string.max': 'Title cannot exceed 255 characters',
+        'string.empty': 'Tiêu đề không được bỏ trống',
+        'string.max': 'Tiêu đề không được vượt quá 255 ký tự',
     }),
     content: Joi.string().allow('').optional(),
     image: Joi.string().required().messages({
-        'string.empty': 'Image is required',
+        'string.empty': 'Hình ảnh không được bỏ trống',
     }),
     category_id: Joi.alternatives().try(
         Joi.string(),
         Joi.number()
     ).required().messages({
-        'any.required': 'Category is required',
+        'any.required': 'Danh mục không được bỏ trống',
     }),
     scheduled_at: Joi.string().allow(null),
     published_at: Joi.string().allow(null),
@@ -132,7 +132,7 @@ const CreatePost = () => {
                 setIsPageLoading(false);
             }
         };
-        
+
         fetchCategories();
     }, []);
 
@@ -148,7 +148,7 @@ const CreatePost = () => {
             .replace(/\s+/g, '-')
             .replace(/-+/g, '-')
             .trim();
-        
+
         return `${baseSlug}-${timestamp}-${randomString}`;
     };
 
@@ -166,7 +166,7 @@ const CreatePost = () => {
                         body: formData,
                     }
                 );
-                
+
                 const data = await response.json();
                 resolve(data.secure_url);
             } catch (error) {
@@ -198,7 +198,7 @@ const CreatePost = () => {
                     body: formData,
                 }
             );
-            
+
             const data = await response.json();
             setValue("image", data.secure_url);
             toast.success("Thumbnail image uploaded successfully!");
@@ -228,7 +228,7 @@ const CreatePost = () => {
             };
 
             const response = await axiosClient.post('/posts', postData);
-            
+
             if (response.data.success) {
                 toast.dismiss(loadingToast);
                 toast.success('Create post successfully!');
@@ -244,18 +244,18 @@ const CreatePost = () => {
 
     return (
         <>
-            <PageTitle title="Create Post | Goshoes" />
+            <PageTitle title="Tạo Bài Viết | Goshoes" />
             <div className="max-w-5xl mx-auto p-4">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold">Create New Post</h1>
+                    <h1 className="text-2xl font-bold">Tạo Bài Viết Mới</h1>
                     <button
                         onClick={() => navigate('/admin/post')}
                         className="px-4 py-2 text-white bg-gray-500 hover:bg-gray-600 rounded"
                     >
-                        Back
+                        Quay Lại
                     </button>
                 </div>
-                
+
                 {isPageLoading ? (
                     <FormSkeleton />
                 ) : (
@@ -264,12 +264,12 @@ const CreatePost = () => {
                         handleSubmit(onSubmit)(e);
                     }} className="space-y-6">
                         <div>
-                            <label className="block mb-2 font-medium">Title</label>
+                            <label className="block mb-2 font-medium">Tiêu Đề</label>
                             <input
                                 type="text"
-                                {...register("title", { required: "Title is required" })}
+                                {...register("title", { required: "Tiêu đề không được bỏ trống" })}
                                 className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                                placeholder="Enter post title"
+                                placeholder="Nhập tiêu đề bài viết"
                             />
                             {errors.title && (
                                 <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
@@ -277,8 +277,8 @@ const CreatePost = () => {
                         </div>
 
                         <div>
-                            <label className="block mb-2 font-medium">Thumbnail Image</label>
-                            <input 
+                            <label className="block mb-2 font-medium">Hình Ảnh Đại Diện</label>
+                            <input
                                 type="file"
                                 ref={fileInputRef}
                                 onChange={handleFileChange}
@@ -290,13 +290,13 @@ const CreatePost = () => {
                                 onClick={handleFeaturedImageUpload}
                                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                             >
-                                Upload Thumbnail Image
+                                Tải Lên Hình Ảnh Đại Diện
                             </button>
                             {watch("image") && (
                                 <div className="mt-2">
-                                    <img 
-                                        src={watch("image")} 
-                                        alt="Featured" 
+                                    <img
+                                        src={watch("image")}
+                                        alt="Hình Đại Diện"
                                         className="w-40 h-40 object-cover rounded"
                                     />
                                 </div>
@@ -304,7 +304,7 @@ const CreatePost = () => {
                         </div>
 
                         <div>
-                            <label className="block mb-2 font-medium">Content</label>
+                            <label className="block mb-2 font-medium">Nội Dung</label>
                             <RichTextEditor
                                 initialValue=""
                                 onChange={setContent}
@@ -312,12 +312,12 @@ const CreatePost = () => {
                         </div>
 
                         <div>
-                            <label className="block mb-2 font-medium">Category</label>
+                            <label className="block mb-2 font-medium">Danh Mục</label>
                             <select
-                                {...register("category_id", { required: "Please select a category" })}
+                                {...register("category_id", { required: "Vui lòng chọn danh mục" })}
                                 className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                             >
-                                <option value="">Select category</option>
+                                <option value="">Chọn danh mục</option>
                                 {categories.map((category) => (
                                     <option key={category.id} value={category.id}>
                                         {category.name}
@@ -332,7 +332,7 @@ const CreatePost = () => {
                         </div>
 
                         <div>
-                            <label className="block mb-2 font-medium">Schedule Post (Optional)</label>
+                            <label className="block mb-2 font-medium">Lên Lịch Bài Viết (Tùy Chọn)</label>
                             <input
                                 type="datetime-local"
                                 {...register('scheduled_at')}
@@ -347,18 +347,17 @@ const CreatePost = () => {
                                 onClick={() => navigate('/admin/post')}
                                 className="w-1/2 px-4 py-2 text-white bg-gray-500 hover:bg-gray-600 rounded"
                             >
-                                Cancel
+                                Hủy
                             </button>
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className={`w-1/2 px-4 py-2 text-white rounded ${
-                                    isLoading 
-                                        ? 'bg-gray-400 cursor-not-allowed' 
-                                        : 'bg-green-500 hover:bg-green-600'
-                                }`}
+                                className={`w-1/2 px-4 py-2 text-white rounded ${isLoading
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-green-500 hover:bg-green-600'
+                                    }`}
                             >
-                                {isLoading ? 'Processing...' : 'Create Post'}
+                                {isLoading ? 'Đang Xử Lý...' : 'Tạo Bài Viết'}
                             </button>
                         </div>
                     </form>

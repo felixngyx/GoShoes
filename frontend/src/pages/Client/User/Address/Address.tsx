@@ -31,14 +31,14 @@ const AddressComponent: React.FC = () => {
     <div className="col-span-9 rounded-lg border border-gray-200 shadow-lg h-fit font-sans">
       <div className="p-4">
         <div className="flex justify-between items-center w-full my-4 p-2">
-          <h2 className="text-lg font-bold text-blue-500">List Address</h2>
+          <h2 className="text-lg font-bold text-blue-500">Danh sách địa chỉ</h2>
           <div>
             {address.length < addressLimit && (
               <button
                 onClick={() => setShowPopup(true)}
                 className="bg-blue-500 text-white px-4 py-2 rounded flex items-center"
               >
-                <Plus className="inline-block mr-1" /> New Address
+                <Plus className="inline-block mr-1" /> Địa chỉ mới
               </button>
             )}
           </div>
@@ -85,7 +85,7 @@ const AddressComponent: React.FC = () => {
               </div>
               {items.is_default && (
                 <div className="text-sm mt-2 text-blue-500 font-semibold border p-1 border-blue-500 inline-block">
-                  Default
+                  Mặc định
                 </div>
               )}
             </div>
@@ -96,22 +96,21 @@ const AddressComponent: React.FC = () => {
           <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
             <form
               onSubmit={handleSubmit(onSubmit)}
-              className={`bg-white p-8 rounded-lg max-w-md w-full shadow-lg transition-all duration-300 transform ${
-                showPopup
+              className={`bg-white p-8 rounded-lg max-w-md w-full shadow-lg transition-all duration-300 transform ${showPopup
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-10"
-              }`}
+                }`}
             >
               <h2 className="text-lg font-bold mb-4">
-                {editAddress ? "Edit Address" : "New Address"}
+                {editAddress ? "Chỉnh sửa địa chỉ" : "Địa chỉ mới"}
               </h2>
 
               {/* Contact */}
-              <label className="block font-semibold">Contact</label>
+              <label className="block font-semibold">Liên hệ</label>
               <div>
                 <input
                   {...register("name")}
-                  placeholder="Full name"
+                  placeholder="Họ và tên"
                   type="text"
                   className="w-full border rounded p-2 mb-4"
                   defaultValue={
@@ -125,7 +124,7 @@ const AddressComponent: React.FC = () => {
                 )}
                 <input
                   {...register("phone_number")}
-                  placeholder="Phone"
+                  placeholder="Số điện thoại"
                   type="number"
                   className="w-full border rounded p-2 mb-4"
                   defaultValue={
@@ -147,7 +146,7 @@ const AddressComponent: React.FC = () => {
 
               {/* Address */}
               <div>
-                <label className="block font-bold">Address</label>
+                <label className="block font-bold">Địa chỉ</label>
                 <button
                   type="button"
                   onClick={() => setShowPopup1(true)}
@@ -202,7 +201,7 @@ const AddressComponent: React.FC = () => {
                 )}
                 <input
                   {...register("address_detail")}
-                  placeholder="Detailed address"
+                  placeholder="Địa chỉ chi tiết"
                   type="text"
                   className="w-full border rounded p-2 mb-4"
                   defaultValue={
@@ -217,7 +216,7 @@ const AddressComponent: React.FC = () => {
                   </p>
                 )}
                 <label className="font-medium flex items-center">
-                  <span>Set as default address</span>
+                  <span>Đặt làm địa chỉ mặc định</span>
                   <input
                     {...register("is_default")}
                     type="checkbox"
@@ -239,13 +238,13 @@ const AddressComponent: React.FC = () => {
                   }}
                   className="bg-gray-300 text-black px-4 py-2 rounded mr-2"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   className="bg-blue-500 text-white px-4 py-2 rounded"
                 >
-                  {editAddress ? "Save" : "Add"}
+                  {editAddress ? "Lưu" : "Thêm"}
                 </button>
               </div>
             </form>

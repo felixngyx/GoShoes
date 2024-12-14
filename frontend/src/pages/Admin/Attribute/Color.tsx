@@ -15,10 +15,10 @@ import { FaRegTrashAlt } from 'react-icons/fa';
 // Add schema validation
 const schema = Joi.object({
 	color: Joi.string().required().messages({
-		'string.empty': 'Color name is required',
+		'string.empty': 'Tên màu không được bỏ trống',
 	}),
 	link_image: Joi.string().required().messages({
-		'string.empty': 'Image is required',
+		'string.empty': 'Hình ảnh không được bỏ trống',
 	}),
 });
 
@@ -74,7 +74,7 @@ const Color = () => {
 			});
 		} catch (error: any) {
 			console.log(error);
-			toast.error(error.response?.data?.message || 'Something went wrong');
+			toast.error(error.response?.data?.message || 'Đã xảy ra lỗi');
 		} finally {
 			setLoading(false);
 		}
@@ -82,7 +82,7 @@ const Color = () => {
 
 	const onSubmit = async (data: COLOR) => {
 		setLoading(true);
-		toast.loading(`${editingColor ? 'Updating' : 'Adding'} color`);
+		toast.loading(`${editingColor ? 'Đang cập nhật' : 'Đang thêm'} màu`);
 		if (editingColor) {
 			try {
 				setIsModalOpen(false);
@@ -97,7 +97,7 @@ const Color = () => {
 				}
 			} catch (error: any) {
 				toast.error(
-					error.response?.data?.message || 'Something went wrong'
+					error.response?.data?.message || 'Đã xảy ra lỗi'
 				);
 			} finally {
 				setLoading(false);
@@ -115,25 +115,25 @@ const Color = () => {
 				}
 			} catch (error: any) {
 				toast.error(
-					error.response?.data?.message || 'Something went wrong'
+					error.response?.data?.message || 'Đã xảy ra lỗi'
 				);
 			} finally {
 				setLoading(false);
 			}
 		}
 		toast.dismiss();
-		toast.success(`${editingColor ? 'Update' : 'Add'} color successfully`);
+		toast.success(`${editingColor ? 'Cập nhật' : 'Thêm'} màu thành công`);
 	};
 
 	const deleteColor = async (id: number) => {
 		try {
-			if (window.confirm('Are you sure you want to delete this color?')) {
+			if (window.confirm('Bạn có chắc chắn muốn xóa màu này không?')) {
 				await colorService.delete(id);
-				toast.success('Color deleted successfully');
+				toast.success('Xóa màu thành công');
 				fetchColor();
 			}
 		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'Something went wrong');
+			toast.error(error.response?.data?.message || 'Đã xảy ra lỗi');
 		}
 	};
 
@@ -193,9 +193,8 @@ const Color = () => {
 		buttons.push(
 			<button
 				key="first"
-				className={`join-item btn btn-sm ${
-					pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
-				}`}
+				className={`join-item btn btn-sm ${pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
+					}`}
 				onClick={() => handlePageChange(1)}
 			>
 				1
@@ -225,11 +224,10 @@ const Color = () => {
 					buttons.push(
 						<button
 							key={i}
-							className={`join-item btn btn-sm ${
-								pagination.page === i
-									? 'btn-active bg-primary text-white'
-									: ''
-							}`}
+							className={`join-item btn btn-sm ${pagination.page === i
+								? 'btn-active bg-primary text-white'
+								: ''
+								}`}
 							onClick={() => handlePageChange(i)}
 						>
 							{i}
@@ -254,11 +252,10 @@ const Color = () => {
 			buttons.push(
 				<button
 					key="last"
-					className={`join-item btn btn-sm ${
-						pagination.page === totalPages
-							? 'btn-active bg-primary text-white'
-							: ''
-					}`}
+					className={`join-item btn btn-sm ${pagination.page === totalPages
+						? 'btn-active bg-primary text-white'
+						: ''
+						}`}
 					onClick={() => handlePageChange(totalPages)}
 				>
 					{totalPages}
@@ -321,25 +318,24 @@ const Color = () => {
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5 col-span-1">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
-					Color List
+					Danh sách màu
 				</h4>
 				<div className="flex items-center gap-2">
 					<button
-						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${
-							selectedItems.length > 0
-								? 'flex items-center gap-2'
-								: 'hidden'
-						}`}
+						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${selectedItems.length > 0
+							? 'flex items-center gap-2'
+							: 'hidden'
+							}`}
 					>
 						<Trash2 size={16} />
-						<p>Delete {selectedItems.length} items</p>
+						<p>Xóa {selectedItems.length} mục</p>
 					</button>
 					<button
 						className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 						onClick={openAddModal}
 					>
 						<Plus size={16} />
-						Add Color
+						Thêm màu
 					</button>
 				</div>
 			</div>
@@ -366,13 +362,13 @@ const Color = () => {
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3 w-2/5">
-								Name
+								Tên
 							</th>
 							<th scope="col" className="px-6 py-3 w-2/5">
-								Image
+								Hình ảnh
 							</th>
 							<th scope="col" className="px-6 py-3 w-1/5">
-								Action
+								Thao tác
 							</th>
 						</tr>
 					</thead>
@@ -392,11 +388,10 @@ const Color = () => {
 						) : (
 							colorData.map((color, key) => (
 								<tr
-									className={`bg-white dark:bg-slate-800 ${
-										key !== colorData.length - 1
-											? 'border-b border-stroke'
-											: ''
-									}`}
+									className={`bg-white dark:bg-slate-800 ${key !== colorData.length - 1
+										? 'border-b border-stroke'
+										: ''
+										}`}
 									key={key}
 								>
 									<td className="w-4 p-4 h-fit">
@@ -454,17 +449,17 @@ const Color = () => {
 						className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/3"
 					>
 						<h2 className="text-xl font-semibold mb-4">
-							{editingColor ? 'Edit Color' : 'Add Color'}
+							{editingColor ? 'Chỉnh sửa màu' : 'Thêm màu'}
 						</h2>
 						<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 							<div>
 								<label htmlFor="color" className="text-sm font-medium">
-									Color name
+									Tên màu
 								</label>
 								<input
 									type="text"
 									className="w-full p-2 border rounded"
-									placeholder="Color name"
+									placeholder="Tên màu"
 									{...register('color')}
 								/>
 								{errors.color && (
@@ -479,7 +474,7 @@ const Color = () => {
 									htmlFor="link_image"
 									className="text-sm font-medium"
 								>
-									Image
+									Hình ảnh
 								</label>
 								<input
 									{...register('link_image')}
@@ -499,7 +494,7 @@ const Color = () => {
 														? URL.createObjectURL(imageFile)
 														: imageFile
 												}
-												alt="Color preview"
+												alt="Xem trước màu"
 												className="w-full h-full object-cover rounded-md border"
 											/>
 											<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -536,7 +531,7 @@ const Color = () => {
 										>
 											<Upload />
 											<p className="text-xs text-gray-500">
-												Upload Image
+												Tải lên hình ảnh
 											</p>
 										</div>
 									)}
@@ -554,13 +549,13 @@ const Color = () => {
 									className="btn btn-sm bg-gray-200 hover:bg-gray-300 text-gray-800"
 									onClick={closeModal}
 								>
-									Cancel
+									Hủy
 								</button>
 								<button
 									type="submit"
 									className="btn btn-sm bg-blue-500 hover:bg-blue-600 text-white"
 								>
-									{editingColor ? 'Save Changes' : 'Add Color'}
+									{editingColor ? 'Lưu thay đổi' : 'Thêm màu'}
 								</button>
 							</div>
 						</form>
@@ -571,7 +566,7 @@ const Color = () => {
 			{previewImage && (
 				<dialog open className="modal">
 					<div className="modal-box">
-						<img src={previewImage} alt="Preview" className="w-full" />
+						<img src={previewImage} alt="Xem trước" className="w-full" />
 						<button
 							onClick={() => setPreviewImage(null)}
 							className="btn btn-sm absolute right-2 top-2"

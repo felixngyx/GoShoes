@@ -146,9 +146,8 @@ const CheckoutPage = () => {
     if (orderState.items.length === 1) {
       return `Checkout | ${orderState.items[0].name}`;
     } else if (orderState.items.length > 1) {
-      return `Checkout | ${orderState.items[0].name} and ${
-        orderState.items.length - 1
-      } other items`;
+      return `Checkout | ${orderState.items[0].name} and ${orderState.items.length - 1
+        } other items`;
     }
     return "Checkout";
   }, [orderState.items]);
@@ -267,147 +266,147 @@ const CheckoutPage = () => {
   // Bỏ useEffect polling và thêm hàm kiểm tra giá
   const checkPriceAndStock = async () => {
     try {
-        const checkPromises = orderState.items.map(async (item) => {
-            const response = await axios.get(
-                `${import.meta.env.VITE_API_URL}/products/${item.id || item.product_id}`
-            );
-            return response.data.data;
-        });
+      const checkPromises = orderState.items.map(async (item) => {
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/products/${item.id || item.product_id}`
+        );
+        return response.data.data;
+      });
 
-        const currentProducts = await Promise.all(checkPromises);
+      const currentProducts = await Promise.all(checkPromises);
 
-        let hasChanges = false;
-        const updatedItems = orderState.items.map((item, index) => {
-            const currentProduct = currentProducts[index];
-            const currentPrice = Number(currentProduct.promotional_price || currentProduct.price);
-            const itemPrice = Number(item.price);
-            
-            if (Math.abs(currentPrice - itemPrice) > 0.01) {
-                hasChanges = true;
-                return {
-                    ...item,
-                    price: currentProduct.price,
-                    promotional_price: currentProduct.promotional_price,
-                    total: item.quantity * (currentProduct.promotional_price || currentProduct.price)
-                };
-            }
-            return item;
-        });
+      let hasChanges = false;
+      const updatedItems = orderState.items.map((item, index) => {
+        const currentProduct = currentProducts[index];
+        const currentPrice = Number(currentProduct.promotional_price || currentProduct.price);
+        const itemPrice = Number(item.price);
 
-        return { hasChanges, updatedItems };
+        if (Math.abs(currentPrice - itemPrice) > 0.01) {
+          hasChanges = true;
+          return {
+            ...item,
+            price: currentProduct.price,
+            promotional_price: currentProduct.promotional_price,
+            total: item.quantity * (currentProduct.promotional_price || currentProduct.price)
+          };
+        }
+        return item;
+      });
+
+      return { hasChanges, updatedItems };
     } catch (error) {
-        console.error("Error checking prices:", error);
-        throw error;
+      console.error("Error checking prices:", error);
+      throw error;
     }
   };
 
   const handleCheckout = async () => {
     try {
-        setIsLoading(true);
-        setHasOrdered(true);
+      setIsLoading(true);
+      setHasOrdered(true);
 
-        if (!defaultAddress || !defaultAddress.id) {
-            toast.error("Please select a shipping address");
-            setHasOrdered(false);
-            setIsLoading(false);
-            return;
-        }
+      if (!defaultAddress || !defaultAddress.id) {
+        toast.error("Please select a shipping address");
+        setHasOrdered(false);
+        setIsLoading(false);
+        return;
+      }
 
-        // Kiểm tra giá trước khi đặt hàng
-        const { hasChanges, updatedItems } = await checkPriceAndStock();
+      // Kiểm tra giá trước khi đặt hàng
+      const { hasChanges, updatedItems } = await checkPriceAndStock();
 
-        if (hasChanges) {
-            const willContinue = window.confirm(
-                "Product prices have changed. Do you want to continue with the updated prices?"
-            );
-
-            if (willContinue) {
-                // Cập nhật state với giá mới
-                setOrderState(prev => ({
-                    ...prev,
-                    items: updatedItems,
-                    subtotal: updatedItems.reduce((sum, item) => sum + item.total, 0)
-                }));
-
-                toast.info("Prices have been updated. Please review your order.", {
-                    duration: 5000,
-                });
-                setIsLoading(false);
-                setHasOrdered(false);
-                return;
-            } else {
-                navigate('/cart');
-                return;
-            }
-        }
-
-        // Tiếp tục xử lý đặt hàng nếu giá không thay đổi hoặc người dùng đồng ý với giá mới
-        const requestData = {
-            items: orderState.items.map((item) => ({
-                product_id: Number(item.id || item.product_id),
-                quantity: Number(item.quantity),
-                ...((item.variant?.id || item.product_variant?.variant_id) && {
-                    variant_id: Number(item.variant?.id || item.product_variant?.variant_id),
-                }),
-            })),
-            shipping_id: Number(defaultAddress.id),
-            payment_method_id: Number(paymentMethod),
-            ...(discountInfo?.discount_info?.code && {
-                discount_code: discountInfo.discount_info.code,
-            }),
-        };
-
-        const response = await axios.post(
-            `${import.meta.env.VITE_API_URL}/orders`,
-            requestData,
-            {
-                headers: {
-                    Authorization: `Bearer ${Cookies.get("access_token")}`,
-                    "Content-Type": "application/json",
-                },
-            }
+      if (hasChanges) {
+        const willContinue = window.confirm(
+          "Giá của một số sản phẩm đã thay đổi. Bạn có muốn tiếp tục đặt hàng với giá mới không?"
         );
 
-        if (response.status === 201) {
-            if (paymentMethod === 1) {
-                // ZaloPay
-                const finalAmount = orderState.subtotal - calculateDiscount();
-                if (finalAmount > 0 && response.data.payment_url) {
-                    const willRedirect = window.confirm(
-                        "You will be redirected to ZaloPay payment page. Do you want to continue?"
-                    );
+        if (willContinue) {
+          // Cập nhật state với giá mới
+          setOrderState(prev => ({
+            ...prev,
+            items: updatedItems,
+            subtotal: updatedItems.reduce((sum, item) => sum + item.total, 0)
+          }));
 
-                    if (willRedirect) {
-                        window.location.href = response.data.payment_url;
-                    } else {
-                        toast.success("Order created successfully!");
-                        navigate("/account/my-order", {
-                            replace: true,
-                            state: {
-                                message: "Order created! Please complete payment within 24 hours.",
-                            },
-                        });
-                    }
-                }
-            } else {
-                // COD
-                toast.success("Order placed successfully!");
-                navigate("/account/my-order", {
-                    replace: true,
-                    state: { message: "Order placed successfully!" },
-                });
-            }
-        }
-    } catch (error: any) {
-        setHasOrdered(false);
-        if (error.response?.data?.message) {
-            toast.error(error.response.data.message);
+          toast.info("Prices have been updated. Please review your order.", {
+            duration: 5000,
+          });
+          setIsLoading(false);
+          setHasOrdered(false);
+          return;
         } else {
-            toast.error("Something went wrong. Please try again later.");
+          navigate('/cart');
+          return;
         }
-        console.error("Order error:", error);
+      }
+
+      // Tiếp tục xử lý đặt hàng nếu giá không thay đổi hoặc người dùng đồng ý với giá mới
+      const requestData = {
+        items: orderState.items.map((item) => ({
+          product_id: Number(item.id || item.product_id),
+          quantity: Number(item.quantity),
+          ...((item.variant?.id || item.product_variant?.variant_id) && {
+            variant_id: Number(item.variant?.id || item.product_variant?.variant_id),
+          }),
+        })),
+        shipping_id: Number(defaultAddress.id),
+        payment_method_id: Number(paymentMethod),
+        ...(discountInfo?.discount_info?.code && {
+          discount_code: discountInfo.discount_info.code,
+        }),
+      };
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/orders`,
+        requestData,
+        {
+          headers: {
+            Authorization: `Bearer ${Cookies.get("access_token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 201) {
+        if (paymentMethod === 1) {
+          // ZaloPay
+          const finalAmount = orderState.subtotal - calculateDiscount();
+          if (finalAmount > 0 && response.data.payment_url) {
+            const willRedirect = window.confirm(
+              "You will be redirected to ZaloPay payment page. Do you want to continue?"
+            );
+
+            if (willRedirect) {
+              window.location.href = response.data.payment_url;
+            } else {
+              toast.success("Order created successfully!");
+              navigate("/account/my-order", {
+                replace: true,
+                state: {
+                  message: "Order created! Please complete payment within 24 hours.",
+                },
+              });
+            }
+          }
+        } else {
+          // COD
+          toast.success("Order placed successfully!");
+          navigate("/account/my-order", {
+            replace: true,
+            state: { message: "Order placed successfully!" },
+          });
+        }
+      }
+    } catch (error: any) {
+      setHasOrdered(false);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Something went wrong. Please try again later.");
+      }
+      console.error("Order error:", error);
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -522,10 +521,9 @@ const CheckoutPage = () => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
         <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-          <h2 className="text-xl font-semibold mb-4">Select Default Address</h2>
+          <h2 className="text-xl font-semibold mb-4">Chọn Địa Chỉ Mặc Định</h2>
           <p className="text-gray-600 mb-4">
-            Please select a default shipping address to continue with your
-            order.
+            Vui lòng chọn địa chỉ giao hàng mặc định để tiếp tục đặt hàng.
           </p>
 
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
@@ -550,7 +548,6 @@ const CheckoutPage = () => {
                   <button
                     onClick={async () => {
                       try {
-                        // Sửa l��i API endpoint
                         await axios.put(
                           `${import.meta.env.VITE_API_URL}/shipping/${item.id}`,
                           {
@@ -568,29 +565,28 @@ const CheckoutPage = () => {
                             },
                           }
                         );
-                        toast.success("Default address updated successfully");
+                        toast.success("Cập nhật địa chỉ mặc định thành công");
                         setShowAddressSelection(false);
-                        window.location.reload(); // Reload để cập nhật địa ch mới
+                        window.location.reload();
                       } catch (error) {
-                        toast.error("Failed to update default address");
+                        toast.error("Cập nhật địa chỉ mặc định thất bại");
                       }
                     }}
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                   >
-                    Set as Default
+                    Đặt làm mặc định
                   </button>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Thêm nút để thêm địa chỉ mới */}
           <div className="mt-4 flex justify-end gap-4">
             <button
               onClick={() => setShowAddressForm(true)}
               className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
             >
-              Add New Address
+              Thêm Địa Chỉ Mới
             </button>
           </div>
         </div>
@@ -618,9 +614,9 @@ const CheckoutPage = () => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
         <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-          <h2 className="text-xl font-semibold mb-4">Add New Address</h2>
+          <h2 className="text-xl font-semibold mb-4">Thêm Địa Chỉ Mới</h2>
           <p className="text-gray-600 mb-4">
-            Please add a shipping address to continue with your order.
+            Vui lòng thêm địa chỉ giao hàng để tiếp tục đặt hàng.
           </p>
 
           {/* Thêm component AddressForm của bạn vào ở đây */}
@@ -633,7 +629,7 @@ const CheckoutPage = () => {
                 onClick={() => setShowAddressForm(false)}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
-                Cancel
+                Hủy
               </button>
             </div>
           )}
@@ -657,7 +653,7 @@ const CheckoutPage = () => {
         {/* Left Section - Order Details */}
         <div className="md:col-span-7">
           <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-semibold mb-6">Order Details</h2>
+            <h2 className="text-2xl font-semibold mb-6">Chi tiết đơn hàng</h2>
 
             {/* Hiển thị danh sách sản phẩm */}
             <div className="space-y-4">
@@ -674,12 +670,12 @@ const CheckoutPage = () => {
                     <h3 className="font-medium">{item.name}</h3>
                     {(item.variant || item.product_variant) && (
                       <p className="text-sm text-gray-500">
-                        Size:{" "}
+                        Kích thước:{" "}
                         {item.variant?.size?.size_name ||
                           item.variant?.size?.size ||
                           item.product_variant?.size}
                         <br />
-                        Color:{" "}
+                        Màu sắc:{" "}
                         {item.variant?.color?.color_name ||
                           item.variant?.color?.color ||
                           item.product_variant?.color}
@@ -731,7 +727,7 @@ const CheckoutPage = () => {
                   type="text"
                   value={discountCode}
                   onChange={(e) => setDiscountCode(e.target.value)}
-                  placeholder="Enter discount code"
+                  placeholder="Nhập mã giảm giá"
                   disabled={isCheckingDiscount || discountInfo}
                   className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                 />
@@ -740,7 +736,7 @@ const CheckoutPage = () => {
                     onClick={handleRemoveDiscount}
                     className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200"
                   >
-                    Remove
+                    Xóa
                   </button>
                 ) : (
                   <button
@@ -751,7 +747,7 @@ const CheckoutPage = () => {
                     {isCheckingDiscount ? (
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     ) : (
-                      "Apply"
+                      "Áp dụng"
                     )}
                   </button>
                 )}
@@ -760,37 +756,37 @@ const CheckoutPage = () => {
               {/* Hiển thị thông tin giảm giá */}
               {discountInfo && (
                 <div className="text-sm text-gray-600 space-y-1">
-                  <p>Code: {discountInfo.discount_info.code}</p>
-                  <p>Discount: {discountInfo.discount_info.percent}%</p>
+                  <p>Mã: {discountInfo.discount_info.code}</p>
+                  <p>Giảm giá: {discountInfo.discount_info.percent}%</p>
                   <p>
-                    Valid until:{" "}
+                    Hạn sử dụng:{" "}
                     {new Date(
                       discountInfo.discount_info.valid_to
                     ).toLocaleDateString()}
                   </p>
                   <p>
-                    Uses remaining: {discountInfo.discount_info.remaining_uses}
+                    Số lần sử dụng còn lại: {discountInfo.discount_info.remaining_uses}
                   </p>
                 </div>
               )}
 
               <div className="mt-6 space-y-2">
                 <div className="flex justify-between">
-                  <span>Subtotal</span>
+                  <span>Tạm tính</span>
                   <span>{formatVND(orderState.subtotal)}</span>
                 </div>
 
                 {discountInfo && (
                   <div className="flex justify-between text-green-600">
                     <span>
-                      Discount ({discountInfo.discount_info.percent}%)
+                      Giảm giá ({discountInfo.discount_info.percent}%)
                     </span>
                     <span>-{formatVND(calculateDiscount())}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                  <span>Total</span>
+                  <span>Tổng cộng</span>
                   <span>
                     {formatVND(orderState.subtotal - calculateDiscount())}
                   </span>
@@ -830,11 +826,11 @@ const CheckoutPage = () => {
                     onClick={handleTogglePopup}
                     className="absolute top-3 right-3 text-blue-500 hover:text-blue-400"
                   >
-                    Change
+                    Thay đổi
                   </button>
                 </div>
                 <div className="inline-block border-2 border-blue-500 text-xs p-[0.15rem] text-blue-400">
-                  default
+                  mặc định
                 </div>
 
                 {showPopup && (
@@ -869,9 +865,9 @@ const CheckoutPage = () => {
                   onChange={(e) => setPaymentMethod(Number(e.target.value))}
                 />
                 <div className="ml-3">
-                  <span className="font-semibold">Cash On Delivery</span>
+                  <span className="font-semibold">Thanh toán khi nhận hàng</span>
                   <p className="text-sm text-gray-500">
-                    Pay with cash upon delivery
+                    Thanh toán bằng tiền mặt khi nhận hàng
                   </p>
                 </div>
               </label>
@@ -898,11 +894,11 @@ const CheckoutPage = () => {
             </div>
           </div>
           <div className="w-full mx-auto rounded-lg bg-white border border-gray-200 p-6 mb-6">
-            <h3 className="font-semibold text-lg mb-4">Order Summary</h3>
+            <h3 className="font-semibold text-lg mb-4">Tóm tắt đơn hàng</h3>
 
             <div className="space-y-4">
               <div className="border-b pb-4">
-                <h4 className="font-medium mb-2">Delivery Address</h4>
+                <h4 className="font-medium mb-2">Địa chỉ giao hàng</h4>
                 <p className="text-gray-600">
                   {
                     address.find((item: any) => item.is_default)
@@ -927,14 +923,14 @@ const CheckoutPage = () => {
               </div>
 
               <div className="border-b pb-4">
-                <h4 className="font-medium mb-2">Payment Method</h4>
+                <h4 className="font-medium mb-2">Phương thức thanh toán</h4>
                 <p className="text-gray-600">
-                  {paymentMethod === 1 ? "ZaloPay" : "Cash On Delivery"}
+                  {paymentMethod === 1 ? "ZaloPay" : "Thanh toán khi nhận hàng"}
                 </p>
               </div>
 
               <div className="border-b pb-4">
-                <h4 className="font-medium mb-2">Order Items</h4>
+                <h4 className="font-medium mb-2">Sản phẩm</h4>
                 {orderState.items.map((item: any) => (
                   <div
                     key={item.id}
@@ -948,9 +944,9 @@ const CheckoutPage = () => {
                           (
                           {[
                             item.variant?.color?.color_name ||
-                              item.product_variant?.color,
+                            item.product_variant?.color,
                             item.variant?.size?.size_name ||
-                              item.product_variant?.size,
+                            item.product_variant?.size,
                           ]
                             .filter(Boolean)
                             .join("/")}
@@ -965,21 +961,21 @@ const CheckoutPage = () => {
 
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Subtotal</span>
+                  <span>Tạm tính</span>
                   <span>{formatVND(orderState.subtotal)}</span>
                 </div>
 
                 {discountInfo && (
                   <div className="flex justify-between text-green-600">
                     <span>
-                      Discount ({discountInfo.discount_info.percent}%)
+                      Giảm giá ({discountInfo.discount_info.percent}%)
                     </span>
                     <span>-{formatVND(calculateDiscount())}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between font-semibold text-lg pt-2">
-                  <span>Total</span>
+                  <span>Tổng cộng</span>
                   <span>
                     {formatVND(orderState.subtotal - calculateDiscount())}
                   </span>
@@ -997,11 +993,11 @@ const CheckoutPage = () => {
                   className="form-checkbox h-4 w-4 text-indigo-500"
                 />
                 <span className="text-sm text-gray-600">
-                  I agree to the{" "}
+                  Tôi đồng ý với{" "}
                   <a href="#" className="text-indigo-500 hover:text-indigo-600">
-                    Terms and Conditions
+                    Điều khoản và Điều kiện
                   </a>{" "}
-                  and confirm that all the information above is correct
+                  và xác nhận rằng tất cả thông tin trên là chính xác
                 </span>
               </label>
             </div>
@@ -1010,21 +1006,20 @@ const CheckoutPage = () => {
             <button
               onClick={handleConfirmOrder}
               disabled={isLoading || !isTermsAccepted}
-              className={`block w-full max-w-xs mx-auto ${
-                isLoading || !isTermsAccepted
-                  ? "bg-indigo-400 cursor-not-allowed" 
-                  : "bg-indigo-500 hover:bg-indigo-700"
-              } focus:bg-indigo-700 text-white rounded-lg px-3 py-2 font-semibold relative`}
+              className={`block w-full max-w-xs mx-auto ${isLoading || !isTermsAccepted
+                ? "bg-indigo-400 cursor-not-allowed"
+                : "bg-indigo-500 hover:bg-indigo-700"
+                } focus:bg-indigo-700 text-white rounded-lg px-3 py-2 font-semibold relative`}
             >
               {isLoading ? (
                 <>
-                  <span className="opacity-0">PLACE ORDER</span>
+                  <span className="opacity-0">ĐẶT HÀNG</span>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   </div>
                 </>
               ) : (
-                "PLACE ORDER"
+                "ĐẶT HÀNG"
               )}
             </button>
           </div>

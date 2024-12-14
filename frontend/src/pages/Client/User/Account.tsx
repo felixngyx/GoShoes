@@ -9,8 +9,8 @@ const Account = () => {
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Breadcrumb
           items={[
-            { name: "Home", link: "/" },
-            { name: "Account", link: "/account" },
+            { name: "Trang chủ", link: "/" },
+            { name: "Tài khoản", link: "/account" },
           ]}
         />
         <div className="mt-8 lg:grid lg:grid-cols-12 lg:gap-8">

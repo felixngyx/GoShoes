@@ -7,8 +7,8 @@ const AboutPage = () => {
     <>
       <Breadcrumb
         items={[
-          { name: "About Us", link: "" },
-          { name: "About Us", link: "about-us" },
+          { name: "Trang chủ", link: "" },
+          { name: "Giới thiệu", link: "about-us" },
         ]}
       />
       <div className="max-w-7xl mx-auto">
@@ -21,10 +21,10 @@ const AboutPage = () => {
               animate={{ opacity: 1, y: 0 }}
             >
               <h1 className="text-6xl font-black text-yellow-300 mb-8 drop-shadow-lg">
-                THE NEW SNEAKERS COLLECTION
+                BỘ SƯU TẬP GIÀY MỚI
               </h1>
               <button className="bg-purple-600 text-white px-12 py-3 rounded-full text-xl font-bold hover:bg-purple-700">
-                START
+                BẮT ĐẦU
               </button>
             </motion.div>
             {/* Decorative Elements */}
@@ -50,15 +50,15 @@ const AboutPage = () => {
           <div className="grid grid-cols-3 gap-8 p-8 text-center">
             <div>
               <h3 className="text-4xl font-black">22M+</h3>
-              <p className="font-bold">USER TRUST US</p>
+              <p className="font-bold">NGƯỜI DÙNG TIN TƯỞNG CHÚNG TÔI</p>
             </div>
             <div>
               <h3 className="text-4xl font-black">90K+</h3>
-              <p className="font-bold">BRAND VISION</p>
+              <p className="font-bold">TẦM NHÌN THƯƠNG HIỆU</p>
             </div>
             <div>
               <h3 className="text-4xl font-black">5K+</h3>
-              <p className="font-bold">AWARDS</p>
+              <p className="font-bold">GIẢI THƯỞNG</p>
             </div>
           </div>
         </div>
@@ -72,11 +72,11 @@ const AboutPage = () => {
               whileInView={{ x: 0, opacity: 1 }}
             >
               <h2 className="text-5xl font-black mb-4">
-                TRENDING SHOES OF THE DAY
+                GIÀY HOT NHẤT TRONG NGÀY
               </h2>
               <img
                 src="https://static.vecteezy.com/system/resources/previews/043/345/236/non_2x/the-latest-in-running-shoe-fashion-on-transparent-background-png.png"
-                alt="Trending Sneaker"
+                alt="Giày Hot"
                 className="w-full h-auto transform -rotate-12"
               />
             </motion.div>
@@ -85,22 +85,22 @@ const AboutPage = () => {
 
         {/* Collection Grid */}
         <div className="px-8 my-16">
-          <h2 className="text-5xl font-black mb-8">TOP COLLECTION</h2>
+          <h2 className="text-5xl font-black mb-8">BỘ SƯU TẬP HÀNG ĐẦU</h2>
           <div className="grid grid-cols-3 gap-8">
             {[
               {
-                title: "New Advanced Filter-equipped basketball shoes",
+                title: "Giày bóng rổ mới với bộ lọc tiên tiến",
                 image:
                   "https://png.pngtree.com/png-clipart/20230506/original/pngtree-sneakers-running-shoes-bright-colors-png-image_9145044.png",
                 color: "bg-orange-400",
               },
               {
-                title: "Multi White Casual Sneakers",
+                title: "Giày thể thao trắng đa năng",
                 image: "/src/images/about/goshoes_giay2.png",
                 color: "bg-lime-400",
               },
               {
-                title: "Desert Blue Casual Walking",
+                title: "Giày đi bộ xanh sa mạc",
                 image: "/src/images/about/goshoes_nike.png",
                 color: "bg-yellow-400",
               },
@@ -117,7 +117,7 @@ const AboutPage = () => {
                 />
                 <p className="font-semibold">{item.title}</p>
                 <button className="mt-4 bg-purple-600 text-white px-6 py-2 rounded-full">
-                  Shop
+                  Mua
                 </button>
               </motion.div>
             ))}
@@ -127,10 +127,10 @@ const AboutPage = () => {
         {/* Categories */}
         <div className="px-8 space-y-4 mb-16">
           {[
-            "PREMIUM COLLECTION",
-            "BEST ARRIVALS",
-            "CRAZY SHOES",
-            "LADIES SHOES",
+            "BỘ SƯU TẬP CAO CẤP",
+            "SẢN PHẨM MỚI NHẤT",
+            "GIÀY ĐỘC ĐÁO",
+            "GIÀY NỮ",
           ].map((category) => (
             <motion.div
               key={category}
@@ -142,7 +142,7 @@ const AboutPage = () => {
           ))}
         </div>
 
-        {/* Decorative Elements */}
+        {/* Các yếu tố trang trí */}
         <div className="fixed top-0 right-0 -z-10">
           <div className="text-blue-300 opacity-20">✦</div>
         </div>

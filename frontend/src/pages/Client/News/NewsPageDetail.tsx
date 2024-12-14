@@ -22,7 +22,7 @@ const NewsPageDetail = () => {
         </h1>
         <div className="mb-6 text-sm text-gray-600">
           <span>
-            By <strong>{newDetail.author_name}</strong>
+            Bởi <strong>{newDetail.author_name}</strong>
           </span>{" "}
           | <span>{new Date(newDetail.published_at).toLocaleDateString()}</span>
         </div>
@@ -41,10 +41,10 @@ const NewsPageDetail = () => {
             to="/news"
             className="text-indigo-500 hover:text-indigo-700 text-sm font-medium"
           >
-            &larr; Back to News
+            &larr; Quay lại Tin tức
           </Link>
           <div className="text-sm text-gray-500">
-            Category: <strong>{newDetail.category_name}</strong>
+            Thể loại: <strong>{newDetail.category_name}</strong>
           </div>
         </div>
       </div>

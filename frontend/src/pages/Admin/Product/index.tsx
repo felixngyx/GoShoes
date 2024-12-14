@@ -173,19 +173,19 @@ const Product = () => {
 	// Lọc sản phẩm theo search term
 	const filteredProducts = searchTerm
 		? allProducts.filter((product) => {
-				const searchLower = searchTerm.toLowerCase();
-				const nameMatch = product.name.toLowerCase().includes(searchLower);
+			const searchLower = searchTerm.toLowerCase();
+			const nameMatch = product.name.toLowerCase().includes(searchLower);
 
-				// Sử dụng category_ids thay vì categories
-				const categories = Array.isArray(product.category_ids)
-					? product.category_ids
-					: [];
-				const categoryMatch = categories.some((cat) =>
-					String(cat).toLowerCase().includes(searchLower)
-				);
+			// Sử dụng category_ids thay vì categories
+			const categories = Array.isArray(product.category_ids)
+				? product.category_ids
+				: [];
+			const categoryMatch = categories.some((cat) =>
+				String(cat).toLowerCase().includes(searchLower)
+			);
 
-				return nameMatch || categoryMatch;
-		  })
+			return nameMatch || categoryMatch;
+		})
 		: allProducts;
 
 	// Tính toán sản phẩm cho trang hiện tại
@@ -198,34 +198,31 @@ const Product = () => {
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-4 px-2 md:py-6 md:px-6 xl:px-7.5 flex flex-col gap-5">
 			<div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
-					Product List ({filteredProducts.length} products)
+					Danh sách sản phẩm ({filteredProducts.length} sản phẩm)
 				</h4>
 
 				<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-					<div className="relative flex-1 sm:flex-none">
+					<label className="input input-sm w-80 input-bordered flex items-center gap-2">
 						<input
 							type="text"
-							placeholder="Search by name or category..."
+							className="grow"
+							placeholder="Tìm kiếm theo tên hoặc danh mục..."
 							value={searchTerm}
-							onChange={(e) => handleSearch(e.target.value)}
-							className="input input-bordered w-full pl-10"
-						/>
+							onChange={(e) => handleSearch(e.target.value)} />
 						<Search
-							className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
 							size={20}
 						/>
-					</div>
+					</label>
 
 					<div className="flex items-center gap-2">
 						<button
-							className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error whitespace-nowrap ${
-								selectedItems.length > 0
-									? 'flex items-center gap-2'
-									: 'hidden'
-							}`}
+							className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error whitespace-nowrap ${selectedItems.length > 0
+								? 'flex items-center gap-2'
+								: 'hidden'
+								}`}
 						>
 							<Trash2 size={16} />
-							<span className="hidden sm:inline">Delete</span>
+							<span className="hidden sm:inline">Xóa</span>
 							{selectedItems.length > 0 && (
 								<span>({selectedItems.length})</span>
 							)}
@@ -236,7 +233,7 @@ const Product = () => {
 							className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary whitespace-nowrap"
 						>
 							<Plus size={16} />
-							<span className="hidden sm:inline">Add Product</span>
+							<span className="hidden sm:inline">Thêm sản phẩm</span>
 						</Link>
 					</div>
 				</div>
@@ -262,13 +259,12 @@ const Product = () => {
 										className="flex items-center cursor-pointer"
 										onClick={() => handleSort('name')}
 									>
-										Name
+										Tên
 										<FaSort
-											className={`ml-1 ${
-												sortConfig.field === 'name'
-													? 'text-primary'
-													: 'text-gray-400'
-											}`}
+											className={`ml-1 ${sortConfig.field === 'name'
+												? 'text-primary'
+												: 'text-gray-400'
+												}`}
 										/>
 									</div>
 								</th>
@@ -280,13 +276,12 @@ const Product = () => {
 										className="flex items-center cursor-pointer"
 										onClick={() => handleSort('price')}
 									>
-										Price
+										Giá
 										<FaSort
-											className={`ml-1 ${
-												sortConfig.field === 'price'
-													? 'text-primary'
-													: 'text-gray-400'
-											}`}
+											className={`ml-1 ${sortConfig.field === 'price'
+												? 'text-primary'
+												: 'text-gray-400'
+												}`}
 										/>
 									</div>
 								</th>
@@ -298,13 +293,12 @@ const Product = () => {
 										className="flex items-center cursor-pointer"
 										onClick={() => handleSort('promotional_price')}
 									>
-										Sale Price
+										Giá khuyến mãi
 										<FaSort
-											className={`ml-1 ${
-												sortConfig.field === 'promotional_price'
-													? 'text-primary'
-													: 'text-gray-400'
-											}`}
+											className={`ml-1 ${sortConfig.field === 'promotional_price'
+												? 'text-primary'
+												: 'text-gray-400'
+												}`}
 										/>
 									</div>
 								</th>
@@ -316,13 +310,12 @@ const Product = () => {
 										className="flex items-center cursor-pointer"
 										onClick={() => handleSort('stock_quantity')}
 									>
-										Quantity
+										Số lượng
 										<FaSort
-											className={`ml-1 ${
-												sortConfig.field === 'stock_quantity'
-													? 'text-primary'
-													: 'text-gray-400'
-											}`}
+											className={`ml-1 ${sortConfig.field === 'stock_quantity'
+												? 'text-primary'
+												: 'text-gray-400'
+												}`}
 										/>
 									</div>
 								</th>
@@ -334,18 +327,17 @@ const Product = () => {
 										className="flex items-center cursor-pointer"
 										onClick={() => handleSort('status')}
 									>
-										Status
+										Trạng thái
 										<FaSort
-											className={`ml-1 ${
-												sortConfig.field === 'status'
-													? 'text-primary'
-													: 'text-gray-400'
-											}`}
+											className={`ml-1 ${sortConfig.field === 'status'
+												? 'text-primary'
+												: 'text-gray-400'
+												}`}
 										/>
 									</div>
 								</th>
 								<th scope="col" className="px-4 py-3 whitespace-nowrap">
-									Action
+									Thao tác
 								</th>
 							</tr>
 						</thead>
@@ -355,7 +347,7 @@ const Product = () => {
 							) : paginatedProducts.length === 0 ? (
 								<tr>
 									<td colSpan={7} className="text-center py-4">
-										No products found
+										Không tìm thấy sản phẩm nào
 									</td>
 								</tr>
 							) : (
@@ -388,22 +380,21 @@ const Product = () => {
 											{formatVNCurrency(Number(product.price))}
 										</td>
 										<td className="px-4 py-3 hidden md:table-cell">
-											{product.promotional_price 
+											{product.promotional_price
 												? formatVNCurrency(Number(product.promotional_price))
-												: 'None'}
+												: 'Không có'}
 										</td>
 										<td className="px-4 py-3 hidden lg:table-cell">
 											{product.stock_quantity}
 										</td>
 										<td className="px-4 py-3 hidden sm:table-cell">
 											<div
-												className={`badge text-white bg-${
-													product.status === Status.PUBLIC
-														? 'success'
-														: product.status === Status.UNPUBLIC
+												className={`badge text-white bg-${product.status === Status.PUBLIC
+													? 'success'
+													: product.status === Status.UNPUBLIC
 														? 'warning'
 														: 'red-500'
-												}`}
+													}`}
 											>
 												{product.status}
 											</div>

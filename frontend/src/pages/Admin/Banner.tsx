@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  Typography, 
-  IconButton, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  TextField, 
+import {
+  Card,
+  Typography,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
   Button,
   DialogActions
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Edit, ImagePlus} from 'lucide-react';
+import { Edit, ImagePlus } from 'lucide-react';
 import PageTitle from "../../components/admin/PageTitle";
 import axiosClient from '../../apis/axiosClient';
 import uploadImageToCloudinary from '../../common/uploadCloudinary';
@@ -33,10 +33,10 @@ interface BannerSectionProps {
 }
 
 const BannerSection = ({ title, items, onEdit }: BannerSectionProps) => {
-  return ( 
+  return (
     <div className="mb-8">
-      <Typography 
-        variant="h4" 
+      <Typography
+        variant="h4"
         className="mb-4 text-gray-800 font-bold"
       >
         {title}
@@ -51,35 +51,35 @@ const BannerSection = ({ title, items, onEdit }: BannerSectionProps) => {
             whileHover={{ scale: 1.02 }}
             className="relative group"
           >
-            <Card 
+            <Card
               className="h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
             >
-              <div 
+              <div
                 className="flex flex-col items-center justify-center 
                 p-6 bg-gradient-to-r from-gray-700 to-gray-900 
                 text-white h-[250px] relative overflow-hidden"
               >
-                {/* Banner Image with Overlay */}
+                {/* Hình ảnh banner với lớp phủ */}
                 {banner.image && (
-                  <img 
-                    src={`${banner.image}`} 
-                    alt={banner.title} 
+                  <img
+                    src={`${banner.image}`}
+                    alt={banner.title}
                     className="absolute inset-0 w-full h-full object-cover opacity-30"
                   />
                 )}
 
-                {/* Banner Title */}
-                <Typography 
-                  variant="h5" 
+                {/* Tiêu đề banner */}
+                <Typography
+                  variant="h5"
                   className="relative z-10 text-center"
                 >
                   {banner.title}
                 </Typography>
 
-                {/* Edit Button */}
+                {/* Nút chỉnh sửa */}
                 <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <IconButton 
-                    size="small" 
+                  <IconButton
+                    size="small"
                     className="bg-white/20 hover:bg-white/30 mr-2"
                     onClick={() => onEdit(banner)}
                   >
@@ -127,19 +127,19 @@ const BannerPage = () => {
         setIsLoading(true);
         const response = await axiosClient.get('/banners');
         const bannerData = response.data.data;
-        
+
         // Categorize banners based on their position
         setBanners({
-          header: bannerData.filter((b: BannerType) => 
+          header: bannerData.filter((b: BannerType) =>
             ['home1', 'home2', 'home3'].includes(b.position)
           ),
-          footer: bannerData.filter((b: BannerType) => 
+          footer: bannerData.filter((b: BannerType) =>
             ['home4', 'home5'].includes(b.position)
           ),
           product: bannerData.filter((b: BannerType) => b.position === 'all1')
         });
       } catch (error) {
-        toast.error('Failed to load banners');
+        toast.error('Không tải được banner');
         console.error('Banner fetch error:', error);
       } finally {
         setIsLoading(false);
@@ -182,12 +182,12 @@ const BannerPage = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    
+
     const file = files[0];
     if (file) {
       // Kiểm tra kích thước file (10MB = 10 * 1024 * 1024 bytes)
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('Image size must be less than 10MB');
+        toast.error('Kích thước ảnh phải nhỏ hơn 10MB');
         return;
       }
 
@@ -201,10 +201,10 @@ const BannerPage = () => {
               imageUrl: imageUrl
             };
           });
-          toast.success('Image uploaded successfully');
+          toast.success('Tải ảnh lên thành công');
         }
       } catch (error) {
-        toast.error('Image upload failed');
+        toast.error('Tải ảnh lên thất bại');
         console.error('Image upload error:', error);
       }
     }
@@ -217,7 +217,7 @@ const BannerPage = () => {
     try {
       // Kiểm tra các trường bắt buộc
       if (!editingBanner.title || !editingBanner.imageUrl) {
-        toast.error('Please fill in all required fields');
+        toast.error('Vui lòng điền đầy đủ các trường bắt buộc');
         return;
       }
 
@@ -227,7 +227,7 @@ const BannerPage = () => {
         url: editingBanner.redirectUrl || '', // Cho phép URL rỗng
         image: editingBanner.imageUrl
       });
-      
+
       // Get updated banner from response
       const updatedBanner = response.data.data;
       // Update local state with the response data
@@ -237,10 +237,10 @@ const BannerPage = () => {
         product: prev.product.map((b) => b.id === updatedBanner.id ? updatedBanner : b)
       }));
 
-      toast.success('Banner updated successfully!');
+      toast.success('Cập nhật banner thành công!');
       handleCloseModal();
     } catch (error) {
-      toast.error('Failed to update banner');
+      toast.error('Cập nhật banner thất bại');
       console.error('Banner update error:', error);
     }
   };
@@ -249,60 +249,60 @@ const BannerPage = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <Typography variant="h6">Loading Banners...</Typography>
+        <Typography variant="h6">Đang tải banner...</Typography>
       </div>
     );
   }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <PageTitle title="Banner Management | Goshoes Admin" />
-      
+      <PageTitle title="Quản lý banner | Goshoes Admin" />
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
         {/* Banner Sections */}
-        <BannerSection 
-          title="Home Page Header Banners" 
+        <BannerSection
+          title="Banner đầu trang chủ"
           items={banners.header}
           onEdit={handleEdit}
         />
-        
-        <BannerSection 
-          title="Home Page Footer Banners" 
+
+        <BannerSection
+          title="Banner cuối trang chủ"
           items={banners.footer}
           onEdit={handleEdit}
         />
-        
-        <BannerSection 
-          title="Product List Banner" 
+
+        <BannerSection
+          title="Banner danh sách sản phẩm"
           items={banners.product}
           onEdit={handleEdit}
         />
       </motion.div>
 
       {/* Edit Banner Modal */}
-      <Dialog 
-        open={openEditModal} 
+      <Dialog
+        open={openEditModal}
         onClose={handleCloseModal}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Edit Banner</DialogTitle>
+        <DialogTitle>Chỉnh sửa banner</DialogTitle>
         <DialogContent>
           <div className="space-y-4 mt-2">
             {/* Banner Title Input */}
             <TextField
               name="title"
-              label="Banner Title"
+              label="Tiêu đề banner"
               fullWidth
               value={editingBanner?.title || ''}
               onChange={handleInputChange}
               variant="outlined"
             />
-            
+
             {/* Image Upload Section */}
             <div className="flex items-center space-x-4">
               <input
@@ -318,15 +318,15 @@ const BannerPage = () => {
                   component="span"
                   startIcon={<ImagePlus />}
                 >
-                  Upload Image
+                  Tải ảnh lên
                 </Button>
               </label>
-              
+
               {/* Image Preview */}
               {editingBanner?.imageUrl && (
-                <img 
-                  src={`${editingBanner.imageUrl}`} 
-                  alt="Banner Preview" 
+                <img
+                  src={`${editingBanner.imageUrl}`}
+                  alt="Xem trước banner"
                   className="w-24 h-24 object-cover rounded"
                 />
               )}
@@ -335,7 +335,7 @@ const BannerPage = () => {
             {/* Redirect URL Input */}
             <TextField
               name="redirectUrl"
-              label="Redirect URL"
+              label="URL chuyển hướng"
               fullWidth
               value={editingBanner?.redirectUrl || ''}
               onChange={handleInputChange}
@@ -345,14 +345,14 @@ const BannerPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal} color="secondary">
-            Cancel
+            Hủy
           </Button>
-          <Button 
-            onClick={handleSaveBanner} 
-            color="primary" 
+          <Button
+            onClick={handleSaveBanner}
+            color="primary"
             variant="contained"
           >
-            Save Changes
+            Lưu thay đổi
           </Button>
         </DialogActions>
       </Dialog>

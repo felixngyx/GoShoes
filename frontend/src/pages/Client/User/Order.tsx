@@ -283,8 +283,7 @@ export default function OrderList(): JSX.Element {
 				order.items.map(async (item) => {
 					try {
 						const response = await axios.get(
-							`${import.meta.env.VITE_API_URL}/products/${
-								item.product.id
+							`${import.meta.env.VITE_API_URL}/products/${item.product.id
 							}`,
 							{
 								headers: {
@@ -413,7 +412,7 @@ export default function OrderList(): JSX.Element {
 						console.error('Error processing item:', error);
 						throw new Error(
 							error.message ||
-								`Không thể lấy thông tin sản phẩm ${item.product.name}`
+							`Không thể lấy thông tin sản phẩm ${item.product.name}`
 						);
 					}
 				})
@@ -440,7 +439,7 @@ export default function OrderList(): JSX.Element {
 			console.error('Lỗi khi xử lý mua lại:', error);
 			toast.error(
 				error.message ||
-					'Không thể xử lý yêu cầu mua lại. Vui lòng thử lại sau.'
+				'Không thể xử lý yêu cầu mua lại. Vui lòng thử lại sau.'
 			);
 		}
 	};
@@ -449,25 +448,25 @@ export default function OrderList(): JSX.Element {
 		status: OrderStatus
 	): {
 		color:
-			| 'default'
-			| 'primary'
-			| 'secondary'
-			| 'error'
-			| 'info'
-			| 'success'
-			| 'warning';
+		| 'default'
+		| 'primary'
+		| 'secondary'
+		| 'error'
+		| 'info'
+		| 'success'
+		| 'warning';
 	} => {
 		const statusColors: Record<
 			OrderStatus,
 			{
 				color:
-					| 'default'
-					| 'primary'
-					| 'secondary'
-					| 'error'
-					| 'info'
-					| 'success'
-					| 'warning';
+				| 'default'
+				| 'primary'
+				| 'secondary'
+				| 'error'
+				| 'info'
+				| 'success'
+				| 'warning';
 			}
 		> = {
 			pending: { color: 'warning' },
@@ -744,7 +743,7 @@ export default function OrderList(): JSX.Element {
 				<form onSubmit={handleSearch} className="w-full sm:w-auto">
 					<TextField
 						name="search"
-						placeholder="Search by Order ID, SKU..."
+						placeholder="Tìm kiếm theo Mã đơn hàng, SKU..."
 						variant="outlined"
 						size="small"
 						defaultValue={filters.search}
@@ -840,7 +839,7 @@ export default function OrderList(): JSX.Element {
 						<Paper key={order.id} className="mb-4 p-4">
 							<div className="flex justify-between items-start mb-2">
 								<div>
-									<p className="font-medium">Order #{order.sku}</p>
+									<p className="font-medium">Đơn hàng #{order.sku}</p>
 									<p className="text-sm text-gray-500">
 										{format(
 											new Date(order.created_at),
@@ -867,8 +866,7 @@ export default function OrderList(): JSX.Element {
 												{order.items[0]?.product.name}
 												{order.items.length > 1 && (
 													<span className="text-sm text-gray-500 ml-2">
-														+{order.items.length - 1} orther
-														products
+														+{order.items.length - 1} sản phẩm khác
 													</span>
 												)}
 											</h3>
@@ -884,14 +882,14 @@ export default function OrderList(): JSX.Element {
 									</p>
 									{Number(order.original_total) - Number(order.total) >
 										0 && (
-										<p className="text-sm text-green-600">
-											Saving:{' '}
-											{formatCurrency(
-												Number(order.original_total) -
+											<p className="text-sm text-green-600">
+												Tiết kiệm:{' '}
+												{formatCurrency(
+													Number(order.original_total) -
 													Number(order.total)
-											)}
-										</p>
-									)}
+												)}
+											</p>
+										)}
 								</div>
 							</div>
 							<div className="flex justify-end items-center pt-4 space-x-2">
@@ -903,8 +901,8 @@ export default function OrderList(): JSX.Element {
 					{(!ordersData?.data || ordersData.data.length === 0) && (
 						<Paper className="p-12 text-center text-gray-500">
 							{filters.search
-								? 'No orders found matching your search criteria'
-								: 'No orders found'}
+								? 'Không tìm thấy đơn hàng nào khớp với tiêu chí tìm kiếm của bạn'
+								: 'Không tìm thấy đơn hàng nào'}
 						</Paper>
 					)}
 
@@ -925,17 +923,17 @@ export default function OrderList(): JSX.Element {
 				open={openDialog.type === 'cancel'}
 				onClose={() => setOpenDialog({ type: '', orderId: null })}
 			>
-				<DialogTitle>Confirm Cancel Order</DialogTitle>
+				<DialogTitle>Xác nhận hủy đơn hàng</DialogTitle>
 				<DialogContent>
 					<DialogContentText>
-						Are you sure you want to cancel this order?
+						Bạn có chắc chắn muốn hủy đơn hàng này không?
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
 					<Button
 						onClick={() => setOpenDialog({ type: '', orderId: null })}
 					>
-						No
+						Không
 					</Button>
 					<Button
 						onClick={() =>
@@ -944,7 +942,7 @@ export default function OrderList(): JSX.Element {
 						variant="contained"
 						color="error"
 					>
-						Yes, Cancel Order
+						Có, hủy đơn hàng
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -972,17 +970,16 @@ export default function OrderList(): JSX.Element {
 					}}
 				>
 					<Typography variant="h6" component="h2" mb={2}>
-						Return & Refund Request
+						Yêu cầu trả hàng & hoàn tiền
 					</Typography>
 
 					<Typography variant="body2" color="text.secondary" mb={3}>
-						Please provide details about your return request. Note that
-						items must be in their original condition.
+						Vui lòng cung cấp chi tiết về yêu cầu trả hàng của bạn. Lưu ý rằng các mặt hàng phải ở tình trạng ban đầu.
 					</Typography>
 
 					<TextField
 						fullWidth
-						label="Reason for Return"
+						label="Lý do trả hàng"
 						multiline
 						rows={4}
 						value={refundForm.reason}
@@ -992,14 +989,14 @@ export default function OrderList(): JSX.Element {
 								reason: e.target.value,
 							}))
 						}
-						placeholder="Please explain why you want to return this item..."
+						placeholder="Vui lòng giải thích lý do bạn muốn trả lại mặt hàng này..."
 						required
 						margin="normal"
 					/>
 
 					<Box mt={3}>
 						<Typography variant="subtitle2" mb={1}>
-							Upload Images (Max 5)
+							Tải lên hình ảnh (Tối đa 5)
 						</Typography>
 
 						<Box
@@ -1063,7 +1060,7 @@ export default function OrderList(): JSX.Element {
 							startIcon={<Upload className="w-4 h-4" />}
 							disabled={refundForm.images.length >= 5}
 						>
-							Upload Images ({refundForm.images.length}/5)
+							Tải lên hình ảnh ({refundForm.images.length}/5)
 						</Button>
 					</Box>
 
@@ -1074,7 +1071,7 @@ export default function OrderList(): JSX.Element {
 								setRefundForm({ reason: '', images: [] });
 							}}
 						>
-							Cancel
+							Hủy bỏ
 						</Button>
 						<Button
 							onClick={() =>
@@ -1088,7 +1085,7 @@ export default function OrderList(): JSX.Element {
 								refundForm.images.length === 0
 							}
 						>
-							Submit Request
+							Gửi yêu cầu
 						</Button>
 					</DialogActions>
 				</Box>
@@ -1098,17 +1095,17 @@ export default function OrderList(): JSX.Element {
 				open={openDialog.type === 'confirm-received'}
 				onClose={() => setOpenDialog({ type: '', orderId: null })}
 			>
-				<DialogTitle>Confirm Order Received</DialogTitle>
+				<DialogTitle>Xác nhận đã nhận hàng</DialogTitle>
 				<DialogContent>
 					<DialogContentText>
-						Have you received your order? This action cannot be undone.
+						Bạn đã nhận được đơn hàng của mình chưa? Hành động này không thể hoàn tác.
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
 					<Button
 						onClick={() => setOpenDialog({ type: '', orderId: null })}
 					>
-						Cancel
+						Hủy bỏ
 					</Button>
 					<Button
 						onClick={() =>
@@ -1118,7 +1115,7 @@ export default function OrderList(): JSX.Element {
 						variant="contained"
 						color="success"
 					>
-						Yes, I've Received It
+						Có, tôi đã nhận được
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -1127,20 +1124,20 @@ export default function OrderList(): JSX.Element {
 				open={openDialog.type === 'confirm-payment'}
 				onClose={handleClosePaymentDialog}
 			>
-				<DialogTitle>Confirm Payment Navigation</DialogTitle>
+				<DialogTitle>Xác nhận điều hướng thanh toán</DialogTitle>
 				<DialogContent>
 					<DialogContentText>
-						Would you like to proceed to the payment page now?
+						Bạn có muốn chuyển đến trang thanh toán ngay bây giờ không?
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={handleClosePaymentDialog}>Later</Button>
+					<Button onClick={handleClosePaymentDialog}>Để sau</Button>
 					<Button
 						onClick={handleConfirmPayment}
 						variant="contained"
 						color="primary"
 					>
-						Pay Now
+						Thanh toán ngay
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -1152,13 +1149,12 @@ export default function OrderList(): JSX.Element {
 				<DialogTitle>
 					<div className="flex items-center gap-2">
 						<CheckCircle className="h-6 w-6 text-green-500" />
-						Order Cancelled Successfully
+						Hủy đơn hàng thành công
 					</div>
 				</DialogTitle>
 				<DialogContent>
 					<DialogContentText>
-						Your order has been cancelled. Our customer service team will
-						contact you shortly to confirm the cancellation.
+						Đơn hàng của bạn đã được hủy. Đội ngũ chăm sóc khách hàng của chúng tôi sẽ liên hệ với bạn sớm để xác nhận việc hủy đơn hàng.
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
@@ -1167,7 +1163,7 @@ export default function OrderList(): JSX.Element {
 						variant="contained"
 						color="primary"
 					>
-						Got it
+						Đã hiểu
 					</Button>
 				</DialogActions>
 			</Dialog>

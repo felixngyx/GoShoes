@@ -107,9 +107,8 @@ const Brand = () => {
 		buttons.push(
 			<button
 				key="first"
-				className={`join-item btn btn-sm ${
-					pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
-				}`}
+				className={`join-item btn btn-sm ${pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
+					}`}
 				onClick={() => handlePageChange(1)}
 			>
 				1
@@ -139,11 +138,10 @@ const Brand = () => {
 					buttons.push(
 						<button
 							key={i}
-							className={`join-item btn btn-sm ${
-								pagination.page === i
-									? 'btn-active bg-primary text-white'
-									: ''
-							}`}
+							className={`join-item btn btn-sm ${pagination.page === i
+								? 'btn-active bg-primary text-white'
+								: ''
+								}`}
 							onClick={() => handlePageChange(i)}
 						>
 							{i}
@@ -168,11 +166,10 @@ const Brand = () => {
 			buttons.push(
 				<button
 					key="last"
-					className={`join-item btn btn-sm ${
-						pagination.page === totalPages
-							? 'btn-active bg-primary text-white'
-							: ''
-					}`}
+					className={`join-item btn btn-sm ${pagination.page === totalPages
+						? 'btn-active bg-primary text-white'
+						: ''
+						}`}
 					onClick={() => handlePageChange(totalPages)}
 				>
 					{totalPages}
@@ -335,25 +332,24 @@ const Brand = () => {
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5 col-span-1">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
-					Brand List
+					Danh sách thương hiệu
 				</h4>
 				<div className="flex items-center gap-2">
 					<button
-						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${
-							selectedItems.length > 0
-								? 'flex items-center gap-2'
-								: 'hidden'
-						}`}
+						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${selectedItems.length > 0
+							? 'flex items-center gap-2'
+							: 'hidden'
+							}`}
 					>
 						<Trash2 size={16} />
-						<p>Delete {selectedItems.length} items</p>
+						<p>Xóa {selectedItems.length} mục</p>
 					</button>
 					<button
 						className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 						onClick={openAddModal}
 					>
 						<Plus size={16} />
-						Add Brand
+						Thêm thương hiệu
 					</button>
 				</div>
 			</div>
@@ -380,13 +376,13 @@ const Brand = () => {
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3 w-2/5">
-								Name
+								Tên
 							</th>
 							<th scope="col" className="px-6 py-3 w-2/5">
 								Logo
 							</th>
 							<th scope="col" className="px-6 py-3 w-1/5">
-								Action
+								Thao tác
 							</th>
 						</tr>
 					</thead>
@@ -408,11 +404,10 @@ const Brand = () => {
 						<tbody>
 							{brands.map((brand, key) => (
 								<tr
-									className={`bg-white dark:bg-slate-800 ${
-										key !== brands.length - 1
-											? 'border-b border-stroke'
-											: ''
-									}`}
+									className={`bg-white dark:bg-slate-800 ${key !== brands.length - 1
+										? 'border-b border-stroke'
+										: ''
+										}`}
 									key={key}
 								>
 									<td className="w-4 p-4">
@@ -436,7 +431,7 @@ const Brand = () => {
 									<td className="px-6 py-3">
 										<img
 											src={brand.logo_url}
-											alt="Brand logo"
+											alt="Logo thương hiệu"
 											className="w-10 h-10 object-cover rounded-md"
 										/>
 									</td>
@@ -465,7 +460,7 @@ const Brand = () => {
 
 			<div className="join ms-auto">{renderPaginationButtons()}</div>
 
-			{/* Add/Edit Brand Modal */}
+			{/* Thêm/Sửa thương hiệu Modal */}
 			{isModalOpen && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 					<div
@@ -473,17 +468,17 @@ const Brand = () => {
 						className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/3"
 					>
 						<h2 className="text-xl font-semibold mb-4">
-							{editingBrand ? 'Edit Brand' : 'Add Brand'}
+							{editingBrand ? 'Sửa thương hiệu' : 'Thêm thương hiệu'}
 						</h2>
 						<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 							<div>
 								<label htmlFor="name" className="text-sm font-bold">
-									Brand name
+									Tên thương hiệu
 								</label>
 								<input
 									type="text"
 									className="w-full p-2 border rounded"
-									placeholder="Brand name"
+									placeholder="Tên thương hiệu"
 									{...register('name')}
 								/>
 								{errors.name && (
@@ -515,7 +510,7 @@ const Brand = () => {
 														? URL.createObjectURL(imageFile)
 														: imageFile
 												}
-												alt="Brand logo preview"
+												alt="Xem trước logo thương hiệu"
 												className="w-full h-full object-cover rounded-md border"
 											/>
 											<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -550,7 +545,7 @@ const Brand = () => {
 										>
 											<Upload />
 											<p className="text-xs text-gray-500">
-												Upload Logo
+												Tải lên logo
 											</p>
 										</div>
 									)}
@@ -568,13 +563,13 @@ const Brand = () => {
 									className="btn btn-sm bg-gray-200 hover:bg-gray-300 text-gray-800"
 									onClick={closeModal}
 								>
-									Cancel
+									Hủy
 								</button>
 								<button
 									type="submit"
 									className="btn btn-sm bg-blue-500 hover:bg-blue-600 text-white"
 								>
-									{editingBrand ? 'Save Changes' : 'Add Brand'}
+									{editingBrand ? 'Lưu thay đổi' : 'Thêm thương hiệu'}
 								</button>
 							</div>
 						</form>
@@ -586,7 +581,7 @@ const Brand = () => {
 			{previewImage && (
 				<dialog open className="modal">
 					<div className="modal-box">
-						<img src={previewImage} alt="Preview" className="w-full" />
+						<img src={previewImage} alt="Xem trước" className="w-full" />
 						<button
 							onClick={() => setPreviewImage(null)}
 							className="btn btn-sm absolute right-2 top-2"
