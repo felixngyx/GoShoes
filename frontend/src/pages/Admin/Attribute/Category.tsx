@@ -77,13 +77,13 @@ const Category = () => {
 
 	const deleteCategory = async (id: number) => {
 		try {
-			if (window.confirm('Are you sure you want to delete this category?')) {
+			if (window.confirm('Bạn có chắc chắn muốn xóa danh mục này?')) {
 				await categoryService.delete(Number(id));
-				toast.success('Category deleted successfully');
+				toast.success('Danh mục đã được xóa');
 				fetchCategories();
 			}
 		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'An error occurred');
+			toast.error(error.response?.data?.message || 'Danh mục không thể xóa');
 		}
 	};
 
@@ -93,17 +93,17 @@ const Category = () => {
 			if (editingCategory) {
 				data.slug = generateSlug(data.name);
 				await categoryService.update(Number(editingCategory.id!), data);
-				toast.success('Category updated successfully');
+				toast.success('Danh mục đã được cập nhật');
 			} else {
 				data.slug = generateSlug(data.name);
 				await categoryService.create(data);
-				toast.success('Category added successfully');
+				toast.success('Danh mục đã được thêm');
 			}
 			closeModal();
 			await fetchCategories();
 			reset();
 		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'Something went wrong');
+			toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
 		} finally {
 			setLoading(false);
 		}

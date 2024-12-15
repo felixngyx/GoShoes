@@ -71,7 +71,7 @@ class RefundController extends Controller
             if (!$order) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Order is not found or does not belong to you'
+                    'message' => 'Order không tồn tại hoặc không thuộc về bạn'
                 ], 404);
             }
 
@@ -83,7 +83,7 @@ class RefundController extends Controller
             if ($existingRefund) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Order Refund Request already exists'
+                    'message' => 'Đơn hàng đã có yêu cầu hoàn tiền khác đang chờ xử lý'
                 ], 422);
             }
 
@@ -91,7 +91,7 @@ class RefundController extends Controller
             if ($request->amount > $order->total_amount) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Refund amount is greater than the total amount of the order'
+                    'message' => 'Số tiền hoàn không thể lớn hơn tổng tiền đơn hàng'
                 ], 422);
             }
 
@@ -110,7 +110,7 @@ class RefundController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => 'Refund Request created successfully',
+                'message' => 'Yêu cầu hoàn tiền đã được gửi',
                 'refund_request' => $refundRequest
             ], 201);
 
@@ -183,7 +183,7 @@ class RefundController extends Controller
         try {
             DB::beginTransaction();
             $refundRequest = RefundRequest::find($request->id);
-            
+
             if (!$refundRequest) {
                 return response()->json([
                     'status' => false,
@@ -214,7 +214,7 @@ class RefundController extends Controller
                 $order->total
             ));
             $refundRequest->update(['status' => 'rejected']);
-            
+
             DB::commit();
             return response()->json([
                 'status' => true,

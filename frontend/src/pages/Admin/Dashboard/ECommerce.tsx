@@ -100,7 +100,7 @@ const ECommerce: React.FC = () => {
 		<>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
 				<CardDataStats
-					title="Total Orders"
+					title="Số Đơn Hàng"
 					total={statistics.totalOrders.toString()}
 					rate=""
 				>
@@ -111,7 +111,7 @@ const ECommerce: React.FC = () => {
 				</CardDataStats>
 
 				<CardDataStats
-					title="Today's Revenue"
+					title="Doanh Thu Hôm Nay"
 					total={formatCurrency(statistics.todayRevenue)}
 					rate=""
 				>
@@ -119,7 +119,7 @@ const ECommerce: React.FC = () => {
 				</CardDataStats>
 
 				<CardDataStats
-					title="Total Products"
+					title="Tổng Doanh Thu"
 					total={statistics.totalProducts.toString()}
 					rate=""
 				>
@@ -127,7 +127,7 @@ const ECommerce: React.FC = () => {
 				</CardDataStats>
 
 				<CardDataStats
-					title="Total Users"
+					title="Tổng Số Người Dùng"
 					total={statistics.totalUsers.toString()}
 					rate=""
 				>

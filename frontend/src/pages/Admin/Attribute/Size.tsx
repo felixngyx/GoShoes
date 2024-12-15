@@ -62,7 +62,7 @@ const Size = () => {
 			});
 		} catch (error: unknown) {
 			const err = error as ApiError;
-			toast.error(err.response?.data?.message || 'Something went wrong');
+			toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
 		} finally {
 			setLoading(false);
 		}
@@ -70,14 +70,14 @@ const Size = () => {
 
 	// Delete size
 	const deleteSize = async (id: string) => {
-		if (window.confirm('Are you sure you want to delete this size?')) {
+		if (window.confirm('Bạn có chắc chắn muốn xóa size này?')) {
 			try {
 				await sizeService.delete(id);
-				toast.success('Size deleted successfully');
+				toast.success('Size đã được xóa');
 				fetchSize();
 			} catch (error: unknown) {
 				const err = error as ApiError;
-				toast.error(err.response?.data?.message || 'Something went wrong');
+				toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
 			}
 		}
 	};

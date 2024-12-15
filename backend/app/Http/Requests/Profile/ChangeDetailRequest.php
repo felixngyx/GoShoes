@@ -35,10 +35,10 @@ class ChangeDetailRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'Email is required',
-            'email.email' => 'Email must be a valid email',
-            'email.unique' => 'Email already exists',
-            'email.max' => 'Email must be less than 191 characters',
+            'email.required' => 'Email là bắt buộc',
+            'email.email' => 'Email phải là một email hợp lệ',
+            'email.unique' => 'Email đã tồn tại',
+            'email.max' => 'Email phải ít hơn 191 ký tự',
         ];
     }
 }

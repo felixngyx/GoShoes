@@ -115,7 +115,7 @@ const ProductSelectionModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-gray-800 rounded-lg w-full max-w-2xl p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">Select Products</h2>
+          <h2 className="text-xl font-bold text-white">Chọn sản phẩm</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white">
             <FiX size={24} />
           </button>
@@ -127,7 +127,7 @@ const ProductSelectionModal = ({
             type="text"
             value={searchTerm}
             onChange={handleSearch}
-            placeholder="Enter product name..."
+            placeholder="Nhập tên sản phẩm..."
             className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
           />
           <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -159,7 +159,7 @@ const ProductSelectionModal = ({
 
         {/* Selected Products Count */}
         <div className="text-gray-400 mb-4">
-          Selected: {localSelectedProducts.length} products
+          Đã chọn: {localSelectedProducts.length} sản phẩm
         </div>
 
         {/* Actions */}
@@ -168,13 +168,13 @@ const ProductSelectionModal = ({
             onClick={onClose}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
           >
-            Cancel
+            Huỷ
           </button>
           <button
             onClick={handleSave}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
-            Save Selection
+            Lưu
           </button>
         </div>
       </div>

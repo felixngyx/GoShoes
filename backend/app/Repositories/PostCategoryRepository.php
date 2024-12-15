@@ -59,7 +59,7 @@ class PostCategoryRepository implements PostCategoryRepositoryInterface
             ->get();
 
         if ($categoriesWithPosts->isNotEmpty()) {
-            throw new \Exception('Cannot delete selected categories because some categories contain posts.');
+            throw new \Exception('Không thể xóa danh mục vì nó chứa bài viết.');
         }
 
         return $this->postCategory->whereIn('id', $ids)->delete();

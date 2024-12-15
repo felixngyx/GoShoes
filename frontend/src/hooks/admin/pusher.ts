@@ -49,7 +49,7 @@ export const usePusherAdmin = (options: PusherHookOptions = {}) => {
                                 },
                                 className: 'mt-2 text-sm font-semibold text-white underline hover:no-underline'
                             },
-                            'View Details →'
+                            'Xem đơn →'
                         )
                     ),
                     {

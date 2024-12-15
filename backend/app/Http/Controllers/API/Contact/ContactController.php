@@ -49,7 +49,7 @@ class ContactController extends Controller
         if ($contactCount >= 3) {
             return response()->json([
                 'success' => false,
-                'message' => 'You have sent too many messages. Please try again after 24 hours.'
+                'message' => 'Bạn đã gửi quá nhiều tin nhắn trong 24 giờ qua. Vui lòng thử lại sau.'
             ], 429); // 429 Too Many Requests
         }
 

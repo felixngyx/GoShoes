@@ -36,14 +36,14 @@ class VerifyChangePhoneRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'token.required' => 'Token is required',
-            'token.string' => 'Token must be a string',
-            'phone.required' => 'Phone is required',
-            'phone.string' => 'Phone must be a string',
-            'phone.regex' => 'Phone must be a valid phone number',
-            'phone.min' => 'Phone must be at least 10 characters',
-            'phone.max' => 'Phone must be less than 191 characters',
-            'phone.unique' => 'Phone is already taken'
+            'token.required' => 'Token là bắt buộc',
+            'token.string' => 'Token phải là một chuỗi',
+            'phone.required' => 'Số điện thoại là bắt buộc',
+            'phone.string' => 'Số điện thoại phải là một chuỗi',
+            'phone.regex' => 'Số điện thoại phải là một số điện thoại hợp lệ',
+            'phone.min' => 'Số điện thoại phải có ít nhất 10 ký tự',
+            'phone.max' => 'Số điện thoại phải ít hơn 191 ký tự',
+            'phone.unique' => 'Số điện thoại đã được sử dụng'
         ];
     }
 }
