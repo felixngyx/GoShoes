@@ -46,7 +46,7 @@ const VerifyEmail: React.FC = () => {
 
 	const handleResetPassword = async () => {
 		if (newPassword !== confirmPassword) {
-			setError('Passwords do not match!');
+			setError('Mật khẩu không khớp!');
 			return;
 		}
 		try {
@@ -55,24 +55,24 @@ const VerifyEmail: React.FC = () => {
 				password: newPassword,
 				password_confirmation: confirmPassword,
 			});
-			toast.success('Password has been updated successfully!');
+			toast.success('Mật khẩu đã được cập nhật thành công!');
 			navigate('/');
 		} catch (error) {
-			toast.error('Failed to update password. Please try again.');
+			toast.error('Cập nhật mật khẩu thất bại. Vui lòng thử lại.');
 			console.error('Failed to update password');
 		}
 	};
 
 	const requestSendEmail = async () => {
-		const message = toast.loading('Sending email...');
+		const message = toast.loading('Đang gửi email...');
 		try {
 			const res = await axiosClient.post('/auth/send-verify-email');
 			console.log(res);
 			if (res.status === 200) {
-				toast.success('Email sent successfully.');
+				toast.success('Gửi email thành công.');
 				toast.dismiss(message);
 			} else {
-				toast.error('Failed to send email. Please try again.');
+				toast.error('Gửi email thất bại. Vui lòng thử lại.');
 				toast.dismiss(message);
 			}
 		} catch (error) {
@@ -92,7 +92,7 @@ const VerifyEmail: React.FC = () => {
 			toast.success('Phone number has been updated successfully!');
 			navigate('/account');
 		} catch (error) {
-			toast.error('Failed to update phone number. Please try again.');
+			toast.error('Cập nhật số điện thoại thất bại. Vui lòng thử lại.');
 			console.error('Failed to update phone number');
 		}
 	};
@@ -162,18 +162,18 @@ const VerifyEmail: React.FC = () => {
 						className="space-y-6"
 					>
 						<h1 className="text-2xl font-semibold text-center">
-							Change Password
+							Đổi mật khẩu
 						</h1>
 						<div className="form-control">
 							<label className="label">
 								<span className="label-text font-medium">
-									New Password
+									Mật khẩu mới
 								</span>
 							</label>
 							<div className="relative">
 								<input
 									type={showPassword ? 'text' : 'password'}
-									placeholder="Enter new password"
+									placeholder="Nhập mật khẩu mới"
 									className="input input-bordered w-full p-4 rounded-md"
 									value={newPassword}
 									onChange={(e) => setNewPassword(e.target.value)}
@@ -194,13 +194,13 @@ const VerifyEmail: React.FC = () => {
 						<div className="form-control">
 							<label className="label">
 								<span className="label-text font-medium">
-									Confirm Password
+									Xác nhận mật khẩu
 								</span>
 							</label>
 							<div className="relative">
 								<input
 									type={showConfirmPassword ? 'text' : 'password'}
-									placeholder="Confirm new password"
+									placeholder="Xác nhận mật khẩu mới"
 									className="input input-bordered w-full p-4 rounded-md"
 									value={confirmPassword}
 									onChange={(e) => setConfirmPassword(e.target.value)}
@@ -225,7 +225,7 @@ const VerifyEmail: React.FC = () => {
 							type="submit"
 							className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
 						>
-							Update Password
+							Cập nhật mật khẩu
 						</button>
 					</form>
 				) : type === 'change-phone' ? (
@@ -237,17 +237,17 @@ const VerifyEmail: React.FC = () => {
 						className="space-y-6"
 					>
 						<h1 className="text-2xl font-semibold text-center">
-							Change Phone Number
+							Đổi số điện thoại
 						</h1>
 						<div className="form-control">
 							<label className="label">
 								<span className="label-text font-medium">
-									New Phone Number
+									Số điện thoại mới
 								</span>
 							</label>
 							<input
 								type="tel"
-								placeholder="Enter new phone number"
+								placeholder="Nhập số điện thoại mới"
 								className="input input-bordered w-full p-4 rounded-md"
 								value={newPhone}
 								onChange={(e) => setNewPhone(e.target.value)}
@@ -258,7 +258,7 @@ const VerifyEmail: React.FC = () => {
 							type="submit"
 							className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
 						>
-							Update Phone Number
+							Cập nhật số điện thoại
 						</button>
 					</form>
 				) : type === 'change-email' ? (
@@ -270,12 +270,12 @@ const VerifyEmail: React.FC = () => {
 						className="space-y-6"
 					>
 						<h1 className="text-2xl font-semibold text-center">
-							Change Email
+							Thay đổi email
 						</h1>
 						<div className="form-control">
 							<label className="label">
 								<span className="label-text font-medium">
-									New Email Address
+									Email thay đổi 
 								</span>
 							</label>
 							<input
@@ -291,19 +291,19 @@ const VerifyEmail: React.FC = () => {
 							type="submit"
 							className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
 						>
-							Update Email Address
+							Cập Nhật Email
 						</button>
 					</form>
 				) : (
 					<div className="text-center">
-						<h1 className="text-4xl mb-5">Verify Email</h1>
+						<h1 className="text-4xl mb-5">Xác minh email</h1>
 						{status ? (
 							<p className="info-verify-email text-xl font-extralight text-green-500">
-								Your email has been verified successfully.
+								Email của bạn đã được xác minh thành công.
 							</p>
 						) : (
 							<p className="info-verify-email text-xl font-extralight text-red-500">
-								Your session has expired, please resend email.
+								Phiên của bạn đã hết hạn, vui lòng gửi lại email.
 							</p>
 						)}
 						{status ? (
@@ -311,14 +311,14 @@ const VerifyEmail: React.FC = () => {
 								to="/"
 								className="btn btn-outline bg-[#40BFFF] text-white mt-10"
 							>
-								Back to home page
+								Quay lại trang chủ
 							</Link>
 						) : (
 							<button
 								className="btn btn-outline bg-[#40BFFF] text-white mt-10"
 								onClick={requestSendEmail}
 							>
-								Resend email
+								Gửi lại email
 							</button>
 						)}
 					</div>

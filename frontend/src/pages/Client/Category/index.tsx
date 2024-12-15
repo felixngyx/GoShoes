@@ -27,17 +27,17 @@ const CategoryPage: React.FC = () => {
 		<>
 			<Breadcrumb
 				items={[
-					{ name: 'Home', link: '' },
-					{ name: 'Category', link: 'category' },
+					{ name: 'Trang chủ', link: '' },
+					{ name: 'Danh mục', link: 'category' },
 				]}
 			/>
 			<div className="max-w-7xl mx-auto px-4 md:px-6 my-4 md:my-10">
-				{/* Search Bar */}
+				{/* Thanh tìm kiếm */}
 				<label className="input input-sm md:input-md input-bordered flex items-center w-full max-w-[300px] md:max-w-[400px] mx-auto mb-6 md:mb-8">
 					<input
 						className="w-full"
 						type="text"
-						placeholder="Search categories..."
+						placeholder="Tìm kiếm danh mục..."
 						value={searchTerm}
 						onChange={(e) => setSearchTerm(e.target.value)}
 					/>
@@ -47,7 +47,7 @@ const CategoryPage: React.FC = () => {
 					/>
 				</label>
 
-				{/* Categories Grid */}
+				{/* Lưới danh mục */}
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
 					{filteredCategories.map((category: any) => (
 						<Link
@@ -65,11 +65,11 @@ const CategoryPage: React.FC = () => {
 											{category.name}
 										</h2>
 										<p className="text-sm md:text-base text-gray-500">
-											{category.products_count} products
+											{category.products_count} sản phẩm
 										</p>
 										{category.featured && (
 											<div className="badge badge-sm md:badge-md bg-[#40BFFF] text-white mt-2">
-												Featured
+												Nổi bật
 											</div>
 										)}
 									</div>
@@ -79,7 +79,7 @@ const CategoryPage: React.FC = () => {
 					))}
 				</div>
 
-				{/* Pagination */}
+				{/* Phân trang */}
 				<div className="flex justify-center mt-4 md:mt-6">
 					<Pagination
 						currentPage={currrentPage}

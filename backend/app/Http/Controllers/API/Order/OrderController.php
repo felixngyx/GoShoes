@@ -259,13 +259,13 @@ class OrderController extends Controller
                     $lockedVariants[] = $variant;
 
                     if ($variant->quantity < $item['quantity']) {
-                        throw new \Exception("Product {$product->name} ({$variant->size->size}/{$variant->color->color}) only has {$variant->quantity} items left");
+                        throw new \Exception("Sản phẩm {$product->name} ({$variant->size->size}/{$variant->color->color}) chỉ còn {$variant->quantity} sản phẩm");
                     }
                     $price = $product->promotional_price ?? $product->price;
                 } else {
                     // Nếu không có biến thể, kiểm tra số lượng sản phẩm trực tiếp
                     if ($product->stock_quantity < $item['quantity']) {
-                        throw new \Exception("Product {$product->name} only has {$product->stock_quantity} items left");
+                        throw new \Exception("Sản phẩm {$product->name} chỉ còn {$product->stock_quantity} sản phẩm");
                     }
                     $price = $product->promotional_price ?? $product->price;
                 }
@@ -391,8 +391,8 @@ class OrderController extends Controller
                 Notification::create([
                     'user_id' => auth()->id(),
                     'order_id' => $order->id,
-                    'title' => 'New Order',
-                    'message' => "Order #{$order->sku} has been created successfully",
+                    'title' => 'Đơn hàng mới',
+                    'message' => "Đơn hàng #{$order->sku} vừa được tạo thành công",
                     'type' => 'order'
                 ]);
 
@@ -402,7 +402,7 @@ class OrderController extends Controller
                     'original_total' => $originalTotal,
                     'discount_amount' => $discountAmount,
                     'final_total' => $finalTotal,
-                    'message' => 'Order has been created successfully'
+                    'message' => 'Đơn hàng đã được tạo thành công'
                 ], 201);
             }
 
@@ -495,8 +495,8 @@ class OrderController extends Controller
                 Notification::create([
                     'user_id' => auth()->id(),
                     'order_id' => $order->id,
-                    'title' => 'New Order',
-                    'message' => "Order #{$order->sku} has been created successfully",
+                    'title' => 'Đơn hàng mới',
+                    'message' => "Đơn hàng #{$order->sku} đã được tạo thành công",
                     'type' => 'order'
                 ]);
 
@@ -550,8 +550,8 @@ class OrderController extends Controller
                 Notification::create([
                     'user_id' => auth()->id(),
                     'order_id' => $order->id,
-                    'title' => 'New Order',
-                    'message' => "Order #{$order->sku} has been created successfully",
+                    'title' => 'Đơn hàng mới',
+                    'message' => "Đơn hàng #{$order->sku} đã được tạo thành công",
                     'type' => 'order'
                 ]);
 
@@ -722,15 +722,15 @@ class OrderController extends Controller
                         Notification::create([
                             'user_id' => auth()->id(),
                             'order_id' => $order->id,
-                            'title' => 'Order Completed',
-                            'message' => "Order #{$order->sku} has been completed",
+                            'title' => 'Đơn hàng hoàn tất',
+                            'message' => "Đơn hàng #{$order->sku} đã hoàn tất",
                             'type' => 'order'
                         ]);
                         Notification::create([
                             'user_id' => $order->user_id,
                             'order_id' => $order->id,
-                            'title' => 'Order Completed',
-                            'message' => "Order #{$order->sku} has been completed",
+                            'title' => 'Đơn hàng hoàn tất',
+                            'message' => "Đơn hàng #{$order->sku} đã hoàn tất",
                             'type' => 'notificationUserTracking'
                         ]);
                         break;
@@ -740,15 +740,15 @@ class OrderController extends Controller
                         Notification::create([
                             'user_id' => $order->user_id,
                             'order_id' => $order->id,
-                            'title' => 'Order Cancelled',
-                            'message' => "Order #{$order->sku} has been cancelled",
+                            'title' => 'Đơn hàng bị hủy',
+                            'message' => "Đơn hàng #{$order->sku} đã bị hủy",
                             'type' => 'order'
                         ]);
                         Notification::create([
                             'user_id' => $order->user_id,
                             'order_id' => $order->id,
-                            'title' => 'Order Cancelled',
-                            'message' => "Order #{$order->sku} has been cancelled",
+                            'title' => 'Đơn hàng bị hủy',
+                            'message' => "Đơn hàng #{$order->sku} đã bị hủy",
                             'type' => 'notificationUserTracking'
                         ]);
 
@@ -780,15 +780,15 @@ class OrderController extends Controller
                         Notification::create([
                             'user_id' => auth()->id(),
                             'order_id' => $order->id,
-                            'title' => 'Order Expired',
-                            'message' => "Order #{$order->sku} has been expired",
+                            'title' => 'Đơn hàng thanh toán online đã hết hạn',
+                            'message' => "Đơn hàng #{$order->sku} đã hết hạn",
                             'type' => 'order'
                         ]);
                         Notification::create([
                             'user_id' => $order->user_id,
                             'order_id' => $order->id,
-                            'title' => 'Order Expired',
-                            'message' => "Order #{$order->sku} has been expired",
+                            'title' => 'Đơn hàng thanh toán online đã hết hạn',
+                            'message' => "Đơn hàng #{$order->sku} đã hết hạn",
                             'type' => 'notificationUserTracking'
                         ]);
                         if ($prevStatus != 'expired' && $prevStatus != 'cancelled') {
@@ -800,15 +800,15 @@ class OrderController extends Controller
                         Notification::create([
                             'user_id' => auth()->id(),
                             'order_id' => $order->id,
-                            'title' => 'Order Shipping',
-                            'message' => "Order #{$order->sku} is shipping",
+                            'title' => 'Đơn hàng đang giao',
+                            'message' => "Đơn hàng #{$order->sku} đang được giao",
                             'type' => 'order'
                         ]);
                         Notification::create([
                             'user_id' => $order->user_id,
                             'order_id' => $order->id,
-                            'title' => 'Order Shipping',
-                            'message' => "Order #{$order->sku} is shipping",
+                            'title' => 'Đơn hàng đang giao',
+                            'message' => "Đơn hàng #{$order->sku} đang được giao",
                             'type' => 'notificationUserTracking'
                         ]);
                         break;
@@ -823,7 +823,7 @@ class OrderController extends Controller
             DB::rollBack();
             Log::error('Cập nhật đơn hàng thất bại: ' . $e->getMessage());
             return response()->json([
-                'error' => 'Failed to update order',
+                'error' => 'Cập nhật đơn hàng thất bại',
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -846,13 +846,13 @@ class OrderController extends Controller
             // Kiểm tra trạng thái đơn hàng
             $validStatuses = ['failed', 'cancelled', 'expired'];
             if (!in_array($order->status, $validStatuses)) {
-                throw new \Exception('This order is not supported to renew payment link');
+                throw new \Exception('Sản phẩm này không thể tạo lại link thanh toán');
             }
 
             // Kiểm tra phương thức thanh toán
             $payment = $order->payment;
             if (!$payment || $payment->method_id == 2) {
-                throw new \Exception('This order is not supported to renew payment link');
+                throw new \Exception('Không thể tạo lại link thanh toán cho đơn hàng COD');
             }
 
             // Kiểm tra số lượng tồn kho cho từng sản phẩm
@@ -860,12 +860,12 @@ class OrderController extends Controller
                 if ($item->variant_id) {
                     $variant = ProductVariant::lockForUpdate()->find($item->variant_id);
                     if (!$variant || $variant->quantity < $item->quantity) {
-                        throw new \Exception("Product {$item->product->name} ({$variant->size->size}/{$variant->color->color}) only has {$variant->quantity} items left");
+                        throw new \Exception("Sản phẩm {$item->product->name} ({$variant->size->size}/{$variant->color->color}) chỉ còn {$variant->quantity} sản phẩm");
                     }
                 } else {
                     $product = Product::lockForUpdate()->find($item->product_id);
                     if (!$product || $product->stock_quantity < $item->quantity) {
-                        throw new \Exception("Product {$product->name} only has {$product->stock_quantity} items left");
+                        throw new \Exception("Sản phẩm {$product->name} chỉ còn {$product->stock_quantity} sản phẩm");
                     }
                 }
             }
@@ -910,7 +910,7 @@ class OrderController extends Controller
                 return response()->json([
                     'success' => true,
                     'payment_url' => $payment_url,
-                    'message' => 'Renew payment link successfully, you have 15 minutes to complete the payment'
+                    'message' => 'Link thanh toán mới đã được tạo'
                 ]);
             } else {
                 // Khôi phục SKU cũ nếu tạo link thất bại
@@ -922,7 +922,7 @@ class OrderController extends Controller
             Log::error('Failed to renew payment link: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to renew payment link',
+                'error' => 'Có lỗi xảy ra khi tạo link thanh toán mới',
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -1021,7 +1021,7 @@ class OrderController extends Controller
             if (!$discount) {
                 return [
                     'status' => false,
-                    'message' => 'Invalid or expired discount code'
+                    'message' => 'Mã giảm giá không hợp lệ'
                 ];
             }
 
@@ -1029,7 +1029,7 @@ class OrderController extends Controller
             if ($discount->usage_limit > 0 && $discount->used_count >= $discount->usage_limit) {
                 return [
                     'status' => false,
-                    'message' => 'Discount code has reached usage limit'
+                    'message' => 'Mã giảm giá đã hết lượt sử dụng'
                 ];
             }
 
@@ -1038,7 +1038,7 @@ class OrderController extends Controller
                 return [
                     'status' => false,
                     'message' => sprintf(
-                        'Minimum order amount must be %s to use this code',
+                        'Mã giảm giá chỉ áp dụng cho đơn hàng từ %s trở lên',
                         number_format($discount->min_order_amount, 0, ',', '.')
                     )
                 ];
@@ -1077,7 +1077,7 @@ class OrderController extends Controller
                 if (!$hasValidProduct) {
                     return [
                         'status' => false,
-                        'message' => 'Discount code is only applicable to certain products'
+                        'message' => 'Mã giảm giá không áp dụng cho sản phẩm trong đơn hàng'
                     ];
                 }
 
@@ -1092,13 +1092,13 @@ class OrderController extends Controller
                 'status' => true,
                 'discount' => $discount,
                 'discount_amount' => $discountAmount,
-                'message' => 'Discount code applied successfully'
+                'message' => 'Mã giảm giá hợp lệ'
             ];
         } catch (\Exception $e) {
             Log::error('Lỗi xử lý mã giảm giá: ' . $e->getMessage());
             return [
                 'status' => false,
-                'message' => 'Error processing discount code: ' . $e->getMessage()
+                'message' => 'Lỗi khi xử lý mã giảm giá: ' . $e->getMessage()
             ];
         }
     }

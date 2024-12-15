@@ -33,7 +33,7 @@ export interface CategoryResponse {
 }
 
 const categoryService = {
-	getAll: (page: number = 1, limit: number = 15) => {
+	getAll: (page: number = 1, limit: number = 5) => {
 		return axiosClient.get<CategoryResponse>(
 			`/categories?page=${page}&limit=${limit}`
 		);

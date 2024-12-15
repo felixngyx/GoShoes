@@ -30,6 +30,15 @@ const useDebounce = (value: string, delay: number) => {
 	return debouncedValue;
 };
 
+const menuItems = [
+	{ 'TRANG CHỦ': '/' },
+	{ 'THƯƠNG HIỆU': '/brand' },
+	{ 'DANH MỤC': '/category' },
+	{ 'GIỚI THIỆU': '/about-us' },
+	{ 'TIN TỨC': '/news' },
+	{ 'LIÊN HỆ': '/contact' },
+]
+
 const Navbar = () => {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('');
@@ -46,13 +55,13 @@ const Navbar = () => {
 		dispatch(logout());
 		Cookies.remove('access_token');
 		Cookies.remove('refresh_token');
-		toast.success('Logout successfully');
+		toast.success('Đăng xuất thành công');
 		navigate('/');
 	};
 
 	const handleCartClick = () => {
 		if (!accessToken) {
-			toast.error('You need to login');
+			toast.error('Bạn cần đăng nhập');
 			navigate('/signin');
 		} else {
 			navigate('/cart');
@@ -213,9 +222,8 @@ const Navbar = () => {
 		return uniqueColors.map((color) => (
 			<button
 				key={color}
-				className={`px-6 py-2 border rounded-md ${
-					selectedColor === color ? 'bg-blue-500 text-white' : ''
-				}`}
+				className={`px-6 py-2 border rounded-md ${selectedColor === color ? 'bg-blue-500 text-white' : ''
+					}`}
 				onClick={() => setSelectedColor(color)}
 			>
 				{color}
@@ -229,7 +237,7 @@ const Navbar = () => {
 		const variants = Array.isArray(selectedProduct.variants)
 			? selectedProduct.variants
 			: JSON.parse(selectedProduct.variants);
-		
+
 		const selectedVariant = variants.find(
 			(variant: any) => variant.color === selectedColor
 		);
@@ -247,15 +255,13 @@ const Navbar = () => {
 			return (
 				<button
 					key={size}
-					className={`px-6 py-2 border rounded-md ${
-						selectedSize === size 
-							? 'bg-blue-500 text-white' 
-							: ''
-					} ${
-						!isAvailable 
-							? 'opacity-50 cursor-not-allowed line-through' 
+					className={`px-6 py-2 border rounded-md ${selectedSize === size
+						? 'bg-blue-500 text-white'
+						: ''
+						} ${!isAvailable
+							? 'opacity-50 cursor-not-allowed line-through'
 							: 'hover:border-blue-500'
-					}`}
+						}`}
 					onClick={() => isAvailable && setSelectedSize(size)}
 					disabled={!isAvailable}
 				>
@@ -281,26 +287,13 @@ const Navbar = () => {
 
 						<div className="hidden md:flex">
 							<ul className="flex flex-row gap-4 lg:gap-8 font-semibold text-sm">
-								{[
-									'HOME',
-									'BRAND',
-									'CATEGORY',
-									'ABOUT US',
-									'NEWS',
-									'CONTACT',
-								].map((item) => (
-									<li key={item}>
+								{menuItems.map((item, index) => (
+									<li key={index}>
 										<Link
-											to={
-												item === 'HOME'
-													? '/'
-													: `/${item
-															.toLowerCase()
-															.replace(' ', '-')}`
-											}
+											to={Object.values(item)[0]}
 											className="menu-item hover:text-blue-500 transition-all duration-300"
 										>
-											{item}
+											{Object.keys(item)[0]}
 										</Link>
 									</li>
 								))}
@@ -343,27 +336,26 @@ const Navbar = () => {
 													to="/account"
 													className="flex items-center w-full gap-2 p-2 rounded-lg hover:bg-gray-200"
 												>
-													<UserRound size={16} /> Account
+													<UserRound size={16} /> Tài khoản
 												</Link>
 											</li>
 											{(user.role === 'admin' ||
 												user.role === 'super-admin') && (
-												<li>
-													<Link
-														to="/admin"
-														className="flex items-center w-full gap-2 p-2 rounded-lg hover:bg-gray-200"
-													>
-														<MdDashboard size={16} /> Admin
-														Dashboard
-													</Link>
-												</li>
-											)}
+													<li>
+														<Link
+															to="/admin"
+															className="flex items-center w-full gap-2 p-2 rounded-lg hover:bg-gray-200"
+														>
+															<MdDashboard size={16} /> Bảng điều khiển
+														</Link>
+													</li>
+												)}
 											<li>
 												<button
 													onClick={logoutHandler}
 													className="flex items-center w-full gap-2 p-2 rounded-lg hover:bg-gray-200"
 												>
-													<LogOut size={16} /> Logout
+													<LogOut size={16} /> Đăng xuất
 												</button>
 											</li>
 										</>
@@ -374,7 +366,7 @@ const Navbar = () => {
 													to="/signin"
 													className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200"
 												>
-													<LogIn size={16} /> Sign In
+													<LogIn size={16} /> Đăng nhập
 												</Link>
 											</li>
 											<li>
@@ -382,7 +374,7 @@ const Navbar = () => {
 													to="/signup"
 													className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200"
 												>
-													<SquarePen size={16} /> Sign Up
+													<SquarePen size={16} /> Đăng ký
 												</Link>
 											</li>
 										</>
@@ -408,21 +400,21 @@ const Navbar = () => {
 						<div className="md:hidden bg-white shadow-lg">
 							<ul className="flex flex-col p-4">
 								{[
-									'HOME',
-									'BRAND',
-									'CATEGORY',
-									'ABOUT US',
-									'NEWS',
-									'CONTACT',
+									'TRANG CHỦ',
+									'THƯƠNG HIỆU',
+									'DANH MỤC',
+									'VỀ CHÚNG TÔI',
+									'TIN TỨC',
+									'LIÊN HỆ',
 								].map((item) => (
 									<li key={item}>
 										<Link
 											to={
-												item === 'HOME'
+												item === 'TRANG CHỦ'
 													? '/'
 													: `/${item
-															.toLowerCase()
-															.replace(' ', '-')}`
+														.toLowerCase()
+														.replace(' ', '-')}`
 											}
 											className="block py-2 px-4 text-sm font-semibold hover:bg-gray-100 rounded-lg"
 											onClick={() => setIsMenuOpen(false)}
@@ -446,14 +438,14 @@ const Navbar = () => {
 						<label className="input input-bordered flex-1 flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2">
 							<input
 								type="text"
-								placeholder="Search"
+								placeholder="Tìm kiếm"
 								className="bg-transparent outline-none w-full text-sm md:text-base"
 								onChange={(e) => setSearchTerm(e.target.value)}
 							/>
 							<IoSearch className="w-5 h-5 md:w-6 md:h-6 text-gray-600" />
 						</label>
 						<button className="btn btn-outline btn-sm md:btn-md rounded-full font-semibold">
-							Cancel
+							Hủy
 						</button>
 					</div>
 
@@ -462,7 +454,7 @@ const Navbar = () => {
 						{debouncedSearchTerm ? (
 							<>
 								<p className="text-lg font-semibold text-gray-700">
-									Top suggestions
+									Gợi ý hàng đầu
 								</p>
 								<ul className="flex flex-col gap-1 mt-2 text-sm font-medium text-gray-600">
 									<li className="hover:bg-gray-100 rounded-md px-3 py-2 transition-colors">
@@ -479,7 +471,7 @@ const Navbar = () => {
 						) : (
 							<>
 								<p className="text-lg font-semibold text-gray-700">
-									Popular search terms
+									Tìm kiếm phổ biến
 								</p>
 								<div className="flex flex-wrap gap-2 mt-2">
 									{[
@@ -509,7 +501,7 @@ const Navbar = () => {
 							) : debouncedSearchTerm && products.length > 0 ? (
 								<>
 									<h2 className="text-2xl font-bold text-gray-900 mb-4">
-										Product Suggestions
+										Gợi ý sản phẩm
 									</h2>
 									<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
 										{products.map((product) => (
@@ -549,8 +541,8 @@ const Navbar = () => {
 														/>
 														<IoCart
 															onClick={() =>
-																	handleCheckAdd(product)
-																}
+																handleCheckAdd(product)
+															}
 															className="cursor-pointer p-3 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
 															size={40}
 															color="#40BFFF"
@@ -576,11 +568,11 @@ const Navbar = () => {
 															dangerouslySetInnerHTML={{
 																__html:
 																	product.description.length >
-																	100
+																		100
 																		? `${product.description.substring(
-																				0,
-																				100
-																		  )}...`
+																			0,
+																			100
+																		)}...`
 																		: product.description,
 															}}
 														></div>
@@ -610,7 +602,7 @@ const Navbar = () => {
 									</div>
 								</>
 							) : debouncedSearchTerm ? (
-								<p className="text-gray-500">No results found.</p>
+								<p className="text-gray-500">Không tìm thấy kết quả.</p>
 							) : null}
 						</div>
 					</div>
@@ -624,11 +616,11 @@ const Navbar = () => {
 							<h3 className="font-bold text-xl text-blue-500">
 								{selectedProduct.name}
 							</h3>
-							<p className="mt-2">Select size and color:</p>
+							<p className="mt-2">Chọn kích thước và màu sắc:</p>
 							<div className="flex flex-col gap-6 mt-4">
 								<div>
 									<h4 className="text-lg font-semibold mb-2">
-										Color:
+										Màu sắc:
 									</h4>
 									<div className="flex flex-wrap gap-2">
 										{renderColors()}
@@ -638,7 +630,7 @@ const Navbar = () => {
 								{selectedColor && (
 									<div className="mt-4">
 										<h4 className="text-lg font-semibold mb-2">
-											Size:
+											Kích thước:
 										</h4>
 										<div className="flex flex-wrap gap-2">
 											{renderSizes()}
@@ -656,14 +648,14 @@ const Navbar = () => {
 										setSelectedColor(null);
 									}}
 								>
-									Cancel
+									Hủy
 								</button>
 								<button
 									className="btn bg-blue-500 text-white"
 									onClick={addCart}
 									disabled={!selectedSize || !selectedColor}
 								>
-									Add to Cart
+									Thêm vào giỏ hàng
 								</button>
 							</div>
 						</div>
@@ -675,22 +667,22 @@ const Navbar = () => {
 				<div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
 					<div className="modal modal-open">
 						<div className="modal-box relative">
-							<h3 className="font-bold text-xl">You need to sign in</h3>
+							<h3 className="font-bold text-xl">Bạn cần đăng nhập</h3>
 							<p className="mt-2">
-								Please sign in to add items to your cart.
+								Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.
 							</p>
 							<div className="mt-4 flex justify-end gap-4">
 								<button
 									className="btn bg-gray-300 text-black"
 									onClick={closeModal}
 								>
-									Close
+									Đóng
 								</button>
 								<button
 									className="btn bg-blue-500 text-white"
 									onClick={handleLoginNow}
 								>
-									Login Now
+									Đăng nhập ngay
 								</button>
 							</div>
 						</div>

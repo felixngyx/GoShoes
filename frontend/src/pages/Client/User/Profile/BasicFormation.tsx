@@ -198,9 +198,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 				<button
 					type="submit"
 					disabled={!user.email_is_verified}
-					className={`btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] col-span-2 mt-5 ${
-						user.email_is_verified ? '' : 'btn-disabled'
-					}`}
+					className={`btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] col-span-2 mt-5 ${user.email_is_verified ? '' : 'btn-disabled'
+						}`}
 				>
 					{user.email_is_verified
 						? 'Cập nhật'

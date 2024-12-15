@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ChevronLeft, 
+import {
+  ChevronLeft,
   ChevronRight,
   Eye,
   Clock,
-  CheckCircle, 
+  CheckCircle,
   XCircle,
   Search
 } from 'lucide-react';
@@ -36,7 +36,7 @@ const RefundRequests = () => {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
-  
+
   useEffect(() => {
     fetchRefunds();
   }, []);
@@ -60,7 +60,7 @@ const RefundRequests = () => {
   };
 
   // Filter refunds based on search
-  const filteredRefunds = refunds.filter(refund => 
+  const filteredRefunds = refunds.filter(refund =>
     refund.order_id.toString().includes(search) ||
     refund.reason.toLowerCase().includes(search.toLowerCase())
   );
@@ -77,21 +77,21 @@ const RefundRequests = () => {
         return (
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-yellow-500" />
-            <span className="text-yellow-500">Pending</span>
+            <span className="text-yellow-500">Đang chờ</span>
           </div>
         );
       case 'approved':
         return (
           <div className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-green-500" />
-            <span className="text-green-500">Approved</span>
+            <span className="text-green-500">Đã duyệt</span>
           </div>
         );
       case 'rejected':
         return (
           <div className="flex items-center gap-2">
             <XCircle className="w-4 h-4 text-red-500" />
-            <span className="text-red-500">Rejected</span>
+            <span className="text-red-500">Đã từ chối</span>
           </div>
         );
       default:
@@ -110,8 +110,8 @@ const RefundRequests = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Refund Requests</h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-300">Manage and review customer refund requests</p>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Yêu cầu hoàn tiền</h1>
+        <p className="mt-2 text-gray-600 dark:text-gray-300">Quản lý và xem xét các yêu cầu hoàn tiền của khách hàng</p>
       </div>
 
       {/* Search and Filters */}
@@ -120,7 +120,7 @@ const RefundRequests = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
-            placeholder="Search by Order ID or Reason..."
+            placeholder="Tìm kiếm theo Mã đơn hàng hoặc Lý do..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border rounded-lg bg-gray-800 text-white border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -134,12 +134,12 @@ const RefundRequests = () => {
           <table className="min-w-full divide-y divide-gray-700">
             <thead className="bg-gray-800">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Order ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-white">User ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Reason</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Date</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Mã đơn hàng</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Mã người dùng</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Lý do</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Trạng thái</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Ngày</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
@@ -148,8 +148,8 @@ const RefundRequests = () => {
                   <td className="px-6 py-4 text-sm text-gray-300">#{refund.order_id}</td>
                   <td className="px-6 py-4 text-sm text-gray-300">#{refund.user_id}</td>
                   <td className="px-6 py-4 text-sm text-gray-300">
-                    {refund.reason.length > 50 
-                      ? `${refund.reason.substring(0, 50)}...` 
+                    {refund.reason.length > 50
+                      ? `${refund.reason.substring(0, 50)}...`
                       : refund.reason}
                   </td>
                   <td className="px-6 py-4 text-sm">
@@ -164,7 +164,7 @@ const RefundRequests = () => {
                       className="flex items-center gap-2 px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 transition-colors text-white"
                     >
                       <Eye className="w-4 h-4" />
-                      View Details
+                      Xem chi tiết
                     </button>
                   </td>
                 </tr>
@@ -177,7 +177,7 @@ const RefundRequests = () => {
         <div className="px-6 py-4 bg-gray-800 border-t border-gray-700">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-400">
-              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredRefunds.length)} of {filteredRefunds.length} results
+              Hiển thị {indexOfFirstItem + 1} đến {Math.min(indexOfLastItem, filteredRefunds.length)} của {filteredRefunds.length} kết quả
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -188,7 +188,7 @@ const RefundRequests = () => {
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <span className="text-gray-300">
-                Page {currentPage} of {totalPages}
+                Trang {currentPage} của {totalPages}
               </span>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}

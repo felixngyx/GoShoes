@@ -36,7 +36,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ email }) => {
 					isSendingResetPassword || user.email_is_verified
 						? ' bg-[#40BFFF] cursor-not-allowed'
 						: 'bg-[#40BFFF] hover:bg-[#259CFA]'
-				}`}
+					}`}
 			>
 				{isSendingResetPassword
 					? 'Đang gửi yêu cầu...'

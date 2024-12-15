@@ -11,22 +11,22 @@ const ForgetPassword: React.FC = () => {
     e.preventDefault();
 
     if (!email) {
-      toast.error('Email là bắt buộc');
+      toast.error('Email không được để trống');
       return;
     }
 
     try {
       await handleSendResetPasswordRequest(email);
     } catch (error) {
-      console.error('Lỗi khi gửi yêu cầu reset mật khẩu:', error);
-      toast.error('Gửi yêu cầu reset mật khẩu thất bại');
+      console.error('Lỗi trong quá trình gửi yêu cầu đặt lại mật khẩu:', error);
+      toast.error('Gửi yêu cầu đặt lại mật khẩu thất bại');
     }
   };
 
   return (
     <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
       <div className="bg-white p-8 rounded-lg shadow-md w-96 border border-stroke">
-        <h2 className="text-2xl font-bold mb-6 text-center">Quên mật khẩu</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">Quên Mật Khẩu</h2>
         <form className="flex flex-col gap-5" onSubmit={handleResetPasswordRequest}>
           <input
             type="email"
@@ -41,7 +41,7 @@ const ForgetPassword: React.FC = () => {
             className={`w-full bg-[#40BFFF] text-white p-2 rounded-md hover:bg-[#259CFA] transition-colors ${isSendingResetPassword ? 'cursor-not-allowed bg-[#259CFA]' : ''}`}
             disabled={isSendingResetPassword}
           >
-            {isSendingResetPassword ? 'Đang gửi yêu cầu...' : 'Quên mật khẩu'}
+            {isSendingResetPassword ? 'Đang gửi yêu cầu...' : 'Quên Mật Khẩu'}
           </button>
         </form>
       </div>

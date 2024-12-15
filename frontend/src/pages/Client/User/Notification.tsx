@@ -11,10 +11,10 @@ interface Notification {
 	timestamp: string;
 	isNew?: boolean;
 	type?:
-		| 'feature'
-		| 'collaboration'
-		| 'opportunity'
-		| 'notificationUserTracking';
+	| 'feature'
+	| 'collaboration'
+	| 'opportunity'
+	| 'notificationUserTracking';
 	order_id?: number;
 }
 
@@ -73,7 +73,7 @@ export default function NotificationsPage() {
 	return (
 		<div className="notifications-page col-span-9 space-y-8">
 			<div className="notifications p-4 bg-gray-100 rounded-lg">
-				<h2 className="font-semibold text-lg">Notifications</h2>
+				<h2 className="font-semibold text-lg">Thông báo</h2>
 				{notifications.length > 0 ? (
 					notifications.map((notification) => (
 						<div
@@ -98,7 +98,7 @@ export default function NotificationsPage() {
 						</div>
 					))
 				) : (
-					<p className="text-gray-500">There are no notifications.</p>
+					<p className="text-gray-500">Không có thông báo nào.</p>
 				)}
 			</div>
 		</div>

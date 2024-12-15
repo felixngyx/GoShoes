@@ -131,10 +131,10 @@ export const useShipping = () => {
 
   // Xử lý việc xóa địa chỉ
   const handleDelete = async (id: number) => {
-    const confirm = window.confirm("Are you sure you want to delete");
+    const confirm = window.confirm("Xác nhận xóa địa chỉ này?");
     if (confirm) {
       await deleteShipping(id);
-      toast.success("Shipping address deleted successfully");
+      toast.success("Đã xóa địa chỉ");
       queryClient.invalidateQueries({
         queryKey: ["ADDRESS"],
       });

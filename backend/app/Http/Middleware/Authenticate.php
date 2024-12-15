@@ -19,7 +19,7 @@ class Authenticate extends Middleware
     protected function unauthenticated($request, array $guards)
     {
         throw new AuthenticationException(
-            'You need to login!',
+            'Bạn cần đăng nhập để tiếp tục!',
             $guards,
         );
     }

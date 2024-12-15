@@ -25,19 +25,19 @@ import { formatVNCurrency } from '../../../common/formatVNCurrency';
 // Add form validation schema
 const productSchema = Joi.object({
 	name: Joi.string().required().messages({
-		'string.empty': 'Name is required',
-		'any.required': 'Name is required',
+		'string.empty': 'Tên sản phẩm không được để trống',
+		'any.required': 'Tên sản phẩm không được để trống',
 	}),
 	price: Joi.number().positive().max(99999999).required().messages({
-		'number.base': 'Price must be a number',
-		'number.max': 'Price cannot exceed 99,999,999₫',
-		'any.required': 'Price is required',
+		'number.base': 'Giá phải là một số',
+		'number.max': 'Giá không được vượt quá 99,999,999₫',
+		'any.required': 'Giá không được để trống',
 	}),
 	promotional_price: Joi.alternatives().try(
 		Joi.number().max(Joi.ref('price')).max(99999999).messages({
-			'number.base': 'Promotional price must be a number',
+			'number.base': 'Giá khuyến mãi phải là một số',
 			'number.max':
-				'Promotional price must be less than the original price and cannot exceed 99,999,999₫',
+				'Giá khuyến mãi phải nhỏ hơn giá gốc và không được vượt quá 99,999,999₫',
 		}),
 		Joi.valid(null, '')
 	),
@@ -45,60 +45,60 @@ const productSchema = Joi.object({
 		.valid('public', 'unpublic', 'hidden')
 		.required()
 		.messages({
-			'string.empty': 'Status cannot be empty',
-			'any.only': 'Status is invalid',
-			'any.required': 'Status is required',
+			'string.empty': 'Trạng thái không được để trống',
+			'any.only': 'Trạng thái không hợp lệ',
+			'any.required': 'Trạng thái không được để trống',
 		}),
 	sku: Joi.string().required().messages({
-		'string.empty': 'SKU cannot be empty',
-		'any.required': 'SKU is required',
+		'string.empty': 'SKU không được để trống',
+		'any.required': 'SKU không được để trống',
 	}),
 	hagtag: Joi.string().required().messages({
-		'string.empty': 'Hashtag cannot be empty',
-		'any.required': 'Hashtag is required',
+		'string.empty': 'Hashtag không được để trống',
+		'any.required': 'Hashtag không được để trống',
 	}),
 	category_ids: Joi.array().items(Joi.number()).min(1).required().messages({
-		'array.base': 'Category must be an array',
-		'array.min': 'Must select at least one category',
-		'any.required': 'Category is required',
+		'array.base': 'Danh mục phải là một mảng',
+		'array.min': 'Phải chọn ít nhất một danh mục',
+		'any.required': 'Danh mục không được để trống',
 	}),
 	brand_id: Joi.number().required().messages({
-		'number.base': 'Brand must be a number',
-		'any.required': 'Brand is required',
+		'number.base': 'Thương hiệu phải là một số',
+		'any.required': 'Thương hiệu không được để trống',
 	}),
 	thumbnail: Joi.string().required().messages({
-		'string.empty': 'Thumbnail cannot be empty',
-		'any.required': 'Thumbnail is required',
+		'string.empty': 'Thumbnail không được để trống',
+		'any.required': 'Thumbnail không được để trống',
 	}),
 	description: Joi.string().required().messages({
-		'string.empty': 'Description cannot be empty',
-		'any.required': 'Description is required',
+		'string.empty': 'Mô tả không được để trống',
+		'any.required': 'Mô tả không được để trống',
 	}),
 	variants: Joi.array()
 		.items(
 			Joi.object({
 				color_id: Joi.number().invalid(0).required().messages({
-					'number.invalid': 'Please select a color',
-					'any.required': 'Color is required',
-					'number.base': 'Please select a color',
-					'any.invalid': 'Please select a color',
+					'number.invalid': 'Vui lòng chọn màu sắc',
+					'any.required': 'Màu sắc không được để trống',
+					'number.base': 'Vui lòng chọn màu sắc',
+					'any.invalid': 'Vui lòng chọn màu sắc',
 				}),
 				image: Joi.string().required().messages({
-					'string.empty': 'Variant image cannot be empty',
-					'any.required': 'Variant image is required',
+					'string.empty': 'Ảnh biến thể không được để trống',
+					'any.required': 'Ảnh biến thể không được để trống',
 				}),
 				variant_details: Joi.array()
 					.items(
 						Joi.object({
 							size_id: Joi.number().min(1).required().messages({
-								'number.base': 'Please select a size',
-								'number.min': 'Please select a size',
-								'any.required': 'Please select a size',
+								'number.base': 'Vui lòng chọn kích thước',
+								'number.min': 'Vui lòng chọn kích thước',
+								'any.required': 'Vui lòng chọn kích thước',
 							}),
 							quantity: Joi.number().min(0).required().messages({
-								'number.base': 'Quantity must be a number',
-								'number.min': 'Quantity must be positive number',
-								'any.required': 'Quantity is required',
+								'number.base': 'Số lượng phải là một số',
+								'number.min': 'Số lượng phải là số dương',
+								'any.required': 'Số lượng không được để trống',
 							}),
 							sku: Joi.string().allow('').optional(),
 						})
@@ -106,18 +106,18 @@ const productSchema = Joi.object({
 					.min(1)
 					.required()
 					.messages({
-						'array.min': 'Must have at least one size',
-						'any.required': 'Size is required',
-						'array.base': 'Please select a size',
+						'array.min': 'Phải có ít nhất một kích thước',
+						'any.required': 'Kích thước không được để trống',
+						'array.base': 'Vui lòng chọn kích thước',
 					}),
 			})
 		)
 		.required()
 		.min(1)
 		.messages({
-			'array.base': 'Variant must be an array',
-			'array.min': 'Must have at least one variant',
-			'any.required': 'Variant is required',
+			'array.base': 'Biến thể phải là một mảng',
+			'array.min': 'Phải có ít nhất một biến thể',
+			'any.required': 'Biến thể không được để trống',
 		}),
 });
 
@@ -226,8 +226,8 @@ const UpdateProduct = () => {
 				// Fetch reference data first
 				const [brandsRes, categoriesRes, colorsRes, sizesRes] =
 					await Promise.all([
-						brandService.getAll(),
-						categoryService.getAll(),
+						brandService.getAll(1, 1000),
+						categoryService.getAll(1, 1000),
 						colorService.getAll(1, 1000),
 						sizeService.getAll(1, 1000),
 					]);
@@ -465,8 +465,7 @@ const UpdateProduct = () => {
 						newPrev[key] = value;
 					} else if (variantIndex > index) {
 						newPrev[
-							`variants.${
-								variantIndex - 1
+							`variants.${variantIndex - 1
 							}.variant_details.${sizeIndex}.quantity`
 						] = value;
 					}
@@ -685,11 +684,10 @@ const UpdateProduct = () => {
 
 			// Cập nhật lại index cho các size phía sau
 			const remainingSizes = currentVariant.variant_details.length;
-			for (let i = sizeIndex + 1; i < remainingSizes; i++) {
+			for (let i = sizeIndex + 1;i < remainingSizes;i++) {
 				const oldKey = `variants.${variantIndex}.variant_details.${i}.quantity`;
-				const newKey = `variants.${variantIndex}.variant_details.${
-					i - 1
-				}.quantity`;
+				const newKey = `variants.${variantIndex}.variant_details.${i - 1
+					}.quantity`;
 				newPrev[newKey] = newPrev[oldKey];
 				delete newPrev[oldKey];
 			}
@@ -820,7 +818,7 @@ const UpdateProduct = () => {
 					<Link to="/admin/product">
 						<ArrowLeft size={20} />
 					</Link>
-					<h3 className="font-bold text-2xl">Update Product</h3>
+					<h3 className="font-bold text-2xl">Cập nhật sản phẩm</h3>
 				</div>
 				<div className="w-full">
 					<form
@@ -830,13 +828,13 @@ const UpdateProduct = () => {
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text font-semibold">
-									Product Name
+									Tên sản phẩm
 								</span>
 							</div>
 							<input
 								{...register('name')}
 								type="text"
-								placeholder="Type here"
+								placeholder="Nhập vào đây"
 								className="input input-bordered w-full"
 							/>
 							{errors.name && (
@@ -848,7 +846,7 @@ const UpdateProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text font-semibold">Price</span>
+								<span className="label-text font-semibold">Giá</span>
 							</div>
 							<input
 								{...register('price')}
@@ -856,7 +854,7 @@ const UpdateProduct = () => {
 								min="0"
 								step="any"
 								onInput={handleNumberInput}
-								placeholder="Type here"
+								placeholder="Nhập vào đây"
 								className="input input-bordered w-full"
 							/>
 							{errors.price && (
@@ -869,7 +867,7 @@ const UpdateProduct = () => {
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text font-semibold">
-									Promotion Price
+									Giá khuyến mãi
 								</span>
 							</div>
 							<input
@@ -881,7 +879,7 @@ const UpdateProduct = () => {
 								min="0"
 								step="any"
 								onInput={handleNumberInput}
-								placeholder="Type here"
+								placeholder="Nhập vào đây"
 								className="input input-bordered w-full"
 							/>
 							{errors.promotional_price && (
@@ -894,13 +892,13 @@ const UpdateProduct = () => {
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text font-semibold">
-									Stock Quantity
+									Số lượng tồn kho
 								</span>
 							</div>
 							<input
 								value={stockQuantity}
 								type="disabled"
-								placeholder="Type here"
+								placeholder="Nhập vào đây"
 								className="input input-bordered w-full bg-gray-200"
 							/>
 						</label>
@@ -912,7 +910,7 @@ const UpdateProduct = () => {
 							<input
 								{...register('sku')}
 								type="text"
-								placeholder="Type here"
+								placeholder="Nhập vào đây"
 								className="input input-bordered w-full uppercase"
 								onChange={(e) => {
 									// Chỉ cho phép chữ cái không dấu, số và dấu gạch ngang
@@ -939,7 +937,7 @@ const UpdateProduct = () => {
 							<input
 								{...register('hagtag')}
 								type="text"
-								placeholder="Type here"
+								placeholder="Nhập vào đây"
 								className="input input-bordered w-full"
 							/>
 							{errors.hagtag && (
@@ -951,16 +949,16 @@ const UpdateProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text font-semibold">Status</span>
+								<span className="label-text font-semibold">Trạng thái</span>
 							</div>
 							<select
 								{...register('status')}
 								className="select select-bordered w-full"
 							>
-								<option>Select Status</option>
-								<option value={Status.PUBLIC}>Public</option>
-								<option value={Status.UNPUBLIC}>Unpublic</option>
-								<option value={Status.HIDDEN}>Hidden</option>
+								<option>Chọn trạng thái</option>
+								<option value={Status.PUBLIC}>Công khai</option>
+								<option value={Status.UNPUBLIC}>Không công khai</option>
+								<option value={Status.HIDDEN}>Ẩn</option>
 							</select>
 							{errors.status && (
 								<p className="text-red-500 text-xs">
@@ -971,14 +969,14 @@ const UpdateProduct = () => {
 
 						<label className="form-control col-span-1">
 							<div className="label">
-								<span className="label-text font-semibold">Brand</span>
+								<span className="label-text font-semibold">Thương hiệu</span>
 							</div>
 							<select
 								{...register('brand_id')}
 								className="select select-bordered w-full"
 								value={product?.brand_id || ''}
 							>
-								<option value="">Select Brand</option>
+								<option value="">Chọn thương hiệu</option>
 								{brands &&
 									brands.length > 0 &&
 									brands.map((brand) => (
@@ -997,7 +995,7 @@ const UpdateProduct = () => {
 						<label className="form-control col-span-1">
 							<div className="label">
 								<span className="label-text font-semibold">
-									Select Categories
+									Chọn danh mục
 								</span>
 							</div>
 							<div className="flex flex-col gap-2">
@@ -1124,8 +1122,8 @@ const UpdateProduct = () => {
 													openModal(
 														thumbnailFile instanceof File
 															? URL.createObjectURL(
-																	thumbnailFile
-															  )
+																thumbnailFile
+															)
 															: thumbnailFile
 													);
 												}}
@@ -1169,7 +1167,7 @@ const UpdateProduct = () => {
 						<label className="form-control col-span-2 z-[0]">
 							<div className="label">
 								<span className="label-text font-semibold">
-									Description
+									Mô tả
 								</span>
 							</div>
 							<RichTextEditor
@@ -1189,7 +1187,7 @@ const UpdateProduct = () => {
 						</label>
 
 						<div className="col-span-3">
-							<h3 className="text-lg font-bold">Variant</h3>
+							<h3 className="text-lg font-bold">Biến thể</h3>
 							{errors.variants && (
 								<span className="label-text text-red-500 text-xs ms-2">
 									{errors.variants.root?.message ||
@@ -1206,7 +1204,7 @@ const UpdateProduct = () => {
 								<div className="col-span-1 p-2 border border-gray-300 rounded-md">
 									<div className="label">
 										<span className="label-text font-bold">
-											Color
+											Màu sắc
 										</span>
 										{errors.variants?.[index]?.color_id && (
 											<span className="label-text text-red-500 text-xs">
@@ -1222,11 +1220,11 @@ const UpdateProduct = () => {
 												type="text"
 												disabled={
 													product?.variants[index]?.color_id !==
-														0 &&
+													0 &&
 													product?.variants[index]?.color_id !==
-														undefined
+													undefined
 												}
-												placeholder="Select color"
+												placeholder="Chọn màu sắc"
 												className="input input-bordered input-sm w-full"
 												value={colorSearchTerms[index] || ''}
 												onChange={(e) =>
@@ -1270,11 +1268,10 @@ const UpdateProduct = () => {
 																		color.id!,
 																	]);
 																}}
-																className={`flex items-center gap-2 ${
-																	selectedColor.includes(
-																		color.id!
-																	) && 'opacity-50'
-																}`}
+																className={`flex items-center gap-2 ${selectedColor.includes(
+																	color.id!
+																) && 'opacity-50'
+																	}`}
 																disabled={selectedColor.includes(
 																	color.id!
 																)}
@@ -1296,7 +1293,7 @@ const UpdateProduct = () => {
 									<label className="form-control col-span-1 w-fit">
 										<div className="label flex justify-between">
 											<span className="label-text font-bold">
-												Images
+												Hình ảnh
 											</span>
 											{errors.variants?.[index]?.image && (
 												<span className="label-text text-red-500 text-xs ms-2">
@@ -1325,7 +1322,7 @@ const UpdateProduct = () => {
 											>
 												<Upload />
 												<p className="text-xs text-gray-500">
-													Add Images
+													Thêm hình ảnh
 												</p>
 											</div>
 											{variantImageFiles[index]?.map(
@@ -1340,9 +1337,8 @@ const UpdateProduct = () => {
 																	? URL.createObjectURL(image)
 																	: image
 															}
-															alt={`Variant ${index + 1} - ${
-																imageIndex + 1
-															}`}
+															alt={`Biến thể ${index + 1} - ${imageIndex + 1
+																}`}
 															className="w-full h-full object-cover rounded-md border border-gray-300"
 														/>
 														<div className="absolute top-[50%] right-[50%] translate-x-[50%] translate-y-[-50%] flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 rounded-md p-2">
@@ -1353,8 +1349,8 @@ const UpdateProduct = () => {
 																	openModal(
 																		image instanceof File
 																			? URL.createObjectURL(
-																					image
-																			  )
+																				image
+																			)
 																			: image
 																	);
 																}}
@@ -1388,7 +1384,7 @@ const UpdateProduct = () => {
 								<div className="col-span-1 flex flex-col gap-2 p-2 border border-gray-300 rounded-md">
 									<div className="label">
 										<span className="label-text font-bold">
-											Size and Quantity
+											Kích thước và số lượng
 										</span>
 										{errors.variants?.[index]?.variant_details && (
 											<span className="label-text text-red-500 text-xs ms-2">
@@ -1424,7 +1420,7 @@ const UpdateProduct = () => {
 															}
 														>
 															<option value="0">
-																Select size
+																Chọn kích thước
 															</option>
 															{sizes.map((size) => {
 																const isDisabled =
@@ -1448,7 +1444,7 @@ const UpdateProduct = () => {
 														<input
 															type="number"
 															min="0"
-															placeholder="Quantity"
+															placeholder="Số lượng"
 															className="input input-bordered input-sm w-full"
 															{...register(
 																`variants.${index}.variant_details.${sizeIndex}.quantity`
@@ -1504,25 +1500,25 @@ const UpdateProduct = () => {
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.size_id && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.size_id?.message
-															}
-														</span>
-													)}
+															<span className="label-text text-red-500 text-xs ms-2">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.size_id?.message
+																}
+															</span>
+														)}
 													{errors.variants?.[index]
 														?.variant_details?.[sizeIndex]
 														?.quantity && (
-														<span className="label-text text-red-500 text-xs ms-2">
-															{
-																errors.variants[index]
-																	.variant_details[sizeIndex]
-																	?.quantity?.message
-															}
-														</span>
-													)}
+															<span className="label-text text-red-500 text-xs ms-2">
+																{
+																	errors.variants[index]
+																		.variant_details[sizeIndex]
+																		?.quantity?.message
+																}
+															</span>
+														)}
 												</>
 											)
 										)}
@@ -1532,23 +1528,23 @@ const UpdateProduct = () => {
 											className="btn btn-sm w-fit ms-auto"
 											disabled={isSubmitting}
 										>
-											Add size
+											Thêm kích thước
 										</button>
 									</div>
 								</div>
 								{product?.variants[index]?.color_id === 0 ||
 									(product?.variants[index]?.color_id ===
 										undefined && (
-										<button
-											type="button"
-											onClick={() => removeVariant(index)}
-											className="btn bg-red-500	 btn-sm col-span-3 text-white"
-											disabled={isSubmitting}
-										>
-											<TrashIcon size={16} color="white" />{' '}
-											<span className="text-xs">Delete Variant</span>
-										</button>
-									))}
+											<button
+												type="button"
+												onClick={() => removeVariant(index)}
+												className="btn bg-red-500	 btn-sm col-span-3 text-white"
+												disabled={isSubmitting}
+											>
+												<TrashIcon size={16} color="white" />{' '}
+												<span className="text-xs">Xóa biến thể</span>
+											</button>
+										))}
 							</div>
 						))}
 
@@ -1558,7 +1554,7 @@ const UpdateProduct = () => {
 							className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary w-fit"
 							disabled={isSubmitting}
 						>
-							Add Variant
+							Thêm biến thể
 						</button>
 
 						<button
@@ -1569,10 +1565,10 @@ const UpdateProduct = () => {
 							{loading ? (
 								<>
 									<span className="loading loading-spinner loading-sm text-info"></span>
-									Updating product...
+									Đang cập nhật sản phẩm...
 								</>
 							) : (
-								'Update product'
+								'Cập nhật sản phẩm'
 							)}
 						</button>
 					</form>

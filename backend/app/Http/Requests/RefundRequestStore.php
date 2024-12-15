@@ -24,9 +24,9 @@ class RefundRequestStore extends FormRequest
     public function messages()
     {
         return [
-            'reason.required' => 'Please provide a reason for the refund request',
-            'reason.min' => 'The reason must be at least 10 characters',
-            'images.*.url' => 'Invalid image URL format'
+            'reason.required' => 'Vui lòng cung cấp lý do cho yêu cầu hoàn tiền',
+            'reason.min' => 'Lý do phải có ít nhất 10 ký tự',
+            'images.*.url' => 'Định dạng URL hình ảnh không hợp lệ'
         ];
     }
-} 
+}

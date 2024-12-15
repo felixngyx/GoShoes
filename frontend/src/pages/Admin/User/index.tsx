@@ -11,7 +11,7 @@ import Pagination from '../../../components/admin/Pagination';
 const User = () => {
 	const [users, setUsers] = useState<UserType[]>([]);
 	const [allUsers, setAllUsers] = useState<UserType[]>([]);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(0);
 	const [previewUser, setPreviewUser] = useState<UserType | null>(null);
@@ -21,7 +21,6 @@ const User = () => {
 
 	const fetchAllUsers = async () => {
 		try {
-			setLoading(true);
 			const response = await userService.getAll(1, 1000);
 			setAllUsers(response.data.data);
 		} catch (error) {
@@ -33,7 +32,6 @@ const User = () => {
 
 	const fetchUsers = async (page: number) => {
 		try {
-			setLoading(true);
 			const response = await userService.getAll(page, 10);
 			setUsers(response.data.data);
 			setTotalPages(response.data.total_pages);
@@ -71,14 +69,11 @@ const User = () => {
 	const handleDelete = async (id: number) => {
 		if (confirm('Are you sure you want to delete this user?')) {
 			try {
-				setLoading(true);
 				await userService.delete(id);
 				fetchUsers(currentPage);
 				toast.success('Delete user success');
 			} catch (error) {
 				console.error('Error deleting user:', error);
-			} finally {
-				setLoading(false);
 			}
 		}
 	};
@@ -87,7 +82,6 @@ const User = () => {
 		if (!status) {
 			if (confirm('Are you sure you want to restore this user?')) {
 				try {
-					setLoading(true);
 					await userService.update(id, {
 						is_deleted: status,
 					});
@@ -95,21 +89,16 @@ const User = () => {
 					toast.success('Restore user success');
 				} catch (error) {
 					console.error('Error restoring user:', error);
-				} finally {
-					setLoading(false);
 				}
 			}
 		} else {
 			if (confirm('Are you sure you want to delete this user?')) {
 				try {
-					setLoading(true);
 					await userService.delete(id);
 					fetchUsers(currentPage);
 					toast.success('Delete user success');
 				} catch (error) {
 					console.error('Error deleting user:', error);
-				} finally {
-					setLoading(false);
 				}
 			}
 		}
@@ -139,10 +128,10 @@ const User = () => {
 
 	const filteredUsers = searchTerm
 		? allUsers.filter(user =>
-				user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
-			)
+			user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+		)
 		: users;
 
 	const sortedAndFilteredUsers = sortUsers(filteredUsers);
@@ -151,24 +140,18 @@ const User = () => {
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
-					User List ({filteredUsers.length} users)
+					Danh sách ({allUsers.length} người dùng)
 				</h4>
-				
-				<div className="flex items-center gap-4">
-					<div className="relative">
-						<input
-							type="text"
-							placeholder="Search by name, email, phone..."
-							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
-							className="input input-bordered w-full max-w-xs pl-10"
-						/>
-						<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-					</div>
-					<button onClick={toggleSortOrder} className="btn btn-sm btn-primary">
-						Sort by Name ({sortOrder})
-					</button>
-				</div>
+
+				<label className="input input-sm input-bordered flex items-center gap-2 w-96">
+					<input
+						placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+						type="text" className="grow" />
+					<Search size={20} />
+
+				</label>
 			</div>
 
 			<div className="relative overflow-x-auto border border-stroke">
@@ -176,43 +159,31 @@ const User = () => {
 					<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
 						<tr>
 							<th scope="col" className="px-6 py-3">
-								Name
-							</th>
-							{/* <th scope="col" className="px-6 py-3">
 								<div className="flex items-center">
-									Email
+									Tên
+									<FaSort className='cursor-pointer ms-1' onClick={toggleSortOrder} />
+								</div>
+
+							</th>
+							<th scope="col" className="px-6 py-3">
+								Xác minh
+							</th>
+							<th scope="col" className="px-6 py-3">
+								<div className="flex items-center">
+									Quản trị viên
 									<a>
 										<FaSort />
 									</a>
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
-									Phone
-									<a>
-										<FaSort />
-									</a>
-								</div>
-							</th> */}
-							<th scope="col" className="px-6 py-3">
-								Is verified
+								<div className="flex items-center">Trạng thái</div>
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">
-									Admin
-									<a>
-										<FaSort />
-									</a>
-								</div>
+								Ngày tạo
 							</th>
 							<th scope="col" className="px-6 py-3">
-								<div className="flex items-center">Status</div>
-							</th>
-							<th scope="col" className="px-6 py-3">
-								Created At
-							</th>
-							<th scope="col" className="px-6 py-3">
-								Action
+								Thao tác
 							</th>
 						</tr>
 					</thead>
@@ -230,7 +201,7 @@ const User = () => {
 						) : sortedAndFilteredUsers.length === 0 ? (
 							<tr>
 								<td colSpan={5} className="text-center py-4">
-									No users found
+									Không tìm thấy người dùng
 								</td>
 							</tr>
 						) : (
@@ -247,8 +218,6 @@ const User = () => {
 										/>
 										{user.name}
 									</td>
-									{/* <td className="px-6 py-4">{user.email}</td>
-									<td className="px-6 py-4">{user.phone}</td> */}
 									<td className="px-6 py-4">
 										{new Date(
 											user.email_verified_at
@@ -257,11 +226,10 @@ const User = () => {
 									<td className="px-6 py-4">
 										<select
 											defaultValue={user.role}
-											className={`select select-bordered select-xs text-xs font-bold ${
-												user.role === 'super-admin'
-													? 'select-disabled text-info'
-													: ''
-											}`}
+											className={`select select-bordered select-xs text-xs font-bold ${user.role === 'super-admin'
+												? 'select-disabled text-info'
+												: ''
+												}`}
 											disabled={loadingUpdate}
 											onChange={(e) => handleRoleChange(e, user.id!)}
 										>
@@ -272,28 +240,27 @@ const User = () => {
 											)}
 											{user.role !== 'super-admin' && (
 												<>
-													<option value="admin">Admin</option>
-													<option value="user">User</option>
+													<option value="admin">Quản trị viên</option>
+													<option value="user">Người dùng</option>
 												</>
 											)}
 										</select>
 									</td>
 									<td className="px-6 py-4">
 										<span
-											className={`px-2 py-1 rounded-full text-xs ${
-												user.is_deleted
-													? 'bg-danger/10 text-danger'
-													: 'bg-success/10 text-success'
-											}`}
+											className={`px-2 py-1 rounded-full text-xs ${user.is_deleted
+												? 'bg-danger/10 text-danger'
+												: 'bg-success/10 text-success'
+												}`}
 										>
-											{user.is_deleted ? 'Inactive' : 'Active'}
+											{user.is_deleted ? 'Không hoạt động' : 'Hoạt động'}
 										</span>
 									</td>
 									<td className="px-6 py-4">
 										{user.created_at
 											? new Date(
-													user.created_at
-											  ).toLocaleDateString()
+												user.created_at
+											).toLocaleDateString()
 											: ''}
 									</td>
 									<td className="px-6 py-4">
@@ -348,7 +315,7 @@ const User = () => {
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 					<div className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/2">
 						<div className="flex justify-between items-center mb-4">
-							<h2 className="text-xl font-semibold">User Details</h2>
+							<h2 className="text-xl font-semibold">Chi tiết người dùng</h2>
 							<button
 								onClick={closeUserDetailModal}
 								className="btn btn-sm btn-ghost"
@@ -384,7 +351,7 @@ const User = () => {
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Phone:
+										Số điện thoại:
 									</p>
 									<p className="font-medium">
 										{previewUser.phone || 'N/A'}
@@ -393,7 +360,7 @@ const User = () => {
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Gender:
+										Giới tính:
 									</p>
 									<p className="font-medium capitalize">
 										{previewUser.gender || 'N/A'}
@@ -404,61 +371,60 @@ const User = () => {
 							<div className="flex flex-col gap-2">
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Birth Date:
+										Ngày sinh:
 									</p>
 									<p className="font-medium">
 										{previewUser.birth_date
 											? new Date(
-													previewUser.birth_date
-											  ).toLocaleDateString()
+												previewUser.birth_date
+											).toLocaleDateString()
 											: 'N/A'}
 									</p>
 								</div>
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Status:
+										Trạng thái:
 									</p>
 									<span
-										className={`px-2 py-1 rounded-full text-xs ${
-											previewUser.is_deleted
-												? 'bg-danger/10 text-danger'
-												: 'bg-success/10 text-success'
-										}`}
+										className={`px-2 py-1 rounded-full text-xs ${previewUser.is_deleted
+											? 'bg-danger/10 text-danger'
+											: 'bg-success/10 text-success'
+											}`}
 									>
-										{previewUser.is_deleted ? 'Inactive' : 'Active'}
+										{previewUser.is_deleted ? 'Không hoạt động' : 'Hoạt động'}
 									</span>
 								</div>
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Email Verified:
+										Email đã xác minh:
 									</p>
 									<p className="font-medium">
 										{previewUser.email_verified_at
 											? new Date(
-													previewUser.email_verified_at
-											  ).toLocaleDateString()
-											: 'Not verified'}
+												previewUser.email_verified_at
+											).toLocaleDateString()
+											: 'Chưa xác minh'}
 									</p>
 								</div>
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Created At:
+										Ngày tạo:
 									</p>
 									<p className="font-medium">
 										{previewUser.created_at
 											? new Date(
-													previewUser.created_at
-											  ).toLocaleDateString()
+												previewUser.created_at
+											).toLocaleDateString()
 											: 'N/A'}
 									</p>
 								</div>
 
 								<div className="border border-gray-200 p-2 rounded-md bg-gray-50 shadow-sm">
 									<p className="text-sm text-gray-600 font-semibold">
-										Bio:
+										Tiểu sử:
 									</p>
 									<p className="font-medium">
 										{previewUser.bio || 'N/A'}

@@ -87,28 +87,28 @@ api.interceptors.request.use(
 );
 
 const LoadingAnimation = () => {
-  return (
-    <div className="w-full h-64 flex items-center justify-center">
-      <div className="space-y-4 text-center">
-        {/* Logo animation */}
-        <div className="relative w-16 h-16 mx-auto">
-          <div className="absolute inset-0 border-4 border-purple-200 dark:border-purple-900/50 rounded-full"></div>
-          <div className="absolute inset-0 border-4 border-purple-600 dark:border-purple-400 rounded-full 
+    return (
+        <div className="w-full h-64 flex items-center justify-center">
+            <div className="space-y-4 text-center">
+                {/* Logo animation */}
+                <div className="relative w-16 h-16 mx-auto">
+                    <div className="absolute inset-0 border-4 border-purple-200 dark:border-purple-900/50 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-purple-600 dark:border-purple-400 rounded-full 
                         border-t-transparent animate-spin"></div>
+                </div>
+
+                {/* Text animation */}
+                <div className="text-lg font-medium text-gray-700 dark:text-gray-200">
+                    <div className="inline-block">
+                        Đang tải đơn hàng
+                        <span className="animate-bounce inline-block">.</span>
+                        <span className="animate-bounce inline-block" style={{ animationDelay: '0.2s' }}>.</span>
+                        <span className="animate-bounce inline-block" style={{ animationDelay: '0.4s' }}>.</span>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        {/* Text animation */}
-        <div className="text-lg font-medium text-gray-700 dark:text-gray-200">
-          <div className="inline-block">
-            Loading Orders
-            <span className="animate-bounce inline-block">.</span>
-            <span className="animate-bounce inline-block" style={{ animationDelay: '0.2s' }}>.</span>
-            <span className="animate-bounce inline-block" style={{ animationDelay: '0.4s' }}>.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default function OrderDashboard() {
@@ -140,7 +140,7 @@ export default function OrderDashboard() {
 
                 // Fetch tất cả các trang
                 const promises = [];
-                for (let page = 1; page <= totalPages; page++) {
+                for (let page = 1;page <= totalPages;page++) {
                     promises.push(api.get<ApiResponse>(`/orders/all?page=${page}`));
                 }
 
@@ -189,7 +189,7 @@ export default function OrderDashboard() {
                 month: '2-digit',
                 year: 'numeric',
             });
-            
+
             return (
                 order.sku.toLowerCase().includes(searchString) ||
                 order.customer.name.toLowerCase().includes(searchString) ||
@@ -259,7 +259,7 @@ export default function OrderDashboard() {
     const handleExportToCSV = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-        
+
         const filteredOrders = allOrders.filter(order => {
             const searchString = searchTerm.toLowerCase();
             const orderDate = new Date(order.created_at).toLocaleDateString('en-GB', {
@@ -267,7 +267,7 @@ export default function OrderDashboard() {
                 month: '2-digit',
                 year: 'numeric',
             });
-            
+
             return (
                 order.sku.toLowerCase().includes(searchString) ||
                 order.customer.name.toLowerCase().includes(searchString) ||
@@ -304,19 +304,19 @@ export default function OrderDashboard() {
             'Status': order.status.toUpperCase(),
             'Customer Name': order.customer.name,
             'Customer Email': order.customer.email,
-            'Shipping Address': order.shipping?.shipping_detail ? 
+            'Shipping Address': order.shipping?.shipping_detail ?
                 (() => {
                     try {
-                        const shippingDetail = typeof order.shipping.shipping_detail === 'string' 
-                            ? JSON.parse(order.shipping.shipping_detail) 
+                        const shippingDetail = typeof order.shipping.shipping_detail === 'string'
+                            ? JSON.parse(order.shipping.shipping_detail)
                             : order.shipping.shipping_detail;
                         return `${shippingDetail.address}, ${shippingDetail.address_detail}`;
                     } catch (e) {
                         return 'N/A';
                     }
-                })() : 
+                })() :
                 'N/A',
-            'Phone Number': order.shipping?.shipping_detail ? 
+            'Phone Number': order.shipping?.shipping_detail ?
                 (() => {
                     try {
                         const shippingDetail = JSON.parse(order.shipping.shipping_detail);
@@ -324,13 +324,13 @@ export default function OrderDashboard() {
                     } catch (e) {
                         return 'N/A';
                     }
-                })() : 
+                })() :
                 'N/A',
             'Total Amount': new Intl.NumberFormat('vi-VN', {
                 style: 'currency',
                 currency: 'VND'
             }).format(Number(order.total)),
-            'Products': order.items.map(item => 
+            'Products': order.items.map(item =>
                 `${item.quantity}x ${item.product.name} (${item.variant?.size || 'N/A'}, ${item.variant?.color || 'N/A'})`
             ).join(' | '),
             'Payment Method': order.payment?.method || 'N/A',
@@ -385,9 +385,9 @@ export default function OrderDashboard() {
         const csvWithBOM = BOM + csvString;
 
         const currentDate = new Date().toLocaleDateString('en-GB').split('/').join('-');
-        
-        const blob = new Blob([csvWithBOM], { 
-            type: 'text/csv;charset=utf-8;' 
+
+        const blob = new Blob([csvWithBOM], {
+            type: 'text/csv;charset=utf-8;'
         });
 
         const link = document.createElement('a');
@@ -426,7 +426,7 @@ export default function OrderDashboard() {
         return (
             <div className="w-full h-64 flex items-center justify-center">
                 <div className="text-red-600 dark:text-red-400 text-center">
-                    <p className="font-semibold mb-2">Error Loading Orders</p>
+                    <p className="font-semibold mb-2">Lỗi tải đơn hàng</p>
                     <p className="text-sm">{error}</p>
                 </div>
             </div>
@@ -437,10 +437,10 @@ export default function OrderDashboard() {
         <div className="w-full max-w-10xl mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
             <div className="p-6 bg-white/60 dark:bg-gray-800/60">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex">Customer's Orders 
-                        <Download 
-                            className='ml-4 mt-1 cursor-pointer hover:text-purple-600' 
-                            size={25} 
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex">Đơn hàng của khách hàng
+                        <Download
+                            className='ml-4 mt-1 cursor-pointer hover:text-purple-600'
+                            size={25}
                             onClick={handleExportToCSV}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
@@ -453,7 +453,7 @@ export default function OrderDashboard() {
                     <div className="relative w-72">
                         <input
                             type="search"
-                            placeholder="Search orders..."
+                            placeholder="Tìm kiếm đơn hàng..."
                             className="w-full px-4 py-2 rounded-full bg-white/70 dark:bg-gray-700/70 border 
                        dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 
                        dark:focus:ring-purple-400 text-gray-800 dark:text-gray-200 
@@ -485,28 +485,28 @@ export default function OrderDashboard() {
                                 </th>
                                 <th onClick={() => handleSort('customer.name')} className="px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-200 cursor-pointer hover:text-purple-600 dark:hover:text-purple-400">
                                     <div className="flex items-center gap-2">
-                                        Customer
+                                        Khách hàng
                                         <ArrowUpDown size={16} />
                                     </div>
                                 </th>
                                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-200">
-                                    Product
+                                    Sản phẩm
                                 </th>
                                 <th onClick={() => handleSort('status')} className="px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-200 cursor-pointer hover:text-purple-600 dark:hover:text-purple-400">
                                     <div className="flex items-center gap-2">
-                                        Status
+                                        Trạng thái
                                         <ArrowUpDown size={16} />
                                     </div>
                                 </th>
                                 <th onClick={() => handleSort('total')} className="px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-200 cursor-pointer hover:text-purple-600 dark:hover:text-purple-400">
                                     <div className="flex items-center gap-2">
-                                        Total
+                                        Tổng cộng
                                         <ArrowUpDown size={16} />
                                     </div>
                                 </th>
                                 <th onClick={() => handleSort('created_at')} className="px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-200 cursor-pointer hover:text-purple-600 dark:hover:text-purple-400">
                                     <div className="flex items-center gap-2">
-                                        Created_at
+                                        Ngày tạo
                                         <ArrowUpDown size={16} />
                                     </div>
                                 </th>
@@ -528,7 +528,7 @@ export default function OrderDashboard() {
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 navigator.clipboard.writeText(order.sku);
-                                                alert("SKU copied to clipboard!");
+                                                alert("SKU đã được sao chép vào clipboard!");
                                             }}
                                         >
                                         </Copy>
@@ -566,10 +566,10 @@ export default function OrderDashboard() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 font-medium text-gray-800 dark:text-gray-200">
-                                    {new Intl.NumberFormat('de-DE', { style: 'decimal' }).format(Number(order.total))}đ
+                                        {new Intl.NumberFormat('de-DE', { style: 'decimal' }).format(Number(order.total))}đ
                                     </td>
                                     <td className="px-6 py-4 font-medium text-gray-800 dark:text-gray-200">
-                                        {new Date(order.created_at).toLocaleDateString('en-en', {
+                                        {new Date(order.created_at).toLocaleDateString('vi-VN', {
                                             year: 'numeric',
                                             month: 'long',
                                             day: 'numeric',
@@ -585,9 +585,9 @@ export default function OrderDashboard() {
             <div className="p-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Showing {((pagination.currentPage - 1) * pagination.perPage) + 1} to{' '}
-                        {Math.min(pagination.currentPage * pagination.perPage, pagination.total)} of{' '}
-                        {pagination.total} entries
+                        Hiển thị từ {((pagination.currentPage - 1) * pagination.perPage) + 1} đến{' '}
+                        {Math.min(pagination.currentPage * pagination.perPage, pagination.total)} trong tổng số{' '}
+                        {pagination.total} mục
                     </div>
                     <div className="flex items-center gap-2">
                         <button

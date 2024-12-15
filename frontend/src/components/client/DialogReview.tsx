@@ -66,7 +66,7 @@ const DialogReview: React.FC<DialogReviewProps> = ({
       comment: string;
     }) => submitReview(data.productId, data.rating, data.comment),
     onSuccess: () => {
-      toast.success("Review submitted successfully!");
+      toast.success("Sản phẩm đã được đánh giá thành công.");
       if (currentReviewIndex < items.length - 1) {
         // Chuyển sang sản phẩm tiếp theo
         setRating(null); // Reset rating
@@ -74,23 +74,23 @@ const DialogReview: React.FC<DialogReviewProps> = ({
         setCurrentReviewIndex((prevIndex) => prevIndex + 1);
       } else {
         // Đã đánh giá hết
-        toast.success("You have reviewed all products!");
+        toast.success("Bạn đã đánh giá tất cả sản phẩm trong đơn hàng.");
         onClose();
       }
     },
     onError: () => {
-      toast.error("Failed to submit review. Please try again.");
+      toast.error("Có lỗi xảy ra khi đánh giá sản phẩm. Vui lòng thử lại.");
     },
   });
 
   const handleSubmit = () => {
     if (!rating || !comment.trim()) {
-      toast("Please provide both a rating and a comment.");
+      toast("Vui lòng nhập đầy đủ thông tin đánh giá.");
       return;
     }
 
     if (!currentProduct) {
-      toast("No product to review. Please try again.");
+      toast("Không tìm thấy thông tin sản phẩm.");
       return;
     }
 
@@ -166,7 +166,7 @@ const DialogReview: React.FC<DialogReviewProps> = ({
         </DialogContent>
         <DialogActions className="mt-4 flex justify-between">
           <Button onClick={onClose} className="text-gray-500">
-            Cancel
+            Huỷ
           </Button>
           <Button
             type="submit"

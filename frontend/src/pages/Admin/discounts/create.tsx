@@ -56,11 +56,11 @@ type FormData = {
   product_ids: number[] | null;
 };
 
-const ProductSelectionModal = ({ 
-  isOpen, 
-  onClose, 
-  onSelectProducts, 
-  selectedProducts 
+const ProductSelectionModal = ({
+  isOpen,
+  onClose,
+  onSelectProducts,
+  selectedProducts
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -115,7 +115,7 @@ const ProductSelectionModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-gray-800 rounded-lg w-full max-w-2xl p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">Select Products</h2>
+          <h2 className="text-xl font-bold text-white">Chọn sản phẩm</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white">
             <FiX size={24} />
           </button>
@@ -127,7 +127,7 @@ const ProductSelectionModal = ({
             type="text"
             value={searchTerm}
             onChange={handleSearch}
-            placeholder="Enter product name..."
+            placeholder="Nhập tên sản phẩm..."
             className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
           />
           <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -144,7 +144,7 @@ const ProductSelectionModal = ({
               <input
                 type="checkbox"
                 checked={localSelectedProducts.some(p => p.id === product.id)}
-                onChange={() => {}}
+                onChange={() => { }}
                 className="mr-3"
               />
               <div className="flex flex-col">
@@ -159,7 +159,7 @@ const ProductSelectionModal = ({
 
         {/* Selected Products Count */}
         <div className="text-gray-400 mb-4">
-          Selected: {localSelectedProducts.length} products
+          Đã chọn: {localSelectedProducts.length} sản phẩm
         </div>
 
         {/* Actions */}
@@ -168,13 +168,13 @@ const ProductSelectionModal = ({
             onClick={onClose}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
           >
-            Cancel
+            Huỷ
           </button>
           <button
             onClick={handleSave}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
-            Save Selection
+            Lưu
           </button>
         </div>
       </div>
@@ -264,14 +264,14 @@ const CreateDiscount = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
-        <Link 
-          to="/admin/discounts" 
+        <Link
+          to="/admin/discounts"
           className="hover:text-white transition-colors"
         >
-          Discounts
+          Giảm giá
         </Link>
         <FiChevronRight className="h-4 w-4" />
-        <span className="text-white">Create Discount</span>
+        <span className="text-white">Tạo giảm giá</span>
       </div>
 
       <ProductSelectionModal
@@ -284,14 +284,14 @@ const CreateDiscount = () => {
       <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl px-8 py-10 mx-auto">
         <h1 className="text-3xl font-bold text-white flex items-center mb-6">
           <FiTag className="mr-3" />
-          Create New Discount
+          Tạo giảm giá mới
         </h1>
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiTag className="mr-2" /> Discount Code
+                <FiTag className="mr-2" /> Mã giảm giá
               </label>
               <input
                 type="text"
@@ -301,7 +301,7 @@ const CreateDiscount = () => {
                   handleCodeChange(e);
                 }}
                 className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-gray-400 transition-all"
-                placeholder="e.g., SUMMER2024"
+                placeholder="VD: SUMMER2024"
               />
               {errors.code && (
                 <p className="text-red-500 text-xs mt-1">{errors.code?.message}</p>
@@ -310,13 +310,13 @@ const CreateDiscount = () => {
 
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiShoppingCart className="mr-2" /> Description
+                <FiShoppingCart className="mr-2" /> Mô tả
               </label>
               <input
                 type="text"
                 {...register('description')}
                 className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-gray-400 transition-all"
-                placeholder="Enter discount description"
+                placeholder="Nhập mô tả giảm giá"
               />
               {errors.description && (
                 <p className="text-red-500 text-xs mt-1">{errors.description?.message}</p>
@@ -327,7 +327,7 @@ const CreateDiscount = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiCalendar className="mr-2" /> Valid From
+                <FiCalendar className="mr-2" /> Hiệu lực từ
               </label>
               <input
                 type="datetime-local"
@@ -341,7 +341,7 @@ const CreateDiscount = () => {
 
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiCalendar className="mr-2" /> Valid To
+                <FiCalendar className="mr-2" /> Hiệu lực đến
               </label>
               <input
                 type="datetime-local"
@@ -357,7 +357,7 @@ const CreateDiscount = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiShoppingCart className="mr-2" /> Minimum Order Amount
+                <FiShoppingCart className="mr-2" /> Số tiền đơn hàng tối thiểu
               </label>
               <input
                 type="number"
@@ -372,7 +372,7 @@ const CreateDiscount = () => {
 
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiTag className="mr-2" /> Usage Limit
+                <FiTag className="mr-2" /> Giới hạn sử dụng
               </label>
               <input
                 type="number"
@@ -389,7 +389,7 @@ const CreateDiscount = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiPercent className="mr-2" /> Discount Percentage
+                <FiPercent className="mr-2" /> Phần trăm giảm giá
               </label>
               <input
                 type="number"
@@ -411,13 +411,13 @@ const CreateDiscount = () => {
 
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Selected Products
+                Sản phẩm đã chọn
               </label>
-              
+
               <div className="flex flex-wrap gap-2 mb-2">
                 {selectedProducts.map(product => (
-                  <div 
-                    key={product.id} 
+                  <div
+                    key={product.id}
                     className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm"
                   >
                     <span>{product.name}</span>
@@ -441,7 +441,7 @@ const CreateDiscount = () => {
                 onClick={() => setIsModalOpen(true)}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 w-full"
               >
-                Select Products
+                Chọn sản phẩm
               </button>
             </div>
           </div>
@@ -452,7 +452,7 @@ const CreateDiscount = () => {
               className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all flex items-center"
             >
               <FiPlus className="mr-2" />
-              Create Discount
+              Tạo giảm giá
             </button>
           </div>
         </form>

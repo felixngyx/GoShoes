@@ -184,10 +184,10 @@ const ProductList = () => {
 			/>
 			<div className="container max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 my-10 gap-10 px-5 md:px-10 lg:px-0">
 				<div className="col-span-1 lg:col-span-3 flex flex-col gap-10">
-					{/* Hot Deals */}
+					{/* Ưu đãi hot */}
 					<div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2">
 						<h2 className="text-xl font-semibold capitalize">
-							HOT DEALS
+							ƯU ĐÃI HOT
 						</h2>
 						<ul className="flex flex-col gap-3">
 							{products?.top_products?.map((product) => (
@@ -209,12 +209,12 @@ const ProductList = () => {
 						</ul>
 					</div>
 
-					{/* Price Slider */}
+					{/* Thanh trượt giá */}
 					<div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2">
-						<h2 className="text-xl font-semibold capitalize">PRICE</h2>
+						<h2 className="text-xl font-semibold capitalize">GIÁ</h2>
 						<div className="flex flex-col gap-3">
 							<span className="flex gap-8">
-								<p className="text-[16px]">Range:</p>
+								<p className="text-[16px]">Khoảng giá:</p>
 								<p>
 									{formatPrice(priceRange[0])} -{' '}
 									{formatPrice(priceRange[1])}
@@ -253,14 +253,14 @@ const ProductList = () => {
 						</div>
 					</div>
 
-					{/* Size */}
+					{/* Kích cỡ */}
 					<div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2 relative">
-						<h2 className="text-xl font-semibold capitalize">SIZE</h2>
+						<h2 className="text-xl font-semibold capitalize">KÍCH CỠ</h2>
 						<button
-							onClick={() => handleSizeClick(0)} // Gọi hàm để reset size
+							onClick={() => handleSizeClick(0)} // Gọi hàm để reset kích cỡ
 							className="absolute top-2 right-2 text-sm text-gray-500 hover:text-blue-600 transition-all"
 						>
-							Reset
+							Đặt lại
 						</button>
 						<div className="flex flex-wrap gap-2">
 							{uniqueSortedSizes?.map((size: any) => {
@@ -269,11 +269,10 @@ const ProductList = () => {
 									<button
 										key={size.id}
 										onClick={() => handleSizeClick(size.id)} // Gọi hàm khi click
-										className={`flex justify-center items-center p-4 w-14 border rounded-md cursor-pointer hover:bg-blue-100 hover:text-blue-600 transition-all ${
-											isSelected
+										className={`flex justify-center items-center p-4 w-14 border rounded-md cursor-pointer hover:bg-blue-100 hover:text-blue-600 transition-all ${isSelected
 												? 'bg-blue-100 text-blue-600 border-blue-600'
 												: ''
-										}`}
+											}`}
 									>
 										<span className="text-sm capitalize">
 											{size.size}
@@ -284,14 +283,14 @@ const ProductList = () => {
 						</div>
 					</div>
 
-					{/* Brand */}
+					{/* Thương hiệu */}
 					<div className="bg-[#F6F7F8] rounded-lg shadow-lg p-5 space-y-2 relative">
-						<h2 className="text-xl font-semibold capitalize">BRAND</h2>
+						<h2 className="text-xl font-semibold capitalize">THƯƠNG HIỆU</h2>
 						<button
-							onClick={() => handleBrandClick(0)} // Gọi hàm để reset brand
+							onClick={() => handleBrandClick(0)} // Gọi hàm để reset thương hiệu
 							className="absolute top-2 right-2 text-sm text-gray-500 hover:text-blue-600 transition-all"
 						>
-							Reset
+							Đặt lại
 						</button>
 						<ul className="flex flex-col gap-3">
 							{brandsToDisplay.map((brand: any) => {
@@ -300,9 +299,8 @@ const ProductList = () => {
 									<li
 										key={brand.id}
 										onClick={() => handleBrandClick(brand.id)} // Gọi hàm khi click
-										className={`flex justify-between p-2 rounded-md cursor-pointer hover:bg-blue-100 hover:text-blue-600 transition-all ${
-											isSelected ? 'bg-blue-100 text-blue-600' : ''
-										}`}
+										className={`flex justify-between p-2 rounded-md cursor-pointer hover:bg-blue-100 hover:text-blue-600 transition-all ${isSelected ? 'bg-blue-100 text-blue-600' : ''
+											}`}
 									>
 										<p className="text-sm capitalize">{brand.name}</p>
 										<p className="text-sm text-gray-500">
@@ -318,7 +316,7 @@ const ProductList = () => {
 								onClick={() => setIsExpanded(true)}
 								className="btn w-full text-[#449ef1aa]"
 							>
-								More
+								Xem thêm
 							</button>
 						)}
 					</div>
@@ -329,62 +327,60 @@ const ProductList = () => {
 						<Banner />
 					</div>
 
-					{/* Filter */}
+					{/* Bộ lọc */}
 					<div className="flex gap-3">
 						<div className="flex items-center gap-2">
-							{/* <span>{filteredProducts.length} Items</span> */}
+							{/* <span>{filteredProducts.length} Sản phẩm</span> */}
 							<select
 								className="select select-sm lg:select-md select-bordered bg-white text-gray-800"
 								value={sortBy}
 								onChange={(e) => setSortBy(e.target.value)}
 							>
-								<option value="newest">Newest</option>
-								<option value="name-asc">Name A-Z</option>
-								<option value="name-desc">Name Z-A</option>
-								<option value="price-asc">Price Low to High</option>
-								<option value="price-desc">Price High to Low</option>
+								<option value="newest">Mới nhất</option>
+								<option value="name-asc">Tên A-Z</option>
+								<option value="name-desc">Tên Z-A</option>
+								<option value="price-asc">Giá từ thấp đến cao</option>
+								<option value="price-desc">Giá từ cao đến thấp</option>
 								<option value="rating-asc">
-									Rating Highest to Lowest
+									Đánh giá từ cao đến thấp
 								</option>
 								<option value="rating-desc">
-									Rating Lowest to Highest
+									Đánh giá từ thấp đến cao
 								</option>
 							</select>
 						</div>
 
-						{/* Show Select */}
+						{/* Hiển thị */}
 						<div>
 							<select
 								className="select select-sm lg:select-md select-bordered bg-white text-gray-800"
 								value={perPage}
 								onChange={handleShowCountChange}
 							>
-								<option value={9}>Show 9</option>
-								<option value={15}>Show 15</option>
+								<option value={9}>Hiển thị 9</option>
+								<option value={15}>Hiển thị 15</option>
 							</select>
 						</div>
 
-						{/* Layout Buttons */}
+						{/* Nút bố cục */}
 						<div className="items-center space-x-2 ml-auto hidden lg:block">
-							{/* Button Grid Layout */}
+							{/* Nút bố cục lưới */}
 							<button
-								className={`btn btn-square ${
-									layout === 'grid'
+								className={`btn btn-square ${layout === 'grid'
 										? 'bg-[#40BFFF] text-white'
 										: 'bg-white text-gray-800 border border-gray-300'
-								}`}
+									}`}
 								onClick={() => setLayout('grid')}
 							>
 								<FaTh />
 							</button>
 
-							{/* Button List Layout */}
+							{/* Nút bố cục danh sách */}
 							<button
-								className={`btn btn-square ${
-									layout === 'list'
+								className={`btn btn-square ${layout === 'list'
 										? 'bg-[#40BFFF] text-white'
 										: 'bg-white text-gray-800 border border-gray-300'
-								}`}
+									}`}
 								onClick={() => setLayout('list')}
 							>
 								<FaBars />
@@ -392,13 +388,12 @@ const ProductList = () => {
 						</div>
 					</div>
 
-					{/* Product List */}
+					{/* Danh sách sản phẩm */}
 					<div
-						className={`grid ${
-							layout === 'grid'
+						className={`grid ${layout === 'grid'
 								? 'lg:grid-cols-3 grid-cols-2'
 								: 'grid-cols-1'
-						} gap-2 md:gap-8`}
+							} gap-2 md:gap-8`}
 					>
 						{isLoading ? (
 							<>
@@ -438,7 +433,7 @@ const ProductList = () => {
 							)
 						) : (
 							<div className="col-span-full text-center">
-								<p>There are no products</p>
+								<p>Không có sản phẩm nào</p>
 							</div>
 						)}
 					</div>

@@ -51,7 +51,7 @@ const Sidebar = () => {
           <Link
             key={index}
             to={item.path}
-            className={`flex items-center gap-4 p-2 hover:bg-gray-100 rounded ${isActive(item.path.split('/').pop() || '')}`}
+            className={`flex items-center text-sm gap-4 p-2 hover:bg-gray-100 rounded ${isActive(item.path.split('/').pop() || '')}`}
             onClick={() => setIsMobileMenuOpen(false)}
           >
             {item.icon} {item.text}
