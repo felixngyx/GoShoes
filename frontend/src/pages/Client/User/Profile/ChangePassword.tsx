@@ -12,18 +12,18 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ email }) => {
 	const { handleSendResetPasswordRequest, isSendingResetPassword } = usePass();
 	const { user } = useSelector((state: RootState) => state.client);
 
-	// Hàm gửi yêu cầu reset mật khẩu khi người dùng nhấn nút
+	// Hàm gửi yêu cầu đặt lại mật khẩu khi người dùng nhấn nút
 	const handleSendResetPasswordRequestAction = async () => {
 		if (!email) {
-			toast.error('Email not found!');
+			toast.error('Không tìm thấy email!');
 			return;
 		}
 
 		try {
 			await handleSendResetPasswordRequest(email);
 		} catch (error) {
-			console.error('Error during password reset request:', error);
-			toast.error('Failed to send reset password request');
+			console.error('Lỗi khi gửi yêu cầu đặt lại mật khẩu:', error);
+			toast.error('Gửi yêu cầu đặt lại mật khẩu thất bại.');
 		}
 	};
 
@@ -32,8 +32,9 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ email }) => {
 			<button
 				onClick={handleSendResetPasswordRequestAction}
 				disabled={isSendingResetPassword || !user.email_is_verified}
-				className={`btn btn-block text-white ${isSendingResetPassword || user.email_is_verified
-						? 'bg-[#259CFA] cursor-not-allowed'
+				className={`btn btn-block text-white ${
+					isSendingResetPassword || user.email_is_verified
+						? ' bg-[#40BFFF] cursor-not-allowed'
 						: 'bg-[#40BFFF] hover:bg-[#259CFA]'
 					}`}
 			>

@@ -23,5 +23,4 @@ export interface ProfileParams {
   current_password?: string;
   new_password?: string;
   confirm_password?: string;
-  address?: string | null;
 }

@@ -24,6 +24,7 @@ const VerifyEmail: React.FC = () => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [status, setStatus] = useState(false);
 	const [newPhone, setNewPhone] = useState('');
+	const [newEmail, setNewEmail] = useState('');
 	const access_token = Cookies.get('access_token');
 	const user = useSelector((state: RootState) => state.client.user);
 	const user_data = JSON.parse(Cookies.get('user') || '{}');
@@ -96,6 +97,20 @@ const VerifyEmail: React.FC = () => {
 		}
 	};
 
+	const handleChangeEmail = async () => {
+		try {
+			await axiosClient.post('/profile/verify-token-change-email', {
+				token,
+				email: newEmail,
+			});
+			toast.success('Email has been updated successfully!');
+			navigate('/account');
+		} catch (error) {
+			toast.error('Failed to update email. Please try again.');
+			console.error('Failed to update email ');
+		}
+	};
+
 	const handleVerifyEmail = async () => {
 		try {
 			const res = await axios.post(`${BASE_URL}/auth/register-verify`, {
@@ -116,26 +131,24 @@ const VerifyEmail: React.FC = () => {
 	};
 
 	useEffect(() => {
-		if (!user.name || !access_token) {
+		// Nếu không có token thì yêu cầu đăng nhập lại
+		if (!token) {
 			navigate('/signin');
+			return; // Ngừng thực hiện nếu không có token
 		}
 
-		if (type === 'reset-password' && token) {
+		// Nếu là reset-password thì tiến hành xác minh token
+		if (type === 'reset-password') {
 			handleVerifyResetToken(token);
-		} else if (type === 'register' && token) {
+		}
+		// Kiểm tra các loại khác như đăng ký hoặc thay đổi số điện thoại
+		else if (type === 'register' && token) {
 			handleVerifyEmail();
 		} else if (type === 'change-phone' && token) {
 			handleVerifyResetToken(token);
 		}
-	}, [token, type]);
+	}, [token, type, navigate]);
 
-	if (isLoading) {
-		return (
-			<div className="flex justify-center items-center min-h-[600px]">
-				<LoadingIcon type="spinner" size="lg" color="primary" />
-			</div>
-		);
-	}
 
 	return (
 		<>
@@ -246,6 +259,39 @@ const VerifyEmail: React.FC = () => {
 							className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
 						>
 							Cập nhật số điện thoại
+						</button>
+					</form>
+				) : type === 'change-email' ? (
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							handleChangeEmail();
+						}}
+						className="space-y-6"
+					>
+						<h1 className="text-2xl font-semibold text-center">
+							Thay đổi email
+						</h1>
+						<div className="form-control">
+							<label className="label">
+								<span className="label-text font-medium">
+									Email thay đổi 
+								</span>
+							</label>
+							<input
+								type="email"
+								placeholder="Enter new email"
+								className="input input-bordered w-full p-4 rounded-md"
+								value={newEmail}
+								onChange={(e) => setNewEmail(e.target.value)}
+								required
+							/>
+						</div>
+						<button
+							type="submit"
+							className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
+						>
+							Cập Nhật Email
 						</button>
 					</form>
 				) : (

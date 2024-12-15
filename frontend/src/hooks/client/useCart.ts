@@ -14,6 +14,7 @@ import { CartItem } from "../../types/client/cart";
 import { removeFromCart } from "./cartSlice";
 import Cookies from "js-cookie";
 import { checkStock } from "../../services/client/product";
+import Swal from 'sweetalert2';
 
 const useCart = () => {
   const dispatch = useDispatch();
@@ -214,23 +215,39 @@ const useCart = () => {
 
   // Hàm xử lý xóa sản phẩm khỏi giỏ hàng
   const handleDeleteFromCart = (productVariantId: number) => {
-    const confirm = window.confirm(
-      "Are you sure you want to remove this product from cart?"
-    );
-
-    if (confirm) {
-      // Gọi API để xóa sản phẩm
-      deleteProductFromCart(productVariantId);
-
-      setCartItemsWithSelected((prevItems) => {
-        const updatedItems = prevItems.filter(
-          (item) => item.product_variant.id !== productVariantId
-        );
-        return updatedItems;
-      });
-
-      dispatch(removeFromCart(productVariantId));
-    }
+    Swal.fire({
+      title: 'Xác nhận xóa',
+      text: 'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy',
+      customClass: {
+        popup: 'bg-white shadow rounded-lg p-4 max-w-[300px]',
+        title: 'text-base font-bold text-gray-800',
+        htmlContainer: 'text-sm text-gray-600',
+        confirmButton: 'bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600',
+        cancelButton: 'bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400',
+      },
+      buttonsStyling: false,
+      position: 'top',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Gọi API để xóa sản phẩm
+        deleteProductFromCart(productVariantId);
+  
+        // Cập nhật danh sách giỏ hàng
+        setCartItemsWithSelected((prevItems) => {
+          const updatedItems = prevItems.filter(
+            (item) => item.product_variant.id !== productVariantId
+          );
+          return updatedItems;
+        });
+  
+        // Dispatch action để cập nhật Redux
+        dispatch(removeFromCart(productVariantId));
+      }
+    });
   };
 
   // Hàm debounce cho updateQuantity API

@@ -21,7 +21,7 @@ export default function Wishlist() {
 
   const handleAddProductToCart = (item: any) => {
     if (!item?.id) {
-      toast.error('Thiếu ID sản phẩm!')
+      toast.error('Mã sản phẩm không có!')
       return
     }
     const productId = item.id
@@ -32,9 +32,8 @@ export default function Wishlist() {
   const handleDelete = (itemId: number) => {
     try {
       handleDeleteFromWishlist(itemId)
-      toast.success('Đã xóa sản phẩm khỏi danh sách yêu thích!')
     } catch (error) {
-      toast.error('Không thể xóa sản phẩm khỏi danh sách yêu thích!')
+      toast.error('Xóa sản phẩm khỏi danh sách yêu thích thất bại!')
     }
   }
 
@@ -68,11 +67,13 @@ export default function Wishlist() {
                   <tr key={item.id} className="border-t border-gray-200">
                     <td className="p-2 md:p-4">
                       <div className="flex items-center space-x-4">
-                        <img
-                          src={item.thumbnail}
-                          alt={item.name}
-                          className="w-16 h-16 md:w-24 md:h-24 rounded-xl object-cover"
-                        />
+                        <Link to={`/products/${item.id}`}>
+                          <img
+                            src={item.thumbnail}
+                            alt={item.name}
+                            className="w-16 h-16 md:w-24 md:h-24 rounded-xl object-cover"
+                          />
+                        </Link>
                         <div>
                           <h5 className="font-manrope font-semibold text-sm md:text-base text-black mb-1">
                             {item.name}
@@ -107,7 +108,7 @@ export default function Wishlist() {
                   <td colSpan={3} className="text-center py-8 md:py-12">
                     <h3 className="text-lg md:text-xl font-semibold mb-2">Danh sách yêu thích của bạn trống</h3>
                     <p className="text-gray-500 text-sm md:text-base">
-                      Duyệt sản phẩm của chúng tôi và thêm vào danh sách yêu thích
+                      Duyệt qua các sản phẩm và thêm vào danh sách yêu thích
                     </p>
                     <Link to="/products" className="btn btn-primary mt-4 inline-block px-4 py-2 bg-[#40BFFF] text-white rounded hover:bg-[#2EA8E5] transition duration-300">
                       Duyệt sản phẩm
@@ -122,4 +123,3 @@ export default function Wishlist() {
     </div>
   )
 }
-
