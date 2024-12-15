@@ -124,7 +124,7 @@ const LocationSelect: React.FC<{
         onClick={getCurrentLocation}
       >
         <MapPin className="text-blue-500" />
-        <p>Use at current location</p>
+        <p>Sử dụng vị trí hiện tại</p>
       </button>
     );
   };
@@ -148,7 +148,7 @@ const LocationSelect: React.FC<{
           className="absolute top-4 right-4 text-blue-500 hover:underline transition duration-200"
           onClick={handleReset}
         >
-          Reset
+          Đặt lại
         </button>
       )}
 

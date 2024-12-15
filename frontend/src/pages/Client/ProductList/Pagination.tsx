@@ -121,7 +121,7 @@ const Pagination: React.FC<PaginationProps> = ({
       >
         <p className="flex justify-center items-center gap-1">
           <FaChevronLeft size={13} />
-          Previous
+          Trước
         </p>
       </button>
 
@@ -139,7 +139,7 @@ const Pagination: React.FC<PaginationProps> = ({
         disabled={currentPage === totalPages}
       >
         <p className="flex justify-center items-center gap-1">
-          Next
+          Sau
           <FaChevronRight size={13} />
         </p>
       </button>
