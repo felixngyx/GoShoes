@@ -100,7 +100,7 @@ const LoadingAnimation = () => {
                 {/* Text animation */}
                 <div className="text-lg font-medium text-gray-700 dark:text-gray-200">
                     <div className="inline-block">
-                        Loading Orders
+                        Đang tải đơn hàng
                         <span className="animate-bounce inline-block">.</span>
                         <span className="animate-bounce inline-block" style={{ animationDelay: '0.2s' }}>.</span>
                         <span className="animate-bounce inline-block" style={{ animationDelay: '0.4s' }}>.</span>

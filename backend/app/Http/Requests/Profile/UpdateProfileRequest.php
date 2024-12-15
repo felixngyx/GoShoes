@@ -39,16 +39,16 @@ class UpdateProfileRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.string' => 'Name must be a string',
-            'name.max' => 'Name must be less than 191 characters',
-            'bio.string' => 'Bio must be a string',
-            'bio.max' => 'Bio must be less than 191 characters',
-            'birth_date.date' => 'Birth date must be a date',
-            'birth_date.date_format' => 'Birth date must be in the format Y-m-d',
-            'birth_date.before' => 'Birth date must be before today',
-            'gender.string' => 'Gender must be a string',
-            'gender.in' => 'Gender must be in "Male", "Female", "Other"',
-            'avt.string' => 'Avt must be a string'
+            'name.string' => 'Tên phải là một chuỗi',
+            'name.max' => 'Tên phải ít hơn 191 ký tự',
+            'bio.string' => 'Tiểu sử phải là một chuỗi',
+            'bio.max' => 'Tiểu sử phải ít hơn 191 ký tự',
+            'birth_date.date' => 'Ngày sinh phải là một ngày',
+            'birth_date.date_format' => 'Ngày sinh phải theo định dạng Y-m-d',
+            'birth_date.before' => 'Ngày sinh phải trước ngày hôm nay',
+            'gender.string' => 'Giới tính phải là một chuỗi',
+            'gender.in' => 'Giới tính phải là "Nam", "Nữ", "Khác"',
+            'avt.string' => 'Avt phải là một chuỗi'
         ];
     }
 }

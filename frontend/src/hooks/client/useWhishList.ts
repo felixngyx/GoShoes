@@ -45,13 +45,13 @@ const useWishlist = () => {
   const { mutate: addToWishlistMutation } = useMutation({
     mutationFn: addProductToWishlist,
     onSuccess: (data: any) => {
-      toast.success("The product has been added to your wishlist.");
+      toast.success("Sản phẩm đã được thêm vào danh sách yêu thích.");
       queryClient.invalidateQueries({
         queryKey: ["WISHLIST"],
       });
     },
     onError: () => {
-      toast.error("You need to log in to add to your wishlist.");
+      toast.error("Bạn cần đăng nhập để sử dụng chức năng.");
     },
   });
 
@@ -74,7 +74,7 @@ const useWishlist = () => {
     onError: (error) => {
       console.error("Error removing product from wishlist:", error);
       toast.error(
-        "Failed to remove product from your wishlist. Please try again."
+        "Có lỗi xảy ra khi xóa sản phẩm khỏi danh sách yêu thích."
       );
     },
   });
@@ -82,7 +82,7 @@ const useWishlist = () => {
   // Hàm xử lý xóa sản phẩm khỏi wishlist
   const handleDeleteFromWishlist = (productId: number) => {
     const confirm = window.confirm(
-      "Are you sure you want to remove this product from your wishlist?"
+      "Bạn có chắc chắn muốn xóa sản phẩm này khỏi danh sách yêu thích?"
     );
 
     if (confirm) {

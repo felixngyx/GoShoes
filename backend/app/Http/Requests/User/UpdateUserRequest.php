@@ -42,18 +42,18 @@ class UpdateUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Name is required',
-            'name.string' => 'Name must be a string',
-            'email.required' => 'Email is required',
-            'email.email' => 'Email must be a valid email',
-            'email.unique' => 'Email already exists',
-            'email.max' => 'Email must be less than 191 characters',
-            'phone.required' => 'Phone is required',
-            'phone.regex' => 'Phone must be a valid phone number',
-            'phone.min' => 'Phone must be at least 10 characters',
-            'phone.unique' => 'Phone already exists',
-            'is_deleted.boolean' => 'Is deleted must be a boolean',
-            'avt.string' => 'Avt must be a string'
+            'name.required' => 'Tên là bắt buộc',
+            'name.string' => 'Tên phải là một chuỗi',
+            'email.required' => 'Email là bắt buộc',
+            'email.email' => 'Email phải là một email hợp lệ',
+            'email.unique' => 'Email đã tồn tại',
+            'email.max' => 'Email phải ít hơn 191 ký tự',
+            'phone.required' => 'Số điện thoại là bắt buộc',
+            'phone.regex' => 'Số điện thoại phải là một số điện thoại hợp lệ',
+            'phone.min' => 'Số điện thoại phải có ít nhất 10 ký tự',
+            'phone.unique' => 'Số điện thoại đã tồn tại',
+            'is_deleted.boolean' => 'Trạng thái xóa phải là boolean',
+            'avt.string' => 'Avt phải là một chuỗi'
         ];
     }
 }

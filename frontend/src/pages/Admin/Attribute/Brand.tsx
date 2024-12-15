@@ -73,13 +73,13 @@ const Brand = () => {
 
 	const deleteBrand = async (id: string) => {
 		try {
-			if (window.confirm('Are you sure you want to delete this brand?')) {
+			if (window.confirm('Bạn có chắc chắn muốn xóa thương hiệu này?')) {
 				await brandService.delete(id);
-				toast.success('Brand deleted successfully');
+				toast.success('Brand đã được xóa');
 				fetchBrands();
 			}
 		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'An error occurred');
+			toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
 		}
 	};
 

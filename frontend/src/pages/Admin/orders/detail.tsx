@@ -64,7 +64,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 				}}
 				color="primary"
 			>
-				Cancel
+				Huỷ
 			</Button>
 			<Button
 				onClick={onConfirm}
@@ -72,7 +72,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 				variant="contained"
 				autoFocus
 			>
-				Confirm
+				Xác nhận
 			</Button>
 		</DialogActions>
 	</Dialog>
@@ -392,7 +392,7 @@ const OrderDetails = () => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Invoice #${order.sku}</title>
+          <title>Hoá đơn #${order.sku}</title>
           <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
           <style>
             @media print {
@@ -506,8 +506,8 @@ const OrderDetails = () => {
 	) => {
 		setConfirmDialog({
 			open: true,
-			title: `Confirm Status Change`,
-			message: `Are you sure you want to change the order status to ${status}?`,
+			title: `Xác nhận chuyển trạng thái đơn hàng`,
+			message: `Bạn có xác nhận chuyển đổi trạng thái đơn hàng sang ${status}?`,
 			onConfirm: async () => {
 				try {
 					await statusMutation.mutateAsync({

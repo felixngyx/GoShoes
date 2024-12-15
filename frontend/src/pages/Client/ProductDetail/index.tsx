@@ -363,7 +363,7 @@ const ProductDetail = () => {
         })
         .catch(() => {
           toast.error(
-            "Failed to add the product to your wishlist. Please try again."
+            "Bạn cần đăng nhập để sử dụng chức năng thêm vào danh sách yêu thích."
           );
         });
     } else {

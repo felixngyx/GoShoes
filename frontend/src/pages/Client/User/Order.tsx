@@ -34,15 +34,15 @@ import DialogReview from '../../../components/client/DialogReview';
 import { CheckCircle } from 'lucide-react';
 
 const tabs: Tab[] = [
-	{ id: 'all', label: 'ALL', color: 'text-red-500' },
-	{ id: 'pending', label: 'Pending', color: 'text-gray-700' },
-	{ id: 'processing', label: 'Processing', color: 'text-gray-700' },
-	{ id: 'shipping', label: 'Shipping', color: 'text-gray-700' },
-	{ id: 'completed', label: 'Completed', color: 'text-gray-700' },
-	{ id: 'cancelled', label: 'Cancelled', color: 'text-gray-700' },
-	{ id: 'refunded', label: 'Refunded', color: 'text-gray-700' },
-	{ id: 'expired', label: 'Expired', color: 'text-gray-700' },
-	{ id: 'failed', label: 'Failed', color: 'text-gray-700' },
+	{ id: 'all', label: 'Tất cả', color: 'text-red-500' },
+	{ id: 'pending', label: 'Đang chờ thanh toán', color: 'text-gray-700' },
+	{ id: 'processing', label: 'Đang xử lý', color: 'text-gray-700' },
+	{ id: 'shipping', label: 'Đang vận chuyển', color: 'text-gray-700' },
+	{ id: 'completed', label: 'Thành công', color: 'text-gray-700' },
+	{ id: 'cancelled', label: 'Đã huỷ', color: 'text-gray-700' },
+	{ id: 'refunded', label: 'Đã trả hàng', color: 'text-gray-700' },
+	{ id: 'expired', label: 'Hết hạn', color: 'text-gray-700' },
+	{ id: 'failed', label: 'Thất bại', color: 'text-gray-700' },
 ];
 
 interface ApiResponse {
@@ -535,7 +535,7 @@ export default function OrderList(): JSX.Element {
 				variant="outlined"
 				size="small"
 			>
-				View Details
+				Xem chi tiết
 			</Button>
 		);
 
@@ -556,7 +556,7 @@ export default function OrderList(): JSX.Element {
 							}
 							color="primary"
 						>
-							Pay Now
+							Thanh toán ngay
 						</Button>
 					</div>
 				);
@@ -573,7 +573,7 @@ export default function OrderList(): JSX.Element {
 								setOpenDialog({ type: 'cancel', orderId: order.id })
 							}
 						>
-							Cancel Order
+							Huỷ đơn
 						</Button>
 					</div>
 				);
@@ -620,7 +620,7 @@ export default function OrderList(): JSX.Element {
 							}}
 							color="primary"
 						>
-							Review
+							Đánh giá
 						</Button>
 						<Button
 							variant="contained"
@@ -628,7 +628,7 @@ export default function OrderList(): JSX.Element {
 							onClick={() => handleBuyAgain(order)}
 							color="primary"
 						>
-							Buy Again
+							Mua lại
 						</Button>
 
 						<DialogReview
@@ -654,7 +654,7 @@ export default function OrderList(): JSX.Element {
 								})
 							}
 						>
-							Confirm Received
+							Đã nhận hàng
 						</Button>
 					</div>
 				);
@@ -667,8 +667,8 @@ export default function OrderList(): JSX.Element {
 	const [selectedOrderId, setSelectedOrderId] = useState<string>('');
 
 	const sortOptions: SortOption[] = [
-		{ value: 'newest', label: 'Newest First' },
-		{ value: 'oldest', label: 'Oldest First' },
+		{ value: 'newest', label: 'Mới nhất' },
+		{ value: 'oldest', label: 'Cũ nhất' },
 	];
 
 	const handleClosePaymentDialog = () => {
@@ -698,7 +698,7 @@ export default function OrderList(): JSX.Element {
 
 		// Kiểm tra số lượng ảnh tối đa
 		if (refundForm.images.length + fileArray.length > 5) {
-			toast.error('Maximum 5 images allowed');
+			toast.error('Tối đa 5 ảnh được phép');
 			return;
 		}
 
@@ -706,14 +706,14 @@ export default function OrderList(): JSX.Element {
 		const validFiles = fileArray.filter((file) => {
 			// Check file size (5MB)
 			if (file.size > 5 * 1024 * 1024) {
-				toast.error(`File ${file.name} is too large. Max size is 5MB`);
+				toast.error(`Kích thước ${file.name} quá lớn (tối đa 5MB)`);
 				return false;
 			}
 
 			// Check file type
 			if (!file.type.match(/^image\/(jpeg|png|jpg)$/)) {
 				toast.error(
-					`File ${file.name} is not a valid image format (JPG, PNG)`
+					`File ${file.name} không hợp lệ. Chỉ chấp nhận file ảnh (jpeg, jpg, png)`
 				);
 				return false;
 			}

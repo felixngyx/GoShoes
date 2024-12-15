@@ -98,13 +98,13 @@ class PostCategoryController extends Controller
             $category = $this->postCategoryService->createCategory($data);
             return response()->json([
                 'success' => true,
-                'message' => 'The category has been created successfully.',
+                'message' => 'Danh mục đã được tạo thành công.',
                 'data' => $category
             ], 201);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while creating the category. May be the category name is already exists.',
+                'message' => 'Danh mục không thể tạo. Có lỗi xảy ra.',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -165,17 +165,17 @@ class PostCategoryController extends Controller
             $this->postCategoryService->deleteCategory($id);
             return response()->json([
                 'success' => true,
-                'message' => 'The category has been deleted successfully.'
+                'message' => 'Danh mục đã được xóa thành công.'
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'The category was not found.'
+                'message' => 'Không tìm thấy danh mục để xóa.'
             ], 404);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while deleting the category.' . $e->getMessage(),
+                'message' => 'Có lỗi xảy ra' . $e->getMessage(),
                 'error' => $e->getMessage()
             ], 500);
         }

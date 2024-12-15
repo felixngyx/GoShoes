@@ -55,13 +55,13 @@ const Navbar = () => {
 		dispatch(logout());
 		Cookies.remove('access_token');
 		Cookies.remove('refresh_token');
-		toast.success('Logout successfully');
+		toast.success('Đăng xuất thành công');
 		navigate('/');
 	};
 
 	const handleCartClick = () => {
 		if (!accessToken) {
-			toast.error('You need to login');
+			toast.error('Bạn cần đăng nhập');
 			navigate('/signin');
 		} else {
 			navigate('/cart');
