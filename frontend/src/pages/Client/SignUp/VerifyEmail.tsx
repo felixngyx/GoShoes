@@ -89,8 +89,8 @@ const VerifyEmail: React.FC = () => {
 				token,
 				phone: newPhone,
 			});
-			toast.success('Phone number has been updated successfully!');
-			navigate('/account');
+			toast.success('Số điện thoại đã được cập nhật thành công!');
+			navigate('/');
 		} catch (error) {
 			toast.error('Cập nhật số điện thoại thất bại. Vui lòng thử lại.');
 			console.error('Failed to update phone number');
