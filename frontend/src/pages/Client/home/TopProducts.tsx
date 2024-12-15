@@ -87,7 +87,7 @@ const TopProducts: FC<TopProductsProps> = ({
                     className="w-full h-full object-cover transform transition-all duration-500 hover:scale-110"
                   />
                   <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
-                    Nóng
+                    Nổi bật
                   </p>
                 </div>
                 <div className="p-4 space-y-3">
@@ -156,7 +156,7 @@ const TopProducts: FC<TopProductsProps> = ({
                           className="w-full h-full object-cover transform transition-all duration-500 hover:scale-110"
                         />
                         <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
-                          Nóng
+                          Nổi bật
                         </p>
                       </div>
                       <div className="p-4 space-y-3">
