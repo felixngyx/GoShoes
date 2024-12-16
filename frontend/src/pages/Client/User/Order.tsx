@@ -848,7 +848,7 @@ export default function OrderList(): JSX.Element {
 									</p>
 								</div>
 								<Chip
-									label={order.status}
+									label={order.status === 'expired' ? 'Hết hạn' : order.status === 'failed' ? 'Thất bại' : order.status === 'refunded' ? 'Đã trả hàng' : order.status === 'cancelled' ? 'Đã huỷ' : order.status === 'completed' ? 'Thành công' : order.status === 'shipping' ? 'Đang vận chuyển' : order.status === 'processing' ? 'Đang xử lý' : order.status === 'pending' ? 'Đang chờ thanh toán' : ''}
 									color={getStatusColor(order.status).color}
 									size="small"
 								/>
