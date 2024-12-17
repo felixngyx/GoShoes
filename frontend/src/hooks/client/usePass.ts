@@ -20,7 +20,6 @@ const usePass = () => {
     mutationFn: sendResetPasswordRequest,
     onSuccess: () => {
       toast.success('Yêu cầu đặt lại mật khẩu đã được gửi thành công');
-      navigate('/signin')
     },
     onError: (error) => {
       const errorMessage = error?.response?.data?.message || 'Gửi yêu cầu đặt lại mật khẩu thất bại';
@@ -46,6 +45,7 @@ const usePass = () => {
     mutationFn: resetPassword,
     onSuccess: () => {
       toast.success('Đặt lại mật khẩu thành công');
+      navigate('/account')
     },
     onError: (error) => {
       const errorMessage = error?.response?.data?.message || 'Đặt lại mật khẩu thất bại';
