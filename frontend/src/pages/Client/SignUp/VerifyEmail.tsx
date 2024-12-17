@@ -4,12 +4,13 @@ import axiosClient from '../../../apis/axiosClient';
 import Cookies from 'js-cookie';
 import { toast } from 'react-hot-toast';
 import Footer from '../../../components/client/Footer';
-import LoadingIcon from '../../../components/common/LoadingIcon';
-import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai'; // Import các icon mắt
+import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store';
 import { login, setUser } from '../../../store/client/userSlice';
+import usePass from '../../../hooks/client/usePass';
+import useProfile from '../../../hooks/client/useProfile';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -29,6 +30,9 @@ const VerifyEmail: React.FC = () => {
 	const user = useSelector((state: RootState) => state.client.user);
 	const user_data = JSON.parse(Cookies.get('user') || '{}');
 	const dispatch = useDispatch();
+	const { handleResetPassword } = usePass();
+	const { handleVerifyTokenChangeEmail, handleVerifyTokenChangePhone } = useProfile();
+
 
 	// State for showing password
 	const [showPassword, setShowPassword] = useState(false);
@@ -44,23 +48,13 @@ const VerifyEmail: React.FC = () => {
 		}
 	};
 
-	const handleResetPassword = async () => {
+	const handleSubmitResetPassword = (e: React.FormEvent) => {
+		e.preventDefault();
 		if (newPassword !== confirmPassword) {
-			setError('Mật khẩu không khớp!');
+			toast.error('Mật khẩu không khớp!');
 			return;
 		}
-		try {
-			await axiosClient.post('/profile/reset-password', {
-				token,
-				password: newPassword,
-				password_confirmation: confirmPassword,
-			});
-			toast.success('Mật khẩu đã được cập nhật thành công!');
-			navigate('/');
-		} catch (error) {
-			toast.error('Cập nhật mật khẩu thất bại. Vui lòng thử lại.');
-			console.error('Failed to update password');
-		}
+		handleResetPassword(token, newPassword, confirmPassword);
 	};
 
 	const requestSendEmail = async () => {
@@ -83,32 +77,22 @@ const VerifyEmail: React.FC = () => {
 		}
 	};
 
-	const handleChangePhone = async () => {
-		try {
-			await axiosClient.post('/profile/verify-token-change-phone', {
-				token,
-				phone: newPhone,
-			});
-			toast.success('Số điện thoại đã được cập nhật thành công!');
-			navigate('/');
-		} catch (error) {
-			toast.error('Cập nhật số điện thoại thất bại. Vui lòng thử lại.');
-			console.error('Failed to update phone number');
+	const handleChangeEmail = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!token || !newEmail) {
+			toast.error('Token và email không hợp lệ');
+			return;
 		}
+		handleVerifyTokenChangeEmail(token, newEmail);
 	};
 
-	const handleChangeEmail = async () => {
-		try {
-			await axiosClient.post('/profile/verify-token-change-email', {
-				token,
-				email: newEmail,
-			});
-			toast.success('Email has been updated successfully!');
-			navigate('/account');
-		} catch (error) {
-			toast.error('Failed to update email. Please try again.');
-			console.error('Failed to update email ');
+	const handleChangePhone = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!token || !newPhone) {
+			toast.error('Token và số điện thoại không hợp lê');
+			return;
 		}
+		handleVerifyTokenChangePhone(token, newPhone);
 	};
 
 	const handleVerifyEmail = async () => {
@@ -131,44 +115,33 @@ const VerifyEmail: React.FC = () => {
 	};
 
 	useEffect(() => {
-		// Nếu không có token thì yêu cầu đăng nhập lại
-		if (!token) {
+		if ((!user || !access_token) && type !== 'reset-password') {
 			navigate('/signin');
-			return; // Ngừng thực hiện nếu không có token
+			return;
 		}
 
-		// Nếu là reset-password thì tiến hành xác minh token
-		if (type === 'reset-password') {
-			handleVerifyResetToken(token);
-		}
 		// Kiểm tra các loại khác như đăng ký hoặc thay đổi số điện thoại
-		else if (type === 'register' && token) {
+		if (type === 'register' && token) {
 			handleVerifyEmail();
 		} else if (type === 'change-phone' && token) {
 			handleVerifyResetToken(token);
 		}
-	}, [token, type, navigate]);
+		// Xử lý reset-password mà không cần điều kiện đăng nhập
+		else if (type === 'reset-password' && token) {
+			setIsLoading(false); // Đặt trạng thái loading là false, không cần làm gì thêm
+		}
+	}, [token, type, navigate, user, access_token])
 
 
 	return (
 		<>
 			<div className="p-8 max-w-xl mx-auto mt-8 bg-white rounded-lg shadow-lg mb-8">
-				{type === 'reset-password' ? (
-					<form
-						onSubmit={(e) => {
-							e.preventDefault();
-							handleResetPassword();
-						}}
-						className="space-y-6"
-					>
-						<h1 className="text-2xl font-semibold text-center">
-							Đổi mật khẩu
-						</h1>
+				{type === 'reset-password' && (
+					<form onSubmit={handleSubmitResetPassword} className="space-y-6">
+						<h1 className="text-2xl font-semibold text-center">Đổi mật khẩu</h1>
 						<div className="form-control">
 							<label className="label">
-								<span className="label-text font-medium">
-									Mật khẩu mới
-								</span>
+								<span className="label-text font-medium">Mật khẩu mới</span>
 							</label>
 							<div className="relative">
 								<input
@@ -193,9 +166,7 @@ const VerifyEmail: React.FC = () => {
 						</div>
 						<div className="form-control">
 							<label className="label">
-								<span className="label-text font-medium">
-									Xác nhận mật khẩu
-								</span>
+								<span className="label-text font-medium">Xác nhận mật khẩu</span>
 							</label>
 							<div className="relative">
 								<input
@@ -208,9 +179,7 @@ const VerifyEmail: React.FC = () => {
 								/>
 								<span
 									className="absolute right-3 top-3 cursor-pointer"
-									onClick={() =>
-										setShowConfirmPassword(!showConfirmPassword)
-									}
+									onClick={() => setShowConfirmPassword(!showConfirmPassword)}
 								>
 									{showConfirmPassword ? (
 										<AiOutlineEyeInvisible size={20} />
@@ -228,22 +197,20 @@ const VerifyEmail: React.FC = () => {
 							Cập nhật mật khẩu
 						</button>
 					</form>
-				) : type === 'change-phone' ? (
+				)}
+
+				{type === 'change-phone' ? (
 					<form
 						onSubmit={(e) => {
 							e.preventDefault();
-							handleChangePhone();
+							handleChangePhone(e);
 						}}
 						className="space-y-6"
 					>
-						<h1 className="text-2xl font-semibold text-center">
-							Đổi số điện thoại
-						</h1>
+						<h1 className="text-2xl font-semibold text-center">Đổi số điện thoại</h1>
 						<div className="form-control">
 							<label className="label">
-								<span className="label-text font-medium">
-									Số điện thoại mới
-								</span>
+								<span className="label-text font-medium">Số điện thoại mới</span>
 							</label>
 							<input
 								type="tel"
@@ -265,18 +232,14 @@ const VerifyEmail: React.FC = () => {
 					<form
 						onSubmit={(e) => {
 							e.preventDefault();
-							handleChangeEmail();
+							handleChangeEmail(e);
 						}}
 						className="space-y-6"
 					>
-						<h1 className="text-2xl font-semibold text-center">
-							Thay đổi email
-						</h1>
+						<h1 className="text-2xl font-semibold text-center">Thay đổi email</h1>
 						<div className="form-control">
 							<label className="label">
-								<span className="label-text font-medium">
-									Email thay đổi 
-								</span>
+								<span className="label-text font-medium">Email thay đổi</span>
 							</label>
 							<input
 								type="email"
@@ -294,7 +257,7 @@ const VerifyEmail: React.FC = () => {
 							Cập Nhật Email
 						</button>
 					</form>
-				) : (
+				) : type !== 'reset-password' && type !== 'change-phone' && type !== 'change-email' ? (
 					<div className="text-center">
 						<h1 className="text-4xl mb-5">Xác minh email</h1>
 						{status ? (
@@ -322,7 +285,7 @@ const VerifyEmail: React.FC = () => {
 							</button>
 						)}
 					</div>
-				)}
+				) : null}
 			</div>
 			<Footer />
 		</>

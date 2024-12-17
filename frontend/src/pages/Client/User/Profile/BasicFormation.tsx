@@ -32,13 +32,15 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 			name: profile?.name || '',
 			email: profile?.email || '',
 			phone: profile?.phone ?? '',
-			bio: profile?.bio || null,
+			bio: profile?.bio || '',
 			avt: profile?.avt || '',
 			gender: profile?.gender || '',
 			birth_date: profile?.birth_date || '',
 		},
 	});
 
+	const [isChangingEmail, setIsChangingEmail] = useState(false);
+	const [isChangingPhone, setIsChangingPhone] = useState(false);
 	const watchEmail = watch('email');
 	const watchPhone = watch('phone');
 
@@ -107,53 +109,49 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 					/>
 				</label>
 
-				{/* Email */}
-				<label className="form-control col-span-2 sm:col-span-1">
-					<div className="label">
-						<span className="label-text font-medium text-base">Email</span>
-					</div>
-					<div className="relative flex items-center">
-						<input
-							type="email"
-							placeholder="Nhập tại đây"
-							className="input input-bordered w-full"
-							readOnly
-							{...register('email')}
-						/>
-						<a
-							href="#"
-							className="absolute right-3 text-blue-500 text-sm hover:underline"
-							onClick={() => handleSendEmailChangeRequest(watchEmail)}
-						>
-							Thay đổi
-						</a>
-					</div>
-				</label>
+			 {/* Email */}
+			 <div className="form-control">
+          <label className="label">
+            <span className="label-text text-base font-medium">Email</span>
+          </label>
+          <div className="relative">
+            <input
+              type="email"
+              className="input input-bordered w-full pr-24"
+              readOnly
+              {...register('email')}
+            />
+            <button
+              type="button"
+              className="btn btn-link btn-sm absolute right-0 top-0 h-full px-3 text-sm font-medium text-blue-500 hover:underline"
+              onClick={() => handleSendEmailChangeRequest(watchEmail)}
+            >
+              {isChangingEmail ? 'Đang thay đổi...' : 'Thay đổi'}
+            </button>
+          </div>
+        </div>
 
-				{/* Số điện thoại */}
-				<label className="form-control col-span-2 sm:col-span-1">
-					<div className="label">
-						<span className="label-text font-medium text-base">
-							Số điện thoại
-						</span>
-					</div>
-					<div className="relative flex items-center">
-						<input
-							type="text"
-							placeholder="Nhập tại đây"
-							className="input input-bordered w-full"
-							readOnly
-							{...register('phone')}
-						/>
-						<a
-							href="#"
-							className="absolute right-3 text-blue-500 text-sm hover:underline"
-							onClick={handleSendPhoneChangeRequest}
-						>
-							Thay đổi
-						</a>
-					</div>
-				</label>
+        {/* Số điện thoại */}
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text text-base font-medium">Số điện thoại</span>
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              className="input input-bordered w-full pr-24"
+              readOnly
+              {...register('phone')}
+            />
+            <button
+              type="button"
+              className="btn btn-link btn-sm absolute right-0 top-0 h-full px-3 text-sm font-medium text-blue-500 hover:underline"
+              onClick={handleSendPhoneChangeRequest}
+            >
+              {isChangingPhone ? 'Đang thay đổi...' : 'Thay đổi'}
+            </button>
+          </div>
+        </div>
 
 				{/* Giới tính */}
 				<label className="form-control col-span-2 sm:col-span-1">
