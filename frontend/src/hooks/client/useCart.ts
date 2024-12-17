@@ -229,7 +229,6 @@ const useCart = () => {
           "bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400",
       },
       buttonsStyling: false,
-      position: "top",
     }).then((result) => {
       if (result.isConfirmed) {
         // Gọi API để xóa sản phẩm
