@@ -46,7 +46,7 @@ const Profile = () => {
           {/* Change Avatar Form - 50% width */}
           <div className="md:col-span-2 space-y-4">
             <h2 className="text-xl font-semibold">Ảnh đại diện</h2>
-            <ChangeAvatar profile={profile} />
+            <ChangeAvatar />
           </div>
         </div>
       </div>

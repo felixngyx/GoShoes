@@ -15,10 +15,7 @@ const useProfile = () => {
 	const navigate = useNavigate();
 
 	// Lấy dữ liệu Profile
-	const {
-		data: profile,
-		isLoading,
-	} = useQuery<Profile | null>({
+	const { data: profile, isLoading } = useQuery<Profile | null>({
 		queryKey: ['PROFILE'],
 		queryFn: getProfile,
 		onError: (error: any) => {
@@ -63,7 +60,7 @@ const useProfile = () => {
 			onSuccess: () => {
 				toast.success('Email đã được thay đổi thành công');
 				navigate('/account');
-			}
+			},
 		});
 
 	// Gửi yêu cầu thay đổi số điện thoại
@@ -89,7 +86,7 @@ const useProfile = () => {
 		onSuccess: () => {
 			toast.success('Số điện thoại đã được thay đổi thành công');
 			navigate('/account');
-		}
+		},
 	});
 
 	// Xử lý gửi yêu cầu thay đổi email

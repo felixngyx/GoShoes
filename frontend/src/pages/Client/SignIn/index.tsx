@@ -51,6 +51,7 @@ const SignIn = () => {
 		try {
 			setLoading(true);
 			const response = await authService.login(data);
+			console.log(response);
 
 			if (response.data.success) {
 				Cookies.set('user', JSON.stringify(response.data.user));
@@ -59,7 +60,7 @@ const SignIn = () => {
 				dispatch(login(response.data.user));
 				toast.success(response.data.message);
 
-				navigate('/');
+				// navigate('/');
 			} else {
 				toast.error(response.data.message);
 			}

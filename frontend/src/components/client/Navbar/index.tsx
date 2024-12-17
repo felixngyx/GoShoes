@@ -8,7 +8,7 @@ import { MdDashboard, MdOutlineShoppingCart } from 'react-icons/md';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { getProductsByName } from '../../../services/client/product';
-import { logout } from '../../../store/client/userSlice';
+import { logout, setUser } from '../../../store/client/userSlice';
 import { RootState } from '../../../store/index';
 import { IProduct } from '../../../types/client/products/products';
 import { IoCart, IoHeartOutline } from 'react-icons/io5';
@@ -46,13 +46,23 @@ const Navbar = () => {
 	const [loading, setLoading] = useState(false);
 	const debouncedSearchTerm = useDebounce(searchTerm, 500);
 	const user = useSelector((state: RootState) => state.client.user);
+	const [avatar, setAvatar] = useState<string | null>(null);
 	const accessToken = Cookies.get('access_token');
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const { totalQuantity } = useCart();
 
+	useEffect(() => {
+		const user = Cookies.get('user');
+		if (user) {
+			const userInformation = JSON.parse(user);
+			setAvatar(userInformation.avt);
+		}
+	}, [user, user.avt, setUser]);
+
 	const logoutHandler = () => {
 		dispatch(logout());
+		setAvatar(null);
 		Cookies.remove('access_token');
 		Cookies.remove('refresh_token');
 		toast.success('Đăng xuất thành công');
@@ -325,10 +335,10 @@ const Navbar = () => {
 									role="button"
 									className="rounded-full flex items-center hover:bg-gray-100"
 								>
-									{user.name ? (
+									{avatar ? (
 										<div className="avatar">
 											<div className="w-8 rounded-full border-2 border-info">
-												<img src={user.avt || `https://avatar.iran.liara.run/public`} />
+												<img src={avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`} />
 											</div>
 										</div>
 									) : (<FaUser className="w-5 h-5 md:w-6 md:h-6" />)}
