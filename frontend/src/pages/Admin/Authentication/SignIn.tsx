@@ -119,14 +119,15 @@ const SignIn: React.FC = () => {
 						<div className="py-17.5 px-26 text-center">
 							<Link className="mb-5.5 inline-block" to="/">
 								<img
-									className="hidden dark:block"
-									src={Logo}
+									className="hidden dark:block w-20 md:w-24"
+									src='/vector-logo/default-monochrome.svg'
 									alt="Logo"
 								/>
 								<img
-									className="dark:hidden"
-									src={LogoDark}
+									className="dark:hidden w-20 md:w-24"
+									src='/vector-logo/default-monochrome.svg'
 									alt="Logo"
+
 								/>
 							</Link>
 
@@ -340,8 +341,8 @@ const SignIn: React.FC = () => {
 										type="submit"
 										disabled={loading}
 										className={`w-full cursor-pointer rounded-lg border ${loading
-												? 'bg-primary/50 border-primary/50'
-												: 'bg-primary border-primary'
+											? 'bg-primary/50 border-primary/50'
+											: 'bg-primary border-primary'
 											} p-4 text-white transition hover:bg-opacity-90 flex items-center justify-center gap-2`}
 									>
 										{loading ? (

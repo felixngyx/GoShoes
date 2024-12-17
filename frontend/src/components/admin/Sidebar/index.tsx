@@ -64,9 +64,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 			className={`absolute left-0 top-0 z-100 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear dark:bg-boxdark lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
 				}`}
 		>
-			<div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
+			<div className="flex items-center justify-center gap-2 px-6 py-5.5 lg:py-6.5">
 				<NavLink to="/admin">
-					<img src={Logo} alt="Logo" />
+					<img
+						className="w-20 md:w-24"
+						src='/vector-logo/default-monochrome-white.svg' alt="Logo" />
 				</NavLink>
 
 				<button
