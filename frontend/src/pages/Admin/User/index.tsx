@@ -212,7 +212,7 @@ const User = () => {
 								>
 									<td className="px-6 py-4 font-medium text-gray-900 dark:text-white flex items-center gap-2">
 										<img
-											src={`https://ui-avatars.com/api/?name=${user.name}&background=random`}
+											src={user.avt || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
 											alt=""
 											className="w-10 h-10 rounded-full"
 										/>

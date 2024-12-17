@@ -1,4 +1,3 @@
-import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 import Navbar from '../../../components/client/Navbar';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -30,7 +29,6 @@ const schema = Joi.object({
 });
 
 const SignIn = () => {
-	const [showPassword, setShowPassword] = useState(false);
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const [loading, setLoading] = useState(false);
@@ -53,12 +51,14 @@ const SignIn = () => {
 		try {
 			setLoading(true);
 			const response = await authService.login(data);
+
 			if (response.data.success) {
 				Cookies.set('user', JSON.stringify(response.data.user));
 				Cookies.set('access_token', response.data.access_token);
 				Cookies.set('refresh_token', response.data.refresh_token);
 				dispatch(login(response.data.user));
 				toast.success(response.data.message);
+
 				navigate('/');
 			} else {
 				toast.error(response.data.message);
@@ -79,7 +79,6 @@ const SignIn = () => {
 				});
 
 				if (serverResponse.data.success) {
-					console.log(serverResponse);
 					Cookies.set('user', JSON.stringify(serverResponse.data.user));
 					Cookies.set('access_token', serverResponse.data.access_token);
 					Cookies.set('refresh_token', serverResponse.data.refresh_token);
@@ -146,17 +145,11 @@ const SignIn = () => {
 							)}
 							<label className="input input-bordered flex items-center bg-[#f0efff] mt-5 gap-2 w-full">
 								<input
-									type={showPassword ? 'text' : 'password'}
+									type='password'
 									className="grow placeholder:text-[#494949]"
 									placeholder="Nhập mật khẩu"
 									{...register('password')}
 								/>
-								<div
-									onClick={() => setShowPassword(!showPassword)}
-									className="cursor-pointer"
-								>
-									{showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-								</div>
 							</label>
 							{errors.password && (
 								<p className="text-red-500 text-sm">

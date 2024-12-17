@@ -52,6 +52,7 @@ axiosClient.interceptors.response.use(
 		const originalRequest = error.config;
 
 		if (error.response.status === 401 && !originalRequest._retry) {
+			console.log('Token expired. Refresh token...');
 			originalRequest._retry = true;
 			const refreshToken = Cookies.get('refresh_token');
 			if (!refreshToken) {

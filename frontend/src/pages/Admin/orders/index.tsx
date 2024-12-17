@@ -437,7 +437,7 @@ export default function OrderDashboard() {
         <div className="w-full max-w-10xl mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
             <div className="p-6 bg-white/60 dark:bg-gray-800/60">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex">Đơn hàng của khách hàng
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex">Danh sách đơn hàng
                         <Download
                             className='ml-4 mt-1 cursor-pointer hover:text-purple-600'
                             size={25}
@@ -562,7 +562,21 @@ export default function OrderDashboard() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(order.status)}`}>
-                                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                            {(() => {
+                                                const statusMap: Record<string, string> = {
+                                                    Shipping: 'Đang giao hàng',
+                                                    Processing: 'Đang xử lý',
+                                                    Completed: 'Hoàn thành',
+                                                    Cancelled: 'Đã hủy',
+                                                    Refunded: 'Đã hoàn tiền',
+                                                    Expired: 'Hết hạn',
+                                                    Failed: 'Thất bại',
+                                                    Pending: 'Chờ xử lý'
+                                                };
+                                                const status = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+                                                return statusMap[status] || status;
+                                            })()}
+
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 font-medium text-gray-800 dark:text-gray-200">
