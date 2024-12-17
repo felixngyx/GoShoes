@@ -110,8 +110,6 @@ const OrderDetail: React.FC = () => {
     address_detail: ''
   };
 
-  console.log('Shipping Detail:', shippingDetail);
-
   return (
     <Box className="container mx-auto py-8 px-4">
       <Card sx={{ mb: 4 }}>
@@ -305,17 +303,36 @@ const OrderDetail: React.FC = () => {
                 display="flex"
                 justifyContent="space-between"
                 alignItems="center"
+                mb={1}
               >
                 <Typography variant="body2" color="text.secondary">
                   Trạng thái
                 </Typography>
                 <Chip
                   label={
-                    orderData.payment.status.charAt(0).toUpperCase() +
-                    orderData.payment.status.slice(1)
+                    orderData.payment.status === 'failed'
+                      ? 'Thất bại'
+                      : orderData.payment.status === 'pending'
+                        ? 'Đang chờ xử lý'
+                        : orderData.payment.status === 'cancelled'
+                          ? 'Đã hủy'
+                          : orderData.payment.status === 'refunded'
+                            ? 'Đã hoàn tiền'
+                            : orderData.payment.status === 'expired'
+                              ? 'Hết hạn'
+                              : orderData.payment.status === 'completed'
+                                ? 'Hoàn tất'
+                                : orderData.payment.status === 'shipping'
+                                  ? 'Đang vận chuyển'
+                                  : 'Đang xử lý'
+
                   }
                   color={
-                    orderData.payment.status === "paid" ? "success" : "default"
+                    orderData.payment.status === 'completed'
+                      ? 'success'
+                      : orderData.payment.status === 'failed'
+                        ? 'error'
+                        : 'warning'
                   }
                   size="small"
                 />

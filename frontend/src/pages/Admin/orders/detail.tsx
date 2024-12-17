@@ -161,10 +161,10 @@ const renewPaymentLink = async (
 	const token = Cookies.get('access_token');
 	const BaseUri = import.meta.env.VITE_API_URL;
 
-	console.log('Starting renewPaymentLink request:', {
-		url: `${BaseUri}/orders/${orderId}/renew-payment`,
-		token: token ? 'Present' : 'Missing',
-	});
+	// console.log('Starting renewPaymentLink request:', {
+	// 	url: `${BaseUri}/orders/${orderId}/renew-payment`,
+	// 	token: token ? 'Present' : 'Missing',
+	// });
 
 	try {
 		const response = await axios.post(

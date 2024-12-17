@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie';
 import { LogIn, LogOut, Menu, SquarePen, UserRound, X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { FaUser } from 'react-icons/fa';
 import { IoSearch } from 'react-icons/io5';
@@ -88,7 +88,7 @@ const Navbar = () => {
 		fetchProducts();
 	}, [debouncedSearchTerm]);
 
-	const Navigate = useNavigate();
+	// const Navigate = useNavigate();
 	const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(
 		null
 	);
@@ -125,9 +125,9 @@ const Navbar = () => {
 						selectedSizeObj.product_variant_id,
 						10
 					);
-					const colorId = selectedVariant.color_id;
-					const quantity = 1;
-					const size = selectedSize;
+					// const colorId = selectedVariant.color_id;
+					// const quantity = 1;
+					// const size = selectedSize;
 					if (!isNaN(productVariantId)) {
 						handleAddToCart(productVariantId, 1);
 
@@ -150,36 +150,36 @@ const Navbar = () => {
 		}
 	};
 
-	const parseVariants = (variantsStr: string) => {
-		try {
-			const variants = JSON.parse(variantsStr);
-			const uniqueVariants = variants.reduce((acc: any[], curr: any) => {
-				const exists = acc.find((item) => item.color_id === curr.color_id);
-				if (!exists) {
-					acc.push(curr);
-				}
-				return acc;
-			}, []);
-			return uniqueVariants;
-		} catch (error) {
-			return [];
-		}
-	};
+	// const parseVariants = (variantsStr: string) => {
+	// 	try {
+	// 		const variants = JSON.parse(variantsStr);
+	// 		const uniqueVariants = variants.reduce((acc: any[], curr: any) => {
+	// 			const exists = acc.find((item) => item.color_id === curr.color_id);
+	// 			if (!exists) {
+	// 				acc.push(curr);
+	// 			}
+	// 			return acc;
+	// 		}, []);
+	// 		return uniqueVariants;
+	// 	} catch (error) {
+	// 		return [];
+	// 	}
+	// };
 
-	const getVariantsForColor = (colorId: number) => {
-		if (!selectedProduct) return [];
+	// const getVariantsForColor = (colorId: number) => {
+	// 	if (!selectedProduct) return [];
 
-		const variants = parseVariants(
-			typeof selectedProduct.variants === 'string'
-				? selectedProduct.variants
-				: JSON.stringify(selectedProduct.variants)
-		);
-		const colorVariant = variants.find(
-			(variant: any) => variant.color_id === colorId
-		);
+	// 	const variants = parseVariants(
+	// 		typeof selectedProduct.variants === 'string'
+	// 			? selectedProduct.variants
+	// 			: JSON.stringify(selectedProduct.variants)
+	// 	);
+	// 	const colorVariant = variants.find(
+	// 		(variant: any) => variant.color_id === colorId
+	// 	);
 
-		return colorVariant?.sizes || [];
-	};
+	// 	return colorVariant?.sizes || [];
+	// };
 
 	const closeModal = () => {
 		setSelectedProduct(null);
@@ -246,7 +246,7 @@ const Navbar = () => {
 			selectedVariant?.sizes.map((sizeVariant: any) => sizeVariant.size)
 		)).sort((a, b) => Number(a) - Number(b));
 
-		return uniqueSizes.map((size) => {
+		uniqueSizes.map((size) => {
 			const sizeVariant = selectedVariant?.sizes.find(
 				(sv: any) => sv.size === size
 			);
@@ -254,7 +254,6 @@ const Navbar = () => {
 
 			return (
 				<button
-					key={size}
 					className={`px-6 py-2 border rounded-md ${selectedSize === size
 						? 'bg-blue-500 text-white'
 						: ''
@@ -262,10 +261,10 @@ const Navbar = () => {
 							? 'opacity-50 cursor-not-allowed line-through'
 							: 'hover:border-blue-500'
 						}`}
-					onClick={() => isAvailable && setSelectedSize(size)}
+					onClick={() => isAvailable && setSelectedSize(String(size))}
 					disabled={!isAvailable}
 				>
-					{size}
+					{String(size)}
 				</button>
 			);
 		});
@@ -324,9 +323,15 @@ const Navbar = () => {
 								<div
 									tabIndex={0}
 									role="button"
-									className="p-1.5 md:p-2 rounded-full hover:bg-gray-100"
+									className="rounded-full flex items-center hover:bg-gray-100"
 								>
-									<FaUser className="w-5 h-5 md:w-6 md:h-6" />
+									{user.name ? (
+										<div className="avatar">
+											<div className="w-8 rounded-full border-2 border-info">
+												<img src={user.avt || `https://avatar.iran.liara.run/public`} />
+											</div>
+										</div>
+									) : (<FaUser className="w-5 h-5 md:w-6 md:h-6" />)}
 								</div>
 								<ul className="dropdown-content bg-white shadow-lg rounded-lg p-2 w-44 md:w-48 mt-2 text-sm font-medium text-gray-700 border border-gray-200">
 									{accessToken ? (
@@ -609,87 +614,91 @@ const Navbar = () => {
 				</div>
 			</div>
 
-			{selectedProduct && (
-				<div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-					<div className="modal modal-open">
-						<div className="modal-box relative">
-							<h3 className="font-bold text-xl text-blue-500">
-								{selectedProduct.name}
-							</h3>
-							<p className="mt-2">Chọn kích thước và màu sắc:</p>
-							<div className="flex flex-col gap-6 mt-4">
-								<div>
-									<h4 className="text-lg font-semibold mb-2">
-										Màu sắc:
-									</h4>
-									<div className="flex flex-wrap gap-2">
-										{renderColors()}
-									</div>
-								</div>
-
-								{selectedColor && (
-									<div className="mt-4">
+			{
+				selectedProduct && (
+					<div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+						<div className="modal modal-open">
+							<div className="modal-box relative">
+								<h3 className="font-bold text-xl text-blue-500">
+									{selectedProduct.name}
+								</h3>
+								<p className="mt-2">Chọn kích thước và màu sắc:</p>
+								<div className="flex flex-col gap-6 mt-4">
+									<div>
 										<h4 className="text-lg font-semibold mb-2">
-											Kích thước:
+											Màu sắc:
 										</h4>
 										<div className="flex flex-wrap gap-2">
-											{renderSizes()}
+											{renderColors()}
 										</div>
 									</div>
-								)}
-							</div>
 
-							<div className="mt-6 flex justify-end gap-4">
-								<button
-									className="btn bg-gray-300 text-black"
-									onClick={() => {
-										setSelectedProduct(null);
-										setSelectedSize(null);
-										setSelectedColor(null);
-									}}
-								>
-									Hủy
-								</button>
-								<button
-									className="btn bg-blue-500 text-white"
-									onClick={addCart}
-									disabled={!selectedSize || !selectedColor}
-								>
-									Thêm vào giỏ hàng
-								</button>
+									{selectedColor && (
+										<div className="mt-4">
+											<h4 className="text-lg font-semibold mb-2">
+												Kích thước:
+											</h4>
+											<div className="flex flex-wrap gap-2">
+												{renderSizes()}
+											</div>
+										</div>
+									)}
+								</div>
+
+								<div className="mt-6 flex justify-end gap-4">
+									<button
+										className="btn bg-gray-300 text-black"
+										onClick={() => {
+											setSelectedProduct(null);
+											setSelectedSize(null);
+											setSelectedColor(null);
+										}}
+									>
+										Hủy
+									</button>
+									<button
+										className="btn bg-blue-500 text-white"
+										onClick={addCart}
+										disabled={!selectedSize || !selectedColor}
+									>
+										Thêm vào giỏ hàng
+									</button>
+								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-			)}
+				)
+			}
 
-			{showModal && (
-				<div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-					<div className="modal modal-open">
-						<div className="modal-box relative">
-							<h3 className="font-bold text-xl">Bạn cần đăng nhập</h3>
-							<p className="mt-2">
-								Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.
-							</p>
-							<div className="mt-4 flex justify-end gap-4">
-								<button
-									className="btn bg-gray-300 text-black"
-									onClick={closeModal}
-								>
-									Đóng
-								</button>
-								<button
-									className="btn bg-blue-500 text-white"
-									onClick={handleLoginNow}
-								>
-									Đăng nhập ngay
-								</button>
+			{
+				showModal && (
+					<div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+						<div className="modal modal-open">
+							<div className="modal-box relative">
+								<h3 className="font-bold text-xl">Bạn cần đăng nhập</h3>
+								<p className="mt-2">
+									Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.
+								</p>
+								<div className="mt-4 flex justify-end gap-4">
+									<button
+										className="btn bg-gray-300 text-black"
+										onClick={closeModal}
+									>
+										Đóng
+									</button>
+									<button
+										className="btn bg-blue-500 text-white"
+										onClick={handleLoginNow}
+									>
+										Đăng nhập ngay
+									</button>
+								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-			)}
-		</div>
+				)
+			}
+		</div >
 	);
 };
 

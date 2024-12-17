@@ -135,7 +135,8 @@ const Cart = () => {
       (t) => (
         <div className="flex flex-col space-y-2 p-4">
           <p className="text-sm text-gray-500">
-            Bạn có muốn xóa {selectedItems.length} sản phẩm này khỏi giỏ hàng của bạn không?
+            Bạn có muốn xóa {selectedItems.length} sản phẩm này khỏi giỏ hàng
+            của bạn không?
           </p>
           <div className="flex justify-end space-x-2">
             <button
@@ -187,28 +188,42 @@ const Cart = () => {
 
   const handleCheckout = () => {
     // Chỉ lấy những sản phẩm đã được chọn
-    const selectedCartItems = cartItemsWithSelected.filter(item => item.selected).map(item => ({
-      id: item.product_variant.product_id,
-      name: item.product_variant.product.name,
-      price: Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price),
-      quantity: item.quantity,
-      thumbnail: item.product_variant.image_variants?.image?.split(", ")[0] || "",
-      variant: {
-        id: item.product_variant.id,
-        size: {
-          size: item.product_variant.size.size,
-          size_name: item.product_variant.size.size_name || item.product_variant.size.size
+    const selectedCartItems = cartItemsWithSelected
+      .filter((item) => item.selected)
+      .map((item) => ({
+        id: item.product_variant.product_id,
+        name: item.product_variant.product.name,
+        price:
+          Number(item.product_variant.product.promotional_price) ||
+          Number(item.product_variant.product.price),
+        quantity: item.quantity,
+        thumbnail:
+          item.product_variant.image_variants?.image?.split(", ")[0] || "",
+        variant: {
+          id: item.product_variant.id,
+          size: {
+            size: item.product_variant.size.size,
+            size_name:
+              item.product_variant.size.size_name ||
+              item.product_variant.size.size,
+          },
+          color: {
+            color_id: item.product_variant.color.id,
+            color_name:
+              item.product_variant.color.color_name ||
+              item.product_variant.color.color,
+          },
         },
-        color: {
-          color_id: item.product_variant.color.id,
-          color_name: item.product_variant.color.color_name || item.product_variant.color.color
-        }
-      },
-      total: (Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price)) * item.quantity
-    }));
+        total:
+          (Number(item.product_variant.product.promotional_price) ||
+            Number(item.product_variant.product.price)) * item.quantity,
+      }));
 
     // Tính lại tổng tiền chỉ cho các sản phẩm được chọn
-    const selectedSubtotal = selectedCartItems.reduce((sum, item) => sum + item.total, 0);
+    const selectedSubtotal = selectedCartItems.reduce(
+      (sum, item) => sum + item.total,
+      0
+    );
 
     navigate("/checkout", {
       state: {
@@ -234,8 +249,8 @@ const Cart = () => {
     <>
       <Breadcrumb
         items={[
-          { name: "Home", link: "" },
-          { name: "Cart", link: "cart" },
+          { name: "Trang chủ", link: "" },
+          { name: "Giỏ hàng", link: "cart" },
         ]}
       />
       <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
@@ -244,9 +259,7 @@ const Cart = () => {
             <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-3xl font-bold text-gray-900">
-                    Giỏ hàng
-                  </h2>
+                  <h2 className="text-3xl font-bold text-gray-900">Giỏ hàng</h2>
                   {cartItemsWithSelected.length > 0 && (
                     <div className="flex items-center space-x-4">
                       <label className="flex items-center space-x-2 cursor-pointer">
@@ -256,7 +269,9 @@ const Cart = () => {
                           checked={allSelected}
                           className="checkbox checkbox-sm checkbox-primary rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
-                        <span className="text-sm text-gray-600">Chọn tất cả</span>
+                        <span className="text-sm text-gray-600">
+                          Chọn tất cả
+                        </span>
                       </label>
                       {allSelected && (
                         <button
@@ -286,7 +301,10 @@ const Cart = () => {
                   <AnimatePresence>
                     {cartItemsWithSelected.map((item: any) => {
                       // Thêm kiểm tra null safety khi tách mảng image_variants
-                      const images = item.product_variant.image_variants?.image?.split(", ") || [];
+                      const images =
+                        item.product_variant.image_variants?.image?.split(
+                          ", "
+                        ) || [];
                       const firstImage = images[0] || ""; // Thêm giá trị mặc định
 
                       return (
@@ -295,8 +313,9 @@ const Cart = () => {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 20 }}
-                          className={`flex items-center space-x-4 p-6 rounded-lg ${item.selected ? "bg-indigo-50" : "bg-gray-50"
-                            }`}
+                          className={`flex items-center space-x-4 p-6 rounded-lg ${
+                            item.selected ? "bg-indigo-50" : "bg-gray-50"
+                          }`}
                         >
                           <input
                             type="checkbox"
@@ -325,7 +344,9 @@ const Cart = () => {
                             <div className="mt-2 space-y-1">
                               <span className="text-sm text-gray-600">
                                 <p>Màu: {item.product_variant.color.color}</p>
-                                <p>Kích thước: {item.product_variant.size.size}</p>
+                                <p>
+                                  Kích thước: {item.product_variant.size.size}
+                                </p>
                               </span>
                             </div>
                             <div className="flex items-center space-x-2 mt-4">
@@ -423,8 +444,9 @@ const Cart = () => {
               <button
                 onClick={handleCheckout}
                 disabled={!isAnyItemSelected}
-                className={`mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg flex items-center justify-center hover:bg-indigo-700 transition duration-200 ${!isAnyItemSelected ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                className={`mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg flex items-center justify-center hover:bg-indigo-700 transition duration-200 ${
+                  !isAnyItemSelected ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <FiCreditCard className="w-5 h-5 mr-2" />
                 Tiến hành thanh toán

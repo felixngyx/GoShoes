@@ -37,7 +37,8 @@ const userSlice = createSlice({
 			state.email = action.payload.email;
 			state.email_is_verified = action.payload.email_is_verified;
 			state.role = action.payload.role;
-			state.avt = action.payload.avt;
+			state.avt =
+				action.payload.avt || 'https://avatar.iran.liara.run/public';
 			state.auth_provider = action.payload.auth_provider;
 		},
 		logout(state) {
