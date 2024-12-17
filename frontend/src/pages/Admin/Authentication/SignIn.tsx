@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { env } from '../../../environment/env';
-import LogoDark from '../../../images/logo/logo-dark.svg';
-import Logo from '../../../images/logo/logo.svg';
 import { useForm } from 'react-hook-form';
 import { joiResolver } from '@hookform/resolvers/joi';
 import Joi from 'joi';

@@ -103,7 +103,8 @@ class AuthService implements AuthServiceInterface
                     'name' => $user->name,
                     'email' => $user->email,
                     'email_is_verified' => (bool)$user->email_verified_at,
-                    'role' => $user->role
+                    'role' => $user->role,
+                    'avt' => $user->avt
                 ],
                 'access_token' => $accessToken,
                 'refresh_token' => $refreshToken,

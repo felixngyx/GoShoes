@@ -392,35 +392,35 @@ const ProductDetail = () => {
 
   const uniqueSizes = selectedColor
     ? Array.from(
-      parsedVariants
-        .filter((variant: Variant) => variant.color_id === selectedColor)
-        .flatMap(
-          (variant: Variant) =>
-            variant.variant_details?.map((detail: any) => ({
-              size: detail.size,
-              disabled: detail.quantity === 0,
-              quantity: detail.quantity,
-            })) || []
-        )
-        .reduce(
-          (
-            acc: Map<
-              string,
-              { size: string; disabled: boolean; quantity: number }
-            >,
-            current: any
-          ) => {
-            if (!acc.has(current.size)) {
-              acc.set(current.size, current);
-            }
-            return acc;
-          },
-          new Map()
-        )
-        .values()
-    )
-      .map((value: any) => value)
-      .sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
+        parsedVariants
+          .filter((variant: Variant) => variant.color_id === selectedColor)
+          .flatMap(
+            (variant: Variant) =>
+              variant.variant_details?.map((detail: any) => ({
+                size: detail.size,
+                disabled: detail.quantity === 0,
+                quantity: detail.quantity,
+              })) || []
+          )
+          .reduce(
+            (
+              acc: Map<
+                string,
+                { size: string; disabled: boolean; quantity: number }
+              >,
+              current: any
+            ) => {
+              if (!acc.has(current.size)) {
+                acc.set(current.size, current);
+              }
+              return acc;
+            },
+            new Map()
+          )
+          .values()
+      )
+        .map((value: any) => value)
+        .sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
     : [];
 
   const handleQuantityChange = (value: number) => {
@@ -570,10 +570,11 @@ const ProductDetail = () => {
                     <button
                       key={index}
                       onClick={() => setSelectedThumbnail(image)} // Cập nhật hình ảnh được chọn
-                      className={`relative overflow-hidden rounded-md ${selectedThumbnail === image
-                        ? "ring-2 ring-theme-color-primary"
-                        : ""
-                        }`}
+                      className={`relative overflow-hidden rounded-md ${
+                        selectedThumbnail === image
+                          ? "ring-2 ring-theme-color-primary"
+                          : ""
+                      }`}
                     >
                       <img
                         src={image}
@@ -610,7 +611,7 @@ const ProductDetail = () => {
             </span>
           </div>
           <div className="flex items-center gap-2 mt-1 mb-3">
-            {product?.promotional_price ? (
+            {product?.promotional_price && product.promotional_price > 0 ? (
               // Nếu có promotional_price thì hiển thị cả giá khuyến mãi và giá gốc
               <>
                 <p className="text-primary text-lg font-semibold">
@@ -624,7 +625,7 @@ const ProductDetail = () => {
                     ((Number(product?.price) -
                       Number(product?.promotional_price)) /
                       Number(product?.price)) *
-                    100
+                      100
                   )}
                   %
                 </p>
@@ -645,12 +646,12 @@ const ProductDetail = () => {
               <span className="col-span-1 text-left">
                 {product.categories && Array.isArray(product.categories)
                   ? [
-                    ...new Set(
-                      product.categories.map(
-                        (category: { name: string }) => category.name
-                      )
-                    ),
-                  ].join(", ")
+                      ...new Set(
+                        product.categories.map(
+                          (category: { name: string }) => category.name
+                        )
+                      ),
+                    ].join(", ")
                   : "Không có danh mục"}
               </span>
             </div>
@@ -677,14 +678,16 @@ const ProductDetail = () => {
                       !sizeInfo.disabled && handleSizeChange(sizeInfo.size)
                     }
                     className={`py-2 text-center text-sm font-medium border rounded-md w-full 
-                            ${selectedSize === sizeInfo.size
-                        ? "border-theme-color-primary ring-2 ring-theme-color-primary"
-                        : "bg-white text-gray-700 border-gray-300"
-                      }
-                            ${sizeInfo.disabled
-                        ? "cursor-not-allowed opacity-50 line-through bg-gray-100"
-                        : "hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary"
-                      }`}
+                            ${
+                              selectedSize === sizeInfo.size
+                                ? "border-theme-color-primary ring-2 ring-theme-color-primary"
+                                : "bg-white text-gray-700 border-gray-300"
+                            }
+                            ${
+                              sizeInfo.disabled
+                                ? "cursor-not-allowed opacity-50 line-through bg-gray-100"
+                                : "hover:border-theme-color-primary focus:outline-none focus:ring-2 focus:ring-theme-color-primary"
+                            }`}
                     disabled={sizeInfo.disabled}
                   >
                     {sizeInfo.size}
@@ -696,9 +699,7 @@ const ProductDetail = () => {
                   </button>
                 ))
               ) : (
-                <p className="text-gray-500 text-sm italic">
-                  Không có kích cỡ
-                </p>
+                <p className="text-gray-500 text-sm italic">Không có kích cỡ</p>
               )}
             </div>
           </div>
@@ -723,11 +724,16 @@ const ProductDetail = () => {
                         )
                       }
                       className={`flex items-center gap-3 px-4 py-2 border rounded-md text-sm font-medium transition-all 
-                              ${selectedColor === colorInfo.id
-                          ? "bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary"
-                          : "bg-white text-gray-700 border-gray-300 hover:border-theme-color-primary"
-                        }
-                              ${!hasAvailableSize ? "cursor-not-allowed opacity-50 bg-gray-100" : ""}`}
+                              ${
+                                selectedColor === colorInfo.id
+                                  ? "bg-theme-color-primary border-theme-color-primary ring-2 ring-theme-color-primary"
+                                  : "bg-white text-gray-700 border-gray-300 hover:border-theme-color-primary"
+                              }
+                              ${
+                                !hasAvailableSize
+                                  ? "cursor-not-allowed opacity-50 bg-gray-100"
+                                  : ""
+                              }`}
                       disabled={!hasAvailableSize}
                     >
                       <img
@@ -745,9 +751,7 @@ const ProductDetail = () => {
                   );
                 })
               ) : (
-                <p className="text-gray-500 text-sm italic">
-                  Không có màu sắc
-                </p>
+                <p className="text-gray-500 text-sm italic">Không có màu sắc</p>
               )}
             </div>
           </div>
@@ -815,19 +819,21 @@ const ProductDetail = () => {
         <div className="mt-8 md:col-span-12 lg:col-span-10 bg-[#FAFAFB] p-5 rounded-lg shadow-md">
           <div className="flex gap-4 md:gap-28 border-b">
             <button
-              className={`px-4 py-2 ${activeTab === "description"
-                ? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
-                : ""
-                }`}
+              className={`px-4 py-2 ${
+                activeTab === "description"
+                  ? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
+                  : ""
+              }`}
               onClick={() => setActiveTab("description")}
             >
               Mô tả
             </button>
             <button
-              className={`px-4 py-2 ${activeTab === "reviews"
-                ? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
-                : ""
-                }`}
+              className={`px-4 py-2 ${
+                activeTab === "reviews"
+                  ? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
+                  : ""
+              }`}
               onClick={() => setActiveTab("reviews")}
             >
               Đánh giá
@@ -838,8 +844,9 @@ const ProductDetail = () => {
               <div className="relative z-10">
                 <div
                   ref={contentRef}
-                  className={`description-content overflow-hidden transition-all duration-300 relative ${isExpanded ? "" : "max-h-[200px]"
-                    }`}
+                  className={`description-content overflow-hidden transition-all duration-300 relative ${
+                    isExpanded ? "" : "max-h-[200px]"
+                  }`}
                 >
                   {product?.description ? (
                     <div
@@ -964,8 +971,9 @@ const ProductDetail = () => {
                             }
                           }}
                           disabled={!link.url}
-                          className={`join-item btn btn-sm ${link.active ? "btn-active" : ""
-                            } ${!link.url ? "btn-disabled" : ""}`}
+                          className={`join-item btn btn-sm ${
+                            link.active ? "btn-active" : ""
+                          } ${!link.url ? "btn-disabled" : ""}`}
                           dangerouslySetInnerHTML={{
                             __html: link.label,
                           }}

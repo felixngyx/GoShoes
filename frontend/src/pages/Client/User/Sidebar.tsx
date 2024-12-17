@@ -1,9 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  FaTrash,
   FaBell,
-  FaCreditCard,
-  FaLock,
   FaMapMarkedAlt,
   FaUser,
   FaShoppingCart,

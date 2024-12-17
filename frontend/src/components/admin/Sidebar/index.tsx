@@ -2,7 +2,6 @@ import { FaUser } from 'react-icons/fa';
 import { Box, Boxes, ContactRound, Home, Image, Newspaper, TicketPercent } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import Logo from '../../../images/logo/logo.svg';
 import { BsCart2 } from 'react-icons/bs';
 interface SidebarProps {
 	sidebarOpen: boolean;

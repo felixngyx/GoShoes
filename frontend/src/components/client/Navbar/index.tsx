@@ -31,13 +31,13 @@ const useDebounce = (value: string, delay: number) => {
 };
 
 const menuItems = [
-	{ 'TRANG CHỦ': '/' },
-	{ 'THƯƠNG HIỆU': '/brand' },
-	{ 'DANH MỤC': '/category' },
-	{ 'GIỚI THIỆU': '/about-us' },
-	{ 'TIN TỨC': '/news' },
-	{ 'LIÊN HỆ': '/contact' },
-]
+	{ "TRANG CHỦ": "/" },
+	{ "THƯƠNG HIỆU": "/brand" },
+	{ "DANH MỤC": "/category" },
+	{ "GIỚI THIỆU": "/about-us" },
+	{ "TIN TỨC": "/news" },
+	{ "LIÊN HỆ": "/contact" },
+];
 
 const Navbar = () => {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -53,10 +53,12 @@ const Navbar = () => {
 	const { totalQuantity } = useCart();
 
 	useEffect(() => {
-		const user = Cookies.get('user');
-		if (user) {
-			const userInformation = JSON.parse(user);
+		const userData = Cookies.get('user');
+		if (userData) {
+			const userInformation = JSON.parse(userData);
 			setAvatar(userInformation.avt);
+		} else {
+			setAvatar(null);
 		}
 	}, [user, user.avt, setUser]);
 
@@ -71,10 +73,10 @@ const Navbar = () => {
 
 	const handleCartClick = () => {
 		if (!accessToken) {
-			toast.error('Bạn cần đăng nhập');
-			navigate('/signin');
+			toast.error("Bạn cần đăng nhập");
+			navigate("/signin");
 		} else {
-			navigate('/cart');
+			navigate("/cart");
 		}
 	};
 
@@ -86,7 +88,7 @@ const Navbar = () => {
 					const products = await getProductsByName(debouncedSearchTerm);
 					setProducts(products.length > 0 ? products : []);
 				} catch (error) {
-					console.error('Error fetching products:', error);
+					console.error("Error fetching products:", error);
 					setProducts([]);
 				} finally {
 					setLoading(false);
@@ -99,9 +101,7 @@ const Navbar = () => {
 	}, [debouncedSearchTerm]);
 
 	// const Navigate = useNavigate();
-	const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(
-		null
-	);
+	const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
 	const [selectedSize, setSelectedSize] = useState<string | null>(null);
 	const [selectedColor, setSelectedColor] = useState<string | null>(null);
 	const { handleAddToCart } = useCart();
@@ -120,7 +120,7 @@ const Navbar = () => {
 		if (selectedSize && selectedColor) {
 			const variants = Array.isArray(selectedProduct?.variants)
 				? selectedProduct.variants
-				: JSON.parse(selectedProduct?.variants || '[]');
+				: JSON.parse(selectedProduct?.variants || "[]");
 			const selectedVariant = variants.find(
 				(variant: any) => variant.color === selectedColor
 			);
@@ -145,18 +145,18 @@ const Navbar = () => {
 						setSelectedSize(null);
 						setSelectedColor(null);
 
-						toast.success('Thêm vào giỏ hàng thành công!');
+						toast.success("Thêm vào giỏ hàng thành công!");
 					} else {
-						toast.error('Product Variant ID không hợp lệ.');
+						toast.error("Product Variant ID không hợp lệ.");
 					}
 				} else {
-					toast.error('Size hoặc sản phẩm không khả dụng.');
+					toast.error("Size hoặc sản phẩm không khả dụng.");
 				}
 			} else {
-				toast.error('Không tìm thấy màu được chọn.');
+				toast.error("Không tìm thấy màu được chọn.");
 			}
 		} else {
-			toast.error('Hãy chọn kích thước và màu trước khi thêm vào giỏ hàng.');
+			toast.error("Hãy chọn kích thước và màu trước khi thêm vào giỏ hàng.");
 		}
 	};
 
@@ -199,7 +199,7 @@ const Navbar = () => {
 	};
 
 	const handleLoginNow = () => {
-		navigate('/signin');
+		navigate("/signin");
 		closeModal();
 	};
 
@@ -232,7 +232,7 @@ const Navbar = () => {
 		return uniqueColors.map((color) => (
 			<button
 				key={color}
-				className={`px-6 py-2 border rounded-md ${selectedColor === color ? 'bg-blue-500 text-white' : ''
+				className={`px-6 py-2 border rounded-md ${selectedColor === color ? "bg-blue-500 text-white" : ""
 					}`}
 				onClick={() => setSelectedColor(color)}
 			>
@@ -252,9 +252,11 @@ const Navbar = () => {
 			(variant: any) => variant.color === selectedColor
 		);
 
-		const uniqueSizes = Array.from(new Set(
-			selectedVariant?.sizes.map((sizeVariant: any) => sizeVariant.size)
-		)).sort((a, b) => Number(a) - Number(b));
+		const uniqueSizes = Array.from(
+			new Set(
+				selectedVariant?.sizes.map((sizeVariant: any) => sizeVariant.size)
+			)
+		).sort((a, b) => Number(a) - Number(b));
 
 		uniqueSizes.map((size) => {
 			const sizeVariant = selectedVariant?.sizes.find(
@@ -264,12 +266,10 @@ const Navbar = () => {
 
 			return (
 				<button
-					className={`px-6 py-2 border rounded-md ${selectedSize === size
-						? 'bg-blue-500 text-white'
-						: ''
+					className={`px-6 py-2 border rounded-md ${selectedSize === size ? "bg-blue-500 text-white" : ""
 						} ${!isAvailable
-							? 'opacity-50 cursor-not-allowed line-through'
-							: 'hover:border-blue-500'
+							? "opacity-50 cursor-not-allowed line-through"
+							: "hover:border-blue-500"
 						}`}
 					onClick={() => isAvailable && setSelectedSize(String(size))}
 					disabled={!isAvailable}
@@ -415,21 +415,19 @@ const Navbar = () => {
 						<div className="md:hidden bg-white shadow-lg">
 							<ul className="flex flex-col p-4">
 								{[
-									'TRANG CHỦ',
-									'THƯƠNG HIỆU',
-									'DANH MỤC',
-									'VỀ CHÚNG TÔI',
-									'TIN TỨC',
-									'LIÊN HỆ',
+									"TRANG CHỦ",
+									"THƯƠNG HIỆU",
+									"DANH MỤC",
+									"VỀ CHÚNG TÔI",
+									"TIN TỨC",
+									"LIÊN HỆ",
 								].map((item) => (
 									<li key={item}>
 										<Link
 											to={
-												item === 'TRANG CHỦ'
-													? '/'
-													: `/${item
-														.toLowerCase()
-														.replace(' ', '-')}`
+												item === "TRANG CHỦ"
+													? "/"
+													: `/${item.toLowerCase().replace(" ", "-")}`
 											}
 											className="block py-2 px-4 text-sm font-semibold hover:bg-gray-100 rounded-lg"
 											onClick={() => setIsMenuOpen(false)}
@@ -489,20 +487,16 @@ const Navbar = () => {
 									Tìm kiếm phổ biến
 								</p>
 								<div className="flex flex-wrap gap-2 mt-2">
-									{[
-										'Nike',
-										'Adidas',
-										'Puma',
-										'Reebok',
-										'New Balance',
-									].map((term) => (
-										<button
-											key={term}
-											className="btn btn-outline rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
-										>
-											{term}
-										</button>
-									))}
+									{["Nike", "Adidas", "Puma", "Reebok", "New Balance"].map(
+										(term) => (
+											<button
+												key={term}
+												className="btn btn-outline rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+											>
+												{term}
+											</button>
+										)
+									)}
 								</div>
 							</>
 						)}
@@ -531,14 +525,11 @@ const Navbar = () => {
 														className="w-full h-40 object-cover transition-transform duration-300 transform group-hover:scale-105"
 													/>
 
-													{product.promotional_price && (
+													{product.promotional_price > 0 && (
 														<p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
 															{Math.round(
 																((Number(product.price) -
-																	Number(
-																		product.promotional_price
-																	)
-																) /
+																	Number(product.promotional_price)) /
 																	Number(product.price)) *
 																100
 															)}
@@ -547,17 +538,13 @@ const Navbar = () => {
 													)}
 													<div className="absolute hidden group-hover:flex w-full h-full top-0 left-0 bg-opacity-70 bg-gray-50 justify-center items-center gap-4 z-10">
 														<IoHeartOutline
-															onClick={() =>
-																handleAddToWishlist(product.id)
-															}
+															onClick={() => handleAddToWishlist(product.id)}
 															className="cursor-pointer p-3 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
 															size={40}
 															color="#40BFFF"
 														/>
 														<IoCart
-															onClick={() =>
-																handleCheckAdd(product)
-															}
+															onClick={() => handleCheckAdd(product)}
 															className="cursor-pointer p-3 bg-white rounded-full shadow-md hover:bg-gray-200 transition"
 															size={40}
 															color="#40BFFF"
@@ -573,17 +560,14 @@ const Navbar = () => {
 													</Link>
 
 													<div className="flex flex-row items-center justify-start gap-1 mt-1">
-														<RatingStars
-															rating={product.rating_count}
-														/>
+														<RatingStars rating={product.rating_count} />
 													</div>
 
 													<p className="text-gray-600 text-sm mt-1">
 														<div
 															dangerouslySetInnerHTML={{
 																__html:
-																	product.description.length >
-																		100
+																	product.description.length > 100
 																		? `${product.description.substring(
 																			0,
 																			100
@@ -595,10 +579,13 @@ const Navbar = () => {
 
 													<div className="flex justify-between items-center mt-2">
 														<div className="flex items-center space-x-2">
-															{product.promotional_price ? (
+															{product.promotional_price &&
+																product.promotional_price > 0 ? (
 																<>
 																	<p className="font-bold text-blue-600 text-lg">
-																		{formatVNCurrency(Number(product.promotional_price))}
+																		{formatVNCurrency(
+																			Number(product.promotional_price)
+																		)}
 																	</p>
 																	<p className="text-gray-500 text-xs line-through">
 																		{formatVNCurrency(Number(product.price))}
@@ -624,91 +611,79 @@ const Navbar = () => {
 				</div>
 			</div>
 
-			{
-				selectedProduct && (
-					<div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-						<div className="modal modal-open">
-							<div className="modal-box relative">
-								<h3 className="font-bold text-xl text-blue-500">
-									{selectedProduct.name}
-								</h3>
-								<p className="mt-2">Chọn kích thước và màu sắc:</p>
-								<div className="flex flex-col gap-6 mt-4">
-									<div>
-										<h4 className="text-lg font-semibold mb-2">
-											Màu sắc:
-										</h4>
-										<div className="flex flex-wrap gap-2">
-											{renderColors()}
-										</div>
+			{selectedProduct && (
+				<div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+					<div className="modal modal-open">
+						<div className="modal-box relative">
+							<h3 className="font-bold text-xl text-blue-500">
+								{selectedProduct.name}
+							</h3>
+							<p className="mt-2">Chọn kích thước và màu sắc:</p>
+							<div className="flex flex-col gap-6 mt-4">
+								<div>
+									<h4 className="text-lg font-semibold mb-2">Màu sắc:</h4>
+									<div className="flex flex-wrap gap-2">{renderColors()}</div>
+								</div>
+
+								{selectedColor && (
+									<div className="mt-4">
+										<h4 className="text-lg font-semibold mb-2">Kích thước:</h4>
+										<div className="flex flex-wrap gap-2">{renderSizes()}</div>
 									</div>
+								)}
+							</div>
 
-									{selectedColor && (
-										<div className="mt-4">
-											<h4 className="text-lg font-semibold mb-2">
-												Kích thước:
-											</h4>
-											<div className="flex flex-wrap gap-2">
-												{renderSizes()}
-											</div>
-										</div>
-									)}
-								</div>
-
-								<div className="mt-6 flex justify-end gap-4">
-									<button
-										className="btn bg-gray-300 text-black"
-										onClick={() => {
-											setSelectedProduct(null);
-											setSelectedSize(null);
-											setSelectedColor(null);
-										}}
-									>
-										Hủy
-									</button>
-									<button
-										className="btn bg-blue-500 text-white"
-										onClick={addCart}
-										disabled={!selectedSize || !selectedColor}
-									>
-										Thêm vào giỏ hàng
-									</button>
-								</div>
+							<div className="mt-6 flex justify-end gap-4">
+								<button
+									className="btn bg-gray-300 text-black"
+									onClick={() => {
+										setSelectedProduct(null);
+										setSelectedSize(null);
+										setSelectedColor(null);
+									}}
+								>
+									Hủy
+								</button>
+								<button
+									className="btn bg-blue-500 text-white"
+									onClick={addCart}
+									disabled={!selectedSize || !selectedColor}
+								>
+									Thêm vào giỏ hàng
+								</button>
 							</div>
 						</div>
 					</div>
-				)
-			}
+				</div>
+			)}
 
-			{
-				showModal && (
-					<div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-						<div className="modal modal-open">
-							<div className="modal-box relative">
-								<h3 className="font-bold text-xl">Bạn cần đăng nhập</h3>
-								<p className="mt-2">
-									Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.
-								</p>
-								<div className="mt-4 flex justify-end gap-4">
-									<button
-										className="btn bg-gray-300 text-black"
-										onClick={closeModal}
-									>
-										Đóng
-									</button>
-									<button
-										className="btn bg-blue-500 text-white"
-										onClick={handleLoginNow}
-									>
-										Đăng nhập ngay
-									</button>
-								</div>
+			{showModal && (
+				<div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+					<div className="modal modal-open">
+						<div className="modal-box relative">
+							<h3 className="font-bold text-xl">Bạn cần đăng nhập</h3>
+							<p className="mt-2">
+								Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.
+							</p>
+							<div className="mt-4 flex justify-end gap-4">
+								<button
+									className="btn bg-gray-300 text-black"
+									onClick={closeModal}
+								>
+									Đóng
+								</button>
+								<button
+									className="btn bg-blue-500 text-white"
+									onClick={handleLoginNow}
+								>
+									Đăng nhập ngay
+								</button>
 							</div>
 						</div>
 					</div>
-				)
-			}
-		</div >
+				</div>
+			)}
+		</div>
 	);
 };
 
