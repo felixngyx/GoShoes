@@ -96,7 +96,7 @@ const ChatUI = () => {
       setTimeout(() => {
         setIsTyping(false);
         addMessage({
-          text: 'Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất có thể.',
+          text: 'Chức năng đang trong quá trình phát triển!',
           sender: 'admin'
         });
       }, 2000);
