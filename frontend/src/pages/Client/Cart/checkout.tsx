@@ -373,7 +373,7 @@ const CheckoutPage = () => {
           const finalAmount = orderState.subtotal - calculateDiscount();
           if (finalAmount > 0 && response.data.payment_url) {
             const willRedirect = window.confirm(
-              "You will be redirected to ZaloPay payment page. Do you want to continue?"
+              "Đơn hàng của bạn đã được tạo. Bạn có muốn chuyển đến trang thanh toán không?"
             );
 
             if (willRedirect) {

@@ -98,7 +98,7 @@ class AuthService implements AuthServiceInterface
 
             return response()->json([
                 'success' => true,
-                'message' => 'Login successful',
+                'message' => 'Đăng nhập thành công!',
                 'user' => [
                     'name' => $user->name,
                     'email' => $user->email,

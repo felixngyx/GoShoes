@@ -606,7 +606,7 @@ const ProductDetail = () => {
             <span className="text-[#9098B1] text-sm">
               {product.reviews}
               <span className="text-sm text-gray-600">
-                {product.rating_count} reviews
+                {product.rating_count} Sao
               </span>
             </span>
           </div>

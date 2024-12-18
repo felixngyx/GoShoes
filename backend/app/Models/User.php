@@ -104,4 +104,8 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims(){
         return [];
     }
+
+    public function history(){
+        return $this->hasMany(HistoryStatusChange::class);
+    }
 }

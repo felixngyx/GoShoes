@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Notification;
 use App\Mail\OrderCancelled;
-
+use App\Models\HistoryStatusChange;
 class OrderController extends Controller
 {
     protected $zaloPaymentController;
@@ -637,7 +637,7 @@ class OrderController extends Controller
 
         $paymentRequest = new Request([
             'order_id' => $order->sku,
-            'amount' => (int) $amount, // Không cần nhân 100 nữa vì ZaloPay đã tính theo VND
+            'amount' => (int) $amount,
         ]);
 
         $response = $this->zaloPaymentController->paymentZalo($paymentRequest);
@@ -707,6 +707,17 @@ class OrderController extends Controller
 
             // Cập nhật trạng thái đơn hàng
             $order->update(['status' => $status]);
+            if(auth()->user()->role == 'admin' || auth()->user()->role == 'super-admin') {
+                // Tạo lịch sử thay đổi trạng thái
+                HistoryStatusChange::create([
+                    'user_id' => auth()->id(),
+                    'order_id' => $order->id,
+                    'time' => now(),
+                    'status_before' => $prevStatus,
+                    'status_after' => $status,
+                ]);
+            }
+
 
             // Tìm thanh toán liên quan
             $orderPayment = $order->payment;
@@ -733,6 +744,7 @@ class OrderController extends Controller
                             'message' => "Đơn hàng #{$order->sku} đã hoàn tất",
                             'type' => 'notificationUserTracking'
                         ]);
+
                         break;
                     case 'cancelled':
                         $orderPayment->update(['status' => 'failed']);
@@ -812,6 +824,22 @@ class OrderController extends Controller
                             'type' => 'notificationUserTracking'
                         ]);
                         break;
+                    case 'processing':
+                        $orderPayment->update(['status'=> 'pending']);
+                        Notification::create([
+                            'user_id' => auth()->id(),
+                            'order_id' => $order->id,
+                            'title' => 'Đơn hàng đang xử lý',
+                            'message' => "Đơn hàng #{$order->sku} đang được xử lý",
+                            'type' => 'order'
+                        ]);
+                        Notification::create([
+                            'user_id' => $order->user_id,
+                            'order_id' => $order->id,
+                            'title' => 'Đơn hàng đang xử lý',
+                            'message' => "Đơn hàng #{$order->sku} đang được xử lý",
+                            'type' => 'notificationUserTracking'
+                        ]);
                     default:
                         $orderPayment->update(['status' => 'pending']);
                 }
@@ -936,7 +964,7 @@ class OrderController extends Controller
             $order = Order::findOrFail($id);
 
             if (!$user->role == 'admin' && !$user->role == 'super-admin' && $order->user_id !== $user->id) {
-                throw new \Exception('You do not have permission to access this order');
+                throw new \Exception('Bạn không có quyền truy cập đơn hàng này');
             }
 
             $order->load([
@@ -948,7 +976,8 @@ class OrderController extends Controller
                 'items.variant.size:id,size',
                 'items.variant.color:id,color',
                 'payment:order_id,method_id,status,url',
-                'payment.method:id,name'
+                'payment.method:id,name',
+                'historyStatusChange:id,user_id,order_id,time,status_before,status_after',
             ]);
 
             return response()->json([
@@ -959,6 +988,16 @@ class OrderController extends Controller
                     'status' => $order->status,
                     'total' => $order->total,
                     'created_at' => $order->created_at->format('Y-m-d H:i:s'),
+
+                    'history' => $order->historyStatusChange->map(function ($history) {
+                        return [
+                            'user' => $history->user->name,
+                            'role' => $history->user->role,
+                            'time' => $history->time->format('Y-m-d H:i:s'),
+                            'status_before' => $history->status_before,
+                            'status_after' => $history->status_after,
+                        ];
+                    }),
 
                     // Thông tin khách hàng
                     'customer' => [

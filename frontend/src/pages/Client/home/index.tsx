@@ -448,7 +448,7 @@ const Homepage = () => {
           </div>
           <div className="col-span-1 flex flex-col justify-start gap-4">
             <p className="text-black text-xl font-bold">
-              Khu Tự Trị Trịnh Văn Bô
+              Hoàng Gia Trịnh Văn Bô
             </p>
             <p className="text-black text-md font-medium">
               Hai Bà Trưng, Hà Nội, Việt Nam
@@ -460,12 +460,12 @@ const Homepage = () => {
             <p className="text-black text-md font-medium">
               Email: [goshoes@example.com](mailto:goshoes@example.com)
             </p>
-            <p
-              className="text-black text-xl font-bold mt-4 cursor-pointer hover:text-gray-800"
+            <button
+              className="text-black text-xl font-bold mt-4 cursor-pointer hover:text-gray-800 bg-transparent border-none"
               onClick={() => navigate("/contact")}
             >
               Liên hệ với chúng tôi
-            </p>
+            </button>
           </div>
         </div>
       </div>
