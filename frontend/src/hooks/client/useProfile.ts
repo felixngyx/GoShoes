@@ -13,7 +13,6 @@ import { useNavigate } from 'react-router-dom';
 
 const useProfile = () => {
 	const navigate = useNavigate();
-
 	// Lấy dữ liệu Profile
 	const {
 		data: profile,
@@ -57,14 +56,18 @@ const useProfile = () => {
 		});
 
 	// Xác minh token đổi email
-	const { mutate: verifyTokenMutation, isLoading: isVerifyingToken } =
-		useMutation({
-			mutationFn: verifyTokenChangeEmail,
-			onSuccess: () => {
-				toast.success('Email đã được thay đổi thành công');
-				navigate('/account');
-			}
-		});
+	const { mutate: verifyTokenMutation, isLoading: isVerifyingToken } = useMutation({
+		mutationFn: verifyTokenChangeEmail,
+		onSuccess: () => {
+			toast.success('Email đã được thay đổi thành công');
+			navigate('/account');
+		},
+		onError: (error: any) => {
+			const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi không xác định';
+			toast.error(errorMessage);
+		},
+	});
+
 
 	// Gửi yêu cầu thay đổi số điện thoại
 	const { mutate: sendPhoneChangeMutation, isLoading: isSendingPhone } =
@@ -83,18 +86,21 @@ const useProfile = () => {
 	// Xác minh token thay đổi số điện thoại
 	const {
 		mutate: verifyPhoneTokenMutation,
-		isLoading: isVerifyingPhoneToken,
 	} = useMutation({
 		mutationFn: verifyTokenChangePhone,
 		onSuccess: () => {
 			toast.success('Số điện thoại đã được thay đổi thành công');
 			navigate('/account');
-		}
+		},
+		onError: (error: any) => {
+			const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi không xác định';
+			toast.error(errorMessage);
+		},
 	});
 
 	// Xử lý gửi yêu cầu thay đổi email
 	const handleSendEmailChangeRequest = () => {
-		sendEmailChangeMutation(); // Gọi mutation mà không cần tham số
+		sendEmailChangeMutation(); 
 	};
 
 	// Xử lý xác minh token thay đổi email
@@ -108,7 +114,7 @@ const useProfile = () => {
 
 	// Xử lý gửi yêu cầu thay đổi số điện thoại
 	const handleSendPhoneChangeRequest = () => {
-		sendPhoneChangeMutation(); // Gọi mutation mà không cần tham số
+		sendPhoneChangeMutation();
 	};
 
 	// Xử lý xác minh token thay đổi số điện thoại
@@ -119,6 +125,7 @@ const useProfile = () => {
 		}
 		verifyPhoneTokenMutation({ token, phone });
 	};
+
 	const handleUpdateProfile = (params: ProfileParams) => {
 		updateProfileMutation({
 			...params,

@@ -264,19 +264,14 @@ const ContactUs = () => {
                 <div className="max-w-3xl mx-auto">
                   <div className="join join-vertical w-full bg-white shadow-xl rounded-lg">
                     <div className="collapse collapse-arrow join-item border border-base-300">
-                      <input
-                        type="radio"
-                        name="my-accordion-4"
-                        checked={true}
-                      />
+                      <input type="radio" name="my-accordion-4" defaultChecked />
                       <div className="collapse-title text-xl font-medium">
                         Giờ làm việc của bạn là gì?
                       </div>
                       <div className="collapse-content">
                         <p>
-                          Chúng tôi mở cửa từ thứ 2 đến thứ 6 từ 9:00 AM đến
-                          6:00 PM. Chúng tôi đóng cửa vào cuối tuần và các ngày
-                          lễ lớn.
+                          Chúng tôi mở cửa từ thứ 2 đến thứ 6 từ 9:00 AM đến 6:00 PM. Chúng tôi
+                          đóng cửa vào cuối tuần và các ngày lễ lớn.
                         </p>
                       </div>
                     </div>

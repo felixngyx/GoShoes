@@ -177,7 +177,7 @@ const ProductCard = () => {
               src={product.thumbnail}
               alt={product.name}
             />
-            {product.promotional_price && (
+            {product.promotional_price > 0 && (
               <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
                 {Math.round(
                   ((Number(product.price) - Number(product.promotional_price)) /
@@ -213,7 +213,7 @@ const ProductCard = () => {
             <RatingStars rating={product.rating_count} />
           </div>
           <div className="flex items-center justify-center gap-2">
-            {product.promotional_price ? (
+            {product.promotional_price && product.promotional_price > 0 ? (
               <>
                 <p className="text-primary text-xs md:text-sm font-semibold">
                   {formatVNCurrency(Number(product.promotional_price))}
