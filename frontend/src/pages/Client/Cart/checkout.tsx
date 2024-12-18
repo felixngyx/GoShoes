@@ -375,6 +375,17 @@ const CheckoutPage = () => {
       }
     } catch (error: any) {
       setHasOrdered(false);
+      
+      if (error.response?.status === 403) {
+        toast.error(error.response.data.error || error.response.data.message);
+        navigate('/account', { 
+          state: { 
+            message: "Vui lòng xác minh email trước khi đặt hàng" 
+          }
+        });
+        return;
+      }
+  
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
@@ -465,7 +476,7 @@ const CheckoutPage = () => {
       if (!Array.isArray(address) || address.length === 0) {
         // Nếu không có địa chỉ nào
         setShowAddressForm(true);
-        toast("Please add a shipping address to continue", {
+        toast("Vui lòng tạo 1 địa chỉ", {
           duration: 5000,
           position: "top-right",
           icon: "⚠️",
@@ -478,7 +489,7 @@ const CheckoutPage = () => {
       } else if (!address.some((item: any) => item.is_default)) {
         // Nếu có địa chỉ nhưng không có địa chỉ mặc định
         setShowAddressSelection(true);
-        toast("Please select a default shipping address to continue", {
+        toast("Vui lòng chọn 1 địa chỉ mặc định", {
           duration: 5000,
           position: "top-right",
           icon: "⚠️",

@@ -62,8 +62,12 @@ interface OrderData {
   items: OrderItem[];
 }
 
-const parseShippingDetail = (shippingDetailStr: string): ShippingDetail => {
+const parseShippingDetail = (shippingDetailStr: string | ShippingDetail): ShippingDetail => {
   try {
+    if (typeof shippingDetailStr === 'object') {
+      return shippingDetailStr as ShippingDetail;
+    }
+    
     return JSON.parse(shippingDetailStr);
   } catch (error) {
     console.error('Error parsing shipping detail:', error);
@@ -75,7 +79,6 @@ const parseShippingDetail = (shippingDetailStr: string): ShippingDetail => {
     };
   }
 };
-
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
