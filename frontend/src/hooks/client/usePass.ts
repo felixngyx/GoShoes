@@ -6,15 +6,24 @@ import {
   resetPassword,
 } from '../../services/client/profile';
 import { useNavigate } from 'react-router-dom';
-
-// Hàm kiểm tra định dạng email
-const isValidEmail = (email) => {
-  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return regex.test(email);
-};
+import { useDispatch } from 'react-redux';
+import Cookies from 'js-cookie';
+import { useState } from 'react';
+import { logout } from '../../store/client/userSlice';
 
 const usePass = () => {
-  const navigate = useNavigate ()
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [avatar, setAvatar] = useState<string | null>(null);
+
+  const logoutHandler = () => {
+    dispatch(logout());
+    setAvatar(null);
+    Cookies.remove('access_token');
+    Cookies.remove('refresh_token');
+    navigate('/signin');
+  };
+
   // Gửi yêu cầu reset mật khẩu
   const { mutate: sendResetPasswordMutation, isLoading: isSendingResetPassword } = useMutation({
     mutationFn: sendResetPasswordRequest,
@@ -45,7 +54,7 @@ const usePass = () => {
     mutationFn: resetPassword,
     onSuccess: () => {
       toast.success('Đặt lại mật khẩu thành công');
-      navigate('/account')
+      logoutHandler();
     },
     onError: (error) => {
       const errorMessage = error?.response?.data?.message || 'Đặt lại mật khẩu thất bại';
@@ -57,10 +66,6 @@ const usePass = () => {
   const handleSendResetPasswordRequest = (email) => {
     if (!email) {
       toast.error('Email không được để trống');
-      return;
-    }
-    if (!isValidEmail(email)) {
-      toast.error('Định dạng email không hợp lệ');
       return;
     }
     sendResetPasswordMutation({ email });

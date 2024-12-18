@@ -532,7 +532,7 @@ const OrderDetails = () => {
   ) => {
     setConfirmDialog({
       open: true,
-      title: `Xác nhận chuyển trạng thái đơn hàng`,
+      title: `Xác nhận chuyển trạng thái đơn hàng, vui lòng kiểm tra lịch sử trạng thái đơn hàng trước khi thay đổi trạng thái đơn hàng`,
       message: `Bạn có xác nhận chuyển đổi trạng thái đơn hàng sang ${ORDER_STATUS_LABELS[status]}?`,
       onConfirm: async () => {
         try {
@@ -939,7 +939,23 @@ const OrderDetails = () => {
 
         <div className="mt-6 space-y-2">
           <div className="flex justify-between font-semibold text-xs md:text-sm">
-            <span>Tổng cuối cùng</span>
+            <span>Giá gốc</span>
+            <span>
+              {new Intl.NumberFormat("vi-VN", {
+                style: "decimal",
+              }).format(
+                order.items.reduce(
+                  (acc, item) => acc + Number(item.price) * item.quantity,
+                  0
+                )
+              )}
+              đ
+            </span>
+          </div>
+        </div>
+        <div className="mt-6 space-y-2">
+          <div className="flex justify-between font-semibold text-xs md:text-sm">
+            <span>Tổng</span>
             <span>
               {new Intl.NumberFormat("de-DE", {
                 style: "decimal",

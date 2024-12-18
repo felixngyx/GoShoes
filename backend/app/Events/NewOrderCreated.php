@@ -26,7 +26,7 @@ class NewOrderCreated implements ShouldBroadcast  // Thêm implements ShouldBroa
     public function broadcastWith()
     {
         return [
-            'message' => 'New order created',
+            'message' => 'Có đơn hàng mới được tạo',
             'order_id' => $this->order_id
         ];
     }

@@ -10,11 +10,25 @@ import {
 } from '../../services/client/profile';
 import { ProfileParams, Profile } from '../../types/client/profile';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import Cookies from 'js-cookie';
+import { useState } from 'react';
+import { logout } from '../../store/client/userSlice';
 
 const useProfile = () => {
 	const navigate = useNavigate();
+	const dispatch = useDispatch();
+	const [avatar, setAvatar] = useState<string | null>(null);
+
+	const logoutHandler = () => {
+		dispatch(logout());
+		setAvatar(null);
+		Cookies.remove('access_token');
+		Cookies.remove('refresh_token');
+		navigate('/signin');
+	};
 	// Lấy dữ liệu Profile
-	const { data: profile, isLoading } = useQuery<Profile | null>({
+	const { data: profile } = useQuery<Profile | null>({
 		queryKey: ['PROFILE'],
 		queryFn: getProfile,
 		onError: (error: any) => {
@@ -24,62 +38,57 @@ const useProfile = () => {
 	});
 
 	// Cập nhật Profile
-	const { mutate: updateProfileMutation, isLoading: isUpdating } = useMutation(
-		{
-			mutationFn: updateProfile,
-			onSuccess: () => {
-				toast.success('Cập nhật hồ sơ thành công');
-			},
-			onError: (error: any) => {
-				console.error('Error while updating profile:', error);
-				toast.error('Cập nhật hồ sơ thất bại');
-			},
-		}
-	);
+	const { mutate: updateProfileMutation } = useMutation({
+		mutationFn: updateProfile,
+		onSuccess: () => {
+			toast.success('Cập nhật hồ sơ thành công');
+		},
+		onError: (error: any) => {
+			console.error('Error while updating profile:', error);
+			toast.error('Cập nhật hồ sơ thất bại');
+		},
+	});
 
 	// Gửi yêu cầu thay đổi email
-	const { mutate: sendEmailChangeMutation, isLoading: isSendingEmail } =
-		useMutation({
-			mutationFn: sendEmailChangeRequest,
-			onSuccess: () => {
-				toast.success(
-					'Yêu cầu thay đổi email đã được gửi. Vui lòng kiểm tra email của bạn.'
-				);
-			},
-			onError: (error: any) => {
-				console.error('Error while sending email change request:', error);
-				toast.error('Gửi yêu cầu thay đổi email thất bại');
-			},
-		});
+	const { mutate: sendEmailChangeMutation } = useMutation({
+		mutationFn: sendEmailChangeRequest,
+		onSuccess: () => {
+			toast.success(
+				'Yêu cầu thay đổi email đã được gửi. Vui lòng kiểm tra email của bạn.'
+			);
+		},
+		onError: (error: any) => {
+			console.error('Error while sending email change request:', error);
+			toast.error('Gửi yêu cầu thay đổi email thất bại');
+		},
+	});
 
 	// Xác minh token đổi email
-	const { mutate: verifyTokenMutation, isLoading: isVerifyingToken } =
-		useMutation({
-			mutationFn: verifyTokenChangeEmail,
-			onSuccess: () => {
-				toast.success('Email đã được thay đổi thành công');
-				navigate('/account');
-			},
-			onError: (error: any) => {
-				const errorMessage =
-					error.response?.data?.message || 'Đã xảy ra lỗi không xác định';
-				toast.error(errorMessage);
-			},
-		});
+	const { mutate: verifyTokenMutation } = useMutation({
+		mutationFn: verifyTokenChangeEmail,
+		onSuccess: () => {
+			toast.success('Email đã được thay đổi thành công');
+			logoutHandler()
+		},
+		onError: (error: any) => {
+			const errorMessage =
+				error.response?.data?.message || 'Đã xảy ra lỗi không xác định';
+			toast.error(errorMessage);
+		},
+	});
 
 	// Gửi yêu cầu thay đổi số điện thoại
-	const { mutate: sendPhoneChangeMutation, isLoading: isSendingPhone } =
-		useMutation({
-			mutationFn: sendPhoneChangeRequest,
-			onSuccess: () => {
-				toast.success(
-					'Yêu cầu thay đổi số điện thoại đã được gửi. Vui lòng kiểm tra điện thoại của bạn.'
-				);
-			},
-			onError: (error: any) => {
-				console.error('Error while sending phone change request:', error);
-			},
-		});
+	const { mutate: sendPhoneChangeMutation } = useMutation({
+		mutationFn: sendPhoneChangeRequest,
+		onSuccess: () => {
+			toast.success(
+				'Yêu cầu thay đổi số điện thoại đã được gửi. Vui lòng kiểm tra điện thoại của bạn.'
+			);
+		},
+		onError: (error: any) => {
+			console.error('Error while sending phone change request:', error);
+		},
+	});
 
 	// Xác minh token thay đổi số điện thoại
 	const { mutate: verifyPhoneTokenMutation } = useMutation({
@@ -160,8 +169,6 @@ const useProfile = () => {
 
 	return {
 		profile,
-		isLoading,
-		isUpdating,
 		handleUpdateProfile,
 		handleUpdateAvatar,
 		handleSendEmailChangeRequest,

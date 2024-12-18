@@ -119,7 +119,7 @@ const ECommerce: React.FC = () => {
 				</CardDataStats>
 
 				<CardDataStats
-					title="Tổng Doanh Thu"
+					title="Tổng Đơn Hàng"
 					total={statistics.totalProducts.toString()}
 					rate=""
 				>

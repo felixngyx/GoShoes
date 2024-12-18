@@ -24,8 +24,12 @@ interface Customer {
 }
 
 interface Shipping {
-  shipping_detail: string;
-  is_default: boolean;
+  shipping_detail: string | {
+    name: string;
+    address: string;
+    phone_number: string;
+    address_detail: string;
+  };
 }
 
 interface OrderData {
@@ -50,8 +54,32 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
     );
   };
 
-  // Parse shipping_detail từ string sang object
-  const shippingDetail = JSON.parse(order.shipping.shipping_detail);
+  const getShippingDetail = (shippingData: any) => {
+    if (typeof shippingData === 'string') {
+      try {
+        return JSON.parse(shippingData);
+      } catch (error) {
+        console.error('Error parsing shipping details:', error);
+        return {
+          name: 'N/A',
+          phone_number: 'N/A',
+          address: 'N/A',
+          address_detail: ''
+        };
+      }
+    } else if (typeof shippingData === 'object' && shippingData !== null) {
+      return shippingData;
+    }
+
+    return {
+      name: 'N/A',
+      phone_number: 'N/A',
+      address: 'N/A',
+      address_detail: ''
+    };
+  };
+
+  const shippingDetail = getShippingDetail(order.shipping?.shipping_detail);
 
   return (
     <div className="w-full max-w-4xl mx-auto p-8 bg-white print:p-6">
@@ -147,19 +175,19 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
           </p>
         </div>
         <div>
-        <h3 className="font-medium mb-2">Người mua:</h3>
-        <p className="text-sm text-gray-600">
-          Tên khách hàng: {shippingDetail.name || "Chưa cập nhật"}
-          <br />
-          Số điện thoại: {shippingDetail.phone_number || "Chưa cập nhật"}
-          <br />
-          Địa chỉ: {shippingDetail.address_detail || "Chưa cập nhật"}
-          <br />
-          Thành phố / Quận huyện: {shippingDetail.address || "Chưa cập nhật"}
-          <br />
-          Email: {order.customer?.email || "Chưa cập nhật"}
-        </p>
-      </div>
+          <h3 className="font-medium mb-2">Người mua:</h3>
+          <p className="text-sm text-gray-600">
+            Tên khách hàng: {shippingDetail.name || "Chưa cập nhật"}
+            <br />
+            Số điện thoại: {shippingDetail.phone_number || "Chưa cập nhật"}
+            <br />
+            Địa chỉ: {shippingDetail.address_detail || "Chưa cập nhật"}
+            <br />
+            Thành phố / Quận huyện: {shippingDetail.address || "Chưa cập nhật"}
+            <br />
+            Email: {order.customer?.email || "Chưa cập nhật"}
+          </p>
+        </div>
       </div>
 
       <div className="mt-8 text-center text-sm text-gray-500 print:mt-6">
