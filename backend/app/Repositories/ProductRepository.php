@@ -41,6 +41,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
 
         // Get top 6 products with most sales
         $topProducts = Product::withSum('orderItems as total_revenue', DB::raw('price * quantity'))
+            ->where('is_deleted', false)
             ->withSum('orderItems as total_quantity', 'quantity')
             ->join('order_items', 'products.id', '=', 'order_items.product_id')
             ->groupBy('products.id', 'products.name')

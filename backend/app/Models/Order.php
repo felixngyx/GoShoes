@@ -42,4 +42,9 @@ class Order extends Model
     {
         return $this->hasOne(RefundRequest::class);
     }
+
+    public function historyStatusChange()
+    {
+        return $this->hasMany(HistoryStatusChange::class);
+    }
 }

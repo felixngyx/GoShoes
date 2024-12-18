@@ -12,7 +12,7 @@ class OrderUpdateStatus extends FormRequest {
 
     public function rules() {
         return [
-            'status' => 'required|string|in:pending,completed,cancelled,shipping,expired',
+            'status' => 'required|string|in:pending,completed,cancelled,shipping,expired,processing',
         ];
     }
 

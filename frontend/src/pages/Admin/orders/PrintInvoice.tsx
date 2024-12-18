@@ -1,5 +1,5 @@
-import React from 'react';
-import { CheckCheckIcon } from 'lucide-react';
+import React from "react";
+import { CheckCheckIcon } from "lucide-react";
 
 interface Product {
   name: string;
@@ -45,13 +45,13 @@ interface PrintInvoiceProps {
 
 const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
   const formatPrice = (price: number | string): string => {
-    return new Intl.NumberFormat('de-DE', { style: 'decimal' }).format(Number(price));
+    return new Intl.NumberFormat("de-DE", { style: "decimal" }).format(
+      Number(price)
+    );
   };
 
   // Parse shipping_detail từ string sang object
-  const shippingDetail = order.shipping?.shipping_detail 
-    ? order.shipping.shipping_detail
-    : null;
+  const shippingDetail = JSON.parse(order.shipping.shipping_detail);
 
   return (
     <div className="w-full max-w-4xl mx-auto p-8 bg-white print:p-6">
@@ -69,31 +69,55 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50">
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Sản phẩm</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Biến thể</th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">Số lượng</th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">Giá</th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">Tổng tiền</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
+                Sản phẩm
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
+                Biến thể
+              </th>
+              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
+                Số lượng
+              </th>
+              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
+                Giá
+              </th>
+              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
+                Tổng tiền
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {order.items.map((item, index) => (
               <tr key={index}>
-                <td className="px-6 py-4 text-sm text-gray-900">{item.product.name}</td>
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  {item.product.name}
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {item.variant ? (
                     <>
-                      {item.variant.size && <span>Size: {item.variant.size}</span>}
-                      {item.variant.size && item.variant.color && <span> | </span>}
-                      {item.variant.color && <span>Color: {item.variant.color}</span>}
+                      {item.variant.size && (
+                        <span>Size: {item.variant.size}</span>
+                      )}
+                      {item.variant.size && item.variant.color && (
+                        <span> | </span>
+                      )}
+                      {item.variant.color && (
+                        <span>Color: {item.variant.color}</span>
+                      )}
                     </>
                   ) : (
-                    'Non Variable'
+                    "Non Variable"
                   )}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-900 text-right">{item.quantity}</td>
-                <td className="px-6 py-4 text-sm text-gray-900 text-right">{formatPrice(item.price)}đ</td>
-                <td className="px-6 py-4 text-sm text-gray-900 text-right">{formatPrice(item.subtotal)}đ</td>
+                <td className="px-6 py-4 text-sm text-gray-900 text-right">
+                  {item.quantity}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900 text-right">
+                  {formatPrice(item.price)}đ
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900 text-right">
+                  {formatPrice(item.subtotal)}đ
+                </td>
               </tr>
             ))}
           </tbody>
@@ -113,22 +137,29 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
         <div>
           <h3 className="font-medium mb-2">Người bán:</h3>
           <p className="text-sm text-gray-600">
-            Cửa hàng: GoShoes<br />
-            Địa chỉ: FPOLY, TVB, HN<br />
-            Số điện thoại: 0999999888<br />
+            Cửa hàng: GoShoes
+            <br />
+            Địa chỉ: FPOLY, TVB, HN
+            <br />
+            Số điện thoại: 0999999888
+            <br />
             Email: contact@goshoes.com
           </p>
         </div>
         <div>
-          <h3 className="font-medium mb-2">Người mua:</h3>
-          <p className="text-sm text-gray-600">
-            Tên khách hàng: {order.customer.name}<br />
-            Số điện thoại: {order.customer.phone}<br />
-            Địa chỉ: {shippingDetail?.address_detail || 'N/A'}<br />
-            Thành phố / Quận huyện: {shippingDetail?.address || 'N/A'}<br />
-            Email: {order.customer.email}
-          </p>
-        </div>
+        <h3 className="font-medium mb-2">Người mua:</h3>
+        <p className="text-sm text-gray-600">
+          Tên khách hàng: {shippingDetail.name || "Chưa cập nhật"}
+          <br />
+          Số điện thoại: {shippingDetail.phone_number || "Chưa cập nhật"}
+          <br />
+          Địa chỉ: {shippingDetail.address_detail || "Chưa cập nhật"}
+          <br />
+          Thành phố / Quận huyện: {shippingDetail.address || "Chưa cập nhật"}
+          <br />
+          Email: {order.customer?.email || "Chưa cập nhật"}
+        </p>
+      </div>
       </div>
 
       <div className="mt-8 text-center text-sm text-gray-500 print:mt-6">

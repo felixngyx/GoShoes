@@ -15,7 +15,6 @@ import {
   Box,
   Chip,
 } from "@mui/material";
-import { MdCalendarToday } from "react-icons/md";
 import { CalendarClock, Mail, MapPin, Phone } from "lucide-react";
 
 interface OrderItem {
@@ -103,11 +102,12 @@ const OrderDetail: React.FC = () => {
   }
 
   const orderData = order.data;
-  const shippingDetail: ShippingDetail = orderData.shipping?.shipping_detail || {
-    name: orderData.customer?.name || '',
-    phone_number: orderData.customer?.phone || '',
-    address: '',
-    address_detail: ''
+  const shippingDetail: ShippingDetail = orderData.shipping
+    ?.shipping_detail || {
+    name: orderData.customer?.name || "",
+    phone_number: orderData.customer?.phone || "",
+    address: "",
+    address_detail: "",
   };
 
   return (
@@ -131,7 +131,6 @@ const OrderDetail: React.FC = () => {
                 </Typography>
               </Box>
             </Box>
-
           </Box>
           <OrderTracking
             status={orderData.status}
@@ -310,29 +309,42 @@ const OrderDetail: React.FC = () => {
                 </Typography>
                 <Chip
                   label={
-                    orderData.payment.status === 'failed'
-                      ? 'Thất bại'
-                      : orderData.payment.status === 'pending'
-                        ? 'Đang chờ xử lý'
-                        : orderData.payment.status === 'cancelled'
-                          ? 'Đã hủy'
-                          : orderData.payment.status === 'refunded'
-                            ? 'Đã hoàn tiền'
-                            : orderData.payment.status === 'expired'
-                              ? 'Hết hạn'
-                              : orderData.payment.status === 'completed'
-                                ? 'Hoàn tất'
-                                : orderData.payment.status === 'shipping'
-                                  ? 'Đang vận chuyển'
-                                  : 'Đang xử lý'
-
+                    orderData.payment.status === "failed"
+                      ? "Thất bại"
+                      : orderData.payment.status === "pending"
+                      ? "Đang chờ thanh toán"
+                      : orderData.payment.status === "cancelled"
+                      ? "Đã hủy"
+                      : orderData.payment.status === "refunded"
+                      ? "Đã hoàn tiền"
+                      : orderData.payment.status === "expired"
+                      ? "Hết hạn"
+                      : orderData.payment.status === "completed"
+                      ? "Hoàn tất"
+                      : orderData.payment.status === "shipping"
+                      ? "Đang vận chuyển"
+                      : orderData.payment.status === "success"
+                      ? "Thành công"
+                      : "Không xác định"
                   }
                   color={
-                    orderData.payment.status === 'completed'
-                      ? 'success'
-                      : orderData.payment.status === 'failed'
-                        ? 'error'
-                        : 'warning'
+                    orderData.payment.status === "success"
+                      ? "success"
+                      : orderData.payment.status === "failed"
+                      ? "error"
+                      : orderData.payment.status === "pending"
+                      ? "warning"
+                      : orderData.payment.status === "cancelled"
+                      ? "error"
+                      : orderData.payment.status === "refunded"
+                      ? "error"
+                      : orderData.payment.status === "expired"
+                      ? "error"
+                      : orderData.payment.status === "completed"
+                      ? "success"
+                      : orderData.payment.status === "shipping"
+                      ? "warning"
+                      : "warning"
                   }
                   size="small"
                 />
