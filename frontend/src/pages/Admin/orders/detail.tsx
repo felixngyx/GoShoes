@@ -939,7 +939,23 @@ const OrderDetails = () => {
 
         <div className="mt-6 space-y-2">
           <div className="flex justify-between font-semibold text-xs md:text-sm">
-            <span>Tổng cuối cùng</span>
+            <span>Giá gốc</span>
+            <span>
+              {new Intl.NumberFormat("vi-VN", {
+                style: "decimal",
+              }).format(
+                order.items.reduce(
+                  (acc, item) => acc + Number(item.price) * item.quantity,
+                  0
+                )
+              )}
+              đ
+            </span>
+          </div>
+        </div>
+        <div className="mt-6 space-y-2">
+          <div className="flex justify-between font-semibold text-xs md:text-sm">
+            <span>Tổng</span>
             <span>
               {new Intl.NumberFormat("de-DE", {
                 style: "decimal",

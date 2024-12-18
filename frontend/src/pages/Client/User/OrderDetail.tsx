@@ -62,6 +62,20 @@ interface OrderData {
   items: OrderItem[];
 }
 
+const parseShippingDetail = (shippingDetailStr: string): ShippingDetail => {
+  try {
+    return JSON.parse(shippingDetailStr);
+  } catch (error) {
+    console.error('Error parsing shipping detail:', error);
+    return {
+      name: '',
+      phone_number: '',
+      address: '',
+      address_detail: ''
+    };
+  }
+};
+
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
@@ -102,8 +116,7 @@ const OrderDetail: React.FC = () => {
   }
 
   const orderData = order.data;
-  const shippingDetail: ShippingDetail = orderData.shipping
-    ?.shipping_detail || {
+  const shippingDetail: ShippingDetail = parseShippingDetail(orderData.shipping.shipping_detail) || {
     name: orderData.customer?.name || "",
     phone_number: orderData.customer?.phone || "",
     address: "",

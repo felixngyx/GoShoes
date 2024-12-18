@@ -158,59 +158,35 @@ const CheckoutPage = () => {
     newQuantity: number
   ) => {
     if (newQuantity < 1) return;
-
+  
     let newSubtotal = 0;
-
-    if (buyNowState) {
-      const newTotal = buyNowState.price * newQuantity;
-      newSubtotal = newTotal;
-
-      setBuyNowState((prev) => ({
-        ...prev,
-        quantity: newQuantity,
-        total: newTotal,
-      }));
-
-      setOrderState((prev) => ({
-        ...prev,
-        items: [
-          {
-            ...prev.items[0],
-            quantity: newQuantity,
-            total: newTotal,
-          },
-        ],
-        subtotal: newTotal,
-        total: newTotal,
-      }));
-    } else {
-      const updatedItems = orderState.items.map((item) => {
-        if (item.variant?.id === variantId) {
-          const updatedTotal = item.price * newQuantity;
-          return {
-            ...item,
-            quantity: newQuantity,
-            total: updatedTotal,
-          };
-        }
-        return item;
-      });
-
-      newSubtotal = updatedItems.reduce((sum, item) => sum + item.total, 0);
-
-      setOrderState((prev) => ({
-        ...prev,
-        items: updatedItems,
-        subtotal: newSubtotal,
-        total: newSubtotal,
-      }));
-    }
-
+  
+    const updatedItems = orderState.items.map((item) => {
+      if (item.variant?.id === variantId || item.id === variantId) {
+        const updatedTotal = item.price * newQuantity;
+        newSubtotal += updatedTotal;
+        return {
+          ...item,
+          quantity: newQuantity,
+          total: updatedTotal,
+        };
+      }
+      newSubtotal += item.total;
+      return item;
+    });
+  
+    setOrderState((prev) => ({
+      ...prev,
+      items: updatedItems,
+      subtotal: newSubtotal,
+      total: newSubtotal,
+    }));
+  
     setQuantities((prev) => ({
       ...prev,
       [variantId]: newQuantity,
     }));
-
+  
     if (discountCode && discountInfo) {
       try {
         const response = await axios.post(
@@ -228,7 +204,7 @@ const CheckoutPage = () => {
             },
           }
         );
-
+  
         if (response.data.status) {
           setDiscountInfo(response.data.data);
         }
@@ -379,7 +355,7 @@ const CheckoutPage = () => {
             if (willRedirect) {
               window.location.href = response.data.payment_url;
             } else {
-              toast.success("Order created successfully!");
+              toast.success("Đơn hàng của bạn đã được tạo");
               navigate("/account/my-order", {
                 replace: true,
                 state: {
@@ -390,10 +366,10 @@ const CheckoutPage = () => {
           }
         } else {
           // COD
-          toast.success("Order placed successfully!");
+          toast.success("Đăt hàng thành công!");
           navigate("/account/my-order", {
             replace: true,
-            state: { message: "Order placed successfully!" },
+            state: { message: "Đặt hàng thành công" },
           });
         }
       }
@@ -402,7 +378,7 @@ const CheckoutPage = () => {
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error("Something went wrong. Please try again later.");
+        toast.error("Có lỗi xảy ra khi đặt hàng");
       }
       console.error("Order error:", error);
     } finally {
