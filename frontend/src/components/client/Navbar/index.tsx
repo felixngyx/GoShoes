@@ -335,7 +335,7 @@ const Navbar = () => {
 									role="button"
 									className="rounded-full flex items-center hover:bg-gray-100"
 								>
-									{avatar ? (
+									{user.name ? (
 										<div className="avatar">
 											<div className="w-8 rounded-full border-2 border-info">
 												<img src={avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`} />
