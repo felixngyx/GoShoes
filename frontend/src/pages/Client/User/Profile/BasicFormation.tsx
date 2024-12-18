@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { ProfileParams } from '../../../../types/client/profile';
-import { RootState } from '../../../../store';
-import { useSelector } from 'react-redux';
+import Cookies from 'js-cookie';
+// import { setUser } from '../../../../store/client/userSlice';
 
 interface ProfileFormProps {
 	profile: any;
@@ -19,8 +19,20 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 }) => {
 	const [emailToChange, setEmailToChange] = useState<string | null>(null);
 	const [phoneToChange, setPhoneToChange] = useState<string | null>(null);
-	const { user } = useSelector((state: RootState) => state.client);
-	console.log(user);
+	const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+	const [authProvider, setAuthProvider] = useState<string | null>(null);
+
+	useEffect(() => {
+		const userInfo = Cookies.get('user');
+
+		if (userInfo) {
+			const userData = JSON.parse(userInfo);
+			console.log(userData);
+			setIsVerifyingEmail(userData.email_is_verified);
+			setAuthProvider(userData.auth_provider);
+		}
+	}, []);
+
 
 	const {
 		register,
@@ -122,7 +134,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 							readOnly
 							{...register('email')}
 						/>
-						{user.auth_provider !== 'facebook' && (
+						{authProvider !== 'facebook' && (
 							<button
 								type="button"
 								className="btn btn-link btn-sm absolute right-0 top-0 h-full px-3 text-sm font-medium text-blue-500 hover:underline"
@@ -198,11 +210,11 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 				{/* Nút cập nhật */}
 				<button
 					type="submit"
-					disabled={!user.email_is_verified}
-					className={`btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] col-span-2 mt-5 ${user.email_is_verified ? '' : 'btn-disabled'
+					disabled={!isVerifyingEmail}
+					className={`btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] col-span-2 mt-5 ${isVerifyingEmail ? '' : 'btn-disabled'
 						}`}
 				>
-					{user.email_is_verified
+					{isVerifyingEmail
 						? 'Cập nhật'
 						: 'Vui lòng xác minh email trước khi cập nhật thông tin'}
 				</button>

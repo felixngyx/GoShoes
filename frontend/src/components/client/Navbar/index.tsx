@@ -60,7 +60,7 @@ const Navbar = () => {
 		} else {
 			setAvatar(null);
 		}
-	}, [user, user.avt, setUser]);
+	}, [user]);
 
 	const logoutHandler = () => {
 		dispatch(logout());
