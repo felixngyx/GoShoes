@@ -72,7 +72,7 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
         JOIN variant_colors AS vc ON pv.color_id = vc.id
         JOIN variant_sizes AS vs ON pv.size_id = vs.id
         LEFT JOIN image_variants AS iv ON iv.product_id = pv.product_id AND iv.color_id = pv.color_id
-        WHERE c.user_id = ?;
+        WHERE c.user_id = ? AND p.is_deleted = false;
         ", [$userId]);
     }
 

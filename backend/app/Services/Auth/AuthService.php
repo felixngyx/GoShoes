@@ -145,7 +145,7 @@ class AuthService implements AuthServiceInterface
 
             return response()->json([
                 'success' => true,
-                'message' => 'User created successfully',
+                'message' => 'Tạo tài khoản thành công! Vui lòng kiểm tra email để xác thực tài khoản',
                 'data' => [
                     'user' => $user->name,
                     'email' => $user->email,

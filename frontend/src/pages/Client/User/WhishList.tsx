@@ -79,7 +79,7 @@ export default function Wishlist() {
                             {item.name}
                           </h5>
                           <p className="added-time text-xs md:text-sm text-[#5C5F6A]">
-                            Thêm vào: {formatScheduledDate(item.scheduled_at)}
+                            Thêm vào: {formatScheduledDate(item.created_at)}
                           </p>
                           <button
                             className="font-semibold text-xs md:text-sm mt-1 text-[#5C5F6A] hover:text-red-500"

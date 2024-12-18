@@ -261,7 +261,7 @@ export default function OrderList(): JSX.Element {
 			setOpenDialog({ type: '', orderId: null });
 			// Refresh data
 			refetch();
-			toast.success('Order confirmed as received');
+			toast.success('Đơn hàng đã được xác nhận nhận hàng');
 		} catch (error: any) {
 			if (error.response?.data?.message) {
 				toast.error(error.response.data.message);

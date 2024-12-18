@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import { Package, User, Calendar, DollarSign, ShoppingCart, CreditCard, CheckCircle, XCircle } from 'lucide-react';
+import { Package, User, ShoppingCart, CheckCircle, XCircle } from 'lucide-react';
 
 interface RefundDetail {
   id: number;
