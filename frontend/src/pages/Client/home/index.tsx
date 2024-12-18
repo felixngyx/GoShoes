@@ -246,24 +246,24 @@ const Homepage = () => {
               key={banner.id}
               className={`
                 ${index === 0
-                  ? "col-span-1 md:col-span-2 h-[300px] md:h-[500px]"
-                  : "col-span-1 h-[200px] md:h-[240px]"
+                  ? "col-span-1 md:col-span-2 max-h-[300px] md:max-h-[500px]"
+                  : "col-span-1 max-h-[200px] md:max-h-[240px]"
                 }
                 relative z-0 rounded-xl overflow-hidden group
                 shadow-lg hover:shadow-2xl transition-all duration-300
                 border border-gray-200 hover:border-gray-300
                 transform hover:-translate-y-1
                 before:absolute before:inset-0 before:z-10 before:bg-gradient-to-t before:from-black/60 before:to-transparent before:opacity-0
-                before:transition-opacity before:duration-300 group-hover:before:opacity-100
+                before:transition-opacity before:duration-300 group-hover:before:opacity-100 group:
               `}
             >
-              <div className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-50">
+              <div className="w-full h-fit object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-50">
                 <ImageWithFallback src={banner.image} alt={banner.title} />
               </div>
               <div className="absolute inset-0 z-20 flex flex-col justify-between p-4 md:p-8">
                 <p
                   className={`text-white font-bold ${index === 0 ? "text-2xl md:text-5xl" : "text-xl md:text-3xl"
-                    }`}
+                    } hidden group-hover:block`}
                 >
                   {banner.title.split("<br />").map((line, lineIndex) => (
                     <React.Fragment key={lineIndex}>
