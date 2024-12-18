@@ -424,7 +424,7 @@ const Product = () => {
 										<td className="px-4 py-3">
 											<div className="flex items-center gap-1 sm:gap-2">
 												<Link
-													to={`/products/${product.id}`}
+													to={`/admin/product/${product.id}`}
 													className="btn btn-xs sm:btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 												>
 													<Eye size={14} />

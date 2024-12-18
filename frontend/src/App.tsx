@@ -9,18 +9,8 @@ import Profile from "./pages/Client/User/Profile/Profile";
 import DefaultLayout from "./layout/DefaultLayout";
 import PageTitle from "./components/admin/PageTitle";
 import ECommerce from "./pages/Admin/Dashboard/ECommerce";
-import Calendar from "./pages/Admin/Calendar";
-import FormElements from "./pages/Admin/Form/FormElements";
-import FormLayout from "./pages/Admin/Form/FormLayout";
-import Tables from "./pages/Admin/Tables";
-import Settings from "./pages/Admin/Settings";
-import Chart from "./pages/Admin/Chart";
-import Alerts from "./pages/Admin/UiElements/Alerts";
-import Buttons from "./pages/Admin/UiElements/Buttons";
 import { useEffect } from "react";
 import SignInAdmin from "./pages/Admin/Authentication/SignIn";
-import SignUpAdmin from "./pages/Admin/Authentication/SignUp";
-import ProfileAdmin from "./pages/Admin/Profile";
 import Order from "./pages/Client/User/Order";
 import NotfoundPage from "./pages/Client/NotfoundPage";
 import OrderDetail from "./pages/Client/User/OrderDetail";
@@ -65,6 +55,7 @@ import ContactList from "./pages/Admin/Contact";
 import NotificationPage from "./pages/Client/User/Notification";
 import DiscountChatWidget from "./components/client/DiscountWiget";
 import BannerPage from "./pages/Admin/Banner";
+import ViewDetailProduct from "./pages/Admin/Product/ViewDetailProduct";
 
 function App() {
   const { pathname } = useLocation();
@@ -200,6 +191,7 @@ function App() {
           <Route path="attribute" element={<Attribute />} />
           <Route path="product/create" element={<AddProduct />} />
           <Route path="product/update/:id" element={<UpdateProduct />}></Route>
+          <Route path="product/:id" element={<ViewDetailProduct />}></Route>
           <Route path="orders">
             <Route index element={<OrderDashboard />} />
             <Route path="detail/:id" element={<DetailOrder />} />
