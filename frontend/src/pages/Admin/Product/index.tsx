@@ -73,12 +73,33 @@ const Product = () => {
 				await productService.delete(id);
 				toast.success('Product deleted successfully');
 				fetchAllProducts();
-				// fetchProducts();
+				fetchProducts();
 			} catch (error) {
 				console.error(error);
 			}
 		}
 	};
+
+	const handleDeleteSelected = async () => {
+		if (window.confirm('Are you sure you want to delete these products?')) {
+			const message = toast.loading('Deleting products...');
+			try {
+				await Promise.all(
+					selectedItems.map((item) =>
+						productService.delete(Number(item))
+					)
+				);
+				toast.dismiss(message);
+				toast.success('Products deleted successfully');
+				fetchAllProducts();
+				fetchProducts();
+				setSelectedItems([]);
+				setSelectAll(false);
+			} catch (error) {
+				console.error(error);
+			}
+		}
+	}
 
 	useEffect(() => {
 		fetchProducts();
@@ -88,7 +109,7 @@ const Product = () => {
 		if (selectAll) {
 			setSelectedItems([]); // Deselect all if already selected
 		} else {
-			setSelectedItems(productData.map((_, index) => index)); // Select all
+			setSelectedItems(productData.map((product) => product.id!)); // Select all
 		}
 		setSelectAll(!selectAll); // Toggle select all state
 	};
@@ -216,6 +237,7 @@ const Product = () => {
 
 					<div className="flex items-center gap-2">
 						<button
+							onClick={handleDeleteSelected}
 							className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error whitespace-nowrap ${selectedItems.length > 0
 								? 'flex items-center gap-2'
 								: 'hidden'
@@ -351,17 +373,17 @@ const Product = () => {
 									</td>
 								</tr>
 							) : (
-								paginatedProducts.map((product, key) => (
+								paginatedProducts.map((product) => (
 									<tr
-										key={key}
+										key={product.id}
 										className="border-b border-stroke hover:bg-gray-50"
 									>
 										<td className="p-4">
 											<input
 												type="checkbox"
 												className="w-4 h-4"
-												checked={selectedItems.includes(key)}
-												onChange={() => handleSelectItem(key)}
+												checked={selectedItems.includes(product.id!)}
+												onChange={() => handleSelectItem(product.id!)}
 											/>
 										</td>
 										<td className="px-4 py-3">
