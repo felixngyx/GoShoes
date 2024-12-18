@@ -32,10 +32,9 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ email }) => {
 			<button
 				onClick={handleSendResetPasswordRequestAction}
 				disabled={isSendingResetPassword || !user.email_is_verified}
-				className={`btn btn-block text-white ${
-					isSendingResetPassword || user.email_is_verified
-						? ' bg-[#40BFFF] cursor-not-allowed'
-						: 'bg-[#40BFFF] hover:bg-[#259CFA]'
+				className={`btn btn-block text-white ${isSendingResetPassword || !user.email_is_verified
+						? 'bg-gray-400 cursor-not-allowed' // Trạng thái bị vô hiệu hóa
+						: 'bg-[#40BFFF] hover:bg-[#259CFA]' // Trạng thái bình thường
 					}`}
 			>
 				{isSendingResetPassword
