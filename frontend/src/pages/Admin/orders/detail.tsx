@@ -532,7 +532,7 @@ const OrderDetails = () => {
   ) => {
     setConfirmDialog({
       open: true,
-      title: `Xác nhận chuyển trạng thái đơn hàng`,
+      title: `Xác nhận chuyển trạng thái đơn hàng, vui lòng kiểm tra lịch sử trạng thái đơn hàng trước khi thay đổi trạng thái đơn hàng`,
       message: `Bạn có xác nhận chuyển đổi trạng thái đơn hàng sang ${ORDER_STATUS_LABELS[status]}?`,
       onConfirm: async () => {
         try {
