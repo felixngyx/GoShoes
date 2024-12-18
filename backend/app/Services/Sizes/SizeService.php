@@ -69,7 +69,7 @@ class SizeService
             }
 
             return response()->json([
-                'message' => 'You cannot delete this size because it is being used in product variants.'
+                'message' => 'Bạn không thể xóa size này vì nó đang được sử dụng trong biến thể.'
             ], 400);
 
         } catch (\Exception $e) {
@@ -82,7 +82,7 @@ class SizeService
             }
 
             return response()->json([
-                'message' => 'An error occurred while deleting the size.',
+                'message' => 'Có lỗi xảy ra khi xóa size.',
                 'error' => $e->getMessage(),
             ], 500);
         }

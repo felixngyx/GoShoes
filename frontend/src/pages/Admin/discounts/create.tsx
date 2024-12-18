@@ -27,7 +27,7 @@ const createDiscountSchema = Joi.object({
     .max(200).message('Description cannot exceed 200 characters')
     .required(),
   valid_from: Joi.string().required(),
-  valid_to: Joi.string().required(),
+  valid_to: Joi.string(),
   min_order_amount: Joi.number()
     .min(0).message('Minimum order amount cannot be negative')
     .max(99999999.99).message('Minimum order amount is too large')

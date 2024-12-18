@@ -30,7 +30,7 @@ class SizeRepository implements SizeRepositoryInterface
     {
         // Kiểm tra xem có biến thể nào đang sử dụng size này không
         if ($size->variants()->count() > 0) {
-            throw new \Exception('You cannot delete this size because it is being used in product variants.');
+            throw new \Exception('Bạn không thể xóa size này vì nó đang được sử dụng trong biến thể.');
         }
 
         return $size->delete();

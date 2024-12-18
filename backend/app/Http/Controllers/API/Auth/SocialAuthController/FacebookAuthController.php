@@ -48,7 +48,7 @@ class FacebookAuthController extends Controller
         // Trả về phản hồi JSON với thông tin người dùng và token
         return response()->json([
             'success' => true,
-            'message' => 'Login successful',
+            'message' => 'Đăng nhập thành công!',
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
