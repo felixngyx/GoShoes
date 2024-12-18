@@ -5,34 +5,41 @@ This project is backend Website GoShoes. This project is built with ReactJS, Lar
 ## How to run this project
 
 1. Clone this project to your local machine. You can use this command to clone this project.
+
 ```bash
 git clone https://github.com/felixngyx/GoShoes.git
 ```
+
 2. Change directory to GoShoes
+
 ```bash
 cd GoShoes
 cd backend
 ```
 
 3. Run this command to build the docker container
+
 ```bash
 docker-compose up --build
 ```
 
 4. Copy the .env.example file to .env file and run the following command
+
 ```bash
 cp .env.example .env
-php artisan migrate
+g
 php artisan key:generate
 php artisan jwt:secret
 ```
 
 5. Run the following command to migrate the database
+
 ```bash
 php artisan migrate
 ```
 
 5. Run the following command to start the server
+
 ```bash
 php artisan serve
 php artisan queue:work
@@ -79,13 +86,13 @@ The project follows a **clean code** and **MVC architecture** structure to ensur
 
 Before you begin, ensure you meet the following requirements:
 
-- **PHP** >= 8.1
-- **Composer** >= 2.0
-- **Laravel** >= 9.x
-- **Database**: MySQL / PostgreSQL / SQLite
-- **Node.js** >= 14.x (optional, for frontend dependencies like Vite)
-- **Git** for version control
-- Web Server (Apache/Nginx)
+-   **PHP** >= 8.1
+-   **Composer** >= 2.0
+-   **Laravel** >= 9.x
+-   **Database**: MySQL / PostgreSQL / SQLite
+-   **Node.js** >= 14.x (optional, for frontend dependencies like Vite)
+-   **Git** for version control
+-   Web Server (Apache/Nginx)
 
 ---
 
@@ -167,13 +174,13 @@ php artisan db:seed
 
 ## 6. Directory Structure
 
-- **`app/`**: Contains core application files (Models, Controllers, etc.).
-- **`routes/`**: API and web route definitions.
-- **`database/`**: Migrations, seeders, and factories.
-- **`resources/`**: Views and frontend assets.
-- **`tests/`**: Unit and feature tests.
-- **`storage/`**: Logs, cache, and user-uploaded files.
-- **`public/`**: Public assets like images, JS, and CSS.
+-   **`app/`**: Contains core application files (Models, Controllers, etc.).
+-   **`routes/`**: API and web route definitions.
+-   **`database/`**: Migrations, seeders, and factories.
+-   **`resources/`**: Views and frontend assets.
+-   **`tests/`**: Unit and feature tests.
+-   **`storage/`**: Logs, cache, and user-uploaded files.
+-   **`public/`**: Public assets like images, JS, and CSS.
 
 ---
 
@@ -319,13 +326,13 @@ php artisan make:test UserTest
 
 ### Prepare for Deployment
 
-- Optimize the application:
+-   Optimize the application:
 
 ```bash
 php artisan optimize
 ```
 
-- Set `APP_ENV=production` in `.env`.
+-   Set `APP_ENV=production` in `.env`.
 
 ### Deployment Tools
 
@@ -338,14 +345,15 @@ Use tools like Laravel Forge, Envoyer, or manual deployment.
 Common issues and solutions:
 
 1. **Storage Permission Error**:
-   ```bash
-   chmod -R 777 storage/
-   ```
+
+    ```bash
+    chmod -R 777 storage/
+    ```
 
 2. **Config Cache**:
-   ```bash
-   php artisan config:cache
-   ```
+    ```bash
+    php artisan config:cache
+    ```
 
 ---
 
@@ -363,8 +371,6 @@ Contributions are welcome. To contribute:
 ## 18. License
 
 This project is open-source and available under the MIT License.
-
-
 
 # API Documentation - Laravel E-commerce System
 
@@ -429,64 +435,76 @@ With its modular structure, developers can seamlessly integrate new features and
 
 **Prefix:** `/auth`
 
-| METHOD | URL                      | CONTROLLER/ACTION                     | DESCRIPTION                   |
-|--------|--------------------------|---------------------------------------|-------------------------------|
-| POST   | `/register`              | `AuthController::registerController` | Register a new user           |
-| POST   | `/register-verify`       | `AuthController::registerVerifyController` | Verify registration          |
-| POST   | `/login`                 | `AuthController::loginController`    | Log in user                   |
-| POST   | `/refresh-token`         | `AuthController::refreshTokenController` | Refresh JWT token            |
-| POST   | `/send-verify-email`     | `AuthController::sendEmailVerifyController` | Send verification email    |
+| METHOD | URL                  | CONTROLLER/ACTION                           | DESCRIPTION             |
+| ------ | -------------------- | ------------------------------------------- | ----------------------- |
+| POST   | `/register`          | `AuthController::registerController`        | Register a new user     |
+| POST   | `/register-verify`   | `AuthController::registerVerifyController`  | Verify registration     |
+| POST   | `/login`             | `AuthController::loginController`           | Log in user             |
+| POST   | `/refresh-token`     | `AuthController::refreshTokenController`    | Refresh JWT token       |
+| POST   | `/send-verify-email` | `AuthController::sendEmailVerifyController` | Send verification email |
 
 ### Usage Example:
+
 #### Register a new user:
+
 ```bash
 POST /api/auth/register
 ```
+
 **Request Body:**
+
 ```json
 {
-  "name": "John Doe",
-  "email": "johndoe@example.com",
-  "password": "password123"
+    "name": "John Doe",
+    "email": "johndoe@example.com",
+    "password": "password123"
 }
 ```
+
 **Response:**
+
 ```json
 {
-  "success": true,
-  "message": "User registered successfully!",
-  "data": {
-    "user": {
-      "id": 1,
-      "name": "John Doe",
-      "email": "johndoe@example.com"
+    "success": true,
+    "message": "User registered successfully!",
+    "data": {
+        "user": {
+            "id": 1,
+            "name": "John Doe",
+            "email": "johndoe@example.com"
+        }
     }
-  }
 }
 ```
 
 ### Login User Example:
+
 #### Log in an existing user:
+
 ```bash
 POST /api/auth/login
 ```
+
 **Request Body:**
+
 ```json
 {
-  "email": "johndoe@example.com",
-  "password": "password123"
+    "email": "johndoe@example.com",
+    "password": "password123"
 }
 ```
+
 **Response:**
+
 ```json
 {
-  "success": true,
-  "message": "Login successful!",
-  "data": {
-    "access_token": "jwt-token-example",
-    "token_type": "Bearer",
-    "expires_in": 3600
-  }
+    "success": true,
+    "message": "Login successful!",
+    "data": {
+        "access_token": "jwt-token-example",
+        "token_type": "Bearer",
+        "expires_in": 3600
+    }
 }
 ```
 
@@ -498,43 +516,47 @@ Endpoints to manage products.
 
 **Base Route:** `/products`
 
-| METHOD | URL                           | CONTROLLER/ACTION                     | DESCRIPTION                        |
-|--------|-------------------------------|---------------------------------------|------------------------------------|
-| GET    | `/products/trashed`           | `ProductController::trashedProducts` | Get all trashed products           |
-| POST   | `/products/restore/{id}`      | `ProductController::restore`         | Restore a specific product         |
-| POST   | `/restore-multiple`           | `ProductController::restoreMultiple` | Restore multiple products          |
-| GET    | `/products/{id}`              | `ProductController::show`            | Get product by ID                  |
-| PUT    | `/products/{id}`              | `ProductController::updateProduct`   | Update product                     |
-| DELETE | `/products/{id}`              | `ProductController::destroy`         | Delete product                     |
-| GET    | `/products`                   | `ProductController::index`           | Get all products                   |
-| POST   | `/products`                   | `ProductController::createProduct`   | Create new product                 |
-| GET    | `/admin/products/{id}`        | `ProductController::getProductForAdmin` | Get product details for admin  |
-| GET    | `/client/products/{id}`       | `ProductController::getProductForClient` | Get product for client          |
-| GET    | `/productDetail/{id}`         | `ProductController::getDetailProduct` | Get product detail                 |
+| METHOD | URL                      | CONTROLLER/ACTION                        | DESCRIPTION                   |
+| ------ | ------------------------ | ---------------------------------------- | ----------------------------- |
+| GET    | `/products/trashed`      | `ProductController::trashedProducts`     | Get all trashed products      |
+| POST   | `/products/restore/{id}` | `ProductController::restore`             | Restore a specific product    |
+| POST   | `/restore-multiple`      | `ProductController::restoreMultiple`     | Restore multiple products     |
+| GET    | `/products/{id}`         | `ProductController::show`                | Get product by ID             |
+| PUT    | `/products/{id}`         | `ProductController::updateProduct`       | Update product                |
+| DELETE | `/products/{id}`         | `ProductController::destroy`             | Delete product                |
+| GET    | `/products`              | `ProductController::index`               | Get all products              |
+| POST   | `/products`              | `ProductController::createProduct`       | Create new product            |
+| GET    | `/admin/products/{id}`   | `ProductController::getProductForAdmin`  | Get product details for admin |
+| GET    | `/client/products/{id}`  | `ProductController::getProductForClient` | Get product for client        |
+| GET    | `/productDetail/{id}`    | `ProductController::getDetailProduct`    | Get product detail            |
 
 ### Usage Example:
+
 #### Get all products:
+
 ```bash
 GET /api/products
 ```
+
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "name": "Product 1",
-      "price": 100,
-      "stock": 50
-    },
-    {
-      "id": 2,
-      "name": "Product 2",
-      "price": 200,
-      "stock": 20
-    }
-  ]
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "name": "Product 1",
+            "price": 100,
+            "stock": 50
+        },
+        {
+            "id": 2,
+            "name": "Product 2",
+            "price": 200,
+            "stock": 20
+        }
+    ]
 }
 ```
 
@@ -544,27 +566,33 @@ GET /api/products
 
 **Base Route:** `/admin/product_variants`
 
-| METHOD | URL                           | CONTROLLER/ACTION                    | DESCRIPTION                      |
-|--------|-------------------------------|--------------------------------------|----------------------------------|
-| POST   | `/delete-many`                | `ProductVariantController::deleteMany` | Delete multiple product variants |
-| DELETE | `/{id}`                       | `ProductVariantController::deleteOne` | Delete single product variant    |
+| METHOD | URL            | CONTROLLER/ACTION                      | DESCRIPTION                      |
+| ------ | -------------- | -------------------------------------- | -------------------------------- |
+| POST   | `/delete-many` | `ProductVariantController::deleteMany` | Delete multiple product variants |
+| DELETE | `/{id}`        | `ProductVariantController::deleteOne`  | Delete single product variant    |
 
 ### Usage Example:
+
 #### Delete multiple variants:
+
 ```bash
 POST /api/admin/product_variants/delete-many
 ```
+
 **Request Body:**
+
 ```json
 {
-  "ids": [1, 2, 3]
+    "ids": [1, 2, 3]
 }
 ```
+
 **Response:**
+
 ```json
 {
-  "success": true,
-  "message": "Variants deleted successfully."
+    "success": true,
+    "message": "Variants deleted successfully."
 }
 ```
 
@@ -574,29 +602,35 @@ POST /api/admin/product_variants/delete-many
 
 **Base Route:** `/colors`
 
-| METHOD | URL                           | CONTROLLER/ACTION                     | DESCRIPTION                       |
-|--------|-------------------------------|---------------------------------------|-----------------------------------|
-| GET    | `/colors`                     | `ColorController::index`              | Get all colors                    |
-| POST   | `/colors`                     | `ColorController::store`              | Create a new color                |
-| GET    | `/colors/{id}`                | `ColorController::show`               | Get color by ID                   |
-| PUT    | `/colors/{id}`                | `ColorController::update`             | Update color                      |
-| DELETE | `/colors/{id}`                | `ColorController::destroy`            | Delete single color               |
-| DELETE | `/colors`                     | `ColorController::destroyMultiple`    | Delete multiple colors            |
+| METHOD | URL            | CONTROLLER/ACTION                  | DESCRIPTION            |
+| ------ | -------------- | ---------------------------------- | ---------------------- |
+| GET    | `/colors`      | `ColorController::index`           | Get all colors         |
+| POST   | `/colors`      | `ColorController::store`           | Create a new color     |
+| GET    | `/colors/{id}` | `ColorController::show`            | Get color by ID        |
+| PUT    | `/colors/{id}` | `ColorController::update`          | Update color           |
+| DELETE | `/colors/{id}` | `ColorController::destroy`         | Delete single color    |
+| DELETE | `/colors`      | `ColorController::destroyMultiple` | Delete multiple colors |
 
 ### Usage Example:
+
 #### Create a new color:
+
 ```bash
 POST /api/colors
 ```
+
 **Request Body:**
+
 ```json
 {
-  "name": "Red",
-  "code": "#FF0000"
+    "name": "Red",
+    "code": "#FF0000"
 }
 ```
+
 **Response:**
-```json
+
+````json
 {
   "success": true,
   "message": "Color created successfully!",
@@ -635,7 +669,7 @@ Before you begin, ensure you meet the following requirements:
 ```bash
 git clone https://github.com/your-username/laravel-backend.git
 cd laravel-backend
-```
+````
 
 ### Install Dependencies
 
@@ -706,13 +740,13 @@ php artisan db:seed
 
 ## 6. Directory Structure
 
-- **`app/`**: Contains core application files (Models, Controllers, etc.).
-- **`routes/`**: API and web route definitions.
-- **`database/`**: Migrations, seeders, and factories.
-- **`resources/`**: Views and frontend assets.
-- **`tests/`**: Unit and feature tests.
-- **`storage/`**: Logs, cache, and user-uploaded files.
-- **`public/`**: Public assets like images, JS, and CSS.
+-   **`app/`**: Contains core application files (Models, Controllers, etc.).
+-   **`routes/`**: API and web route definitions.
+-   **`database/`**: Migrations, seeders, and factories.
+-   **`resources/`**: Views and frontend assets.
+-   **`tests/`**: Unit and feature tests.
+-   **`storage/`**: Logs, cache, and user-uploaded files.
+-   **`public/`**: Public assets like images, JS, and CSS.
 
 ---
 
@@ -858,13 +892,13 @@ php artisan make:test UserTest
 
 ### Prepare for Deployment
 
-- Optimize the application:
+-   Optimize the application:
 
 ```bash
 php artisan optimize
 ```
 
-- Set `APP_ENV=production` in `.env`.
+-   Set `APP_ENV=production` in `.env`.
 
 ### Deployment Tools
 
@@ -877,14 +911,15 @@ Use tools like Laravel Forge, Envoyer, or manual deployment.
 Common issues and solutions:
 
 1. **Storage Permission Error**:
-   ```bash
-   chmod -R 777 storage/
-   ```
+
+    ```bash
+    chmod -R 777 storage/
+    ```
 
 2. **Config Cache**:
-   ```bash
-   php artisan config:cache
-   ```
+    ```bash
+    php artisan config:cache
+    ```
 
 ---
 
@@ -903,7 +938,6 @@ Contributions are welcome. To contribute:
 
 This project is open-source and available under the MIT License.
 
-
 ## 1. Introduction
 
 This project is a backend application built using **Laravel**, a powerful and modern PHP framework. It provides RESTful APIs for managing resources and business logic.
@@ -916,13 +950,13 @@ The project follows a **clean code** and **MVC architecture** structure to ensur
 
 Before you begin, ensure you meet the following requirements:
 
-- **PHP** >= 8.1
-- **Composer** >= 2.0
-- **Laravel** >= 9.x
-- **Database**: MySQL / PostgreSQL / SQLite
-- **Node.js** >= 14.x (optional, for frontend dependencies like Vite)
-- **Git** for version control
-- Web Server (Apache/Nginx)
+-   **PHP** >= 8.1
+-   **Composer** >= 2.0
+-   **Laravel** >= 9.x
+-   **Database**: MySQL / PostgreSQL / SQLite
+-   **Node.js** >= 14.x (optional, for frontend dependencies like Vite)
+-   **Git** for version control
+-   Web Server (Apache/Nginx)
 
 ---
 
@@ -1004,13 +1038,13 @@ php artisan db:seed
 
 ## 6. Directory Structure
 
-- **`app/`**: Contains core application files (Models, Controllers, etc.).
-- **`routes/`**: API and web route definitions.
-- **`database/`**: Migrations, seeders, and factories.
-- **`resources/`**: Views and frontend assets.
-- **`tests/`**: Unit and feature tests.
-- **`storage/`**: Logs, cache, and user-uploaded files.
-- **`public/`**: Public assets like images, JS, and CSS.
+-   **`app/`**: Contains core application files (Models, Controllers, etc.).
+-   **`routes/`**: API and web route definitions.
+-   **`database/`**: Migrations, seeders, and factories.
+-   **`resources/`**: Views and frontend assets.
+-   **`tests/`**: Unit and feature tests.
+-   **`storage/`**: Logs, cache, and user-uploaded files.
+-   **`public/`**: Public assets like images, JS, and CSS.
 
 ---
 
@@ -1156,13 +1190,13 @@ php artisan make:test UserTest
 
 ### Prepare for Deployment
 
-- Optimize the application:
+-   Optimize the application:
 
 ```bash
 php artisan optimize
 ```
 
-- Set `APP_ENV=production` in `.env`.
+-   Set `APP_ENV=production` in `.env`.
 
 ### Deployment Tools
 
@@ -1175,14 +1209,15 @@ Use tools like Laravel Forge, Envoyer, or manual deployment.
 Common issues and solutions:
 
 1. **Storage Permission Error**:
-   ```bash
-   chmod -R 777 storage/
-   ```
+
+    ```bash
+    chmod -R 777 storage/
+    ```
 
 2. **Config Cache**:
-   ```bash
-   php artisan config:cache
-   ```
+    ```bash
+    php artisan config:cache
+    ```
 
 ---
 
@@ -1200,5 +1235,3 @@ Contributions are welcome. To contribute:
 ## 18. License
 
 This project is open-source and available under the MIT License.
-
-

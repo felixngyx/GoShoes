@@ -14,10 +14,7 @@ import { useNavigate } from 'react-router-dom';
 const useProfile = () => {
 	const navigate = useNavigate();
 	// Lấy dữ liệu Profile
-	const {
-		data: profile,
-		isLoading,
-	} = useQuery<Profile | null>({
+	const { data: profile, isLoading } = useQuery<Profile | null>({
 		queryKey: ['PROFILE'],
 		queryFn: getProfile,
 		onError: (error: any) => {
@@ -56,18 +53,19 @@ const useProfile = () => {
 		});
 
 	// Xác minh token đổi email
-	const { mutate: verifyTokenMutation, isLoading: isVerifyingToken } = useMutation({
-		mutationFn: verifyTokenChangeEmail,
-		onSuccess: () => {
-			toast.success('Email đã được thay đổi thành công');
-			navigate('/account');
-		},
-		onError: (error: any) => {
-			const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi không xác định';
-			toast.error(errorMessage);
-		},
-	});
-
+	const { mutate: verifyTokenMutation, isLoading: isVerifyingToken } =
+		useMutation({
+			mutationFn: verifyTokenChangeEmail,
+			onSuccess: () => {
+				toast.success('Email đã được thay đổi thành công');
+				navigate('/account');
+			},
+			onError: (error: any) => {
+				const errorMessage =
+					error.response?.data?.message || 'Đã xảy ra lỗi không xác định';
+				toast.error(errorMessage);
+			},
+		});
 
 	// Gửi yêu cầu thay đổi số điện thoại
 	const { mutate: sendPhoneChangeMutation, isLoading: isSendingPhone } =
@@ -84,23 +82,22 @@ const useProfile = () => {
 		});
 
 	// Xác minh token thay đổi số điện thoại
-	const {
-		mutate: verifyPhoneTokenMutation,
-	} = useMutation({
+	const { mutate: verifyPhoneTokenMutation } = useMutation({
 		mutationFn: verifyTokenChangePhone,
 		onSuccess: () => {
 			toast.success('Số điện thoại đã được thay đổi thành công');
 			navigate('/account');
 		},
 		onError: (error: any) => {
-			const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi không xác định';
+			const errorMessage =
+				error.response?.data?.message || 'Đã xảy ra lỗi không xác định';
 			toast.error(errorMessage);
 		},
 	});
 
 	// Xử lý gửi yêu cầu thay đổi email
 	const handleSendEmailChangeRequest = () => {
-		sendEmailChangeMutation(); 
+		sendEmailChangeMutation();
 	};
 
 	// Xử lý xác minh token thay đổi email
