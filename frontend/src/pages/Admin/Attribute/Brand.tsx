@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import LoadingIcon from '../../../components/common/LoadingIcon';
 import { FaRegTrashAlt } from 'react-icons/fa';
 import uploadImageToCloudinary from '../../../common/uploadCloudinary';
+import Swal from 'sweetalert2';
 
 // Update schema validation
 const schema = Joi.object({
@@ -72,15 +73,37 @@ const Brand = () => {
 	};
 
 	const deleteBrand = async (id: string) => {
-		try {
-			if (window.confirm('Bạn có chắc chắn muốn xóa thương hiệu này?')) {
-				await brandService.delete(id);
-				toast.success('Brand đã được xóa');
-				fetchBrands();
+		Swal.fire({
+			title: 'Xác nhận xóa',
+			text: 'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonText: 'Xóa',
+			cancelButtonText: 'Hủy',
+			customClass: {
+				popup: 'bg-white shadow rounded-lg p-4 max-w-[500px]',
+				title: 'text-base font-bold text-gray-800',
+				htmlContainer: 'text-sm text-gray-600',
+				confirmButton:
+					'bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mr-2',
+				cancelButton:
+					'bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400',
+			},
+			buttonsStyling: false,
+		}).then(async (result) => {
+			if (result.isConfirmed) {
+				try {
+					const message = toast.loading('Đang xóa brand...');
+					await brandService.delete(id);
+					toast.dismiss(message);
+					toast.success('Brand đã được xóa');
+					fetchBrands();
+				} catch (error: any) {
+					toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+				}
 			}
-		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
-		}
+		})
+
 	};
 
 	useEffect(() => {

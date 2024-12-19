@@ -10,6 +10,7 @@ import Pagination from '../../../components/admin/Pagination';
 import { Link } from 'react-router-dom';
 import { formatVNCurrency } from '../../../common/formatVNCurrency';
 import { Search } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 export enum Status {
 	PUBLIC = 'public',
@@ -68,37 +69,77 @@ const Product = () => {
 	};
 
 	const deleteProduct = async (id: number) => {
-		if (window.confirm('Are you sure you want to delete this product?')) {
-			try {
-				await productService.delete(id);
-				toast.success('Product deleted successfully');
-				fetchAllProducts();
-				fetchProducts();
-			} catch (error) {
-				console.error(error);
+		Swal.fire({
+			title: 'Xác nhận xóa',
+			text: 'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonText: 'Xóa',
+			cancelButtonText: 'Hủy',
+			customClass: {
+				popup: 'bg-white shadow rounded-lg p-4 max-w-[500px]',
+				title: 'text-base font-bold text-gray-800',
+				htmlContainer: 'text-sm text-gray-600',
+				confirmButton:
+					'bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mr-2',
+				cancelButton:
+					'bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400',
+			},
+			buttonsStyling: false,
+		}).then(async (result) => {
+			if (result.isConfirmed) {
+				const message = toast.loading('Deleting product...');
+				try {
+					await productService.delete(id);
+					toast.dismiss(message);
+					toast.success('Product deleted successfully');
+					fetchAllProducts();
+					fetchProducts();
+				} catch (error) {
+					console.error('Failed to delete product:', error);
+				}
 			}
-		}
+		})
 	};
 
 	const handleDeleteSelected = async () => {
-		if (window.confirm('Are you sure you want to delete these products?')) {
-			const message = toast.loading('Deleting products...');
-			try {
-				await Promise.all(
-					selectedItems.map((item) =>
-						productService.delete(Number(item))
-					)
-				);
-				toast.dismiss(message);
-				toast.success('Products deleted successfully');
-				fetchAllProducts();
-				fetchProducts();
-				setSelectedItems([]);
-				setSelectAll(false);
-			} catch (error) {
-				console.error(error);
+		Swal.fire({
+			title: 'Xác nhận xóa',
+			text: 'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonText: 'Xóa',
+			cancelButtonText: 'Hủy',
+			customClass: {
+				popup: 'bg-white shadow rounded-lg p-4 max-w-[500px]',
+				title: 'text-base font-bold text-gray-800',
+				htmlContainer: 'text-sm text-gray-600',
+				confirmButton:
+					'bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mr-2',
+				cancelButton:
+					'bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400',
+			},
+			buttonsStyling: false,
+		}).then(async (result) => {
+			if (result.isConfirmed) {
+				const message = toast.loading('Deleting products...');
+				try {
+					await Promise.all(
+						selectedItems.map((item) =>
+							productService.delete(Number(item))
+						)
+					);
+					toast.dismiss(message);
+					toast.success('Products deleted successfully');
+					fetchAllProducts();
+					fetchProducts();
+					setSelectedItems([]);
+					setSelectAll(false);
+				} catch (error) {
+					console.error(error);
+				}
 			}
-		}
+		})
 	}
 
 	useEffect(() => {

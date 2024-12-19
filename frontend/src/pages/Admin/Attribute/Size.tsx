@@ -7,6 +7,7 @@ import Joi from 'joi';
 import toast from 'react-hot-toast';
 import { SIZE as SizeType } from '../../../services/admin/size';
 import LoadingIcon from '../../../components/common/LoadingIcon';
+import Swal from 'sweetalert2';
 
 // Add schema validation
 const schema = Joi.object({
@@ -70,16 +71,37 @@ const Size = () => {
 
 	// Delete size
 	const deleteSize = async (id: string) => {
-		if (window.confirm('Bạn có chắc chắn muốn xóa size này?')) {
-			try {
-				await sizeService.delete(id);
-				toast.success('Size đã được xóa');
-				fetchSize();
-			} catch (error: unknown) {
-				const err = error as ApiError;
-				toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
+		Swal.fire({
+			title: 'Xác nhận xóa',
+			text: 'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonText: 'Xóa',
+			cancelButtonText: 'Hủy',
+			customClass: {
+				popup: 'bg-white shadow rounded-lg p-4 max-w-[500px]',
+				title: 'text-base font-bold text-gray-800',
+				htmlContainer: 'text-sm text-gray-600',
+				confirmButton:
+					'bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mr-2',
+				cancelButton:
+					'bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400',
+			},
+			buttonsStyling: false,
+		}).then(async (result) => {
+			if (result.isConfirmed) {
+				try {
+					const message = toast.loading('Đang xóa size');
+					await sizeService.delete(id);
+					toast.success('Size đã được xóa');
+					toast.dismiss(message);
+					fetchSize();
+				} catch (error: unknown) {
+					const err = error as ApiError;
+					toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
+				}
 			}
-		}
+		})
 	};
 
 	// Create size
