@@ -87,7 +87,7 @@ class AuthService implements AuthServiceInterface
 //            }
 
             // Set access token TTL to 30 minutes
-            config(['jwt.ttl' => 30]);
+            config(['jwt.ttl' => 60]);
             // Add token type "access" to the access token
             $accessToken = JWTAuth::claims(['token_type' => 'access'])->fromUser($user);
 
