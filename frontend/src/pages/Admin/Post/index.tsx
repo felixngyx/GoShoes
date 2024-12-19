@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Posts } from "../../../types/admin/template/post";
 import { getAllPosts, deletePost } from "../../../services/admin/post";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 const PostSkeleton = () => (
   <div className="bg-white/5 backdrop-blur-sm rounded-sm border border-white/10 shadow-md">
@@ -121,8 +122,8 @@ const Post = () => {
           key={i}
           onClick={() => setCurrentPage(i)}
           className={`px-3 py-1 rounded-md ${currentPage === i
-              ? 'bg-[#3C50E0] text-white'
-              : 'bg-white/5 text-gray-400 hover:bg-white/10'
+            ? 'bg-[#3C50E0] text-white'
+            : 'bg-white/5 text-gray-400 hover:bg-white/10'
             }`}
         >
           {i}
@@ -145,26 +146,45 @@ const Post = () => {
   };
 
   const handleDelete = async (postId: number) => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      try {
-        setIsDeleting(true);
-        setSelectedPostId(postId);
-        const loadingToast = toast.loading('Deleting post...');
+    Swal.fire({
+      title: 'Xác nhận xóa',
+      text: 'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy',
+      customClass: {
+        popup: 'bg-white shadow rounded-lg p-4 max-w-[500px]',
+        title: 'text-base font-bold text-gray-800',
+        htmlContainer: 'text-sm text-gray-600',
+        confirmButton:
+          'bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mr-2',
+        cancelButton:
+          'bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400',
+      },
+      buttonsStyling: false,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setIsDeleting(true);
+          setSelectedPostId(postId);
+          const loadingToast = toast.loading('Deleting post...');
 
-        await deletePost(postId);
+          await deletePost(postId);
 
-        // Invalidate and refetch
-        await queryClient.invalidateQueries(['posts']);
+          // Invalidate and refetch
+          await queryClient.invalidateQueries(['posts']);
 
-        toast.dismiss(loadingToast);
-        toast.success('Post deleted successfully');
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || 'Error deleting post');
-      } finally {
-        setIsDeleting(false);
-        setSelectedPostId(null);
+          toast.dismiss(loadingToast);
+          toast.success('Post deleted successfully');
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || 'Error deleting post');
+        } finally {
+          setIsDeleting(false);
+          setSelectedPostId(null);
+        }
       }
-    }
+    })
   };
 
   return (
