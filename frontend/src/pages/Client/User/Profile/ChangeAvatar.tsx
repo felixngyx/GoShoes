@@ -2,19 +2,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Eye, Upload, X } from 'lucide-react';
 import { FaRegTrashAlt } from 'react-icons/fa';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../../../store';
+import { useDispatch } from 'react-redux';
 import uploadImageToCloudinary from '../../../../common/uploadCloudinary';
 import axiosClient from '../../../../apis/axiosClient';
-import { setUser } from '../../../../store/client/userSlice';
+import { login, UserState } from '../../../../store/client/userSlice';
 import Cookies from 'js-cookie';
 
 const ChangeAvatar = () => {
-  const user = useSelector((state: RootState) => state.client.user);
-  const [avatar, setAvatar] = useState<string | undefined>(user.avt);
+  const [userInfor, setUserInfor] = useState<UserState | null>(null);
+  const [avatar, setAvatar] = useState<string | undefined>(undefined);
   const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [imageFile, setImageFile] = useState<File | string | undefined>(user.avt);
+  const [imageFile, setImageFile] = useState<File | string | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -22,8 +21,13 @@ const ChangeAvatar = () => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setAvatar(user.avt);
-    setImageFile(user.avt);
+    const userInfo = Cookies.get('user');
+    if (userInfo) {
+      const user = JSON.parse(userInfo);
+      setUserInfor(user);
+      setAvatar(user.avt);
+      setImageFile(user.avt);
+    }
   }, []);
 
   const closeModal = () => {
@@ -86,12 +90,13 @@ const ChangeAvatar = () => {
         if (response.status === 200) {
 
           const userData = {
-            ...user,
+            ...userInfor,
             avt: urlAvatar,
           }
 
+          Cookies.remove('user');
           Cookies.set('user', JSON.stringify(userData));
-          dispatch(setUser({
+          dispatch(login({
             user: userData
           }));
           setImageFile(urlAvatar);

@@ -35,7 +35,7 @@ const ContactUs = () => {
     agree: Joi.boolean().valid(true).required().label("Terms & Conditions"),
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
@@ -43,11 +43,11 @@ const ContactUs = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     const { error } = schema.validate(formData, { abortEarly: false });
     if (error) {
-      const errorMessages = {};
+      const errorMessages: { [key: string]: string } = {};
       error.details.forEach((detail) => {
         errorMessages[detail.path[0]] = detail.message;
       });
@@ -74,8 +74,7 @@ const ContactUs = () => {
       } else {
         toast.error(response.data.message || "Failed to send message.");
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || "An error occurred. Please try again.";
       toast.error(errorMessage);

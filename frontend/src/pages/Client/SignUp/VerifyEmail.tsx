@@ -8,7 +8,7 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store';
-import { login, setUser } from '../../../store/client/userSlice';
+import { setUser } from '../../../store/client/userSlice';
 import usePass from '../../../hooks/client/usePass';
 import useProfile from '../../../hooks/client/useProfile';
 
