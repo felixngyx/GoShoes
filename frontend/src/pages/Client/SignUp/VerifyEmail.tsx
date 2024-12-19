@@ -11,6 +11,7 @@ import { RootState } from '../../../store';
 import { setUser } from '../../../store/client/userSlice';
 import usePass from '../../../hooks/client/usePass';
 import useProfile from '../../../hooks/client/useProfile';
+import LoadingIcon from '../../../components/common/LoadingIcon';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -135,158 +136,163 @@ const VerifyEmail: React.FC = () => {
 
 	return (
 		<>
-			<div className="p-8 max-w-xl mx-auto mt-8 bg-white rounded-lg shadow-lg mb-8">
-				{type === 'reset-password' && (
-					<form onSubmit={handleSubmitResetPassword} className="space-y-6">
-						<h1 className="text-2xl font-semibold text-center">Đổi mật khẩu</h1>
-						<div className="form-control">
-							<label className="label">
-								<span className="label-text font-medium">Mật khẩu mới</span>
-							</label>
-							<div className="relative">
-								<input
-									type={showPassword ? 'text' : 'password'}
-									placeholder="Nhập mật khẩu mới"
-									className="input input-bordered w-full p-4 rounded-md"
-									value={newPassword}
-									onChange={(e) => setNewPassword(e.target.value)}
-									required
-								/>
-								<span
-									className="absolute right-3 top-3 cursor-pointer"
-									onClick={() => setShowPassword(!showPassword)}
-								>
-									{showPassword ? (
-										<AiOutlineEyeInvisible size={20} />
-									) : (
-										<AiOutlineEye size={20} />
-									)}
-								</span>
+			{isLoading ? (
+				<div className="flex items-center justify-center h-screen">
+					<LoadingIcon type='spinner' color='info' size='lg' />
+				</div>
+			) : (
+				<div className="p-8 max-w-xl mx-auto mt-8 bg-white rounded-lg shadow-lg mb-8">
+					{type === 'reset-password' && (
+						<form onSubmit={handleSubmitResetPassword} className="space-y-6">
+							<h1 className="text-2xl font-semibold text-center">Đổi mật khẩu</h1>
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text font-medium">Mật khẩu mới</span>
+								</label>
+								<div className="relative">
+									<input
+										type={showPassword ? 'text' : 'password'}
+										placeholder="Nhập mật khẩu mới"
+										className="input input-bordered w-full p-4 rounded-md"
+										value={newPassword}
+										onChange={(e) => setNewPassword(e.target.value)}
+										required
+									/>
+									<span
+										className="absolute right-3 top-3 cursor-pointer"
+										onClick={() => setShowPassword(!showPassword)}
+									>
+										{showPassword ? (
+											<AiOutlineEyeInvisible size={20} />
+										) : (
+											<AiOutlineEye size={20} />
+										)}
+									</span>
+								</div>
 							</div>
-						</div>
-						<div className="form-control">
-							<label className="label">
-								<span className="label-text font-medium">Xác nhận mật khẩu</span>
-							</label>
-							<div className="relative">
-								<input
-									type={showConfirmPassword ? 'text' : 'password'}
-									placeholder="Xác nhận mật khẩu mới"
-									className="input input-bordered w-full p-4 rounded-md"
-									value={confirmPassword}
-									onChange={(e) => setConfirmPassword(e.target.value)}
-									required
-								/>
-								<span
-									className="absolute right-3 top-3 cursor-pointer"
-									onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-								>
-									{showConfirmPassword ? (
-										<AiOutlineEyeInvisible size={20} />
-									) : (
-										<AiOutlineEye size={20} />
-									)}
-								</span>
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text font-medium">Xác nhận mật khẩu</span>
+								</label>
+								<div className="relative">
+									<input
+										type={showConfirmPassword ? 'text' : 'password'}
+										placeholder="Xác nhận mật khẩu mới"
+										className="input input-bordered w-full p-4 rounded-md"
+										value={confirmPassword}
+										onChange={(e) => setConfirmPassword(e.target.value)}
+										required
+									/>
+									<span
+										className="absolute right-3 top-3 cursor-pointer"
+										onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+									>
+										{showConfirmPassword ? (
+											<AiOutlineEyeInvisible size={20} />
+										) : (
+											<AiOutlineEye size={20} />
+										)}
+									</span>
+								</div>
 							</div>
-						</div>
-						{error && <div className="text-red-500 text-sm">{error}</div>}
-						<button
-							type="submit"
-							className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
-						>
-							Cập nhật mật khẩu
-						</button>
-					</form>
-				)}
-
-				{type === 'change-phone' ? (
-					<form
-						onSubmit={(e) => {
-							e.preventDefault();
-							handleChangePhone(e);
-						}}
-						className="space-y-6"
-					>
-						<h1 className="text-2xl font-semibold text-center">Đổi số điện thoại</h1>
-						<div className="form-control">
-							<label className="label">
-								<span className="label-text font-medium">Số điện thoại mới</span>
-							</label>
-							<input
-								type="tel"
-								placeholder="Nhập số điện thoại mới"
-								className="input input-bordered w-full p-4 rounded-md"
-								value={newPhone}
-								onChange={(e) => setNewPhone(e.target.value)}
-								required
-							/>
-						</div>
-						<button
-							type="submit"
-							className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
-						>
-							Cập nhật số điện thoại
-						</button>
-					</form>
-				) : type === 'change-email' ? (
-					<form
-						onSubmit={(e) => {
-							e.preventDefault();
-							handleChangeEmail(e);
-						}}
-						className="space-y-6"
-					>
-						<h1 className="text-2xl font-semibold text-center">Thay đổi email</h1>
-						<div className="form-control">
-							<label className="label">
-								<span className="label-text font-medium">Email thay đổi</span>
-							</label>
-							<input
-								type="email"
-								placeholder="Enter new email"
-								className="input input-bordered w-full p-4 rounded-md"
-								value={newEmail}
-								onChange={(e) => setNewEmail(e.target.value)}
-								required
-							/>
-						</div>
-						<button
-							type="submit"
-							className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
-						>
-							Cập Nhật Email
-						</button>
-					</form>
-				) : type !== 'reset-password' && type !== 'change-phone' && type !== 'change-email' ? (
-					<div className="text-center">
-						<h1 className="text-4xl mb-5">Xác minh email</h1>
-						{status ? (
-							<p className="info-verify-email text-xl font-extralight text-green-500">
-								Email của bạn đã được xác minh thành công.
-							</p>
-						) : (
-							<p className="info-verify-email text-xl font-extralight text-red-500">
-								Phiên của bạn đã hết hạn, vui lòng gửi lại email.
-							</p>
-						)}
-						{status ? (
-							<Link
-								to="/"
-								className="btn btn-outline bg-[#40BFFF] text-white mt-10"
-							>
-								Quay lại trang chủ
-							</Link>
-						) : (
+							{error && <div className="text-red-500 text-sm">{error}</div>}
 							<button
-								className="btn btn-outline bg-[#40BFFF] text-white mt-10"
-								onClick={requestSendEmail}
+								type="submit"
+								className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
 							>
-								Gửi lại email
+								Cập nhật mật khẩu
 							</button>
-						)}
-					</div>
-				) : null}
-			</div>
+						</form>
+					)}
+
+					{type === 'change-phone' ? (
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								handleChangePhone(e);
+							}}
+							className="space-y-6"
+						>
+							<h1 className="text-2xl font-semibold text-center">Đổi số điện thoại</h1>
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text font-medium">Số điện thoại mới</span>
+								</label>
+								<input
+									type="tel"
+									placeholder="Nhập số điện thoại mới"
+									className="input input-bordered w-full p-4 rounded-md"
+									value={newPhone}
+									onChange={(e) => setNewPhone(e.target.value)}
+									required
+								/>
+							</div>
+							<button
+								type="submit"
+								className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
+							>
+								Cập nhật số điện thoại
+							</button>
+						</form>
+					) : type === 'change-email' ? (
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								handleChangeEmail(e);
+							}}
+							className="space-y-6"
+						>
+							<h1 className="text-2xl font-semibold text-center">Thay đổi email</h1>
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text font-medium">Email thay đổi</span>
+								</label>
+								<input
+									type="email"
+									placeholder="Enter new email"
+									className="input input-bordered w-full p-4 rounded-md"
+									value={newEmail}
+									onChange={(e) => setNewEmail(e.target.value)}
+									required
+								/>
+							</div>
+							<button
+								type="submit"
+								className="btn w-full bg-[#40BFFF] text-white hover:bg-[#32a5d6] mt-6 p-4 rounded-md"
+							>
+								Cập Nhật Email
+							</button>
+						</form>
+					) : type !== 'reset-password' && type !== 'change-phone' && type !== 'change-email' ? (
+						<div className="text-center">
+							<h1 className="text-4xl mb-5">Xác minh email</h1>
+							{status ? (
+								<p className="info-verify-email text-xl font-extralight text-green-500">
+									Email của bạn đã được xác minh thành công.
+								</p>
+							) : (
+								<p className="info-verify-email text-xl font-extralight text-red-500">
+									Phiên của bạn đã hết hạn, vui lòng gửi lại email.
+								</p>
+							)}
+							{status ? (
+								<Link
+									to="/"
+									className="btn btn-outline bg-[#40BFFF] text-white mt-10"
+								>
+									Quay lại trang chủ
+								</Link>
+							) : (
+								<button
+									className="btn btn-outline bg-[#40BFFF] text-white mt-10"
+									onClick={requestSendEmail}
+								>
+									Gửi lại email
+								</button>
+							)}
+						</div>
+					) : null}
+				</div>)}
 			<Footer />
 		</>
 	);
