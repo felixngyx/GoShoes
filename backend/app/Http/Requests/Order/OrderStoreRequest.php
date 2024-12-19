@@ -12,6 +12,15 @@ class OrderStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
+        $user = auth()->user();
+        // Nếu user chưa xác thực email
+        if ($user && !$user->email_verified_at) {
+            throw new \Illuminate\Auth\Access\Authorization("Vu lòng xác thực email trước khi thực hiện hành động này.");
+        }
+        if ($user && $user->is_deleted) {
+            throw new \Illuminate\Auth\Access\AuthorizationException('Tài khoản này đã bị xóa.');
+        }
+
         return auth()->check();
     }
 

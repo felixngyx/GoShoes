@@ -12,6 +12,7 @@ import Cookies from "js-cookie";
 import { addProductToWishlist } from "../../../services/client/whishlist";
 import axiosClient from "../../../apis/axiosClient";
 import ZoomImage from "../../../components/common/ZoomImage";
+import { gellReviewByProductId } from "../../../services/client/review";
 
 interface Variant {
    color_id: number;
@@ -24,12 +25,36 @@ interface Variant {
    }>;
 }
 
+interface Review {
+   user: {
+      name: string;
+      avt: string;
+   };
+   rating: number;
+   comment: string;
+   created_at: string;
+}
+
+interface PaginationLink {
+   url: string | null;
+   label: string;
+   active: boolean;
+}
+
+interface ReviewResponse {
+   current_page: number;
+   data: Review[];
+   last_page: number;
+   links: PaginationLink[];
+   total: number;
+}
+
 const ProductDetailSkeleton = () => {
    return (
       <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
-         <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+         <div className="grid grid-cols-12 gap-10">
             {/* Left Section - Product Images Skeleton */}
-            <div className="md:col-span-5">
+            <div className="col-span-6">
                <div className="relative overflow-hidden rounded-lg bg-gray-200 animate-pulse mb-2 h-[571px]" />
                <div className="grid grid-cols-4 gap-2">
                   {[1, 2, 3, 4].map((index) => (
@@ -42,7 +67,7 @@ const ProductDetailSkeleton = () => {
             </div>
 
             {/* Right Section - Product Information Skeleton */}
-            <div className="md:col-span-5 space-y-4">
+            <div className="col-span-6 space-y-4">
                {/* Product Name */}
                <div className="h-8 bg-gray-200 animate-pulse rounded w-3/4" />
 
@@ -104,21 +129,6 @@ const ProductDetailSkeleton = () => {
                </div>
             </div>
 
-            {/* Best Sellers Skeleton */}
-            <div className="md:col-span-2">
-               <div className="h-6 bg-gray-200 animate-pulse rounded w-24 mb-2" />
-               <div className="space-y-4 border rounded-sm p-4">
-                  <div className="h-40 bg-gray-200 animate-pulse rounded" />
-                  <div className="flex justify-center">
-                     <div className="h-4 bg-gray-200 animate-pulse rounded w-24" />
-                  </div>
-                  <div className="flex justify-center gap-2">
-                     <div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
-                     <div className="h-6 bg-gray-200 animate-pulse rounded w-16" />
-                  </div>
-               </div>
-            </div>
-
             {/* Description Tab Skeleton */}
             <div className="mt-8 col-span-1 md:col-span-10 bg-[#FAFAFB] p-5 rounded-lg shadow-md">
                <div className="flex gap-4 md:gap-28 border-b mb-4">
@@ -139,19 +149,6 @@ const ProductDetailSkeleton = () => {
                </div>
             </div>
 
-            {/* Related Products Skeleton */}
-            <div className="col-span-1 md:col-span-10">
-               <div className="h-6 bg-gray-200 animate-pulse rounded w-32 mb-4" />
-               <div className="grid grid-cols-4 gap-4">
-                  {[1, 2, 3, 4].map((index) => (
-                     <div key={index} className="border rounded-lg p-4">
-                        <div className="h-40 bg-gray-200 animate-pulse rounded mb-2" />
-                        <div className="h-6 bg-gray-200 animate-pulse rounded w-3/4 mb-2" />
-                        <div className="h-4 bg-gray-200 animate-pulse rounded w-1/2" />
-                     </div>
-                  ))}
-               </div>
-            </div>
          </div>
       </div>
    );
@@ -192,14 +189,35 @@ const ViewDetailProduct = () => {
    );
    const [selectedColor, setSelectedColor] = useState<number | null>(null);
    const [quantity, setQuantity] = useState(1);
-   const [comments, setComments] = useState<string[]>([]);
-   const [newComment, setNewComment] = useState("");
    const [currentSlide, setCurrentSlide] = useState(0);
    const [availableQuantity, setAvailableQuantity] = useState(0);
    const { handleAddToCartDetail } = useCart();
    const [allImages, setAllImages] = useState<string[]>([]);
    const [shouldShowButton, setShouldShowButton] = useState(false);
    const contentRef = useRef<HTMLDivElement>(null);
+
+   const [activeTab, setActiveTab] = useState<
+      "description" | "reviews" | "writeComment"
+   >("description");
+   const [isExpanded, setIsExpanded] = useState(false);
+   const [currentPage, setCurrentPage] = useState(1);
+   const [comments, setComments] = useState<string[]>([]);
+   const [newComment, setNewComment] = useState("");
+
+
+   const { data: reviewData } = useQuery<ReviewResponse>({
+      queryKey: ["PRODUCT_REVIEWS", product?.id],
+      queryFn: () => gellReviewByProductId(product?.id),
+   });
+
+
+   // Function to handle adding a new comment
+   const handleAddComment = () => {
+      if (newComment.trim()) {
+         setComments([...comments, newComment]);
+         setNewComment("");
+      }
+   };
 
    // Xử lý variants an toàn hơn
    const parsedVariants = useMemo(() => {
@@ -746,6 +764,193 @@ const ViewDetailProduct = () => {
                   >
                      Mua ngay
                   </button>
+               </div>
+            </div>
+
+            {/* Description, Reviews & Write Comment */}
+            <div className="mt-8 md:col-span-12 lg:col-span-10 bg-[#FAFAFB] p-5 rounded-lg shadow-md">
+               <div className="flex gap-4 md:gap-28 border-b">
+                  <button
+                     className={`px-4 py-2 ${activeTab === "description"
+                        ? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
+                        : ""
+                        }`}
+                     onClick={() => setActiveTab("description")}
+                  >
+                     Mô tả
+                  </button>
+                  <button
+                     className={`px-4 py-2 ${activeTab === "reviews"
+                        ? "border-b-2 border-theme-color-primary font-semibold text-[#40BFFF]"
+                        : ""
+                        }`}
+                     onClick={() => setActiveTab("reviews")}
+                  >
+                     Đánh giá
+                  </button>
+               </div>
+               <div className="p-4">
+                  {activeTab === "description" && (
+                     <div className="relative z-10">
+                        <div
+                           ref={contentRef}
+                           className={`description-content overflow-hidden transition-all duration-300 relative ${isExpanded ? "" : "max-h-[200px]"
+                              }`}
+                        >
+                           {product?.description ? (
+                              <div
+                                 dangerouslySetInnerHTML={{
+                                    __html: product.description,
+                                 }}
+                              ></div>
+                           ) : (
+                              <p>No description available</p>
+                           )}
+                        </div>
+
+                        {/* Gradient overlay when collapsed */}
+                        {!isExpanded && shouldShowButton && (
+                           <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent z-20"></div>
+                        )}
+
+                        {/* Show more/less button */}
+                        {shouldShowButton && product?.description && (
+                           <div className="relative z-30">
+                              <button
+                                 onClick={() => setIsExpanded(!isExpanded)}
+                                 className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 mx-auto bg-white rounded-md shadow-sm hover:shadow"
+                              >
+                                 {isExpanded ? (
+                                    <>
+                                       Show Less
+                                       <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          className="h-4 w-4"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                       >
+                                          <path
+                                             strokeLinecap="round"
+                                             strokeLinejoin="round"
+                                             strokeWidth={2}
+                                             d="M5 15l7-7 7 7"
+                                          />
+                                       </svg>
+                                    </>
+                                 ) : (
+                                    <>
+                                       Show More
+                                       <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          className="h-4 w-4"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                       >
+                                          <path
+                                             strokeLinecap="round"
+                                             strokeLinejoin="round"
+                                             strokeWidth={2}
+                                             d="M19 9l-7 7-7-7"
+                                          />
+                                       </svg>
+                                    </>
+                                 )}
+                              </button>
+                           </div>
+                        )}
+                     </div>
+                  )}
+                  {activeTab === "reviews" && (
+                     <div>
+                        {/* Reviews List */}
+                        <div className="max-w-6xl mx-auto">
+                           <div></div>
+                           <div className="flex flex-col gap-8">
+                              {reviewData?.data.map((item: Review, index: number) => (
+                                 <div
+                                    key={index}
+                                    className="bg-white rounded-lg shadow-lg p-6 transition-transform hover:scale-[1.01]"
+                                 >
+                                    <div className="flex items-start justify-between mb-4">
+                                       <div className="flex items-center space-x-4">
+                                          <img
+                                             src={item.user.avt}
+                                             className="w-12 h-12 rounded-full object-cover"
+                                          />
+                                          <div>
+                                             <h3 className="text-xl font-semibold">
+                                                {item.user.name}
+                                             </h3>
+                                             <div className="flex items-center space-x-2 mt-1">
+                                                <RatingStars rating={item.rating} />
+                                                <span className="text-gray-500">
+                                                   {new Date(item.created_at).toLocaleDateString(
+                                                      "vi-VN",
+                                                      {
+                                                         day: "2-digit",
+                                                         month: "2-digit",
+                                                         year: "numeric",
+                                                      }
+                                                   )}
+                                                </span>
+                                             </div>
+                                          </div>
+                                       </div>
+                                    </div>
+                                    <p className="text-gray-700 mb-4">{item.comment}</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                       <button className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg overflow-hidden">
+                                          {/* <img className="w-full h-32 object-cover hover:opacity-90 transition-opacity" /> */}
+                                       </button>
+                                    </div>
+                                 </div>
+                              ))}
+
+                              {/* Pagination or more reviews */}
+                              <div className="join bg-[#FAFAFB] rounded-md ms-auto">
+                                 {reviewData?.links.map((link, index) => (
+                                    <button
+                                       key={index}
+                                       onClick={() => {
+                                          if (link.url) {
+                                             const page = parseInt(link.label);
+                                             if (!isNaN(page)) setCurrentPage(page);
+                                          }
+                                       }}
+                                       disabled={!link.url}
+                                       className={`join-item btn btn-sm ${link.active ? "btn-active" : ""
+                                          } ${!link.url ? "btn-disabled" : ""}`}
+                                       dangerouslySetInnerHTML={{
+                                          __html: link.label,
+                                       }}
+                                    />
+                                 ))}
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  )}
+                  {activeTab === "writeComment" && (
+                     <div>
+                        {/* Comment Form */}
+                        <div className="mb-4">
+                           <textarea
+                              className="w-full p-2 border rounded-md"
+                              placeholder="Write your comment here..."
+                              value={newComment}
+                              onChange={(e) => setNewComment(e.target.value)}
+                           />
+                           <button
+                              className="btn btn-sm bg-[#40BFFF] text-white mt-2"
+                              onClick={handleAddComment}
+                           >
+                              Submit Comment
+                           </button>
+                        </div>
+                     </div>
+                  )}
                </div>
             </div>
          </div>

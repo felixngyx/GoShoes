@@ -31,7 +31,7 @@ class Authorize
             }
             $user = JWTAuth::parseToken()->authenticate();
             if (!$user['email_verified_at']) {
-                return response()->json(['error' => 'Email not verified'], 403);
+                return response()->json(['error' => 'Chưa xác minh email, vui lòng xác minh email!'], 403);
             }
             if ($user['is_deleted']) {
                 return response()->json(['error' => 'User is deleted'], 403);
