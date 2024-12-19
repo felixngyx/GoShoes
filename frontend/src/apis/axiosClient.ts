@@ -76,6 +76,8 @@ axiosClient.interceptors.response.use(
 						Authorization: `Bearer ${refreshToken}`,
 					},
 				});
+
+				console.log('Refresh token response:', response);
 				const data = await response.json();
 				Cookies.set('access_token', data.access_token);
 				return axiosClient(originalRequest);
