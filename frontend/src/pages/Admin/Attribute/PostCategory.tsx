@@ -9,6 +9,7 @@ import LoadingIcon from '../../../components/common/LoadingIcon';
 import postCategoryService, {
 	POST_CATEGORY,
 } from '../../../services/admin/post_category';
+import Swal from 'sweetalert2';
 
 type PaginationType = {
 	page: number;
@@ -74,15 +75,35 @@ const PostCategory = () => {
 	};
 
 	const deleteCategory = async (id: number) => {
-		try {
-			if (window.confirm('Bạn có chắc chắn muốn xóa danh mục này không?')) {
-				await postCategoryService.delete(Number(id));
-				toast.success('Xóa danh mục thành công');
-				fetchCategories();
+		Swal.fire({
+			title: 'Xác nhận xóa',
+			text: 'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonText: 'Xóa',
+			cancelButtonText: 'Hủy',
+			customClass: {
+				popup: 'bg-white shadow rounded-lg p-4 max-w-[500px]',
+				title: 'text-base font-bold text-gray-800',
+				htmlContainer: 'text-sm text-gray-600',
+				confirmButton:
+					'bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mr-2',
+				cancelButton:
+					'bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400',
+			},
+			buttonsStyling: false,
+		}).then(async (result) => {
+			if (result.isConfirmed) {
+				try {
+					await postCategoryService.delete(Number(id));
+					toast.success('Xóa danh mục thành công');
+					fetchCategories();
+				} catch (error: any) {
+					toast.error(error.response?.data?.message || 'Đã xảy ra lỗi');
+				}
 			}
-		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'Đã xảy ra lỗi');
-		}
+		})
+
 	};
 
 	const onSubmit = async (data: POST_CATEGORY) => {

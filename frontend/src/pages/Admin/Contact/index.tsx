@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import axiosClient from '../../../apis/axiosClient';
+import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 
 
 interface Contact {
@@ -29,6 +31,41 @@ const ContactList = () => {
 
     fetchContacts();
   }, []);
+
+
+
+  const handleDeleteContact = async (id: number) => {
+    Swal.fire({
+      title: 'Xác nhận xóa',
+      text: 'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy',
+      customClass: {
+        popup: 'bg-white shadow rounded-lg p-4 max-w-[500px]',
+        title: 'text-base font-bold text-gray-800',
+        htmlContainer: 'text-sm text-gray-600',
+        confirmButton:
+          'bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mr-2',
+        cancelButton:
+          'bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400',
+      },
+      buttonsStyling: false,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const message = toast.loading('Đang xóa liên hệ...');
+          await axiosClient.get(`/delete/${id}`);
+          toast.dismiss(message);
+          setContacts(contacts.filter(c => c.id !== id));
+        } catch (error) {
+          console.error('Không thể xóa liên hệ');
+        }
+      }
+    })
+
+  }
 
   if (loading) {
     return <div>Loading...</div>;
@@ -69,14 +106,7 @@ const ContactList = () => {
                   </button>
                   <button
                     onClick={async () => {
-                      if (window.confirm('Bạn có chắc chắn muốn xóa liên hệ này không?')) {
-                        try {
-                          await axiosClient.get(`/delete/${contact.id}`);
-                          setContacts(contacts.filter(c => c.id !== contact.id));
-                        } catch (error) {
-                          console.error('Không thể xóa liên hệ');
-                        }
-                      }
+
                     }}
                     className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-2"
                   >
