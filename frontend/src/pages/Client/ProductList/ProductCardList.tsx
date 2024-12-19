@@ -4,7 +4,7 @@ import { IProduct } from "../../../types/client/products/products";
 import useCart from "../../../hooks/client/useCart";
 import useWishlist from "../../../hooks/client/useWhishList";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { formatVNCurrency } from "../../../common/formatVNCurrency";
 import toast from "react-hot-toast";
@@ -167,12 +167,16 @@ const ProductCardList = ({
       </div>
       <div className="w-2/3">
         <div className="flex flex-col justify-between items-start h-full gap-2 p-2">
-          <h3 className="text-2xl font-semibold">{product.name}</h3>
+          <Link to={`/products/${product.id}`}>
+            <p className="text-[#223263] text-sm sm:text-base lg:text-lg font-semibold mt-2 px-2 hover:text-primary transition line-clamp-2">
+              {product.name}
+            </p>
+          </Link>
           <div className="flex flex-row gap-2 items-center">
             <div className="rating flex flex-row items-center gap-1">
               <RatingStars rating={product.rating_count} />
             </div>
-            <p className="text-sm text-[#C1C8CE]">12 reviews</p>
+            <p className="text-sm text-[#C1C8CE]">{product.rating_count} Sao</p>
           </div>
           <hr className="w-2/3" />
           <div className="flex flex-row gap-2 items-center">
@@ -200,14 +204,23 @@ const ProductCardList = ({
               </p>
             )}
           </div>
-          <p>{product.description}</p>
+          <p className="text-gray-600 text-sm mt-1">
+            <div
+              dangerouslySetInnerHTML={{
+                __html:
+                  product.description.length > 100
+                    ? `${product.description.substring(0, 100)}...`
+                    : product.description,
+              }}
+            ></div>
+          </p>
           <div className="flex flex-row gap-2">
             {/* Nút thêm sản phẩm vào giỏ hàng */}
             <button
               onClick={() => handleCheckAdd()}
               className="btn bg-[#ebf6ff] rounded-sm text-[#40BFFF] hover:bg-[#40BFFF] hover:text-[#fff] px-10 flex flex-row gap-2 items-center"
             >
-              <ShoppingCart /> Add to cart
+              <ShoppingCart /> Thêm vào giỏ hàng
             </button>
 
             {/* Nút thêm vào wishlist */}
@@ -215,7 +228,7 @@ const ProductCardList = ({
               onClick={() => handleAddToWishlist(product.id)}
               className="btn bg-[#ebf6ff] rounded-sm text-[#40BFFF] hover:bg-[#40BFFF] hover:text-[#fff] flex flex-row gap-2 items-center"
             >
-              <Heart /> Add to wishlist
+              <Heart /> Thêm vào danh sách yêu thích
             </button>
           </div>
         </div>

@@ -631,7 +631,7 @@ const ViewDetailProduct = () => {
                      <span className="col-span-1 text-left">{product.brand.name}</span>
                   </div>
                   <div className="grid grid-cols-2 max-w-xs">
-                     <span className="col-span-1">Tình trạng:</span>
+                     <span className="col-span-1">Số lượng:</span>
                      <span className="col-span-1 text-left">
                         {availableQuantity} sản phẩm
                      </span>

@@ -511,7 +511,15 @@ const OrderDetails = () => {
       }));
 
       // Show immediate feedback
-      toast.success(`Order status updated to ${status}`);
+      const statusInVietnamese = {
+        'pending': 'Chờ xác nhận',
+        'processing': 'Đang xử lý',
+        'shipping': 'Đang giao hàng',
+        'delivered': 'Đã giao hàng',
+        'cancelled': 'Đã hủy',
+        'completed': 'Thành công',
+      };
+      toast.success(`Trạng thái đơn hàng đã được cập nhật thành ${statusInVietnamese[status as keyof typeof statusInVietnamese]}`);
 
       return { previousData };
     },

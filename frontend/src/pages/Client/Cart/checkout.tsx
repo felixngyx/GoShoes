@@ -146,8 +146,9 @@ const CheckoutPage = () => {
     if (orderState.items.length === 1) {
       return `Checkout | ${orderState.items[0].name}`;
     } else if (orderState.items.length > 1) {
-      return `Checkout | ${orderState.items[0].name} and ${orderState.items.length - 1
-        } other items`;
+      return `Checkout | ${orderState.items[0].name} and ${
+        orderState.items.length - 1
+      } other items`;
     }
     return "Checkout";
   }, [orderState.items]);
@@ -158,9 +159,9 @@ const CheckoutPage = () => {
     newQuantity: number
   ) => {
     if (newQuantity < 1) return;
-  
+
     let newSubtotal = 0;
-  
+
     const updatedItems = orderState.items.map((item) => {
       if (item.variant?.id === variantId || item.id === variantId) {
         const updatedTotal = item.price * newQuantity;
@@ -174,19 +175,19 @@ const CheckoutPage = () => {
       newSubtotal += item.total;
       return item;
     });
-  
+
     setOrderState((prev) => ({
       ...prev,
       items: updatedItems,
       subtotal: newSubtotal,
       total: newSubtotal,
     }));
-  
+
     setQuantities((prev) => ({
       ...prev,
       [variantId]: newQuantity,
     }));
-  
+
     if (discountCode && discountInfo) {
       try {
         const response = await axios.post(
@@ -204,7 +205,7 @@ const CheckoutPage = () => {
             },
           }
         );
-  
+
         if (response.data.status) {
           setDiscountInfo(response.data.data);
         }
@@ -244,7 +245,9 @@ const CheckoutPage = () => {
     try {
       const checkPromises = orderState.items.map(async (item) => {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/products/${item.id || item.product_id}`
+          `${import.meta.env.VITE_API_URL}/products/${
+            item.id || item.product_id
+          }`
         );
         return response.data.data;
       });
@@ -254,41 +257,59 @@ const CheckoutPage = () => {
       let hasChanges = false;
       const updatedItems = orderState.items.map((item, index) => {
         const currentProduct = currentProducts[index];
-        const currentPrice = Number(currentProduct.promotional_price || currentProduct.price);
-        const itemPrice = Number(item.price);
 
-        if (Math.abs(currentPrice - itemPrice) > 0.01) {
+        // Get current price and stored price, prioritizing promotional prices
+        const currentPrice = Number(
+          currentProduct.promotional_price || currentProduct.price
+        );
+        const itemPrice = Number(item.promotional_price || item.price);
+
+        // Check if price has changed
+        const epsilon = 0.01;
+        const priceHasChanged = Math.abs(currentPrice - itemPrice) > epsilon;
+
+        if (priceHasChanged) {
           hasChanges = true;
+
+          // Calculate the display price (promotional or regular)
+          const displayPrice =
+            currentProduct.promotional_price || currentProduct.price;
+
           return {
             ...item,
-            price: currentProduct.price,
-            promotional_price: currentProduct.promotional_price,
-            total: item.quantity * (currentProduct.promotional_price || currentProduct.price)
+            price: currentProduct.promotional_price
+              ? currentProduct.price
+              : currentProduct.price,
+            promotional_price: currentProduct.promotional_price || null, // Ensure we keep or clear promotional price
+            total: item.quantity * displayPrice, // Use the display price for total
           };
         }
         return item;
       });
 
-      return { hasChanges, updatedItems };
+      return {
+        hasChanges,
+        updatedItems: hasChanges ? updatedItems : orderState.items,
+      };
     } catch (error) {
       console.error("Error checking prices:", error);
-      throw error;
+      throw new Error("Failed to check current prices");
     }
   };
 
+  // Checkout handling function
   const handleCheckout = async () => {
     try {
       setIsLoading(true);
       setHasOrdered(true);
 
-      if (!defaultAddress || !defaultAddress.id) {
-        toast.error("Please select a shipping address");
-        setHasOrdered(false);
-        setIsLoading(false);
+      // Validate shipping address
+      if (!defaultAddress?.id) {
+        toast.error("Vui lòng chọn địa chỉ giao hàng");
         return;
       }
 
-      // Kiểm tra giá trước khi đặt hàng
+      // Check for price changes
       const { hasChanges, updatedItems } = await checkPriceAndStock();
 
       if (hasChanges) {
@@ -297,32 +318,39 @@ const CheckoutPage = () => {
         );
 
         if (willContinue) {
-          // Cập nhật state với giá mới
-          setOrderState(prev => ({
+          // Calculate new total
+          const newSubtotal = updatedItems.reduce(
+            (sum, item) => sum + item.total,
+            0
+          );
+
+          // Update order state with new prices
+          setOrderState((prev) => ({
             ...prev,
             items: updatedItems,
-            subtotal: updatedItems.reduce((sum, item) => sum + item.total, 0)
+            subtotal: newSubtotal,
           }));
 
-          toast.info("Prices have been updated. Please review your order.", {
+          toast.info("Giá đã được cập nhật. Vui lòng kiểm tra lại đơn hàng.", {
             duration: 5000,
           });
-          setIsLoading(false);
-          setHasOrdered(false);
           return;
         } else {
-          navigate('/cart');
+          // Redirect to cart if user cancels
+          navigate("/cart");
           return;
         }
       }
 
-      // Tiếp tục xử lý đặt hàng nếu giá không thay đổi hoặc người dùng đồng ý với giá mới
+      // Prepare order data
       const requestData = {
         items: orderState.items.map((item) => ({
           product_id: Number(item.id || item.product_id),
           quantity: Number(item.quantity),
           ...((item.variant?.id || item.product_variant?.variant_id) && {
-            variant_id: Number(item.variant?.id || item.product_variant?.variant_id),
+            variant_id: Number(
+              item.variant?.id || item.product_variant?.variant_id
+            ),
           }),
         })),
         shipping_id: Number(defaultAddress.id),
@@ -332,6 +360,7 @@ const CheckoutPage = () => {
         }),
       };
 
+      // Submit order
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/orders`,
         requestData,
@@ -345,8 +374,9 @@ const CheckoutPage = () => {
 
       if (response.status === 201) {
         if (paymentMethod === 1) {
-          // ZaloPay
+          // Handle ZaloPay payment
           const finalAmount = orderState.subtotal - calculateDiscount();
+
           if (finalAmount > 0 && response.data.payment_url) {
             const willRedirect = window.confirm(
               "Đơn hàng của bạn đã được tạo. Bạn có muốn chuyển đến trang thanh toán không?"
@@ -355,46 +385,51 @@ const CheckoutPage = () => {
             if (willRedirect) {
               window.location.href = response.data.payment_url;
             } else {
-              toast.success("Đơn hàng của bạn đã được tạo");
-              navigate("/account/my-order", {
-                replace: true,
-                state: {
-                  message: "Order created! Please complete payment within 24 hours.",
-                },
-              });
+              handleSuccessfulOrder(
+                "Order created! Please complete payment within 24 hours."
+              );
             }
           }
         } else {
-          // COD
-          toast.success("Đăt hàng thành công!");
-          navigate("/account/my-order", {
-            replace: true,
-            state: { message: "Đặt hàng thành công" },
-          });
+          // Handle COD payment
+          handleSuccessfulOrder("Đặt hàng thành công");
         }
       }
     } catch (error: any) {
-      setHasOrdered(false);
-      
-      if (error.response?.status === 403) {
-        toast.error(error.response.data.error || error.response.data.message);
-        navigate('/account', { 
-          state: { 
-            message: "Vui lòng xác minh email trước khi đặt hàng" 
-          }
-        });
-        return;
-      }
-  
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error("Có lỗi xảy ra khi đặt hàng");
-      }
-      console.error("Order error:", error);
+      handleCheckoutError(error);
     } finally {
       setIsLoading(false);
+      setHasOrdered(false);
     }
+  };
+
+  // Helper function for successful orders
+  const handleSuccessfulOrder = (message: string) => {
+    toast.success("Đặt hàng thành công!");
+    navigate("/account/my-order", {
+      replace: true,
+      state: { message },
+    });
+  };
+
+  // Helper function for error handling
+  const handleCheckoutError = (error: any) => {
+    setHasOrdered(false);
+
+    if (error.response?.status === 403) {
+      toast.error(error.response.data.error || error.response.data.message);
+      navigate("/account", {
+        state: {
+          message: "Vui lòng xác minh email trước khi đặt hàng",
+        },
+      });
+      return;
+    }
+
+    const errorMessage =
+      error.response?.data?.message || "Có lỗi xảy ra khi đặt hàng";
+    toast.error(errorMessage);
+    console.error("Order error:", error);
   };
 
   // Sửa lại hàm handleConfirmOrder
@@ -696,11 +731,14 @@ const CheckoutPage = () => {
                           +
                         </button>
                       </div>
-                      <span className="font-medium">
-                        {formatVND(
-                          item.price * quantities[item.variant?.id || item.id]
-                        )}
-                      </span>
+                      <div className="text-right">
+                        <span className="font-medium">
+                          {formatVND(
+                            (item.promotional_price || item.price) *
+                              quantities[item.variant?.id || item.id]
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -752,7 +790,8 @@ const CheckoutPage = () => {
                     ).toLocaleDateString()}
                   </p>
                   <p>
-                    Số lần sử dụng còn lại: {discountInfo.discount_info.remaining_uses}
+                    Số lần sử dụng còn lại:{" "}
+                    {discountInfo.discount_info.remaining_uses}
                   </p>
                 </div>
               )}
@@ -852,7 +891,9 @@ const CheckoutPage = () => {
                   onChange={(e) => setPaymentMethod(Number(e.target.value))}
                 />
                 <div className="ml-3">
-                  <span className="font-semibold">Thanh toán khi nhận hàng</span>
+                  <span className="font-semibold">
+                    Thanh toán khi nhận hàng
+                  </span>
                   <p className="text-sm text-gray-500">
                     Thanh toán bằng tiền mặt khi nhận hàng
                   </p>
@@ -931,9 +972,9 @@ const CheckoutPage = () => {
                           (
                           {[
                             item.variant?.color?.color_name ||
-                            item.product_variant?.color,
+                              item.product_variant?.color,
                             item.variant?.size?.size_name ||
-                            item.product_variant?.size,
+                              item.product_variant?.size,
                           ]
                             .filter(Boolean)
                             .join("/")}
@@ -941,7 +982,11 @@ const CheckoutPage = () => {
                         </span>
                       )}
                     </span>
-                    <span>{formatVND(item.price * item.quantity)}</span>
+                    <span>
+                      {formatVND(
+                        (item.promotional_price || item.price) * item.quantity
+                      )}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -993,10 +1038,11 @@ const CheckoutPage = () => {
             <button
               onClick={handleConfirmOrder}
               disabled={isLoading || !isTermsAccepted}
-              className={`block w-full max-w-xs mx-auto ${isLoading || !isTermsAccepted
-                ? "bg-indigo-400 cursor-not-allowed"
-                : "bg-indigo-500 hover:bg-indigo-700"
-                } focus:bg-indigo-700 text-white rounded-lg px-3 py-2 font-semibold relative`}
+              className={`block w-full max-w-xs mx-auto ${
+                isLoading || !isTermsAccepted
+                  ? "bg-indigo-400 cursor-not-allowed"
+                  : "bg-indigo-500 hover:bg-indigo-700"
+              } focus:bg-indigo-700 text-white rounded-lg px-3 py-2 font-semibold relative`}
             >
               {isLoading ? (
                 <>

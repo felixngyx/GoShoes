@@ -12,7 +12,7 @@ class DiscountUpdateRequest extends FormRequest
             'code' => 'required|string|unique:discounts,code,' . $this->route('id'),
             'description' => 'nullable|string',
             'valid_from' => 'required|date',
-            'valid_to' => 'required|date|after:valid_from',
+            'valid_to' => 'nullable|date|after:valid_from',
             'min_order_amount' => 'required|numeric|min:0',
             'usage_limit' => 'required|integer|min:1',
             'percent' => [

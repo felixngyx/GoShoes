@@ -75,7 +75,7 @@ class DiscountRepository
     }
 
     public function getRandomDiscount(){
-        $rand = $this->model->where('percent', '<', 80)->inRandomOrder()->take(3)->with('products')->get();
+        $rand = $this->model->where('percent', '<', 30)->inRandomOrder()->take(3)->with('products')->get();
         return $rand;
     }
 }
