@@ -23,7 +23,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     public function listProduct(
         array $filters = [],
         int $page = 1,
-        int $perPage = 10
+        int $perPage = 10000
     )
     {
         $query = $this->getBaseQuery($filters);
