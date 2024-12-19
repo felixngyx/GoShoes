@@ -18,7 +18,7 @@ type PaginationType = {
 
 const schema = Joi.object({
 	name: Joi.string().required().messages({
-		'string.empty': 'Category name is required',
+		'string.empty': 'Tên danh mục không được để trống',
 	}),
 });
 
@@ -75,13 +75,13 @@ const PostCategory = () => {
 
 	const deleteCategory = async (id: number) => {
 		try {
-			if (window.confirm('Are you sure you want to delete this category?')) {
+			if (window.confirm('Bạn có chắc chắn muốn xóa danh mục này không?')) {
 				await postCategoryService.delete(Number(id));
-				toast.success('Category deleted successfully');
+				toast.success('Xóa danh mục thành công');
 				fetchCategories();
 			}
 		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'An error occurred');
+			toast.error(error.response?.data?.message || 'Đã xảy ra lỗi');
 		}
 	};
 
@@ -89,16 +89,16 @@ const PostCategory = () => {
 		try {
 			if (editingCategory) {
 				await postCategoryService.update(Number(editingCategory.id!), data);
-				toast.success('Category updated successfully');
+				toast.success('Cập nhật danh mục thành công');
 			} else {
 				await postCategoryService.create(data);
-				toast.success('Category added successfully');
+				toast.success('Thêm danh mục thành công');
 			}
 			await fetchCategories();
 			closeModal();
 			reset();
 		} catch (error: any) {
-			toast.error(error.response?.data?.message || 'Something went wrong');
+			toast.error(error.response?.data?.message || 'Đã xảy ra lỗi');
 		}
 	};
 
@@ -155,9 +155,8 @@ const PostCategory = () => {
 		buttons.push(
 			<button
 				key="first"
-				className={`join-item btn btn-sm ${
-					pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
-				}`}
+				className={`join-item btn btn-sm ${pagination.page === 1 ? 'btn-active bg-primary text-white' : ''
+					}`}
 				onClick={() => handlePageChange(1)}
 			>
 				1
@@ -187,11 +186,10 @@ const PostCategory = () => {
 					buttons.push(
 						<button
 							key={i}
-							className={`join-item btn btn-sm ${
-								pagination.page === i
-									? 'btn-active bg-primary text-white'
-									: ''
-							}`}
+							className={`join-item btn btn-sm ${pagination.page === i
+								? 'btn-active bg-primary text-white'
+								: ''
+								}`}
 							onClick={() => handlePageChange(i)}
 						>
 							{i}
@@ -216,11 +214,10 @@ const PostCategory = () => {
 			buttons.push(
 				<button
 					key="last"
-					className={`join-item btn btn-sm ${
-						pagination.page === totalPages
-							? 'btn-active bg-primary text-white'
-							: ''
-					}`}
+					className={`join-item btn btn-sm ${pagination.page === totalPages
+						? 'btn-active bg-primary text-white'
+						: ''
+						}`}
 					onClick={() => handlePageChange(totalPages)}
 				>
 					{totalPages}
@@ -258,25 +255,24 @@ const PostCategory = () => {
 		<div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark py-6 px-4 md:px-6 xl:px-7.5 flex flex-col gap-5 col-span-1">
 			<div className="flex justify-between items-center">
 				<h4 className="text-xl font-semibold text-black dark:text-white">
-					Post Category List
+					Danh sách danh mục bài viết
 				</h4>
 				<div className="flex items-center gap-2">
 					<button
-						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${
-							selectedItems.length > 0
-								? 'flex items-center gap-2'
-								: 'hidden'
-						}`}
+						className={`btn btn-sm bg-[#FFD1D1] hover:bg-[#FFD1D1]/80 text-error ${selectedItems.length > 0
+							? 'flex items-center gap-2'
+							: 'hidden'
+							}`}
 					>
 						<Trash2 size={16} />
-						<p>Delete {selectedItems.length} items</p>
+						<p>Xóa {selectedItems.length} mục</p>
 					</button>
 					<button
 						className="btn btn-sm bg-[#BCDDFE] hover:bg-[#BCDDFE]/80 text-primary"
 						onClick={openAddModal}
 					>
 						<Plus size={16} />
-						Add Category Post
+						Thêm danh mục bài viết
 					</button>
 				</div>
 			</div>
@@ -303,10 +299,10 @@ const PostCategory = () => {
 								</div>
 							</th>
 							<th scope="col" className="px-6 py-3 w-2/3">
-								Name
+								Tên
 							</th>
 							<th scope="col" className="px-6 py-3 w-1/3">
-								Action
+								Thao tác
 							</th>
 						</tr>
 					</thead>
@@ -326,11 +322,10 @@ const PostCategory = () => {
 						) : (
 							postCategories.map((category, key) => (
 								<tr
-									className={`bg-white dark:bg-slate-800 ${
-										key !== postCategories.length - 1
-											? 'border-b border-stroke'
-											: ''
-									}`}
+									className={`bg-white dark:bg-slate-800 ${key !== postCategories.length - 1
+										? 'border-b border-stroke'
+										: ''
+										}`}
 									key={key}
 								>
 									<td className="w-4 p-4">
@@ -383,13 +378,13 @@ const PostCategory = () => {
 						className="bg-white dark:bg-boxdark p-6 rounded-lg w-1/3"
 					>
 						<h2 className="text-xl font-semibold mb-4">
-							{editingCategory ? 'Edit Category' : 'Add Category'}
+							{editingCategory ? 'Chỉnh sửa danh mục' : 'Thêm danh mục'}
 						</h2>
 						<form onSubmit={handleSubmit(onSubmit)}>
 							<input
 								type="text"
 								className="w-full p-2 border rounded mb-2"
-								placeholder="Category name"
+								placeholder="Tên danh mục"
 								{...register('name')}
 							/>
 							{errors.name && (
@@ -403,13 +398,13 @@ const PostCategory = () => {
 									className="btn btn-sm bg-gray-200 hover:bg-gray-300 text-gray-800"
 									onClick={closeModal}
 								>
-									Cancel
+									Hủy
 								</button>
 								<button
 									type="submit"
 									className="btn btn-sm bg-blue-500 hover:bg-blue-600 text-white"
 								>
-									{editingCategory ? 'Save Changes' : 'Add Category'}
+									{editingCategory ? 'Lưu thay đổi' : 'Thêm danh mục'}
 								</button>
 							</div>
 						</form>

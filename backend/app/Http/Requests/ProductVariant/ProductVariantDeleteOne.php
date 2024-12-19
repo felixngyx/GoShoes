@@ -35,9 +35,9 @@ class ProductVariantDeleteOne extends FormRequest
     public function messages(): array
     {
         return [
-            "id.required" => "Product variant id is required",
-            "id.integer" => "Product variant id must be an integer",
-            "id.exists" => "Product variant id does not exist",
+            "id.required" => "Yêu cầu mã biến thể sản phẩm",
+            "id.integer" => "Mã biến thể sản phẩm phải là số nguyên",
+            "id.exists" => "Mã biến thể sản phẩm không tồn tại",
         ];
     }
 }

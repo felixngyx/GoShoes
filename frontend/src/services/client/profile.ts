@@ -1,5 +1,4 @@
 import { Profile, ProfileParams } from '../../types/client/profile';
-import { profileUpdateSchema } from '../../pages/Client/User/Schema/profileSchema';
 import axiosClient from '../../apis/axiosClient';
 
 // Các interface liên quan
@@ -63,7 +62,6 @@ export const verifyTokenForResetPassword = async (params: VerifyTokenRequest): P
     throw error;
   }
 };
-
 
 // Đặt lại mật khẩu mới
 export const resetPassword = async (params: ResetPasswordParams): Promise<void> => {
@@ -164,13 +162,6 @@ export const getProfile = async (): Promise<Profile> => {
 
 // Hàm cập nhật thông tin hồ sơ người dùng
 export const updateProfile = async (params: ProfileParams): Promise<Profile> => {
-  const { error } = profileUpdateSchema.validate(params, { abortEarly: false });
-
-  if (error) {
-    console.error('Validation errors:', error.details);
-    throw new Error(error.details.map((err: any) => err.message).join(', '));
-  }
-
   try {
     const response = await axiosClient.put('/profile/update', params);
 

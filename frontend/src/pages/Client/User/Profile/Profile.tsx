@@ -8,16 +8,11 @@ const Profile = () => {
   const {
     profile,
     isLoading,
-    selectedLocation,
     handleUpdateProfile,
-    handleLocationSelect,
     handleSendEmailChangeRequest,
     handleVerifyTokenChangeEmail,
     handleVerifyTokenChangePhone,
     handleSendPhoneChangeRequest,
-    isSendingEmail,
-    isSendingPhone,
-    isVerifyingPhoneToken,
   } = useProfile();
 
   if (isLoading) return <div>Loading...</div>;
@@ -27,18 +22,14 @@ const Profile = () => {
       <div className="grid grid-cols-1 gap-8">
         {/* Basic Information Form - Full width */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-semibold">Basic Information</h2>
+          <h2 className="text-2xl font-semibold">Thông tin cơ bản</h2>
           <BasicInfoForm
             profile={profile}
-            selectedLocation={selectedLocation}
             handleUpdateProfile={handleUpdateProfile}
-            handleLocationSelect={handleLocationSelect}
             handleSendEmailChangeRequest={handleSendEmailChangeRequest}
             handleVerifyTokenChangeEmail={handleVerifyTokenChangeEmail}
             handleVerifyTokenChangePhone={handleVerifyTokenChangePhone}
             handleSendPhoneChangeRequest={handleSendPhoneChangeRequest}
-            isSendingPhone={isSendingPhone}
-            isVerifyingPhoneToken={isVerifyingPhoneToken}
           />
         </div>
 
@@ -47,15 +38,15 @@ const Profile = () => {
           {/* Change Password Form - 50% width */}
           {profile?.email && (
             <div className="md:col-span-2 space-y-4">
-              <h2 className="text-xl font-semibold">Change Password</h2>
+              <h2 className="text-xl font-semibold">Đổi mật khẩu</h2>
               <ChangePasswordForm email={profile.email} />
             </div>
           )}
 
           {/* Change Avatar Form - 50% width */}
           <div className="md:col-span-2 space-y-4">
-            <h2 className="text-xl font-semibold">Profile Picture</h2>
-            <ChangeAvatar profile={profile} />
+            <h2 className="text-xl font-semibold">Ảnh đại diện</h2>
+            <ChangeAvatar />
           </div>
         </div>
       </div>

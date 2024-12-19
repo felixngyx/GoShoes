@@ -40,16 +40,16 @@ const ContactList = () => {
 
   return (
     <div className="container mx-auto py-12">
-      <h2 className="text-2xl font-bold mb-6">Contact Messages</h2>
+      <h2 className="text-2xl font-bold mb-6">Tin nhắn liên hệ</h2>
       <div className="overflow-x-auto">
         <table className="table-auto w-full">
           <thead>
             <tr>
-              <th className="px-4 py-2">No.</th>
-              <th className="px-4 py-2">Full Name</th>
+              <th className="px-4 py-2">STT</th>
+              <th className="px-4 py-2">Họ và tên</th>
               <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Subject</th>
-              <th className="px-4 py-2">Message</th>
+              <th className="px-4 py-2">Chủ đề</th>
+              <th className="px-4 py-2">Tin nhắn</th>
             </tr>
           </thead>
           <tbody>
@@ -65,22 +65,22 @@ const ContactList = () => {
                     onClick={() => window.location.href = `mailto:${contact.email}`}
                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                   >
-                    Reply
+                    Trả lời
                   </button>
                   <button
                     onClick={async () => {
-                      if (window.confirm('Are you sure you want to delete this contact?')) {
+                      if (window.confirm('Bạn có chắc chắn muốn xóa liên hệ này không?')) {
                         try {
                           await axiosClient.get(`/delete/${contact.id}`);
                           setContacts(contacts.filter(c => c.id !== contact.id));
                         } catch (error) {
-                          console.error('Failed to delete contact');
+                          console.error('Không thể xóa liên hệ');
                         }
                       }
                     }}
                     className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-2"
                   >
-                    Delete
+                    Xóa
                   </button>
                 </td>
               </tr>

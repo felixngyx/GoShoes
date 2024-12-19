@@ -13,7 +13,6 @@ import { useDispatch } from 'react-redux';
 import { env } from '../../../environment/env';
 import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
 import LoadingIcon from '../../../components/common/LoadingIcon';
-import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 
 // Define the schema for form validation
 const schema = Joi.object({
@@ -21,23 +20,23 @@ const schema = Joi.object({
 		.email({ tlds: { allow: false } })
 		.required()
 		.messages({
-			'string.email': 'Invalid email address',
-			'string.empty': 'Email is required',
+			'string.email': 'Địa chỉ email không hợp lệ',
+			'string.empty': 'Email không được để trống',
 		}),
 	name: Joi.string().required().messages({
-		'string.empty': 'Username is required',
+		'string.empty': 'Tên người dùng không được để trống',
 	}),
 	password: Joi.string().min(6).required().messages({
-		'string.empty': 'Password is required',
-		'string.min': 'Password must be at least 6 characters long',
+		'string.empty': 'Mật khẩu không được để trống',
+		'string.min': 'Mật khẩu phải có ít nhất 6 ký tự',
 	}),
 	confirmPassword: Joi.string()
 		.valid(Joi.ref('password'))
 		.required()
 		.valid(Joi.ref('password'))
 		.messages({
-			'any.required': 'Confirm Password is required',
-			'any.only': 'Confirm Password do not match',
+			'any.required': 'Xác nhận mật khẩu không được để trống',
+			'any.only': 'Xác nhận mật khẩu không khớp',
 		}),
 });
 
@@ -53,8 +52,6 @@ const SignUp = () => {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const [loading, setLoading] = useState(false);
-	const [showPassword, setShowPassword] = useState(false);
-	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 	const {
 		register,
@@ -102,13 +99,13 @@ const SignUp = () => {
 				}
 			} catch (error) {
 				console.error('Facebook login error:', error);
-				toast.error('Facebook login failed. Please try again.');
+				toast.error('Đăng nhập Facebook thất bại. Vui lòng thử lại.');
 			} finally {
 				setLoading(false);
 			}
 		} else {
 			console.error('Facebook login failed:', response);
-			toast.error('Facebook login failed.');
+			toast.error('Đăng nhập Facebook thất bại.');
 		}
 	};
 
@@ -119,15 +116,15 @@ const SignUp = () => {
 				<div className="flex justify-between items-center container max-w-5xl mx-auto mt-10 px-5 md:px-8 lg:px-0">
 					<div className="hidden lg:flex justify-start w-full md:w-2/3">
 						<div className="flex flex-col gap-5 justify-center">
-							<h1 className="text-4xl font-bold">Sign up to</h1>
+							<h1 className="text-4xl font-bold">Đăng ký để</h1>
 							<h1 className="text-5xl font-bold text-[#40BFFF] italic">
 								GoShoes
 							</h1>
 							<p className="text-md text-black text-left">
-								If you already have an account <br />
-								You can{' '}
+								Nếu bạn đã có tài khoản <br />
+								Bạn có thể{' '}
 								<Link to="/signin" className="text-[#40BFFF] font-bold">
-									Sign in here!
+									Đăng nhập tại đây!
 								</Link>
 							</p>
 						</div>
@@ -135,10 +132,10 @@ const SignUp = () => {
 					</div>
 					<div className="w-full lg:w-1/3 flex justify-center items-center">
 						<form onSubmit={handleSubmit(onSubmit)} className="w-full">
-							<p className="text-2xl font-bold">Sign up</p>
+							<p className="text-2xl font-bold">Đăng ký</p>
 							<input
 								type="text"
-								placeholder="Enter username"
+								placeholder="Nhập tên người dùng"
 								className="input input-bordered w-full rounded-md bg-[#f0efff] mt-5 placeholder:text-[#494949]"
 								{...register('name')}
 							/>
@@ -149,7 +146,7 @@ const SignUp = () => {
 							)}
 							<input
 								type="text"
-								placeholder="Enter email"
+								placeholder="Nhập email"
 								className="input input-bordered w-full rounded-md bg-[#f0efff] mt-5 placeholder:text-[#494949]"
 								{...register('email')}
 							/>
@@ -160,17 +157,11 @@ const SignUp = () => {
 							)}
 							<label className="input input-bordered flex items-center bg-[#f0efff] mt-5 gap-2">
 								<input
-									type={showPassword ? 'text' : 'password'}
+									type='password'
 									className="grow placeholder:text-[#494949]"
-									placeholder="Enter password"
+									placeholder="Nhập mật khẩu"
 									{...register('password')}
 								/>
-								<div
-									onClick={() => setShowPassword(!showPassword)}
-									className="cursor-pointer"
-								>
-									{showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-								</div>
 							</label>
 							{errors.password && (
 								<p className="text-red-500 text-sm">
@@ -179,23 +170,11 @@ const SignUp = () => {
 							)}
 							<label className="input input-bordered flex items-center bg-[#f0efff] mt-5 gap-2">
 								<input
-									type={showConfirmPassword ? 'text' : 'password'}
+									type='password'
 									className="grow placeholder:text-[#494949]"
-									placeholder="Enter confirm password"
+									placeholder="Nhập xác nhận mật khẩu"
 									{...register('confirmPassword')}
 								/>
-								<div
-									onClick={() =>
-										setShowConfirmPassword(!showConfirmPassword)
-									}
-									className="cursor-pointer"
-								>
-									{showConfirmPassword ? (
-										<FaRegEyeSlash />
-									) : (
-										<FaRegEye />
-									)}
-								</div>
 							</label>
 							{errors.confirmPassword && (
 								<p className="text-red-500 text-sm">
@@ -215,15 +194,15 @@ const SignUp = () => {
 											size="sm"
 											color="success"
 										/>
-										Signing up
+										Đang đăng ký
 									</>
 								) : (
-									'Sign up'
+									'Đăng ký'
 								)}
 							</button>
 
 							<p className="text-md text-[#B0B0B0] text-center my-10">
-								or continue with
+								hoặc tiếp tục với
 							</p>
 							<div className="flex justify-center items-center gap-5 mt-5">
 								<FacebookLogin

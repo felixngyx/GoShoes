@@ -52,13 +52,13 @@ axiosClient.interceptors.response.use(
 		const originalRequest = error.config;
 
 		if (error.response.status === 401 && !originalRequest._retry) {
+			console.log('Token expired. Refresh token...');
 			originalRequest._retry = true;
 			const refreshToken = Cookies.get('refresh_token');
 			if (!refreshToken) {
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');
 				Cookies.remove('user');
-				toast.error('Your session has expired');
 
 				// Chỉ chuyển hướng cho các trang admin và trang yêu cầu xác thực
 				if (pathname.includes('/admin')) {
@@ -76,6 +76,8 @@ axiosClient.interceptors.response.use(
 						Authorization: `Bearer ${refreshToken}`,
 					},
 				});
+
+				console.log('Refresh token response:', response);
 				const data = await response.json();
 				Cookies.set('access_token', data.access_token);
 				return axiosClient(originalRequest);
@@ -83,7 +85,7 @@ axiosClient.interceptors.response.use(
 				Cookies.remove('access_token');
 				Cookies.remove('refresh_token');
 				Cookies.remove('user');
-				toast.error('Your session has expired');
+				toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
 
 				// Chỉ chuyển hướng cho các trang admin và trang yêu cầu xác thực
 				if (pathname.includes('/admin')) {

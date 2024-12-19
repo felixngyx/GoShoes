@@ -12,15 +12,15 @@ class OrderUpdateStatus extends FormRequest {
 
     public function rules() {
         return [
-            'status' => 'required|string|in:pending,completed,cancelled,shipping,expired',
+            'status' => 'required|string|in:pending,completed,cancelled,shipping,expired,processing',
         ];
     }
 
     public function messages() {
         return [
-            'status.required' => 'The status field is required.',
-            'status.string' => 'The status must be a string.',
-            'status.in' => 'The selected status is invalid.',
+            'status.required' => 'Trạng thái không được để trống.',
+            'status.string' => 'Trạng thái phải là chuỗi.',
+            'status.in' => 'Trạng thái không hợp lệ.',
         ];
     }
 }

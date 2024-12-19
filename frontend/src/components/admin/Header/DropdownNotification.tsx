@@ -184,7 +184,7 @@ const DropdownNotification = () => {
 					<div className="absolute -right-27 mt-2.5 flex h-90 w-75 flex-col rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark sm:right-0 sm:w-80">
 						<div className="px-4.5 py-3 flex justify-between items-center">
 							<h5 className="text-sm font-medium text-bodydark2">
-								Notifications {unreadCount > 0 && `(${unreadCount})`}
+								Thông báo {unreadCount > 0 && `(${unreadCount})`}
 							</h5>
 							<button 
 								onClick={() => {
@@ -297,7 +297,7 @@ const DropdownNotification = () => {
 													}}
 													className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
 												>
-													Mark as read
+													Đánh dấu là đã đọc
 												</button>
 											)}
 										</div>
@@ -320,14 +320,14 @@ const DropdownNotification = () => {
 										</p>
 										{notification.type === 'order' && notification.order_id && (
 											<div className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-												Click to view order details →
+												Bấm để xem chi tiết đơn hàng →
 											</div>
 										)}
 									</div>
 								))
 							) : (
 								<div className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-									No notifications
+									Không có thông báo nào
 								</div>
 							)}
 						</div>

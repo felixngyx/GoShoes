@@ -1,5 +1,5 @@
-import React from 'react';
-import { CheckCheckIcon } from 'lucide-react';
+import React from "react";
+import { CheckCheckIcon } from "lucide-react";
 
 interface Product {
   name: string;
@@ -24,8 +24,12 @@ interface Customer {
 }
 
 interface Shipping {
-  shipping_detail: string;
-  is_default: boolean;
+  shipping_detail: string | {
+    name: string;
+    address: string;
+    phone_number: string;
+    address_detail: string;
+  };
 }
 
 interface OrderData {
@@ -45,20 +49,44 @@ interface PrintInvoiceProps {
 
 const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
   const formatPrice = (price: number | string): string => {
-    return new Intl.NumberFormat('de-DE', { style: 'decimal' }).format(Number(price));
+    return new Intl.NumberFormat("de-DE", { style: "decimal" }).format(
+      Number(price)
+    );
   };
 
-  // Parse shipping_detail từ string sang object
-  const shippingDetail = order.shipping?.shipping_detail 
-    ? order.shipping.shipping_detail
-    : null;
+  const getShippingDetail = (shippingData: any) => {
+    if (typeof shippingData === 'string') {
+      try {
+        return JSON.parse(shippingData);
+      } catch (error) {
+        console.error('Error parsing shipping details:', error);
+        return {
+          name: 'N/A',
+          phone_number: 'N/A',
+          address: 'N/A',
+          address_detail: ''
+        };
+      }
+    } else if (typeof shippingData === 'object' && shippingData !== null) {
+      return shippingData;
+    }
+
+    return {
+      name: 'N/A',
+      phone_number: 'N/A',
+      address: 'N/A',
+      address_detail: ''
+    };
+  };
+
+  const shippingDetail = getShippingDetail(order.shipping?.shipping_detail);
 
   return (
     <div className="w-full max-w-4xl mx-auto p-8 bg-white print:p-6">
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Invoice #{order.sku}</h1>
-          <p className="text-gray-600 mt-1">Thank you!</p>
+          <h1 className="text-2xl font-bold">Hoá đơn #{order.sku}</h1>
+          <p className="text-gray-600 mt-1">Cảm ơn bạn đã mua hàng!</p>
         </div>
         <div className="w-20 h-20 rounded-full border-2 border-gray-300 flex items-center justify-center">
           <CheckCheckIcon className="w-12 h-12 text-gray-400" />
@@ -69,31 +97,55 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50">
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Product</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Variant</th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">Quantity</th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">Price</th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">Total Price</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
+                Sản phẩm
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
+                Biến thể
+              </th>
+              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
+                Số lượng
+              </th>
+              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
+                Giá
+              </th>
+              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
+                Tổng tiền
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {order.items.map((item, index) => (
               <tr key={index}>
-                <td className="px-6 py-4 text-sm text-gray-900">{item.product.name}</td>
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  {item.product.name}
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {item.variant ? (
                     <>
-                      {item.variant.size && <span>Size: {item.variant.size}</span>}
-                      {item.variant.size && item.variant.color && <span> | </span>}
-                      {item.variant.color && <span>Color: {item.variant.color}</span>}
+                      {item.variant.size && (
+                        <span>Size: {item.variant.size}</span>
+                      )}
+                      {item.variant.size && item.variant.color && (
+                        <span> | </span>
+                      )}
+                      {item.variant.color && (
+                        <span>Color: {item.variant.color}</span>
+                      )}
                     </>
                   ) : (
-                    'Non Variable'
+                    "Non Variable"
                   )}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-900 text-right">{item.quantity}</td>
-                <td className="px-6 py-4 text-sm text-gray-900 text-right">{formatPrice(item.price)}đ</td>
-                <td className="px-6 py-4 text-sm text-gray-900 text-right">{formatPrice(item.subtotal)}đ</td>
+                <td className="px-6 py-4 text-sm text-gray-900 text-right">
+                  {item.quantity}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900 text-right">
+                  {formatPrice(item.price)}đ
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900 text-right">
+                  {formatPrice(item.subtotal)}đ
+                </td>
               </tr>
             ))}
           </tbody>
@@ -103,7 +155,7 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
       <div className="flex justify-end mb-8">
         <div className="w-64">
           <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="font-medium text-gray-600">Total amout</span>
+            <span className="font-medium text-gray-600">Số tiền đơn hàng</span>
             <span className="font-bold">{formatPrice(order.total)}đ</span>
           </div>
         </div>
@@ -111,22 +163,29 @@ const PrintInvoice: React.FC<PrintInvoiceProps> = ({ order }) => {
 
       <div className="grid grid-cols-2 gap-8">
         <div>
-          <h3 className="font-medium mb-2">Seller:</h3>
+          <h3 className="font-medium mb-2">Người bán:</h3>
           <p className="text-sm text-gray-600">
-            Store: GoShoes<br />
-            Address: FPOLY, TVB, HN<br />
-            Phone: 0999999888<br />
-            email: contact@goshoes.com
+            Cửa hàng: GoShoes
+            <br />
+            Địa chỉ: FPOLY, TVB, HN
+            <br />
+            Số điện thoại: 0999999888
+            <br />
+            Email: contact@goshoes.com
           </p>
         </div>
         <div>
-          <h3 className="font-medium mb-2">Customer:</h3>
+          <h3 className="font-medium mb-2">Người mua:</h3>
           <p className="text-sm text-gray-600">
-            Name: {order.customer.name}<br />
-            Phone: {order.customer.phone}<br />
-            Address: {shippingDetail?.address_detail || 'N/A'}<br />
-            City/Province: {shippingDetail?.address || 'N/A'}<br />
-            Email: {order.customer.email}
+            Tên khách hàng: {shippingDetail.name || "Chưa cập nhật"}
+            <br />
+            Số điện thoại: {shippingDetail.phone_number || "Chưa cập nhật"}
+            <br />
+            Địa chỉ: {shippingDetail.address_detail || "Chưa cập nhật"}
+            <br />
+            Thành phố / Quận huyện: {shippingDetail.address || "Chưa cập nhật"}
+            <br />
+            Email: {order.customer?.email || "Chưa cập nhật"}
           </p>
         </div>
       </div>

@@ -87,7 +87,7 @@ class AuthService implements AuthServiceInterface
 //            }
 
             // Set access token TTL to 30 minutes
-            config(['jwt.ttl' => 30]);
+            config(['jwt.ttl' => 60]);
             // Add token type "access" to the access token
             $accessToken = JWTAuth::claims(['token_type' => 'access'])->fromUser($user);
 
@@ -98,12 +98,13 @@ class AuthService implements AuthServiceInterface
 
             return response()->json([
                 'success' => true,
-                'message' => 'Login successful',
+                'message' => 'Đăng nhập thành công!',
                 'user' => [
                     'name' => $user->name,
                     'email' => $user->email,
                     'email_is_verified' => (bool)$user->email_verified_at,
-                    'role' => $user->role
+                    'role' => $user->role,
+                    'avt' => $user->avt
                 ],
                 'access_token' => $accessToken,
                 'refresh_token' => $refreshToken,
@@ -144,7 +145,7 @@ class AuthService implements AuthServiceInterface
 
             return response()->json([
                 'success' => true,
-                'message' => 'User created successfully',
+                'message' => 'Tạo tài khoản thành công! Vui lòng kiểm tra email để xác thực tài khoản',
                 'data' => [
                     'user' => $user->name,
                     'email' => $user->email,

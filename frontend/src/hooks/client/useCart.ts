@@ -14,6 +14,7 @@ import { CartItem } from "../../types/client/cart";
 import { removeFromCart } from "./cartSlice";
 import Cookies from "js-cookie";
 import { checkStock } from "../../services/client/product";
+import Swal from "sweetalert2";
 
 const useCart = () => {
   const dispatch = useDispatch();
@@ -49,7 +50,7 @@ const useCart = () => {
       });
     },
     onError: () => {
-      toast.error("You need to log in to be able to add to cart.");
+      toast.error("Bạn cần đăng nhập để có thể mua hàng.");
     },
   });
 
@@ -77,28 +78,28 @@ const useCart = () => {
       const newQuantity = existingItem.quantity + quantity;
 
       if (newQuantity > stockQuantity) {
-        toast.error(`The maximum quantity available is ${stockQuantity}`);
+        toast.error(`Số lượng tối đa có được là ${stockQuantity}`);
         return;
       }
 
       // Cập nhật số lượng mới
       const params: CartParams = {
         product_variant_id: productVariantId,
-        quantity: newQuantity
+        quantity: newQuantity,
       };
 
       try {
         await updateCartQuantity(params);
         queryClient.invalidateQueries({ queryKey: ["CART"] });
-        toast.success("Updated cart quantity successfully");
+        toast.success("Cập nhật số lượng giỏ hàng thành công");
       } catch (error) {
-        toast.error("Failed to update cart quantity");
+        toast.error("Không thể cập nhật số lượng giỏ hàng");
       }
     } else {
       // Thêm mới vào giỏ hàng
       const params: CartParams = {
         product_variant_id: productVariantId,
-        quantity
+        quantity,
       };
       addToCartMutation.mutate(params);
     }
@@ -107,11 +108,11 @@ const useCart = () => {
   const { mutate: addProductToCart } = useMutation({
     mutationFn: addToCart,
     onSuccess: () => {
-      toast.success("Product added successfully");
+      toast.success("Đã thêm sản phẩm thành công");
       queryClient.invalidateQueries({ queryKey: ["CART"] }); // Làm mới dữ liệu giỏ hàng sau khi thêm
     },
     onError: () => {
-      toast.error("You need to log in to be able to add to cart.");
+      toast.error("Bạn cần đăng nhập để có thể thêm vào giỏ hàng.");
     },
   });
 
@@ -169,10 +170,7 @@ const useCart = () => {
 
       // Nếu số lượng sản phẩm trong giỏ hàng vượt quá số lượng trong kho, hiện thông báo
       if (quantity > stockQuantity) {
-        toast.error(
-          `The maximum quantity for this product is ${stockQuantity}.`,
-          {}
-        );
+        toast.error(`Số lượng tối đa có được là ${stockQuantity}.`, {});
       }
 
       // Đảm bảo số lượng cập nhật không vượt quá số lượng trong kho
@@ -203,34 +201,51 @@ const useCart = () => {
   const { mutate: deleteProductFromCart } = useMutation({
     mutationFn: deleteCartItem,
     onSuccess: () => {
-      toast.success("Product has been removed from cart.");
+      toast.success("Sản phẩm đã bị xóa khỏi giỏ hàng.");
       queryClient.invalidateQueries({ queryKey: ["CART"] });
     },
     onError: (error) => {
       console.error("Error removing product from cart:", error);
-      toast.error("Failed to remove product from cart. Please try again.");
+      toast.error("Không thể xóa sản phẩm khỏi giỏ hàng. Vui lòng thử lại.");
     },
   });
 
   // Hàm xử lý xóa sản phẩm khỏi giỏ hàng
   const handleDeleteFromCart = (productVariantId: number) => {
-    const confirm = window.confirm(
-      "Are you sure you want to remove this product from cart?"
-    );
+    Swal.fire({
+      title: "Xác nhận xóa",
+      text: "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+      customClass: {
+        popup: "bg-white shadow rounded-lg p-4 max-w-[300px]",
+        title: "text-base font-bold text-gray-800",
+        htmlContainer: "text-sm text-gray-600",
+        confirmButton:
+          "bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600",
+        cancelButton:
+          "bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400",
+      },
+      buttonsStyling: false,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Gọi API để xóa sản phẩm
+        deleteProductFromCart(productVariantId);
 
-    if (confirm) {
-      // Gọi API để xóa sản phẩm
-      deleteProductFromCart(productVariantId);
+        // Cập nhật danh sách giỏ hàng
+        setCartItemsWithSelected((prevItems) => {
+          const updatedItems = prevItems.filter(
+            (item) => item.product_variant.id !== productVariantId
+          );
+          return updatedItems;
+        });
 
-      setCartItemsWithSelected((prevItems) => {
-        const updatedItems = prevItems.filter(
-          (item) => item.product_variant.id !== productVariantId
-        );
-        return updatedItems;
-      });
-
-      dispatch(removeFromCart(productVariantId));
-    }
+        // Dispatch action để cập nhật Redux
+        dispatch(removeFromCart(productVariantId));
+      }
+    });
   };
 
   // Hàm debounce cho updateQuantity API

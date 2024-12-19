@@ -72,16 +72,15 @@ const NewsPage = () => {
       </button>
     );
 
-    for (let i = 1; i <= totalPages; i++) {
+    for (let i = 1;i <= totalPages;i++) {
       pages.push(
         <button
           key={i}
           onClick={() => setCurrentPage(i)}
-          className={`px-4 py-2 text-sm font-medium ${
-            currentPage === i 
-              ? 'text-white bg-indigo-500 border border-indigo-500' 
+          className={`px-4 py-2 text-sm font-medium ${currentPage === i
+              ? 'text-white bg-indigo-500 border border-indigo-500'
               : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-          } rounded-md`}
+            } rounded-md`}
         >
           {i}
         </button>
@@ -110,7 +109,7 @@ const NewsPage = () => {
             <div className="flex flex-wrap w-full mb-6">
               <div className="w-full">
                 <h1 className="text-4xl font-bold title-font text-gray-900 mb-4">
-                  News
+                  Tin tức
                 </h1>
                 <div className="h-1 w-24 bg-indigo-500 rounded"></div>
               </div>
@@ -150,104 +149,104 @@ const NewsPage = () => {
 
   return (
     <>
-     <Breadcrumb
+      <Breadcrumb
         items={[
-          { name: "Home", link: "" },
-          { name: "News", link: "news" },
+          { name: "Trang chủ", link: "" },
+          { name: "Tin tức", link: "news" },
         ]}
       />
-    <div className="container mx-auto px-4 py-8">
-      <section className="text-gray-700 body-font">
-        <div className="container mx-auto max-w-7xl">
-          <div className="flex flex-wrap w-full mb-6">
-            <div className="w-full">
-              <h1 className="text-4xl font-bold title-font text-gray-900 mb-4">
-                News
-              </h1>
-              <div className="h-1 w-24 bg-indigo-500 rounded"></div>
+      <div className="container mx-auto px-4 py-8">
+        <section className="text-gray-700 body-font">
+          <div className="container mx-auto max-w-7xl">
+            <div className="flex flex-wrap w-full mb-6">
+              <div className="w-full">
+                <h1 className="text-4xl font-bold title-font text-gray-900 mb-4">
+                  Tin tức
+                </h1>
+                <div className="h-1 w-24 bg-indigo-500 rounded"></div>
+              </div>
             </div>
-          </div>
 
-          {/* Search and filter section */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <input
-                type="text"
-                placeholder="Search news..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-              />
+            {/* Search and filter section */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm tin tức..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div className="w-full sm:w-48">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">Tất cả danh mục</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="w-full sm:w-48">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
 
-          {/* News grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredNews.map((article: News) => (
-              <div
-                key={article.id}
-                className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg overflow-hidden flex flex-col"
-              >
-                <div className="h-56 w-full overflow-hidden">
-                  <img
-                    src={article.image}
-                    alt={article.title}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="p-6 flex flex-col flex-grow">
-                  <h3 className="tracking-widest text-indigo-500 text-xs font-medium uppercase">
-                    {article.category_name}
-                  </h3>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                    {article.title}
-                  </h2>
-                  <p className="text-base text-gray-600 leading-relaxed mb-4 line-clamp-1">
-                    {stripHtml(article.content)}
-                  </p>
-                  <div className="mt-auto">
-                    <Link
-                      to={`/news/${article.id}`}
-                      className="text-white bg-indigo-500 hover:bg-indigo-600 px-4 py-2 text-sm font-medium rounded shadow-md transition duration-300"
-                    >
-                      Read More
-                    </Link>
+            {/* News grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredNews.map((article: News) => (
+                <div
+                  key={article.id}
+                  className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg overflow-hidden flex flex-col"
+                >
+                  <div className="h-56 w-full overflow-hidden">
+                    <img
+                      src={article.image}
+                      alt={article.title}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="p-6 flex flex-col flex-grow">
+                    <h3 className="tracking-widest text-indigo-500 text-xs font-medium uppercase">
+                      {article.category_name}
+                    </h3>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                      {article.title}
+                    </h2>
+                    <p className="text-base text-gray-600 leading-relaxed mb-4 line-clamp-1">
+                      {stripHtml(article.content)}
+                    </p>
+                    <div className="mt-auto">
+                      <Link
+                        to={`/news/${article.id}`}
+                        className="text-white bg-indigo-500 hover:bg-indigo-600 px-4 py-2 text-sm font-medium rounded shadow-md transition duration-300"
+                      >
+                        Đọc thêm
+                      </Link>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {!isLoading && data.data.pagination.totalPages > 1 && (
+              <div className="flex justify-center gap-2 mt-8">
+                {renderPagination()}
               </div>
-            ))}
+            )}
+
+            {/* No results message */}
+            {filteredNews.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Không tìm thấy tin tức phù hợp</p>
+              </div>
+            )}
           </div>
-
-          {/* Pagination */}
-          {!isLoading && data.data.pagination.totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-8">
-              {renderPagination()}
-            </div>
-          )}
-
-          {/* No results message */}
-          {filteredNews.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No matching news found</p>
-            </div>
-          )}
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
     </>
   );
 };

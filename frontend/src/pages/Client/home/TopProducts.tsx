@@ -1,6 +1,7 @@
 import { FC, useState } from "react";
 import { IoStar, IoChevronBack, IoChevronForward } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import { formatVNCurrency } from "../../../common/formatVNCurrency";
 
 type Product = {
   id: string;
@@ -59,7 +60,7 @@ const TopProducts: FC<TopProductsProps> = ({
   return (
     <div className="container mx-auto my-12 px-6">
       <p className="text-4xl font-extrabold text-center text-gray-900 mb-8">
-        Top Products
+        Sản Phẩm Hàng Đầu
       </p>
 
       {/* Mobile View: Scrollable */}
@@ -87,7 +88,7 @@ const TopProducts: FC<TopProductsProps> = ({
                       className="w-full h-full object-cover transform transition-all duration-500 hover:scale-110"
                     />
                     <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
-                      Hot
+                      Nổi bật
                     </p>
                   </div>
                   <div className="p-4 space-y-3">
@@ -102,21 +103,21 @@ const TopProducts: FC<TopProductsProps> = ({
                       )}
                     </div>
                     <div className="flex items-baseline justify-between">
-                      {product.promotional_price ? (
+                      {product.promotional_price &&
+                      product.promotional_price > 0 ? (
                         <>
-                          <p className="text-red-500 font-bold text-xl">
-                            {Number(product.promotional_price).toLocaleString(
-                              "vi-VN"
-                            )}{" "}
-                            ₫
+                          <p className="text-red-500 font-bold text-lg">
+                            {formatVNCurrency(
+                              Number(product.promotional_price)
+                            )}
                           </p>
                           <p className="text-gray-400 text-sm line-through">
-                            {Number(product.price).toLocaleString("vi-VN")} ₫
+                            {formatVNCurrency(Number(product.price))}
                           </p>
                         </>
                       ) : (
-                        <p className="text-red-500 font-bold text-xl">
-                          {Number(product.price).toLocaleString("vi-VN")} ₫
+                        <p className="text-red-500 font-bold text-lg">
+                          {formatVNCurrency(Number(product.price))}
                         </p>
                       )}
                     </div>
@@ -157,7 +158,7 @@ const TopProducts: FC<TopProductsProps> = ({
                             className="w-full h-full object-cover transform transition-all duration-500 hover:scale-110"
                           />
                           <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
-                            Hot
+                            Nổi bật
                           </p>
                         </div>
                         <div className="p-4 space-y-3">
@@ -174,7 +175,8 @@ const TopProducts: FC<TopProductsProps> = ({
                             ))}
                           </div>
                           <div className="flex items-baseline justify-between">
-                            {product.promotional_price ? (
+                            {product.promotional_price &&
+                            product.promotional_price > 0 ? (
                               <>
                                 <p className="text-red-500 font-bold text-xl">
                                   {Number(

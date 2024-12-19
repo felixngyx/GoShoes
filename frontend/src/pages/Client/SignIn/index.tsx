@@ -1,4 +1,3 @@
-import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 import Navbar from '../../../components/client/Navbar';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -21,16 +20,15 @@ const schema = Joi.object({
 		.email({ tlds: { allow: false } })
 		.required()
 		.messages({
-			'string.email': 'Invalid email address',
-			'string.empty': 'Email is required',
+			'string.email': 'Địa chỉ email không hợp lệ',
+			'string.empty': 'Email không được để trống',
 		}),
 	password: Joi.string().required().messages({
-		'string.empty': 'Password is required',
+		'string.empty': 'Mật khẩu không được để trống',
 	}),
 });
 
 const SignIn = () => {
-	const [showPassword, setShowPassword] = useState(false);
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const [loading, setLoading] = useState(false);
@@ -53,18 +51,20 @@ const SignIn = () => {
 		try {
 			setLoading(true);
 			const response = await authService.login(data);
+
 			if (response.data.success) {
 				Cookies.set('user', JSON.stringify(response.data.user));
 				Cookies.set('access_token', response.data.access_token);
 				Cookies.set('refresh_token', response.data.refresh_token);
 				dispatch(login(response.data.user));
 				toast.success(response.data.message);
+
 				navigate('/');
 			} else {
 				toast.error(response.data.message);
 			}
 		} catch (error: any) {
-			toast.error('Invalid email or password');
+			toast.error('Email hoặc mật khẩu không hợp lệ');
 		} finally {
 			setLoading(false);
 		}
@@ -79,7 +79,6 @@ const SignIn = () => {
 				});
 
 				if (serverResponse.data.success) {
-					console.log(serverResponse);
 					Cookies.set('user', JSON.stringify(serverResponse.data.user));
 					Cookies.set('access_token', serverResponse.data.access_token);
 					Cookies.set('refresh_token', serverResponse.data.refresh_token);
@@ -91,14 +90,14 @@ const SignIn = () => {
 					toast.error(serverResponse.data.message);
 				}
 			} catch (error) {
-				console.error('Facebook login error:', error);
-				toast.error('Facebook login failed. Please try again.');
+				console.error('Lỗi đăng nhập Facebook:', error);
+				toast.error('Đăng nhập Facebook thất bại. Vui lòng thử lại.');
 			} finally {
 				setLoading(false);
 			}
 		} else {
-			console.error('Facebook login failed:', response);
-			toast.error('Facebook login failed.');
+			console.error('Đăng nhập Facebook thất bại:', response);
+			toast.error('Đăng nhập Facebook thất bại.');
 		}
 	};
 
@@ -109,15 +108,15 @@ const SignIn = () => {
 				<div className="flex justify-between items-center container max-w-5xl mx-auto mt-10 px-5 md:px-8 lg:px-0">
 					<div className="relative w-full lg:w-2/3 hidden lg:flex justify-start items-center">
 						<div className="flex flex-col gap-5">
-							<h1 className="text-4xl font-bold">Sign in to</h1>
+							<h1 className="text-4xl font-bold">Đăng nhập vào</h1>
 							<h1 className="text-5xl font-bold italic text-[#40BFFF]">
 								GoShoes
 							</h1>
 							<p className="text-md text-black text-left">
-								If you don't have an account <br />
-								You can{' '}
+								Nếu bạn chưa có tài khoản <br />
+								Bạn có thể{' '}
 								<Link to="/signup" className="text-[#40BFFF] font-bold">
-									Register here!
+									Đăng ký tại đây!
 								</Link>
 							</p>
 						</div>
@@ -132,10 +131,10 @@ const SignIn = () => {
 							className="my-auto w-full"
 							onSubmit={handleSubmit(onSubmit)}
 						>
-							<p className="text-2xl font-bold">Sign in</p>
+							<p className="text-2xl font-bold">Đăng nhập</p>
 							<input
 								type="text"
-								placeholder="Enter email or username"
+								placeholder="Nhập email hoặc tên người dùng"
 								className="input input-bordered w-full rounded-md bg-[#f0efff] mt-5 placeholder:text-[#494949]"
 								{...register('email')}
 							/>
@@ -146,17 +145,11 @@ const SignIn = () => {
 							)}
 							<label className="input input-bordered flex items-center bg-[#f0efff] mt-5 gap-2 w-full">
 								<input
-									type={showPassword ? 'text' : 'password'}
+									type='password'
 									className="grow placeholder:text-[#494949]"
-									placeholder="Enter password"
+									placeholder="Nhập mật khẩu"
 									{...register('password')}
 								/>
-								<div
-									onClick={() => setShowPassword(!showPassword)}
-									className="cursor-pointer"
-								>
-									{showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-								</div>
 							</label>
 							{errors.password && (
 								<p className="text-red-500 text-sm">
@@ -165,7 +158,7 @@ const SignIn = () => {
 							)}
 							<Link to="/forget-password" className="ms-auto">
 								<p className="text-md inline-block text-[#B0B0B0] mt-3 cursor-pointer">
-									Forgot your password?
+									Quên mật khẩu?
 								</p>
 							</Link>
 							<button
@@ -179,14 +172,14 @@ const SignIn = () => {
 											size="sm"
 											color="ghost"
 										/>{' '}
-										Signing in
+										Đang đăng nhập
 									</>
 								) : (
-									'Sign in'
+									'Đăng nhập'
 								)}
 							</button>
 							<p className="text-md text-[#B0B0B0] text-center my-10">
-								or continue with
+								hoặc tiếp tục với
 							</p>
 							<div className="flex justify-center items-center gap-5 mt-5">
 								<FacebookLogin

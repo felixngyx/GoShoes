@@ -15,7 +15,6 @@ import {
   Box,
   Chip,
 } from "@mui/material";
-import { MdCalendarToday } from "react-icons/md";
 import { CalendarClock, Mail, MapPin, Phone } from "lucide-react";
 
 interface OrderItem {
@@ -63,6 +62,23 @@ interface OrderData {
   items: OrderItem[];
 }
 
+const parseShippingDetail = (shippingDetailStr: string | ShippingDetail): ShippingDetail => {
+  try {
+    if (typeof shippingDetailStr === 'object') {
+      return shippingDetailStr as ShippingDetail;
+    }
+    
+    return JSON.parse(shippingDetailStr);
+  } catch (error) {
+    console.error('Error parsing shipping detail:', error);
+    return {
+      name: '',
+      phone_number: '',
+      address: '',
+      address_detail: ''
+    };
+  }
+};
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
@@ -103,14 +119,12 @@ const OrderDetail: React.FC = () => {
   }
 
   const orderData = order.data;
-  const shippingDetail: ShippingDetail = orderData.shipping?.shipping_detail || {
-    name: orderData.customer?.name || '',
-    phone_number: orderData.customer?.phone || '',
-    address: '',
-    address_detail: ''
+  const shippingDetail: ShippingDetail = parseShippingDetail(orderData.shipping.shipping_detail) || {
+    name: orderData.customer?.name || "",
+    phone_number: orderData.customer?.phone || "",
+    address: "",
+    address_detail: "",
   };
-
-  console.log('Shipping Detail:', shippingDetail);
 
   return (
     <Box className="container mx-auto py-8 px-4">
@@ -124,7 +138,7 @@ const OrderDetail: React.FC = () => {
           >
             <Box>
               <Typography variant="h5" component="h1" gutterBottom>
-                Order #{orderData.sku}
+                Đơn hàng #{orderData.sku}
               </Typography>
               <Box display="flex" alignItems="center">
                 <CalendarClock size={16} style={{ marginRight: "8px" }} />
@@ -133,7 +147,6 @@ const OrderDetail: React.FC = () => {
                 </Typography>
               </Box>
             </Box>
-            
           </Box>
           <OrderTracking
             status={orderData.status}
@@ -148,7 +161,7 @@ const OrderDetail: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Order Items
+                Sản phẩm trong đơn hàng
               </Typography>
               <Box sx={{ maxHeight: 400, overflowY: "auto", pr: 2 }}>
                 {orderData.items.map((item, index) => (
@@ -191,10 +204,10 @@ const OrderDetail: React.FC = () => {
                       {item.variant && (
                         <Box mt={1}>
                           <Typography variant="body2" color="text.secondary">
-                            Size: {item.variant.size}
+                            Kích thước: {item.variant.size}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Color: {item.variant.color}
+                            Màu sắc: {item.variant.color}
                           </Typography>
                         </Box>
                       )}
@@ -205,7 +218,7 @@ const OrderDetail: React.FC = () => {
                         alignItems="center"
                       >
                         <Typography variant="body2" color="text.secondary">
-                          Quantity: {item.quantity}
+                          Số lượng: {item.quantity}
                         </Typography>
                         <Typography variant="body1" fontWeight="medium">
                           {new Intl.NumberFormat("vi-VN", {
@@ -224,14 +237,14 @@ const OrderDetail: React.FC = () => {
           <Card sx={{ mt: 4 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Order Summary
+                Tóm tắt đơn hàng
               </Typography>
               <Box
                 display="flex"
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <Typography variant="subtitle1">Total</Typography>
+                <Typography variant="subtitle1">Tổng cộng</Typography>
                 <Typography variant="subtitle1" fontWeight="bold">
                   {new Intl.NumberFormat("vi-VN", {
                     style: "currency",
@@ -247,7 +260,7 @@ const OrderDetail: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Customer Information
+                Thông tin khách hàng
               </Typography>
               <Box mb={2}>
                 <Typography variant="subtitle1">
@@ -268,8 +281,8 @@ const OrderDetail: React.FC = () => {
                     style={{ marginRight: "8px", marginTop: "4px" }}
                   />
                   <Typography variant="body2">
-                    {shippingDetail.address_detail && 
-                        `${shippingDetail.address_detail}, `}
+                    {shippingDetail.address_detail &&
+                      `${shippingDetail.address_detail}, `}
                     {shippingDetail.address}
                   </Typography>
                 </Box>
@@ -286,7 +299,7 @@ const OrderDetail: React.FC = () => {
           <Card sx={{ mt: 4 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Payment Details
+                Chi tiết thanh toán
               </Typography>
               <Box
                 display="flex"
@@ -295,7 +308,7 @@ const OrderDetail: React.FC = () => {
                 mb={1}
               >
                 <Typography variant="body2" color="text.secondary">
-                  Method
+                  Phương thức
                 </Typography>
                 <Typography variant="body1">
                   {orderData.payment.method}
@@ -305,17 +318,49 @@ const OrderDetail: React.FC = () => {
                 display="flex"
                 justifyContent="space-between"
                 alignItems="center"
+                mb={1}
               >
                 <Typography variant="body2" color="text.secondary">
-                  Status
+                  Trạng thái
                 </Typography>
                 <Chip
                   label={
-                    orderData.payment.status.charAt(0).toUpperCase() +
-                    orderData.payment.status.slice(1)
+                    orderData.payment.status === "failed"
+                      ? "Thất bại"
+                      : orderData.payment.status === "pending"
+                      ? "Đang chờ thanh toán"
+                      : orderData.payment.status === "cancelled"
+                      ? "Đã hủy"
+                      : orderData.payment.status === "refunded"
+                      ? "Đã hoàn tiền"
+                      : orderData.payment.status === "expired"
+                      ? "Hết hạn"
+                      : orderData.payment.status === "completed"
+                      ? "Hoàn tất"
+                      : orderData.payment.status === "shipping"
+                      ? "Đang vận chuyển"
+                      : orderData.payment.status === "success"
+                      ? "Thành công"
+                      : "Không xác định"
                   }
                   color={
-                    orderData.payment.status === "paid" ? "success" : "default"
+                    orderData.payment.status === "success"
+                      ? "success"
+                      : orderData.payment.status === "failed"
+                      ? "error"
+                      : orderData.payment.status === "pending"
+                      ? "warning"
+                      : orderData.payment.status === "cancelled"
+                      ? "error"
+                      : orderData.payment.status === "refunded"
+                      ? "error"
+                      : orderData.payment.status === "expired"
+                      ? "error"
+                      : orderData.payment.status === "completed"
+                      ? "success"
+                      : orderData.payment.status === "shipping"
+                      ? "warning"
+                      : "warning"
                   }
                   size="small"
                 />

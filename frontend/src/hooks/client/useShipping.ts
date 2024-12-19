@@ -10,27 +10,32 @@ import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
 import Joi from "joi";
 import { joiResolver } from "@hookform/resolvers/joi";
+import axios from "axios";
 
 const addressSchema = Joi.object({
   name: Joi.string().min(3).max(50).required().messages({
-    "string.base": "Name must be a string",
-    "string.min": "Name must have at least 3 characters",
-    "string.max": "Name must not exceed 50 characters",
-    "any.required": "Name is required",
+    "string.base": "Tên phải là một chuỗi",
+    "string.min": "Tên phải có ít nhất 3 ký tự",
+    "string.max": "Tên không được vượt quá 50 ký tự",
+    "any.required": "Tên không được bỏ trống",
+    "string.empty": "Tên không được bỏ trống",
   }),
   phone_number: Joi.string()
     .pattern(/^[0-9]{10,11}$/)
     .required()
     .messages({
-      "string.pattern.base": "Phone number must be 10 or 11 digits",
-      "any.required": "Phone number is required",
+      "string.pattern.base": "Số điện thoại phải có 10 hoặc 11 chữ số",
+      "any.required": "Số điện thoại không được bỏ trống",
+      "string.empty": "Số điện thoại không được bỏ trống",
     }),
   address: Joi.string().required().messages({
-    "any.required": "Address is required",
+    "any.required": "Địa chỉ không được bỏ trống",
+    "string.empty": "Địa chỉ không được bỏ trống",
   }),
-  address_detail: Joi.string().min(5).required().messages({
-    "string.min": "Address detail must be at least 5 characters long",
-    "any.required": "Address detail is required",
+  address_detail: Joi.string().required().min(5).messages({
+    "string.min": "Chi tiết địa chỉ phải có ít nhất 5 ký tự",
+    "any.required": "Chi tiết địa chỉ không được bỏ trống",
+    "string.empty": "Chi tiết địa chỉ không được bỏ trống",
   }),
   is_default: Joi.boolean(),
 });
@@ -131,13 +136,25 @@ export const useShipping = () => {
 
   // Xử lý việc xóa địa chỉ
   const handleDelete = async (id: number) => {
-    const confirm = window.confirm("Are you sure you want to delete");
+    const confirm = window.confirm("Xác nhận xóa địa chỉ này?");
     if (confirm) {
-      await deleteShipping(id);
-      toast.success("Shipping address deleted successfully");
-      queryClient.invalidateQueries({
-        queryKey: ["ADDRESS"],
-      });
+      try {
+        await deleteShipping(id);
+        toast.success("Đã xóa địa chỉ");
+        queryClient.invalidateQueries({
+          queryKey: ["ADDRESS"],
+        });
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 400) {
+          toast.error(
+            "Không thể xóa địa chỉ này vì đang có đơn hàng liên kết."
+          );
+        } else {
+          // Xử lý các lỗi khác
+          toast.error("Có lỗi xảy ra, vui lòng thử lại");
+        }
+        console.error("Failed to delete shipping option:", error);
+      }
     }
   };
 

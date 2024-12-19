@@ -135,20 +135,20 @@ const Cart = () => {
       (t) => (
         <div className="flex flex-col space-y-2 p-4">
           <p className="text-sm text-gray-500">
-            Do you want to remove these {selectedItems.length} products from
-            your cart?
+            Bạn có muốn xóa {selectedItems.length} sản phẩm này khỏi giỏ hàng
+            của bạn không?
           </p>
           <div className="flex justify-end space-x-2">
             <button
               className="px-3 py-1 text-sm text-white bg-blue-500 rounded hover:bg-blue-600"
-              onClick={() => toast.dismiss(t.id)} // Đóng toast nếu người dùng nhấn Cancel
+              onClick={() => toast.dismiss(t.id)} // Đóng toast nếu người dùng nhấn Hủy
             >
-              Cancel
+              Hủy
             </button>
             <button
               className="px-3 py-1 text-sm text-white bg-red-500 rounded hover:bg-red-600"
               onClick={() => {
-                toast.dismiss(t.id); // Đóng Toast confirm
+                toast.dismiss(t.id); // Đóng Toast xác nhận
 
                 // Hàm xóa sản phẩm tuần tự
                 const deleteNext = (index: number) => {
@@ -177,7 +177,7 @@ const Cart = () => {
                 deleteNext(0);
               }}
             >
-              Confirm
+              Xác nhận
             </button>
           </div>
         </div>
@@ -188,28 +188,42 @@ const Cart = () => {
 
   const handleCheckout = () => {
     // Chỉ lấy những sản phẩm đã được chọn
-    const selectedCartItems = cartItemsWithSelected.filter(item => item.selected).map(item => ({
-      id: item.product_variant.product_id,
-      name: item.product_variant.product.name,
-      price: Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price),
-      quantity: item.quantity,
-      thumbnail: item.product_variant.image_variants?.image?.split(", ")[0] || "",
-      variant: {
-        id: item.product_variant.id,
-        size: {
-          size: item.product_variant.size.size,
-          size_name: item.product_variant.size.size_name || item.product_variant.size.size
+    const selectedCartItems = cartItemsWithSelected
+      .filter((item) => item.selected)
+      .map((item) => ({
+        id: item.product_variant.product_id,
+        name: item.product_variant.product.name,
+        price:
+          Number(item.product_variant.product.promotional_price) ||
+          Number(item.product_variant.product.price),
+        quantity: item.quantity,
+        thumbnail:
+          item.product_variant.image_variants?.image?.split(", ")[0] || "",
+        variant: {
+          id: item.product_variant.id,
+          size: {
+            size: item.product_variant.size.size,
+            size_name:
+              item.product_variant.size.size_name ||
+              item.product_variant.size.size,
+          },
+          color: {
+            color_id: item.product_variant.color.id,
+            color_name:
+              item.product_variant.color.color_name ||
+              item.product_variant.color.color,
+          },
         },
-        color: {
-          color_id: item.product_variant.color.id,
-          color_name: item.product_variant.color.color_name || item.product_variant.color.color
-        }
-      },
-      total: (Number(item.product_variant.product.promotional_price) || Number(item.product_variant.product.price)) * item.quantity
-    }));
+        total:
+          (Number(item.product_variant.product.promotional_price) ||
+            Number(item.product_variant.product.price)) * item.quantity,
+      }));
 
     // Tính lại tổng tiền chỉ cho các sản phẩm được chọn
-    const selectedSubtotal = selectedCartItems.reduce((sum, item) => sum + item.total, 0);
+    const selectedSubtotal = selectedCartItems.reduce(
+      (sum, item) => sum + item.total,
+      0
+    );
 
     navigate("/checkout", {
       state: {
@@ -233,209 +247,214 @@ const Cart = () => {
 
   return (
     <>
-       <Breadcrumb
+      <Breadcrumb
         items={[
-          { name: "Home", link: "" },
-          { name: "Cart", link: "cart" },
+          { name: "Trang chủ", link: "" },
+          { name: "Giỏ hàng", link: "cart" },
         ]}
       />
-    <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
-            <div className="px-4 py-5 sm:p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-3xl font-bold text-gray-900">
-                  Shopping Cart
-                </h2>
-                {cartItemsWithSelected.length > 0 && (
-                  <div className="flex items-center space-x-4">
-                    <label className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        onChange={toggleSelectAll}
-                        checked={allSelected}
-                        className="checkbox checkbox-sm checkbox-primary rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <span className="text-sm text-gray-600">Select All</span>
-                    </label>
-                    {allSelected && (
-                      <button
-                        className="text-sm text-red-600 hover:text-red-800 transition"
-                        onClick={handleDeleteAll}
-                      >
-                        Delete All
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-                  role="alert"
-                >
-                  <span className="block sm:inline">{error}</span>
-                </motion.div>
-              )}
-
-              <div className="space-y-4">
-                <AnimatePresence>
-                  {cartItemsWithSelected.map((item: any) => {
-                    // Thêm kiểm tra null safety khi tách mảng image_variants
-                    const images = item.product_variant.image_variants?.image?.split(", ") || [];
-                    const firstImage = images[0] || ""; // Thêm giá trị mặc định
-
-                    return (
-                      <motion.div
-                        key={item.product_variant.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        className={`flex items-center space-x-4 p-6 rounded-lg ${
-                          item.selected ? "bg-indigo-50" : "bg-gray-50"
-                        }`}
-                      >
+      <div className="max-w-7xl mx-auto lg:px-0 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-3xl font-bold text-gray-900">Giỏ hàng</h2>
+                  {cartItemsWithSelected.length > 0 && (
+                    <div className="flex items-center space-x-4">
+                      <label className="flex items-center space-x-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={item.selected || false}
-                          onChange={() =>
-                            toggleSelectItem(item.product_variant.id)
-                          }
+                          onChange={toggleSelectAll}
+                          checked={allSelected}
                           className="checkbox checkbox-sm checkbox-primary rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
-                        <Link
-                          to={`/products/${item.product_variant.product_id}`}
+                        <span className="text-sm text-gray-600">
+                          Chọn tất cả
+                        </span>
+                      </label>
+                      {allSelected && (
+                        <button
+                          className="text-sm text-red-600 hover:text-red-800 transition"
+                          onClick={handleDeleteAll}
                         >
-                          <img
-                            src={firstImage}
-                            alt={item.product_variant.product.name}
-                            className="w-32 h-32 object-cover rounded"
-                          />
-                        </Link>
-                        <div className="flex-1">
-                          <h3 className="text-xl font-medium text-gray-900">
-                            {item.product_variant.product.name}
-                          </h3>
-                          <p className="text-gray-500 mt-1">
-                            {item.description}
-                          </p>
-                          <div className="mt-2 space-y-1">
-                            <span className="text-sm text-gray-600">
-                              <p>Color: {item.product_variant.color.color}</p>
-                              <p>Size: {item.product_variant.size.size}</p>
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2 mt-4">
-                            <button
-                              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                              onClick={() =>
-                                handleQuantityChange(
-                                  item.product_variant.id,
-                                  String(item.quantity - 1)
-                                )
-                              }
-                            >
-                              <FiMinus className="w-5 h-5 text-gray-600" />
-                            </button>
-                            <input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) =>
-                                handleQuantityChange(
-                                  item.product_variant.id,
-                                  e.target.value
-                                )
-                              }
-                              className="w-16 text-center border-gray-300 rounded-md"
-                              min="1"
-                            />
-                            <button
-                              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                              onClick={() =>
-                                handleQuantityChange(
-                                  item.product_variant.id,
-                                  String(item.quantity + 1)
-                                )
-                              }
-                            >
-                              <FiPlus className="w-5 h-5 text-gray-600" />
-                            </button>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-medium text-gray-900">
-                            {formatVND(item.totalPrice)}
-                          </p>
-                          <button
-                            onClick={() =>
-                              handleDeleteFromCart(item.product_variant.id)
-                            }
-                            className="mt-4 text-red-600 hover:text-red-800 focus:outline-none focus:underline flex items-center justify-end"
-                          >
-                            <FiTrash2 className="w-5 h-5 mr-1" />
-                            Remove
-                          </button>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
-              </div>
+                          Xóa tất cả
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
 
-              {cartItemsWithSelected.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-12"
-                >
-                  <FiShoppingBag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-medium text-gray-900 mb-2">
-                    Your cart is empty
-                  </h3>
-                  <p className="text-gray-500">
-                    Start shopping to add items to your cart
-                  </p>
-                </motion.div>
-              )}
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+                    role="alert"
+                  >
+                    <span className="block sm:inline">{error}</span>
+                  </motion.div>
+                )}
+
+                <div className="space-y-4">
+                  <AnimatePresence>
+                    {cartItemsWithSelected.map((item: any) => {
+                      // Thêm kiểm tra null safety khi tách mảng image_variants
+                      const images =
+                        item.product_variant.image_variants?.image?.split(
+                          ", "
+                        ) || [];
+                      const firstImage = images[0] || ""; // Thêm giá trị mặc định
+
+                      return (
+                        <motion.div
+                          key={item.product_variant.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          className={`flex items-center space-x-4 p-6 rounded-lg ${
+                            item.selected ? "bg-indigo-50" : "bg-gray-50"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={item.selected || false}
+                            onChange={() =>
+                              toggleSelectItem(item.product_variant.id)
+                            }
+                            className="checkbox checkbox-sm checkbox-primary rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <Link
+                            to={`/products/${item.product_variant.product_id}`}
+                          >
+                            <img
+                              src={firstImage}
+                              alt={item.product_variant.product.name}
+                              className="w-32 h-32 object-cover rounded"
+                            />
+                          </Link>
+                          <div className="flex-1">
+                            <h3 className="text-xl font-medium text-gray-900">
+                              {item.product_variant.product.name}
+                            </h3>
+                            <p className="text-gray-500 mt-1">
+                              {item.description}
+                            </p>
+                            <div className="mt-2 space-y-1">
+                              <span className="text-sm text-gray-600">
+                                <p>Màu: {item.product_variant.color.color}</p>
+                                <p>
+                                  Kích thước: {item.product_variant.size.size}
+                                </p>
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2 mt-4">
+                              <button
+                                className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                onClick={() =>
+                                  handleQuantityChange(
+                                    item.product_variant.id,
+                                    String(item.quantity - 1)
+                                  )
+                                }
+                              >
+                                <FiMinus className="w-5 h-5 text-gray-600" />
+                              </button>
+                              <input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) =>
+                                  handleQuantityChange(
+                                    item.product_variant.id,
+                                    e.target.value
+                                  )
+                                }
+                                className="w-16 text-center border-gray-300 rounded-md"
+                                min="1"
+                              />
+                              <button
+                                className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                onClick={() =>
+                                  handleQuantityChange(
+                                    item.product_variant.id,
+                                    String(item.quantity + 1)
+                                  )
+                                }
+                              >
+                                <FiPlus className="w-5 h-5 text-gray-600" />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-2xl font-medium text-gray-900">
+                              {formatVND(item.totalPrice)}
+                            </p>
+                            <button
+                              onClick={() =>
+                                handleDeleteFromCart(item.product_variant.id)
+                              }
+                              className="mt-4 text-red-600 hover:text-red-800 focus:outline-none focus:underline flex items-center justify-end"
+                            >
+                              <FiTrash2 className="w-5 h-5 mr-1" />
+                              Xóa
+                            </button>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </div>
+
+                {cartItemsWithSelected.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-center py-12"
+                  >
+                    <FiShoppingBag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-medium text-gray-900 mb-2">
+                      Giỏ hàng của bạn trống
+                    </h3>
+                    <p className="text-gray-500">
+                      Bắt đầu mua sắm để thêm sản phẩm vào giỏ hàng
+                    </p>
+                  </motion.div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-lg p-6 sticky top-20">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Order Summary
-            </h3>
-            <div className="space-y-2">
-              <div className="flex justify-between text-gray-600">
-                <span>Subtotal</span>
-                <span>{formatVND(orderSummary.subtotal)}</span>
-              </div>
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-lg p-6 sticky top-20">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Tóm tắt đơn hàng
+              </h3>
+              <div className="space-y-2">
+                <div className="flex justify-between text-gray-600">
+                  <span>Tạm tính</span>
+                  <span>{formatVND(orderSummary.subtotal)}</span>
+                </div>
 
-              <div className="border-t border-gray-200 pt-4 flex justify-between text-gray-900 font-semibold">
-                <span>Total</span>
-                <span>{formatVND(orderSummary.total)}</span>
+                <div className="border-t border-gray-200 pt-4 flex justify-between text-gray-900 font-semibold">
+                  <span>Tổng cộng</span>
+                  <span>{formatVND(orderSummary.total)}</span>
+                </div>
               </div>
+              <button
+                onClick={handleCheckout}
+                disabled={!isAnyItemSelected}
+                className={`mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg flex items-center justify-center hover:bg-indigo-700 transition duration-200 ${
+                  !isAnyItemSelected ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                <FiCreditCard className="w-5 h-5 mr-2" />
+                Tiến hành thanh toán
+              </button>
             </div>
-            <button
-              onClick={handleCheckout}
-              disabled={!isAnyItemSelected}
-              className={`mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg flex items-center justify-center hover:bg-indigo-700 transition duration-200 ${
-                !isAnyItemSelected ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              <FiCreditCard className="w-5 h-5 mr-2" />
-              Proceed to Checkout
-            </button>
           </div>
         </div>
       </div>
-    </div>
     </>
   );
 };

@@ -66,7 +66,7 @@ const ECommerce: React.FC = () => {
 				totalRevenue: Number(monthlyRes.data.overview.total_revenue) || 0,
 				totalProducts: monthlyRes.data.overview.total_products || 0,
 				totalUsers: monthlyRes.data.overview.total_users || 0,
-					totalOrders: monthlyRes.data.overview.total_orders || 0,
+				totalOrders: monthlyRes.data.overview.total_orders || 0,
 				monthlyRevenue: revenueData,
 				topProducts: topProductsRes.data.top_products || [],
 			}));
@@ -100,7 +100,7 @@ const ECommerce: React.FC = () => {
 		<>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
 				<CardDataStats
-					title="Total Orders"
+					title="Số Đơn Hàng"
 					total={statistics.totalOrders.toString()}
 					rate=""
 				>
@@ -111,7 +111,7 @@ const ECommerce: React.FC = () => {
 				</CardDataStats>
 
 				<CardDataStats
-					title="Today's Revenue"
+					title="Doanh Thu Hôm Nay"
 					total={formatCurrency(statistics.todayRevenue)}
 					rate=""
 				>
@@ -119,7 +119,7 @@ const ECommerce: React.FC = () => {
 				</CardDataStats>
 
 				<CardDataStats
-					title="Total Products"
+					title="Tổng Đơn Hàng"
 					total={statistics.totalProducts.toString()}
 					rate=""
 				>
@@ -127,7 +127,7 @@ const ECommerce: React.FC = () => {
 				</CardDataStats>
 
 				<CardDataStats
-					title="Total Users"
+					title="Tổng Số Người Dùng"
 					total={statistics.totalUsers.toString()}
 					rate=""
 				>
@@ -154,10 +154,10 @@ const ECommerce: React.FC = () => {
 				<div className="mb-3 justify-between gap-4 sm:flex">
 					<div>
 						<h5 className="text-xl font-semibold text-black dark:text-white">
-							Refund Statistics
+							Thống Kê Hoàn Tiền
 						</h5>
 						<p className="text-sm text-gray-400 dark:text-gray-500">
-							Overview of refunds in the system
+							Tổng quan về hoàn tiền trong hệ thống
 						</p>
 					</div>
 				</div>
@@ -167,7 +167,7 @@ const ECommerce: React.FC = () => {
 						<div className="flex items-center justify-between">
 							<div>
 								<h6 className="text-sm font-medium text-gray-600 dark:text-gray-300">
-									Approved Refunds
+									Hoàn Tiền Đã Duyệt
 								</h6>
 								<p className="mt-1 text-lg font-bold text-green-600">
 									{statistics.approvedPercentage.toFixed(2)}%
@@ -198,7 +198,7 @@ const ECommerce: React.FC = () => {
 						<div className="flex items-center justify-between">
 							<div>
 								<h6 className="text-sm font-medium text-gray-600 dark:text-gray-300">
-									Pending Refunds
+									Hoàn Tiền Đang Chờ
 								</h6>
 								<p className="mt-1 text-lg font-bold text-yellow-600">
 									{statistics.pendingPercentage.toFixed(2)}%
@@ -228,7 +228,7 @@ const ECommerce: React.FC = () => {
 						<div className="flex items-center justify-between">
 							<div>
 								<h6 className="text-sm font-medium text-gray-600 dark:text-gray-300">
-									Rejected Refunds
+									Hoàn Tiền Bị Từ Chối
 								</h6>
 								<p className="mt-1 text-lg font-bold text-red-600">
 									{statistics.rejectedPercentage.toFixed(2)}%

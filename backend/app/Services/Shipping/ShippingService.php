@@ -143,12 +143,12 @@ class ShippingService implements ShippingServiceInterface
                     }
                     return response()->json([
                         'success' => false,
-                        'message' => 'This shipping is in order',
+                        'message' => 'Địa chỉ đang được sử dụng trong 1 đơn hàng!',
                     ], 200);
                 }
                 return response()->json([
                     'success' => false,
-                    'message' => 'This shipping is in order',
+                    'message' => 'Địa chỉ đang được sử dụng trong 1 đơn hàng!',
                 ], 400);
             }
 
@@ -193,7 +193,7 @@ class ShippingService implements ShippingServiceInterface
             if (self::getShippingRepository()->checkShippingInOrder($id)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This shipping is in order',
+                    'message' => 'Địa chỉ đang được sử dụng trong 1 đơn hàng!',
                 ], 400);
             }
 

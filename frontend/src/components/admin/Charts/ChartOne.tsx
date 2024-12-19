@@ -156,10 +156,10 @@ const ChartOne: React.FC<ChartOneProps> = ({
 	];
 
 	const filterButtons = [
-		{ value: 'today', label: 'Today' },
-		{ value: 'monthly', label: 'This Month' },
-		{ value: 'yearly', label: 'This Year' },
-		{ value: 'all', label: 'All Time' },
+		{ value: 'today', label: 'Hôm nay' },
+		{ value: 'monthly', label: 'Tháng này' },
+		{ value: 'yearly', label: 'Năm nay' },
+		{ value: 'all', label: 'Tất cả thời gian' },
 	] as const;
 
 	return (
@@ -171,7 +171,7 @@ const ChartOne: React.FC<ChartOneProps> = ({
 							<span className="block h-2.5 w-full max-w-2.5 rounded-full bg-primary"></span>
 						</span>
 						<div className="w-full">
-							<p className="font-semibold text-primary">Revenue</p>
+							<p className="font-semibold text-primary">Doanh thu</p>
 						</div>
 					</div>
 				</div>

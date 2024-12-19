@@ -9,6 +9,7 @@ import ProductCard from "../ProductCard";
 import NewestProducts from "./NewestProducts";
 import SalesProducts from "./SaleProducts";
 import TopProducts from "./TopProducts";
+import { ArrowRight } from "lucide-react";
 // import { ColorExtractor } from 'color-thief-react';
 // import { motion } from "framer-motion";
 
@@ -87,12 +88,11 @@ const EmailSubscribeModal = ({
           </button>
 
           <h3 className="text-2xl font-bold text-gray-900 mb-4">
-            Subscribe to Newsletter
+            Đăng ký nhận bản tin
           </h3>
 
           <p className="text-gray-600 mb-6">
-            Enter your email to receive notifications about our latest
-            promotions and updates
+            Nhập email của bạn để nhận thông báo về các chương trình khuyến mãi và cập nhật mới nhất của chúng tôi
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -101,29 +101,28 @@ const EmailSubscribeModal = ({
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder="Nhập email của bạn"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 required
               />
-              <p className="mt-2 text-sm text-gray-500">
-                We'll never share your email with anyone else.
-              </p>
+              {/* <p className="mt-2 text-sm text-gray-500">
+                Chúng tôi sẽ không bao giờ chia sẻ email của bạn với bất kỳ ai khác.
+              </p> */}
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition duration-200 ${
-                isLoading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              className={`w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition duration-200 ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
-                  Processing...
+                  Đang xử lý...
                 </div>
               ) : (
-                "Subscribe"
+                "Đăng ký"
               )}
             </button>
           </form>
@@ -235,7 +234,7 @@ const Homepage = () => {
   return (
     <>
       {/* Banner Header */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 px-4 md:px-6 mt-6 md:mt-10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 px-4 md:px-6 md:mt-10">
         {isLoading ? (
           <>
             <BannerSkeleton isLarge={true} />
@@ -247,27 +246,25 @@ const Homepage = () => {
             <div
               key={banner.id}
               className={`
-                ${
-                  index === 0
-                    ? "col-span-1 md:col-span-2 h-[300px] md:h-[500px]"
-                    : "col-span-1 h-[200px] md:h-[240px]"
+                ${index === 0
+                  ? "col-span-1 md:col-span-2 max-h-[300px] md:max-h-[500px]"
+                  : "col-span-1 max-h-[200px] md:max-h-[240px]"
                 }
                 relative z-0 rounded-xl overflow-hidden group
                 shadow-lg hover:shadow-2xl transition-all duration-300
                 border border-gray-200 hover:border-gray-300
                 transform hover:-translate-y-1
                 before:absolute before:inset-0 before:z-10 before:bg-gradient-to-t before:from-black/60 before:to-transparent before:opacity-0
-                before:transition-opacity before:duration-300 group-hover:before:opacity-100
+                before:transition-opacity before:duration-300 group-hover:before:opacity-100 group:
               `}
             >
-              <div className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-50">
+              <div className="w-full h-fit object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-50">
                 <ImageWithFallback src={banner.image} alt={banner.title} />
               </div>
               <div className="absolute inset-0 z-20 flex flex-col justify-between p-4 md:p-8">
                 <p
-                  className={`text-white font-bold ${
-                    index === 0 ? "text-2xl md:text-5xl" : "text-xl md:text-3xl"
-                  }`}
+                  className={`text-white font-bold ${index === 0 ? "text-2xl md:text-5xl" : "text-xl md:text-3xl"
+                    } hidden group-hover:block`}
                 >
                   {banner.title.split("<br />").map((line, lineIndex) => (
                     <React.Fragment key={lineIndex}>
@@ -282,9 +279,9 @@ const Homepage = () => {
                   onClick={() => handleShopNow(banner.url)}
                   className="text-white text-xl font-bold underline cursor-pointer hover:text-gray-200
                   transform translate-y-[100%] opacity-0 transition-all duration-300
-                  group-hover:translate-y-0 group-hover:opacity-100"
+                  group-hover:translate-y-0 group-hover:opacity-100 flex items-center gap-2"
                 >
-                  Go Now
+                  Xem ngay <ArrowRight />
                 </p>
               </div>
             </div>
@@ -293,21 +290,21 @@ const Homepage = () => {
       </div>
 
       {/* CTA */}
-      <div className="container max-w-5xl mx-auto bg-[#F1F1F1] p-6 md:p-12 my-6 md:my-10 mx-4">
+      <div className="container max-w-5xl mx-auto bg-[#F1F1F1] p-6 md:p-12 my-28">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0">
           <div className="text-center md:text-left">
             <p className="text-xl md:text-2xl font-bold">
-              Receive discount code when the program is available
+              Nhận mã giảm giá khi chương trình có sẵn
             </p>
             <p className="text-sm md:text-md font-medium mt-2">
-              Subscribe us to receive discount code
+              Đăng ký với chúng tôi để nhận mã giảm giá
             </p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
             className="w-full md:w-auto bg-black text-white text-lg md:text-xl font-bold px-6 md:px-10 py-2 hover:bg-gray-800 transition duration-200"
           >
-            Email Me
+            Gửi Email
           </button>
         </div>
       </div>
@@ -319,8 +316,8 @@ const Homepage = () => {
       />
 
       {/* Latest Product */}
-      <p className="text-2xl md:text-3xl font-bold text-center mt-10 md:mt-20 px-4">
-        Product List
+      <p className="text-2xl md:text-3xl font-bold text-center px-4">
+        Danh sách sản phẩm
       </p>
       <div className="container max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10 mt-6 md:mt-10">
@@ -331,7 +328,7 @@ const Homepage = () => {
             onClick={() => navigate("/products")}
             className="py-2 px-4 text-center bg-[#40BFFF] text-white font-bold rounded-lg hover:bg-[#3397cc] transition duration-300 btn-sm"
           >
-            View All
+            Xem tất cả
           </button>
         </div>
       </div>
@@ -357,9 +354,9 @@ const Homepage = () => {
               <div className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-50">
                 <ImageWithFallback src={banner.image} alt={banner.title} />
               </div>
-              <div className="absolute inset-0 z-20 flex flex-col justify-between p-8">
+              <div className="absolute inset-0 z-20 flex flex-col justify-between p-8 items-start">
                 <p
-                  className="text-white text-5xl font-extrabold 
+                  className="text-white text-2xl font-extrabold 
                   transform translate-y-[-100%] opacity-0 transition-all duration-300 
                   group-hover:translate-y-0 group-hover:opacity-100"
                 >
@@ -376,9 +373,9 @@ const Homepage = () => {
                   onClick={() => handleShopNow(banner.url)}
                   className="text-white text-xl font-bold underline cursor-pointer hover:text-gray-200
                   transform translate-y-[100%] opacity-0 transition-all duration-300
-                  group-hover:translate-y-0 group-hover:opacity-100"
+                  group-hover:translate-y-0 group-hover:opacity-100 flex items-center gap-2"
                 >
-                  Go Now
+                  Mua ngay <ArrowRight />
                 </button>
               </div>
             </div>
@@ -392,19 +389,19 @@ const Homepage = () => {
           <div className="max-w-[200px] text-center">
             <FaShippingFast className="mx-auto" color="#FF6875" size={80} />
             <p className="text-lg md:text-xl font-bold capitalize my-2">
-              Free Shipping
+              Miễn phí vận chuyển
             </p>
             <p className="text-sm md:text-md font-medium">
-              Free shipping on all order and return
+              Miễn phí vận chuyển cho tất cả đơn hàng và trả hàng
             </p>
           </div>
           <div className="max-w-[200px] text-center">
             <RiRefund2Line className="mx-auto" color="#FF6875" size={80} />
             <p className="text-lg md:text-xl font-bold capitalize my-2">
-              100% Refund
+              Hoàn tiền 100%
             </p>
             <p className="text-sm md:text-md font-medium">
-              We offer 100% refund on all order
+              Chúng tôi cung cấp hoàn tiền 100% cho tất cả đơn hàng
             </p>
           </div>
           <div className="max-w-[200px] text-center">
@@ -414,10 +411,10 @@ const Homepage = () => {
               size={80}
             />
             <p className="text-lg md:text-xl font-bold capitalize my-2">
-              Support 24/7
+              Hỗ trợ 24/7
             </p>
             <p className="text-sm md:text-md font-medium">
-              We support 24/7 for all customer
+              Chúng tôi hỗ trợ 24/7 cho tất cả khách hàng
             </p>
           </div>
         </div>
@@ -438,7 +435,7 @@ const Homepage = () => {
       {/* Map and Store Information */}
       <div className="container max-w-7xl mx-auto my-10 px-4">
         <p className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-10">
-          Find Us
+          Tìm chúng tôi
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
           <div className="col-span-1 h-[300px] md:h-[450px]">
@@ -452,24 +449,24 @@ const Homepage = () => {
           </div>
           <div className="col-span-1 flex flex-col justify-start gap-4">
             <p className="text-black text-xl font-bold">
-              Khu Tự Trị Trịnh Văn Bô
+              Hoàng Gia Trịnh Văn Bô
             </p>
             <p className="text-black text-md font-medium">
-              Hai Ba Trung , Ha Noi Viet Nam
+              Hai Bà Trưng, Hà Nội, Việt Nam
             </p>
-            <p className="text-black text-xl font-bold mt-4">Contact Us</p>
+            <p className="text-black text-xl font-bold mt-4">Liên hệ với chúng tôi</p>
             <p className="text-black text-md font-medium">
-              Phone: +1 (123) 456-7890
+              Điện thoại: +1 (123) 456-7890
             </p>
             <p className="text-black text-md font-medium">
               Email: [goshoes@example.com](mailto:goshoes@example.com)
             </p>
-            <p
-              className="text-black text-xl font-bold mt-4 cursor-pointer hover:text-gray-800"
+            <button
+              className="text-black text-xl font-bold mt-4 cursor-pointer hover:text-gray-800 bg-transparent border-none"
               onClick={() => navigate("/contact")}
             >
-              Contact Us
-            </p>
+              Liên hệ với chúng tôi
+            </button>
           </div>
         </div>
       </div>

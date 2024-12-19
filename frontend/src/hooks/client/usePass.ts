@@ -1,25 +1,38 @@
 import { useMutation } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import {
   sendResetPasswordRequest,
   verifyTokenForResetPassword,
   resetPassword,
 } from '../../services/client/profile';
-
-// Helper function to validate email format
-const isValidEmail = (email: string) => {
-  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return regex.test(email);
-};
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import Cookies from 'js-cookie';
+import { useState } from 'react';
+import { logout } from '../../store/client/userSlice';
 
 const usePass = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [avatar, setAvatar] = useState<string | null>(null);
+
+  const logoutHandler = () => {
+    dispatch(logout());
+    setAvatar(null);
+    Cookies.remove('access_token');
+    Cookies.remove('refresh_token');
+    navigate('/signin');
+  };
+
   // Gửi yêu cầu reset mật khẩu
   const { mutate: sendResetPasswordMutation, isLoading: isSendingResetPassword } = useMutation({
     mutationFn: sendResetPasswordRequest,
     onSuccess: () => {
+      toast.success('Yêu cầu đặt lại mật khẩu đã được gửi thành công');
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || 'Failed to send password reset request';
-      console.error('Error while sending reset password request:', errorMessage);
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.message || 'Gửi yêu cầu đặt lại mật khẩu thất bại';
+      toast.error(`Lỗi: ${errorMessage}`);
     },
   });
 
@@ -28,19 +41,11 @@ const usePass = () => {
     mutationFn: verifyTokenForResetPassword,
     onSuccess: (data) => {
       if (data) {
-        console.log('Verification token successful:', data);
+        console.log('Xác minh token thành công:', data);
       }
     },
-    onError: (error: any) => {
-      if (error?.message === 'Network Error') {
-        console.error('Network error occurred:', error);
-        if (!window.isNetworkErrorShown) {
-          console.error('Network error, please check your connection');
-          window.isNetworkErrorShown = true; // Đánh dấu lỗi đã được hiển thị
-        }
-      } else {
-        const errorMessage = error?.response?.data?.message || 'Verification failed';
-      }
+    onError: (error) => {
+      console.error('Lỗi khi xác minh token:', error);
     },
   });
 
@@ -48,43 +53,40 @@ const usePass = () => {
   const { mutate: resetPasswordMutation, isLoading: isResettingPassword } = useMutation({
     mutationFn: resetPassword,
     onSuccess: () => {
-      console.log('Password reset successful');
+      toast.success('Đặt lại mật khẩu thành công');
+      logoutHandler();
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || 'Failed to reset password';
-      console.error('Error while resetting password:', errorMessage);
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.message || 'Đặt lại mật khẩu thất bại';
+      toast.error(`Lỗi: ${errorMessage}`);
     },
   });
 
   // Hàm xử lý gửi yêu cầu reset mật khẩu
-  const handleSendResetPasswordRequest = (email: string) => {
+  const handleSendResetPasswordRequest = (email) => {
     if (!email) {
-      console.error('Email cannot be empty');
-      return;
-    }
-    if (!isValidEmail(email)) {
-      console.error('Invalid email format');
+      toast.error('Email không được để trống');
       return;
     }
     sendResetPasswordMutation({ email });
   };
 
   // Hàm xử lý xác minh token reset mật khẩu
-  const handleVerifyResetToken = (token: string) => {
+  const handleVerifyResetToken = (token) => {
     if (!token) {
-      console.error('Token cannot be empty');
+      toast.error('Token không được để trống');
       return;
     }
     verifyResetTokenMutation({ token, type: 'reset-password' });
   };
 
   // Hàm xử lý đặt lại mật khẩu mới
-  const handleResetPassword = (token: string, password: string, password_confirmation: string) => {
+  const handleResetPassword = (token, password, password_confirmation) => {
     if (!password || password !== password_confirmation) {
-      console.error('Password and confirmation password do not match');
+      toast.error('Mật khẩu và xác nhận mật khẩu không khớp');
       return;
     }
-    console.log('Resetting password with token:', token);
+    console.log('Đang đặt lại mật khẩu với token:', token);
     resetPasswordMutation({ token, password, password_confirmation });
   };
 

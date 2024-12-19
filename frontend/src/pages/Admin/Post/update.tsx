@@ -54,17 +54,17 @@ interface Editor {
 
 const postSchema = Joi.object({
   title: Joi.string().required().messages({
-    'string.empty': 'Title is required',
+    'string.empty': 'Tiêu đề không được bỏ trống',
   }),
   content: Joi.string().allow('').optional(),
   image: Joi.string().required().messages({
-    'string.empty': 'Image is required',
+    'string.empty': 'Hình ảnh không được bỏ trống',
   }),
   category_id: Joi.alternatives().try(
     Joi.string(),
     Joi.number()
   ).required().messages({
-    'any.required': 'Category is required',
+    'any.required': 'Danh mục không được bỏ trống',
   })
 });
 
@@ -136,10 +136,10 @@ const UpdatePost = () => {
       try {
         setIsPageLoading(true);
         const postResponse = await getPostById(Number(id));
-        
+
         if (postResponse.success && postResponse.post) {
           const post = postResponse.post;
-          
+
           reset({
             title: post.title,
             content: post.content,
@@ -149,7 +149,7 @@ const UpdatePost = () => {
 
           setPreviewImage(post.image);
           setInitialContent(post.content || '');
-          
+
           if (editorRef.current) {
             editorRef.current.setContent(post.content || '');
           }
@@ -170,7 +170,7 @@ const UpdatePost = () => {
             setCategories([]);
           }
         };
-        
+
         await fetchCategories();
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -185,7 +185,7 @@ const UpdatePost = () => {
 
   const onSubmit = async (data: FormData) => {
     const currentContent = editorRef.current?.getContent() || '';
-    
+
     if (!currentContent) {
       toast.error('Content is required');
       return;
@@ -216,7 +216,7 @@ const UpdatePost = () => {
       }
 
       const response = await axiosClient.put(`/posts/${id}`, postData);
-      
+
       if (response.data.success) {
         // Cập nhật lại dữ liệu ngay sau khi update thành công
         const updatedPost = await getPostById(Number(id));
@@ -240,7 +240,7 @@ const UpdatePost = () => {
     } catch (error: any) {
       console.error('Update post error:', error);
       toast.dismiss();
-      
+
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
@@ -261,14 +261,14 @@ const UpdatePost = () => {
 
   return (
     <>
-      <PageTitle title="Update Post | Goshoes" />
+      <PageTitle title="Cập nhật bài viết | Goshoes" />
       <div className="max-w-5xl mx-auto p-4">
         {isPageLoading ? (
           <FormSkeleton />
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300">Title</label>
+              <label className="block text-sm font-medium text-gray-300">Tiêu đề</label>
               <input
                 type="text"
                 {...register('title')}
@@ -281,18 +281,18 @@ const UpdatePost = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300">Image</label>
+              <label className="block text-sm font-medium text-gray-300">Hình ảnh</label>
               <div className="mt-1 space-y-2">
                 {previewImage && (
                   <div className="relative w-full h-48 rounded-lg overflow-hidden">
-                    <img 
-                      src={previewImage} 
-                      alt="Preview" 
+                    <img
+                      src={previewImage}
+                      alt="Xem trước"
                       className="w-full h-full object-cover"
                     />
                   </div>
                 )}
-                
+
                 <input
                   type="file"
                   accept="image/*"
@@ -308,7 +308,7 @@ const UpdatePost = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300">Content</label>
+              <label className="block text-sm font-medium text-gray-300">Nội dung</label>
               <div className="mt-1">
                 <RichTextEditor
                   ref={editorRef}
@@ -323,17 +323,17 @@ const UpdatePost = () => {
             </div>
 
             <div>
-              <label className="block mb-2 font-medium">Category</label>
+              <label className="block mb-2 font-medium">Danh mục</label>
               <select
                 {...register("category_id")}
                 disabled={isLoading}
                 className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 value={watch('category_id')}
               >
-                <option value="">Select category</option>
+                <option value="">Chọn danh mục</option>
                 {categories.map((category) => (
-                  <option 
-                    key={category.id} 
+                  <option
+                    key={category.id}
                     value={category.id}
                   >
                     {category.name}
@@ -353,18 +353,17 @@ const UpdatePost = () => {
                 onClick={() => navigate('/admin/post')}
                 className="w-1/2 px-4 py-2 text-white bg-gray-500 hover:bg-gray-600 rounded"
               >
-                Cancel
+                Hủy
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-1/2 px-4 py-2 text-white rounded ${
-                  isLoading 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-blue-500 hover:bg-blue-600'
-                }`}
+                className={`w-1/2 px-4 py-2 text-white rounded ${isLoading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
+                  }`}
               >
-                {isLoading ? 'Processing...' : 'Update Post'}
+                {isLoading ? 'Đang xử lý...' : 'Cập nhật bài viết'}
               </button>
             </div>
           </form>

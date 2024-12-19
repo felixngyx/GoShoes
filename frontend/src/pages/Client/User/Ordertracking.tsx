@@ -11,11 +11,11 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
   const getStatusInfo = (currentStatus: OrderStatus) => {
     switch (currentStatus) {
       case 'pending':
-        return { Icon: ShoppingCart, label: 'Order Placed', color: 'text-blue-600' };
+        return { Icon: ShoppingCart, label: 'Đã đặt hàng', color: 'text-blue-600' };
       case 'processing':
-        return { Icon: Package, label: 'Processing', color: 'text-blue-600' };
+        return { Icon: Package, label: 'Đang xử lý', color: 'text-blue-600' };
       case 'shipping':
-        return { Icon: Truck, label: 'Shipping', color: 'text-blue-600' };
+        return { Icon: Truck, label: 'Đang vận chuyển', color: 'text-blue-600' };
       case 'completed':
         return { Icon: CheckCircle2, label: 'Delivered', color: 'text-green-600' };
       case 'cancelled':
@@ -32,10 +32,10 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
   };
 
   const mainSteps = [
-    { id: 'pending', label: 'Order Placed', Icon: ShoppingCart },
-    { id: 'processing', label: 'Processing', Icon: Package },
-    { id: 'shipping', label: 'Shipping', Icon: Truck },
-    { id: 'completed', label: 'Delivered', Icon: CheckCircle2 },
+    { id: 'pending', label: 'Đã đặt hàng', Icon: ShoppingCart },
+    { id: 'processing', label: 'Đang xử lý', Icon: Package },
+    { id: 'shipping', label: 'Đang vận chuyển', Icon: Truck },
+    { id: 'completed', label: 'Hoàn tất ', Icon: CheckCircle2 },
   ] as const;
 
   const getStepStatus = (stepId: string) => {
@@ -72,7 +72,7 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
       {/* Payment Status - Responsive Layout */}
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-2">
-          <span className="font-medium text-sm sm:text-base">Payment Method:</span>
+          <span className="font-medium text-sm sm:text-base">Phương thức:</span>
           <span className="text-sm sm:text-base">{paymentMethod}</span>
         </div>
         <div className={`
@@ -81,7 +81,15 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
           ${paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
           ${paymentStatus === 'failed' ? 'bg-red-100 text-red-800' : ''}
         `}>
-          {paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}
+          {paymentStatus === 'success' && 'Thành công'}
+          {paymentStatus === 'pending' && 'Đang chờ'}
+          {paymentStatus === 'failed' && 'Thất bại'}
+          {paymentStatus === 'cancelled' && 'Đã hủy'}
+          {paymentStatus === 'refunded' && 'Đã hoàn tiền'}
+          {paymentStatus === 'expired' && 'Hết hạn'}
+          {paymentStatus === 'processing' && 'Đang xử lý'}
+          {paymentStatus === 'shipping' && 'Đang vận chuyển'}
+          {paymentStatus === 'completed' && 'Hoàn tất'}
         </div>
       </div>
 
@@ -91,7 +99,7 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
           {mainSteps.map((step, index) => {
             const stepStatus = getStepStatus(step.id);
             const isLastStep = index === mainSteps.length - 1;
-            
+
             return (
               <div key={step.id} className="relative flex-1 w-full sm:w-auto">
                 <div className="flex flex-row sm:flex-col items-center justify-center gap-4 sm:gap-0">
@@ -112,7 +120,7 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
                       `} />
                     </>
                   )}
-                  
+
                   {/* Step Circle */}
                   <div className={`
                     relative z-20
@@ -124,16 +132,16 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ status, paymentStatus, pa
                     shrink-0
                   `}>
                     {['cancelled', 'refunded', 'expired', 'failed'].includes(status) && index === 0 ? (
-                      <StatusIcon 
-                        className={`w-6 h-6 ${stepStatus.color}`} 
+                      <StatusIcon
+                        className={`w-6 h-6 ${stepStatus.color}`}
                       />
                     ) : (
-                      <step.Icon 
-                        className={`w-6 h-6 ${stepStatus.color}`} 
+                      <step.Icon
+                        className={`w-6 h-6 ${stepStatus.color}`}
                       />
                     )}
                   </div>
-                  
+
                   {/* Step Label */}
                   <div className={`
                     text-sm font-medium ${stepStatus.color}

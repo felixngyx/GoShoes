@@ -200,7 +200,7 @@ const DiscountList = () => {
 					<input
 						{...register('search')}
 						type="text"
-						placeholder="Search discounts by name or code..."
+						placeholder="Tìm kiếm giảm giá theo tên hoặc mã..."
 						className="pl-10 pr-4 py-2 border rounded-lg w-[300px] focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80 dark:bg-gray-800/80"
 					/>
 				</div>
@@ -210,14 +210,14 @@ const DiscountList = () => {
 						className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
 					>
 						<Plus className="h-4 w-4" />
-						Add Discount
+						Thêm Giảm Giá
 					</button>
 					<button
 						className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 flex items-center gap-2"
 						onClick={() => setIsFilterOpen(!isFilterOpen)}
 					>
 						<Filter className="h-4 w-4" />
-						Filters
+						Bộ Lọc
 					</button>
 					<button className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50">
 						<MoreHorizontal className="h-4 w-4" />
@@ -236,28 +236,28 @@ const DiscountList = () => {
 								/>
 							</th>
 							<th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
-								Code
+								Mã
 							</th>
 							<th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
-								Description
+								Mô Tả
 							</th>
 							<th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
 								<div className="flex items-center gap-1">
-									Status
+									Trạng Thái
 									<ChevronDown className="h-4 w-4" />
 								</div>
 							</th>
 							<th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
-								Valid From
+								Có Hiệu Lực Từ
 							</th>
 							<th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
-								Valid To
+								Có Hiệu Lực Đến
 							</th>
 							<th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
-								Discount
+								Giảm Giá
 							</th>
 							<th className="px-4 py-3 text-left text-sm font-medium dark:text-gray-200">
-								Used
+								Đã Sử Dụng
 							</th>
 							<th className="w-12 px-4 py-3"></th>
 						</tr>
@@ -283,8 +283,8 @@ const DiscountList = () => {
 								<td className="px-4 py-3">
 									<span
 										className={`inline-flex items-center px-2 py-1 rounded-full text-xs
-                    ${getStatusColor(discount.valid_from, discount.valid_to)}
-                  `}
+					${getStatusColor(discount.valid_from, discount.valid_to)}
+				  `}
 									>
 										{getStatusText(
 											discount.valid_from,
@@ -338,7 +338,7 @@ const DiscountList = () => {
 													className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
 												>
 													<Edit className="h-4 w-4" />
-													Update
+													Cập Nhật
 												</button>
 												<button
 													onClick={() => {
@@ -351,7 +351,7 @@ const DiscountList = () => {
 													className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
 												>
 													<Trash2 className="h-4 w-4" />
-													Delete
+													Xóa
 												</button>
 											</div>
 										</>
@@ -366,14 +366,14 @@ const DiscountList = () => {
 			{isFilterOpen && (
 				<div className="absolute top-16 right-6 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg p-4 w-64 z-10 mt-32">
 					<div className="space-y-3">
-						<div className="font-medium dark:text-gray-200">Filters</div>
+						<div className="font-medium dark:text-gray-200">Bộ Lọc</div>
 						<label className="flex items-center gap-2">
 							<input
 								type="checkbox"
 								className="rounded dark:bg-gray-700 dark:border-gray-600"
 								defaultChecked
 							/>
-							<span className="dark:text-gray-300">Code</span>
+							<span className="dark:text-gray-300">Mã</span>
 						</label>
 						<label className="flex items-center gap-2">
 							<input
@@ -381,7 +381,7 @@ const DiscountList = () => {
 								className="rounded dark:bg-gray-700 dark:border-gray-600"
 								defaultChecked
 							/>
-							<span className="dark:text-gray-300">Description</span>
+							<span className="dark:text-gray-300">Mô Tả</span>
 						</label>
 						<label className="flex items-center gap-2">
 							<input
@@ -389,7 +389,7 @@ const DiscountList = () => {
 								className="rounded dark:bg-gray-700 dark:border-gray-600"
 								defaultChecked
 							/>
-							<span className="dark:text-gray-300">Status</span>
+							<span className="dark:text-gray-300">Trạng Thái</span>
 						</label>
 						<label className="flex items-center gap-2">
 							<input
@@ -397,7 +397,7 @@ const DiscountList = () => {
 								className="rounded dark:bg-gray-700 dark:border-gray-600"
 								defaultChecked
 							/>
-							<span className="dark:text-gray-300">Valid Period</span>
+							<span className="dark:text-gray-300">Thời Gian Hiệu Lực</span>
 						</label>
 						<label className="flex items-center gap-2">
 							<input
@@ -405,7 +405,7 @@ const DiscountList = () => {
 								className="rounded dark:bg-gray-700 dark:border-gray-600"
 								defaultChecked
 							/>
-							<span className="dark:text-gray-300">Discount Amount</span>
+							<span className="dark:text-gray-300">Số Lượng Giảm Giá</span>
 						</label>
 						<label className="flex items-center gap-2">
 							<input
@@ -413,7 +413,7 @@ const DiscountList = () => {
 								className="rounded dark:bg-gray-700 dark:border-gray-600"
 								defaultChecked
 							/>
-							<span className="dark:text-gray-300">Usage Count</span>
+							<span className="dark:text-gray-300">Số Lần Sử Dụng</span>
 						</label>
 					</div>
 				</div>
@@ -429,12 +429,11 @@ const DiscountList = () => {
 							</div>
 
 							<h3 className="text-lg font-medium text-center mb-2 dark:text-gray-200">
-								Delete Discount
+								Xóa Giảm Giá
 							</h3>
 
 							<p className="text-gray-500 dark:text-gray-400 text-center mb-6">
-								Are you sure you want to delete this discount? This
-								action cannot be undone.
+								Bạn có chắc chắn muốn xóa giảm giá này không? Hành động này không thể hoàn tác.
 							</p>
 
 							<div className="flex gap-3 justify-end">
@@ -447,7 +446,7 @@ const DiscountList = () => {
 									}
 									className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
 								>
-									Cancel
+									Hủy
 								</button>
 								<button
 									onClick={() =>
@@ -456,7 +455,7 @@ const DiscountList = () => {
 									}
 									className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
 								>
-									Delete
+									Xóa
 								</button>
 							</div>
 						</div>

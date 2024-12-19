@@ -6,9 +6,9 @@ const Footer = () => {
 		<div className="w-full bg-[#BCDDFE]">
 			{/* Thay đổi padding trên mobile */}
 			<div className="container max-w-7xl mx-auto py-6 md:py-10 px-4">
-				{/* Top Section - Thêm spacing nhỏ hơn trên mobile */}
+				{/* Phần trên - Thêm khoảng cách nhỏ hơn trên mobile */}
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10 mb-6 md:mb-10">
-					{/* Logo & Description */}
+					{/* Logo & Mô tả */}
 					<div className="text-center md:text-left">
 						<div className="flex items-center gap-2 mb-4 justify-center md:justify-start">
 							<div className="rounded-lg p-2">
@@ -16,15 +16,15 @@ const Footer = () => {
 							</div>
 						</div>
 						<p className="text-gray-600 max-w-[300px] mx-auto md:mx-0">
-							Goshoes is a website that sells shoes.
+							Goshoes là một trang web bán giày.
 						</p>
 					</div>
 
-					{/* Follow Us */}
+					{/* Theo dõi chúng tôi */}
 					<div className="text-center md:text-left">
-						<h3 className="text-xl font-bold mb-3 md:mb-4">Follow Us</h3>
+						<h3 className="text-xl font-bold mb-3 md:mb-4">Theo dõi chúng tôi</h3>
 						<p className="text-gray-600 mb-3 md:mb-4">
-							Follow us on social media to get the latest news and updates.
+							Theo dõi chúng tôi trên mạng xã hội để nhận tin tức và cập nhật mới nhất.
 						</p>
 						<div className="flex gap-4 justify-center md:justify-start">
 							<a href="#" className="text-[#385C8E] hover:opacity-80 transition-opacity">
@@ -36,73 +36,73 @@ const Footer = () => {
 						</div>
 					</div>
 
-					{/* Contact Us */}
+					{/* Liên hệ với chúng tôi */}
 					<div className="text-center md:text-left">
-						<h3 className="text-xl font-bold mb-3 md:mb-4">Contact Us</h3>
+						<h3 className="text-xl font-bold mb-3 md:mb-4">Liên hệ với chúng tôi</h3>
 						<div className="text-gray-600">
 							<p>Goshoes , 118</p>
-							<p>Hai Ba Trung , Ha Noi</p>
-							<p>Viet Nam</p>
+							<p>Hai Bà Trưng , Hà Nội</p>
+							<p>Việt Nam</p>
 						</div>
 					</div>
 				</div>
 
-				{/* Links Section - Cải thiện layout trên mobile */}
+				{/* Phần liên kết - Cải thiện bố cục trên mobile */}
 				<div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-6 md:mb-10">
-					{/* Information */}
+					{/* Thông tin */}
 					<div className="text-center md:text-left">
-						<h3 className="font-bold mb-3 md:mb-4">Information</h3>
+						<h3 className="font-bold mb-3 md:mb-4">Thông tin</h3>
 						<ul className="space-y-2">
-							<li><Link to="/about-us" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">About Us</Link></li>
-							<li><Link to="/news" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">News</Link></li>
-							<li><Link to="/contact" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Contact</Link></li>
-							<li><Link to="/brand" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Brands</Link></li>
+							<li><Link to="/about-us" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Về chúng tôi</Link></li>
+							<li><Link to="/news" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Tin tức</Link></li>
+							<li><Link to="/contact" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Liên hệ</Link></li>
+							<li><Link to="/brand" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Thương hiệu</Link></li>
 						</ul>
 					</div>
 
-					{/* Shop */}
+					{/* Cửa hàng */}
 					<div className="text-center md:text-left">
-						<h3 className="font-bold mb-3 md:mb-4">Shop</h3>
+						<h3 className="font-bold mb-3 md:mb-4">Cửa hàng</h3>
 						<ul className="space-y-2">
-							<li><Link to="/products" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Products</Link></li>
-							<li><Link to="/category" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Categories</Link></li>
-							<li><Link to="/cart" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Shopping Cart</Link></li>
+							<li><Link to="/products" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Sản phẩm</Link></li>
+							<li><Link to="/category" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Danh mục</Link></li>
+							<li><Link to="/cart" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Giỏ hàng</Link></li>
 						</ul>
 					</div>
 
-					{/* My Account */}
+					{/* Tài khoản của tôi */}
 					<div className="text-center md:text-left">
-						<h3 className="font-bold mb-3 md:mb-4">My Account</h3>
+						<h3 className="font-bold mb-3 md:mb-4">Tài khoản của tôi</h3>
 						<ul className="space-y-2">
-							<li><Link to="/account" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Account Info</Link></li>
-							<li><Link to="/account/my-order" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">My Orders</Link></li>
-							<li><Link to="/account/whish-list" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Wishlist</Link></li>
-							<li><Link to="/account/my-address" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">My Addresses</Link></li>
+							<li><Link to="/account" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Thông tin tài khoản</Link></li>
+							<li><Link to="/account/my-order" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Đơn hàng của tôi</Link></li>
+							<li><Link to="/account/whish-list" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Danh sách yêu thích</Link></li>
+							<li><Link to="/account/my-address" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Địa chỉ của tôi</Link></li>
 						</ul>
 					</div>
 
-					{/* Support */}
+					{/* Hỗ trợ */}
 					<div className="text-center md:text-left">
-						<h3 className="font-bold mb-3 md:mb-4">Support</h3>
+						<h3 className="font-bold mb-3 md:mb-4">Hỗ trợ</h3>
 						<ul className="space-y-2">
-							<li><Link to="/signin" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Sign In</Link></li>
-							<li><Link to="/signup" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Sign Up</Link></li>
-							<li><Link to="/forget-password" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Forgot Password</Link></li>
+							<li><Link to="/signin" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Đăng nhập</Link></li>
+							<li><Link to="/signup" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Đăng ký</Link></li>
+							<li><Link to="/forget-password" className="text-gray-600 hover:text-gray-800 text-sm md:text-base">Quên mật khẩu</Link></li>
 						</ul>
 					</div>
 				</div>
 
-				{/* Bottom Section - Cải thiện spacing và alignment trên mobile */}
+				{/* Phần dưới - Cải thiện khoảng cách và căn chỉnh trên mobile */}
 				<div className="border-t border-gray-300 pt-4 md:pt-6">
 					<div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
 						<p className="text-gray-600 text-sm md:text-base text-center md:text-left">
-							© 2024 Goshoes. All rights reserved.
+							© 2024 Goshoes. Bản quyền thuộc về.
 						</p>
 						<div className="flex gap-4 items-center">
-							<img 
-								src="https://simg.zalopay.com.vn/zlp-website/assets/new_logo_6c5db2d21b.svg" 
-								alt="ZaloPay" 
-								className="h-6 md:h-8 object-contain" 
+							<img
+								src="https://simg.zalopay.com.vn/zlp-website/assets/new_logo_6c5db2d21b.svg"
+								alt="ZaloPay"
+								className="h-6 md:h-8 object-contain"
 							/>
 						</div>
 					</div>

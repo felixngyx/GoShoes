@@ -36,13 +36,13 @@ class VerifyChangeEmailRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'token.required' => 'Token is required',
-            'token.string' => 'Token must be a string',
-            'email.required' => 'Email is required',
-            'email.string' => 'Email must be a string',
-            'email.email' => 'Email must be a valid email',
-            'email.max' => 'Email must be less than 191 characters',
-            'email.unique' => 'Email is already taken'
+            'token.required' => 'Token là bắt buộc',
+            'token.string' => 'Token phải là một chuỗi',
+            'email.required' => 'Email là bắt buộc',
+            'email.string' => 'Email phải là một chuỗi',
+            'email.email' => 'Email phải là một email hợp lệ',
+            'email.max' => 'Email phải ít hơn 191 ký tự',
+            'email.unique' => 'Email đã được sử dụng'
         ];
     }
 }

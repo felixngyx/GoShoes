@@ -36,11 +36,11 @@ class ProductVariantDeleteMany extends FormRequest
     public function messages(): array
     {
         return [
-            "ids.required" => "Product variant ids are required",
-            "ids.array" => "Product variant ids must be an array",
-            "ids.*.required" => "Product variant id is required",
-            "ids.*.integer" => "Product variant id must be an integer",
-            "ids.*.exists" => "Product variant id does not exist",
+            "ids.required" => "Cần có mã định danh của biến thể sản phẩm",
+            "ids.array" => "Mã định danh của biến thể sản phẩm phải là một mảng",
+            "ids.*.required" => "Cần có mã định danh của biến thể sản phẩm",
+            "ids.*.integer" => "Mã định danh của biến thể sản phẩm phải là số nguyên",
+            "ids.*.exists" => "Mã định danh của biến thể sản phẩm không tồn tại",
         ];
     }
 }

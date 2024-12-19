@@ -9,104 +9,110 @@ import {
 	verifyTokenChangePhone,
 } from '../../services/client/profile';
 import { ProfileParams, Profile } from '../../types/client/profile';
-import { useShipping } from './useShipping';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import Cookies from 'js-cookie';
+import { useState } from 'react';
+import { logout } from '../../store/client/userSlice';
 
 const useProfile = () => {
+	const navigate = useNavigate();
+	const dispatch = useDispatch();
+	const [avatar, setAvatar] = useState<string | null>(null);
+
+	const logoutHandler = () => {
+		dispatch(logout());
+		setAvatar(null);
+		Cookies.remove('access_token');
+		Cookies.remove('refresh_token');
+		navigate('/signin');
+	};
 	// Lấy dữ liệu Profile
-	const {
-		data: profile,
-		isLoading,
-		isError,
-	} = useQuery<Profile | null>({
+	const { data: profile } = useQuery<Profile | null>({
 		queryKey: ['PROFILE'],
 		queryFn: getProfile,
 		onError: (error: any) => {
 			console.error('Error while fetching profile:', error);
-			toast.error('Cannot fetch profile information');
+			toast.error('Không thể lấy thông tin hồ sơ');
 		},
 	});
 
 	// Cập nhật Profile
-	const { mutate: updateProfileMutation, isLoading: isUpdating } = useMutation(
-		{
-			mutationFn: updateProfile,
-			onSuccess: () => {
-				toast.success('Profile updated successfully');
-			},
-			onError: (error: any) => {
-				console.error('Error while updating profile:', error);
-				toast.error('Failed to update profile');
-			},
-		}
-	);
-
-	// Gửi yêu cầu thay đổi email
-	const { mutate: sendEmailChangeMutation, isLoading: isSendingEmail } =
-		useMutation({
-			mutationFn: sendEmailChangeRequest,
-			onSuccess: () => {
-				toast.success(
-					'Email change request has been sent. Please check your email.'
-				);
-			},
-			onError: (error: any) => {
-				console.error('Error while sending email change request:', error);
-				toast.error('Failed to send email change request');
-			},
-		});
-
-	// Xác minh token đổi email
-	const { mutate: verifyTokenMutation, isLoading: isVerifyingToken } =
-		useMutation({
-			mutationFn: verifyTokenChangeEmail,
-			onSuccess: () => {
-				toast.success('Email successfully changed');
-			},
-			onError: (error: any) => {
-				console.error('Error while verifying email change token:', error);
-				toast.error('Failed to verify email change token');
-			},
-		});
-
-	// Gửi yêu cầu thay đổi số điện thoại
-	const { mutate: sendPhoneChangeMutation, isLoading: isSendingPhone } =
-		useMutation({
-			mutationFn: sendPhoneChangeRequest,
-			onSuccess: () => {
-				toast.success(
-					'Phone number change request has been sent. Please check your phone.'
-				);
-			},
-			onError: (error: any) => {
-				console.error('Error while sending phone change request:', error);
-				toast.error('Failed to send phone change request');
-			},
-		});
-
-	// Xác minh token thay đổi số điện thoại
-	const {
-		mutate: verifyPhoneTokenMutation,
-		isLoading: isVerifyingPhoneToken,
-	} = useMutation({
-		mutationFn: verifyTokenChangePhone,
+	const { mutate: updateProfileMutation } = useMutation({
+		mutationFn: updateProfile,
 		onSuccess: () => {
-			toast.success('Phone number successfully changed');
+			toast.success('Cập nhật hồ sơ thành công');
 		},
 		onError: (error: any) => {
-			console.error('Error while verifying phone change token:', error);
-			toast.error('Failed to verify phone change token');
+			console.error('Error while updating profile:', error);
+			toast.error('Cập nhật hồ sơ thất bại');
+		},
+	});
+
+	// Gửi yêu cầu thay đổi email
+	const { mutate: sendEmailChangeMutation } = useMutation({
+		mutationFn: sendEmailChangeRequest,
+		onSuccess: () => {
+			toast.success(
+				'Yêu cầu thay đổi email đã được gửi. Vui lòng kiểm tra email của bạn.'
+			);
+		},
+		onError: (error: any) => {
+			console.error('Error while sending email change request:', error);
+			toast.error('Gửi yêu cầu thay đổi email thất bại');
+		},
+	});
+
+	// Xác minh token đổi email
+	const { mutate: verifyTokenMutation } = useMutation({
+		mutationFn: verifyTokenChangeEmail,
+		onSuccess: () => {
+			toast.success('Email đã được thay đổi thành công');
+			logoutHandler()
+		},
+		onError: (error: any) => {
+			const errorMessage =
+				error.response?.data?.message || 'Đã xảy ra lỗi không xác định';
+			toast.error(errorMessage);
+		},
+	});
+
+	// Gửi yêu cầu thay đổi số điện thoại
+	const { mutate: sendPhoneChangeMutation } = useMutation({
+		mutationFn: sendPhoneChangeRequest,
+		onSuccess: () => {
+			toast.success(
+				'Yêu cầu thay đổi số điện thoại đã được gửi. Vui lòng kiểm tra điện thoại của bạn.'
+			);
+		},
+		onError: (error: any) => {
+			console.error('Error while sending phone change request:', error);
+		},
+	});
+
+	// Xác minh token thay đổi số điện thoại
+	const { mutate: verifyPhoneTokenMutation } = useMutation({
+		mutationFn: verifyTokenChangePhone,
+		onSuccess: () => {
+			toast.success('Số điện thoại đã được thay đổi thành công');
+			navigate('/account');
+		},
+		onError: (error: any) => {
+			const errorMessage =
+				error.response?.data?.message || 'Đã xảy ra lỗi không xác định';
+			toast.error(errorMessage);
 		},
 	});
 
 	// Xử lý gửi yêu cầu thay đổi email
 	const handleSendEmailChangeRequest = () => {
-		sendEmailChangeMutation(); // Gọi mutation mà không cần tham số
+		sendEmailChangeMutation();
 	};
 
 	// Xử lý xác minh token thay đổi email
 	const handleVerifyTokenChangeEmail = (token: string, email: string) => {
 		if (!token || !email) {
-			toast.error('Token and email cannot be empty');
+			toast.error('Token và email không được để trống');
 			return;
 		}
 		verifyTokenMutation({ token, email });
@@ -114,50 +120,40 @@ const useProfile = () => {
 
 	// Xử lý gửi yêu cầu thay đổi số điện thoại
 	const handleSendPhoneChangeRequest = () => {
-		sendPhoneChangeMutation(); // Gọi mutation mà không cần tham số
+		sendPhoneChangeMutation();
 	};
 
 	// Xử lý xác minh token thay đổi số điện thoại
 	const handleVerifyTokenChangePhone = (token: string, phone: string) => {
 		if (!token || !phone) {
-			toast.error('Token and phone number cannot be empty');
+			toast.error('Token và số điện thoại không được để trống');
 			return;
 		}
 		verifyPhoneTokenMutation({ token, phone });
 	};
 
-	// Xử lý cập nhật profile
 	const handleUpdateProfile = (params: ProfileParams) => {
-		if (!params.name || !params.avt || !params.birth_date || !params.gender) {
-			console.error('Invalid data for updating profile:', params);
-			toast.error('Please check the information');
-			return;
-		}
 		updateProfileMutation({
 			...params,
-			address: selectedLocation || undefined,
 		});
 	};
 
-	// avt
 	// Xử lý thay đổi avatar
 	const handleUpdateAvatar = async (base64Image: string) => {
 		const updatedProfile = {
-			avt: base64Image, // Sử dụng chuỗi base64 của avatar
-			name: profile?.name || '', // Đảm bảo 'name' không rỗng
-			email: profile?.email || '', // Đảm bảo 'email' không rỗng
-			birth_date: profile?.birth_date || '', // Đảm bảo 'birth_date' không rỗng
-			gender: profile?.gender || '', // Đảm bảo 'gender' không rỗng
+			avt: base64Image,
+			name: profile?.name || '',
+			email: profile?.email || '',
+			birth_date: profile?.birth_date || '',
+			gender: profile?.gender || '',
 			phone: profile?.phone ? profile.phone.toString() : '',
 			bio: profile?.bio || '',
-			address: profile?.address || undefined,
 		};
 
 		try {
-			// Gọi API cập nhật profile
 			await updateProfileMutation(updatedProfile);
 		} catch (error) {
-			throw new Error('Failed to update profile');
+			throw new Error('Cập nhật hồ sơ thất bại');
 		}
 	};
 
@@ -171,32 +167,14 @@ const useProfile = () => {
 		});
 	};
 
-	// Xử lý địa chỉ
-	const {
-		selectedLocation,
-		handleLocationSelect,
-		handleEdit,
-		showPopup,
-		setShowPopup,
-		editAddress,
-	} = useShipping();
-
 	return {
 		profile,
-		isLoading,
-		isUpdating,
 		handleUpdateProfile,
 		handleUpdateAvatar,
 		handleSendEmailChangeRequest,
 		handleVerifyTokenChangeEmail,
 		handleSendPhoneChangeRequest,
 		handleVerifyTokenChangePhone,
-		selectedLocation,
-		handleLocationSelect,
-		handleEdit,
-		showPopup,
-		setShowPopup,
-		editAddress,
 	};
 };
 

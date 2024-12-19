@@ -1,36 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { joiResolver } from '@hookform/resolvers/joi';
-import { profileUpdateSchema } from '../Schema/profileSchema';
 import { ProfileParams } from '../../../../types/client/profile';
-import { RootState } from '../../../../store';
-import { useSelector } from 'react-redux';
+import Cookies from 'js-cookie';
+// import { setUser } from '../../../../store/client/userSlice';
 
 interface ProfileFormProps {
 	profile: any;
-	selectedLocation: any;
 	handleUpdateProfile: (data: ProfileParams) => void;
-	handleLocationSelect: () => void;
 	handleSendEmailChangeRequest: (email: string) => void;
-	handleVerifyTokenChangePhone: (token: string, phone: string) => void;
 	handleSendPhoneChangeRequest: () => void;
-	handleVerifyTokenChangeEmail: (token: string, email: string) => void;
-	isSendingPhone: boolean;
-	isVerifyingPhoneToken: boolean;
 }
 
 const ProfileForm: React.FC<ProfileFormProps> = ({
 	profile,
-	selectedLocation,
 	handleUpdateProfile,
-	handleLocationSelect,
 	handleSendEmailChangeRequest,
 	handleSendPhoneChangeRequest,
-	handleVerifyTokenChangeEmail,
 }) => {
 	const [emailToChange, setEmailToChange] = useState<string | null>(null);
 	const [phoneToChange, setPhoneToChange] = useState<string | null>(null);
-	const { user } = useSelector((state: RootState) => state.client);
+	const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+	const [authProvider, setAuthProvider] = useState<string | null>(null);
+
+	useEffect(() => {
+		const userInfo = Cookies.get('user');
+
+		if (userInfo) {
+			const userData = JSON.parse(userInfo);
+			console.log(userData);
+			setIsVerifyingEmail(userData.email_is_verified);
+			setAuthProvider(userData.auth_provider);
+		}
+	}, []);
+
 
 	const {
 		register,
@@ -39,7 +41,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 		setValue,
 		watch,
 	} = useForm<ProfileParams>({
-		resolver: joiResolver(profileUpdateSchema),
 		defaultValues: {
 			name: profile?.name || '',
 			email: profile?.email || '',
@@ -48,10 +49,11 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 			avt: profile?.avt || '',
 			gender: profile?.gender || '',
 			birth_date: profile?.birth_date || '',
-			address: selectedLocation?.shipping_detail.address || '',
 		},
 	});
 
+	const [isChangingEmail, setIsChangingEmail] = useState(false);
+	const [isChangingPhone, setIsChangingPhone] = useState(false);
 	const watchEmail = watch('email');
 	const watchPhone = watch('phone');
 
@@ -66,11 +68,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 			setValue('birth_date', profile.birth_date);
 		}
 
-		if (selectedLocation) {
-			setValue('address', selectedLocation.shipping_detail.address);
-		}
-
-		// Nếu có email/phone đang chờ thay đổi, hiển thị lại
+		// Nếu có email hoặc số điện thoại đang chờ thay đổi, hiển thị lại
 		if (emailToChange) {
 			setValue('email', emailToChange);
 		}
@@ -78,35 +76,28 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 		if (phoneToChange) {
 			setValue('phone', phoneToChange);
 		}
-	}, [profile, selectedLocation, emailToChange, phoneToChange, setValue]);
+	}, [profile, emailToChange, phoneToChange, setValue]);
 
 	const onSubmit = async (data: ProfileParams) => {
 		const updatedData: ProfileParams = {
 			...data,
-			address: selectedLocation?.shipping_detail?.address,
 		};
 
-		// Nếu email thay đổi và không rỗng, gửi yêu cầu thay đổi email
-		if (
-			watchEmail.trim() !== profile?.email?.trim() &&
-			watchEmail.trim() !== ''
-		) {
+		// Nếu email thay đổi, gửi yêu cầu thay đổi email
+		if (watchEmail !== profile?.email && watchEmail !== '') {
 			updatedData.email = watchEmail;
 			handleSendEmailChangeRequest(watchEmail); // Gửi yêu cầu thay đổi email
 			setEmailToChange(watchEmail); // Lưu email đang thay đổi
 		}
 
-		// Nếu số điện thoại thay đổi và không rỗng, gửi yêu cầu thay đổi số điện thoại
-		if (
-			watchPhone.trim() !== profile?.phone?.trim() &&
-			watchPhone.trim() !== ''
-		) {
+		// Nếu số điện thoại thay đổi, gửi yêu cầu thay đổi số điện thoại
+		if (watchPhone !== profile?.phone && watchPhone !== '') {
 			updatedData.phone = watchPhone;
 			handleSendPhoneChangeRequest(); // Gửi yêu cầu thay đổi số điện thoại
 			setPhoneToChange(watchPhone); // Lưu số điện thoại đang thay đổi
 		}
 
-		// Gọi hàm cập nhật profile
+		// Gọi hàm cập nhật thông tin cá nhân
 		handleUpdateProfile(updatedData);
 	};
 
@@ -116,86 +107,85 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 				className="grid grid-cols-2 gap-x-5 gap-y-4"
 				onSubmit={handleSubmit(onSubmit)}
 			>
-				{/* Các trường nhập liệu */}
+				{/* Trường nhập tên */}
 				<label className="form-control col-span-2 sm:col-span-1">
 					<div className="label">
 						<span className="label-text font-medium text-base">
-							UserName
+							Tên người dùng
 						</span>
 					</div>
 					<input
 						type="text"
-						placeholder="Type here"
+						placeholder="Nhập tại đây"
 						className="input input-bordered w-full"
 						{...register('name')}
 					/>
-					{errors.name && (
-						<p className="text-red-500">{errors.name?.message}</p>
-					)}
 				</label>
 
 				{/* Email */}
-				<label className="form-control col-span-2 sm:col-span-1">
-					<div className="label">
-						<span className="label-text font-medium text-base">
-							Email
-						</span>
+				<div className="form-control">
+					<label className="label">
+						<span className="label-text text-base font-medium">Email</span>
+					</label>
+					<div className="relative">
+						<input
+							type="email"
+							className="input input-bordered w-full pr-24"
+							readOnly
+							{...register('email')}
+						/>
+						{authProvider !== 'facebook' && (
+							<button
+								type="button"
+								className="btn btn-link btn-sm absolute right-0 top-0 h-full px-3 text-sm font-medium text-blue-500 hover:underline"
+								onClick={() => handleSendEmailChangeRequest(watchEmail)}
+							>
+								{isChangingEmail ? 'Đang thay đổi...' : 'Thay đổi'}
+							</button>
+						)}
 					</div>
-					<input
-						type="email"
-						placeholder="Type here"
-						className="input input-bordered w-full"
-						{...register('email')}
-					/>
-					{errors.email && (
-						<p className="text-red-500">{errors.email?.message}</p>
-					)}
-				</label>
+				</div>
 
-				{/* Phone */}
-				<label className="form-control col-span-2 sm:col-span-1">
-					<div className="label">
-						<span className="label-text font-medium text-base">
-							Phone number
-						</span>
+				{/* Số điện thoại */}
+				<div className="form-control">
+					<label className="label">
+						<span className="label-text text-base font-medium">Số điện thoại</span>
+					</label>
+					<div className="relative">
+						<input
+							type="text"
+							className="input input-bordered w-full pr-24"
+							readOnly
+							{...register('phone')}
+						/>
+						<button
+							type="button"
+							className="btn btn-link btn-sm absolute right-0 top-0 h-full px-3 text-sm font-medium text-blue-500 hover:underline"
+							onClick={handleSendPhoneChangeRequest}
+						>
+							{isChangingPhone ? 'Đang thay đổi...' : 'Thay đổi'}
+						</button>
 					</div>
-					<input
-						type="text"
-						placeholder="Type here"
-						className="input input-bordered w-full"
-						{...register('phone')}
-					/>
-					{errors.phone && (
-						<p className="text-red-500">{errors.phone?.message}</p>
-					)}
-				</label>
+				</div>
 
-				{/* Gender */}
+				{/* Giới tính */}
 				<label className="form-control col-span-2 sm:col-span-1">
 					<div className="label">
-						<span className="label-text font-medium text-base">
-							Gender
-						</span>
+						<span className="label-text font-medium text-base">Giới tính</span>
 					</div>
 					<select
 						className="select select-bordered w-full"
 						{...register('gender')}
 					>
-						<option value="male">Male</option>
-						<option value="female">Female</option>
-						<option value="other">Other</option>
+						<option value="male">Nam</option>
+						<option value="female">Nữ</option>
 					</select>
-					{errors.gender && (
-						<p className="text-red-500">{errors.gender?.message}</p>
-					)}
 				</label>
 
-				{/* Birth date */}
+				{/* Ngày sinh */}
 				<label className="form-control col-span-2 sm:col-span-1">
 					<div className="label">
-						<span className="label-text font-medium text-base">
-							Birth date
-						</span>
+						<span className="label-text font-medium text-base">Ngày sinh</span>
 					</div>
 					<input
 						type="date"
@@ -203,36 +193,30 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 						{...register('birth_date')}
 						placeholder="YYYY-MM-DD"
 					/>
-					{errors.birth_date && (
-						<p className="text-red-500">{errors.birth_date?.message}</p>
-					)}
 				</label>
 
-				{/* Bio */}
+				{/* Tiểu sử */}
 				<label className="form-control col-span-2">
 					<div className="label">
-						<span className="label-text font-medium text-base">Bio</span>
+						<span className="label-text font-medium text-base">Tiểu sử</span>
 					</div>
 					<textarea
-						placeholder="Type here"
+						placeholder="Nhập tại đây"
 						className="textarea textarea-bordered w-full"
 						{...register('bio')}
 					/>
-					{errors.bio && (
-						<p className="text-red-500">{errors.bio?.message}</p>
-					)}
 				</label>
 
+				{/* Nút cập nhật */}
 				<button
 					type="submit"
-					disabled={!user.email_is_verified}
-					className={`btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] col-span-2 mt-5 ${
-						user.email_is_verified ? '' : 'btn-disabled'
-					}`}
+					disabled={!isVerifyingEmail}
+					className={`btn btn-sm bg-[#40BFFF] text-white hover:bg-[#259CFA] col-span-2 mt-5 ${isVerifyingEmail ? '' : 'btn-disabled'
+						}`}
 				>
-					{user.email_is_verified
-						? 'Update'
-						: 'Please verify your email first to update your profile'}
+					{isVerifyingEmail
+						? 'Cập nhật'
+						: 'Vui lòng xác minh email trước khi cập nhật thông tin'}
 				</button>
 			</form>
 		</div>

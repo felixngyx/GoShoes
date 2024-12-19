@@ -93,7 +93,7 @@ const DropdownUser = () => {
 										fill=""
 									/>
 								</svg>
-								My Profile
+								Hồ sơ
 							</Link>
 						</li>
 						<li>
@@ -102,7 +102,7 @@ const DropdownUser = () => {
 								className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
 							>
 								<HomeIcon/>
-								Home Page
+								Trang chủ
 							</Link>
 						</li>
 					</ul>
@@ -127,7 +127,7 @@ const DropdownUser = () => {
 								fill=""
 							/>
 						</svg>
-						Log Out
+						Đăng xuất
 					</button>
 				</div>
 			)}

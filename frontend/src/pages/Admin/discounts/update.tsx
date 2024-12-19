@@ -35,29 +35,29 @@ type DiscountResponse = {
 
 const updateDiscountSchema = Joi.object({
   code: Joi.string()
-    .min(3).message('Discount code must be at least 3 characters')
-    .max(50).message('Discount code cannot exceed 50 characters')
-    .pattern(/^[A-Z0-9]+$/).message('Discount code can only contain uppercase letters and numbers')
+    .min(3).message('Mã giảm giá phải có ít nhất 3 ký tự')
+    .max(50).message('Mã giảm giá không được vượt quá 50 ký tự')
+    .pattern(/^[A-Z0-9]+$/).message('Mã giảm giá chỉ được chứa chữ cái in hoa và số')
     .required(),
   description: Joi.string()
-    .min(5).message('Description must be at least 5 characters')
-    .max(200).message('Description cannot exceed 200 characters')
+    .min(5).message('Mô tả phải có ít nhất 5 ký tự')
+    .max(200).message('Mô tả không được vượt quá 200 ký tự')
     .required(),
   valid_from: Joi.string().required(),
   valid_to: Joi.string().required(),
   min_order_amount: Joi.number()
-    .min(0).message('Minimum order amount cannot be negative')
-    .max(99999999.99).message('Minimum order amount is too large')
+    .min(0).message('Số tiền đơn hàng tối thiểu không được âm')
+    .max(99999999.99).message('Số tiền đơn hàng tối thiểu quá lớn')
     .precision(2)
     .required(),
   usage_limit: Joi.number()
     .integer()
-    .min(1).message('Usage limit must be greater than 0')
-    .max(999999).message('Usage limit is too large')
+    .min(1).message('Giới hạn sử dụng phải lớn hơn 0')
+    .max(999999).message('Giới hạn sử dụng quá lớn')
     .required(),
   percent: Joi.number()
-    .min(0).message('Discount percentage cannot be negative')
-    .max(100).message('Discount percentage cannot exceed 100%')
+    .min(0).message('Phần trăm giảm giá không được âm')
+    .max(100).message('Phần trăm giảm giá không được vượt quá 100%')
     .required(),
   product_ids: Joi.array().items(Joi.number()).allow(null)
 });
@@ -135,7 +135,7 @@ const UpdateDiscount = () => {
       setValue('min_order_amount', parseFloat(discount.min_order_amount));
       setValue('usage_limit', discount.usage_limit);
       setValue('percent', parseFloat(discount.percent));
-      
+
       if (discount.products) {
         setSelectedProducts(discount.products);
         setValue('product_ids', discount.products.map(p => p.id));
@@ -176,7 +176,7 @@ const UpdateDiscount = () => {
           }
         }
       );
-      
+
       if (response.data.status) {
         toast.success('Discount updated successfully');
         navigate('/admin/discounts');
@@ -198,11 +198,11 @@ const UpdateDiscount = () => {
   };
 
   // ProductSelectionModal component
-  const ProductSelectionModal = ({ 
-    isOpen, 
-    onClose, 
-    onSelectProducts, 
-    selectedProducts 
+  const ProductSelectionModal = ({
+    isOpen,
+    onClose,
+    onSelectProducts,
+    selectedProducts
   }: {
     isOpen: boolean;
     onClose: () => void;
@@ -266,7 +266,7 @@ const UpdateDiscount = () => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-gray-800 rounded-lg w-full max-w-2xl p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-white">Select Products</h2>
+            <h2 className="text-xl font-bold text-white">Chọn sản phẩm</h2>
             <button onClick={onClose} className="text-gray-400 hover:text-white">
               <FiX size={24} />
             </button>
@@ -277,7 +277,7 @@ const UpdateDiscount = () => {
               type="text"
               value={searchTerm}
               onChange={handleSearch}
-              placeholder="Search products..."
+              placeholder="Tìm kiếm sản phẩm..."
               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
             />
             <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -293,7 +293,7 @@ const UpdateDiscount = () => {
                 <input
                   type="checkbox"
                   checked={localSelectedProducts.some(p => p.id === product.id)}
-                  onChange={() => {}}
+                  onChange={() => { }}
                   className="mr-3"
                 />
                 <div className="flex flex-col">
@@ -314,7 +314,7 @@ const UpdateDiscount = () => {
           </div>
 
           <div className="text-gray-400 mb-4">
-            Selected: {localSelectedProducts.length} products
+            Đã chọn: {localSelectedProducts.length} sản phẩm
           </div>
 
           <div className="flex justify-end gap-3">
@@ -322,13 +322,13 @@ const UpdateDiscount = () => {
               onClick={onClose}
               className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
             >
-              Cancel
+              Huỷ
             </button>
             <button
               onClick={handleSave}
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
             >
-              Save Selection
+              Lưu
             </button>
           </div>
         </div>
@@ -348,22 +348,22 @@ const UpdateDiscount = () => {
     <div className="container mx-auto py-8 px-4">
       <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
         <Link to="/admin/discounts" className="hover:text-white transition-colors">
-          Discounts
+          Giảm giá
         </Link>
         <FiChevronRight className="h-4 w-4" />
-        <span className="text-white">Update Discount</span>
+        <span className="text-white">Cập nhật giảm giá</span>
       </div>
 
       <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl px-8 py-10 mx-auto">
         <h1 className="text-3xl font-bold text-white flex items-center mb-6">
           <FiTag className="mr-3" />
-          Update Discount
+          Cập nhật giảm giá
         </h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="form-control">
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Discount Code
+              Mã giảm giá
             </label>
             <input
               type="text"
@@ -377,7 +377,7 @@ const UpdateDiscount = () => {
 
           <div className="form-control">
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Description
+              Mô tả
             </label>
             <textarea
               {...register('description')}
@@ -392,7 +392,7 @@ const UpdateDiscount = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiCalendar className="mr-2" /> Valid From
+                <FiCalendar className="mr-2" /> Hiệu lực từ
               </label>
               <input
                 type="date"
@@ -406,7 +406,7 @@ const UpdateDiscount = () => {
 
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiCalendar className="mr-2" /> Valid To
+                <FiCalendar className="mr-2" /> Hiệu lực đến
               </label>
               <input
                 type="date"
@@ -422,7 +422,7 @@ const UpdateDiscount = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiShoppingCart className="mr-2" /> Minimum Order Amount
+                <FiShoppingCart className="mr-2" /> Số tiền đơn hàng tối thiểu
               </label>
               <input
                 type="number"
@@ -437,7 +437,7 @@ const UpdateDiscount = () => {
 
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiTag className="mr-2" /> Usage Limit
+                <FiTag className="mr-2" /> Giới hạn sử dụng
               </label>
               <input
                 type="number"
@@ -453,7 +453,7 @@ const UpdateDiscount = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                <FiPercent className="mr-2" /> Discount Percentage
+                <FiPercent className="mr-2" /> Phần trăm giảm giá
               </label>
               <input
                 type="number"
@@ -474,12 +474,12 @@ const UpdateDiscount = () => {
 
             <div className="form-control">
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Selected Products
+                Sản phẩm đã chọn
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {selectedProducts.map(product => (
-                  <div 
-                    key={product.id} 
+                  <div
+                    key={product.id}
                     className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm"
                   >
                     <span>{product.name}</span>
@@ -503,7 +503,7 @@ const UpdateDiscount = () => {
                 onClick={() => setIsModalOpen(true)}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 w-full"
               >
-                Select Products
+                Chọn sản phẩm
               </button>
             </div>
           </div>
@@ -514,14 +514,14 @@ const UpdateDiscount = () => {
               onClick={() => navigate('/admin/discounts')}
               className="px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 rounded-lg"
             >
-              Cancel
+              Hủy
             </button>
             <button
               type="submit"
               className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all flex items-center"
             >
               <FiPlus className="mr-2" />
-              Update Discount
+              Cập nhật giảm giá
             </button>
           </div>
         </form>

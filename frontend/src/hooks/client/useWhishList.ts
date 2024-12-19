@@ -8,6 +8,7 @@ import {
   deleteProductFromWishlist,
 } from "./../../services/client/whishlist";
 import Cookies from "js-cookie";
+import Swal from 'sweetalert2';
 
 const useWishlist = () => {
   const queryClient = useQueryClient();
@@ -17,12 +18,12 @@ const useWishlist = () => {
   const [error, setError] = useState("");
   const token = Cookies.get("access_token");
 
-  // Fetch dữ liệu wishlist
+  // Lấy dữ liệu danh sách yêu thích
   const { data: wishlistItems = [], isLoading } = useQuery<WishlistItem[]>({
     queryKey: ["WISHLIST"],
     queryFn: async () => {
       if (!token) {
-        throw new Error("Access token not found");
+        throw new Error("Không tìm thấy token truy cập");
       }
       return getWishlist();
     },
@@ -35,30 +36,30 @@ const useWishlist = () => {
         const products = wishlistItems[0].map((item) => item.product);
         setWishlistItemsWithSelected(products);
       } else {
-        // Handle error if it's not an array
-        setError("Invalid data format received for wishlist items.");
+        // Xử lý lỗi nếu dữ liệu không phải dạng mảng
+        setError("Dữ liệu danh sách yêu thích không hợp lệ.");
       }
     }
   }, [wishlistItems]);
 
-  // Mutation để thêm sản phẩm vào wishlist
+  // Mutation để thêm sản phẩm vào danh sách yêu thích
   const { mutate: addToWishlistMutation } = useMutation({
     mutationFn: addProductToWishlist,
     onSuccess: (data: any) => {
-      toast.success("The product has been added to your wishlist.");
+      toast.success("Sản phẩm đã được thêm vào danh sách yêu thích.");
       queryClient.invalidateQueries({
         queryKey: ["WISHLIST"],
       });
     },
     onError: () => {
-      toast.error("You need to log in to add to your wishlist.");
+      toast.error("Bạn cần đăng nhập để thêm vào danh sách yêu thích.");
     },
   });
 
-  // Hàm xử lý thêm sản phẩm vào wishlist
+  // Hàm xử lý thêm sản phẩm vào danh sách yêu thích
   const handleAddToWishlist = (productId: number) => {
     if (!productId) {
-      toast.error("Invalid product information.");
+      toast.error("Thông tin sản phẩm không hợp lệ.");
       return;
     }
     addToWishlistMutation({ product_id: productId });
@@ -68,36 +69,41 @@ const useWishlist = () => {
   const { mutate: deleteFromWishlistMutation } = useMutation({
     mutationFn: deleteProductFromWishlist,
     onSuccess: () => {
-      toast.success("The product has been removed from your wishlist.");
+      toast.success("Sản phẩm đã được xóa khỏi danh sách yêu thích!");
       queryClient.invalidateQueries({ queryKey: ["WISHLIST"] });
     },
     onError: (error) => {
-      console.error("Error removing product from wishlist:", error);
-      toast.error(
-        "Failed to remove product from your wishlist. Please try again."
-      );
+      console.error("Lỗi khi xóa sản phẩm:", error);
+      toast.error("Xóa sản phẩm thất bại, vui lòng thử lại!");
     },
   });
 
   // Hàm xử lý xóa sản phẩm khỏi wishlist
   const handleDeleteFromWishlist = (productId: number) => {
-    const confirm = window.confirm(
-      "Are you sure you want to remove this product from your wishlist?"
-    );
-
-    if (confirm) {
-      deleteFromWishlistMutation(productId);
-
-      setWishlistItemsWithSelected((prevItems) => {
-        const updatedItems = prevItems.filter((item) => item.id !== productId);
-        return updatedItems;
-      });
-
-      // Nếu có hành động redux khác, có thể dispatch ở đây
-      // dispatch(removeFromWishlist(productId));
-    }
+    Swal.fire({
+      title: 'Xác nhận',
+      text: 'Bạn có chắc chắn muốn xóa sản phẩm này khỏi danh sách yêu thích?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'OK',
+      cancelButtonText: 'Hủy',
+      customClass: {
+        popup: 'bg-white shadow rounded-lg p-4 max-w-[300px]', // Khung nhỏ gọn giống window.confirm
+        title: 'text-base font-bold text-gray-800', // Tiêu đề nhỏ gọn
+        htmlContainer: 'text-sm text-gray-600', // Nội dung nhỏ gọn
+        confirmButton: 'bg-red-500 text-white px-4 py-2 rounded hover:bg-blue-600', // Nút OK
+        cancelButton: 'bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400', // Nút Hủy
+      },
+      buttonsStyling: false, // Tắt style mặc định của SweetAlert2
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteFromWishlistMutation(productId);
+      } else {
+        toast.error('Hành động xóa đã bị hủy!');
+      }
+    });
   };
-
+  
   return {
     wishlistItemsWithSelected,
     isLoading,

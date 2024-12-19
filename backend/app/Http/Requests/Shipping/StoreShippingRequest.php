@@ -38,14 +38,14 @@ class StoreShippingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            "address.required" => "Address is required",
-            "address_detail.required" => "Address detail is required",
-            "phone_number.required" => "Phone number is required",
-            "is_default.required" => "Is default is required",
-            "address.string" => "Address must be a string",
-            "address_detail.string" => "Address detail must be a string",
-            "phone_number.string" => "Phone number must be a string",
-            "is_default.boolean" => "Is default must be a boolean",
+            "address.required" => "Địa chỉ là bắt buộc",
+            "address_detail.required" => "Chi tiết địa chỉ là bắt buộc",
+            "phone_number.required" => "Số điện thoại là bắt buộc",
+            "is_default.required" => "Trạng thái mặc định là bắt buộc",
+            "address.string" => "Địa chỉ phải là chuỗi",
+            "address_detail.string" => "Chi tiết địa chỉ phải là chuỗi",
+            "phone_number.string" => "Số điện thoại phải là chuỗi",
+            "is_default.boolean" => "Trạng thái mặc định phải là kiểu boolean",
         ];
     }
 }

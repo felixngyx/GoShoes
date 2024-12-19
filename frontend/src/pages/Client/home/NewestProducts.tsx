@@ -4,6 +4,7 @@ import { IoChevronBack, IoChevronForward, IoStar } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { getProductsHomeCustom } from "../../../services/client/product";
 import { IProduct } from "../../../types/client/products/products";
+import { formatVNCurrency } from "../../../common/formatVNCurrency";
 
 const ProductSkeleton = () => (
   <div className="shadow-md animate-pulse w-[200px] flex-shrink-0 mx-2">
@@ -56,64 +57,72 @@ const NewestProducts = () => {
   };
 
   return (
-    <div className="container mx-auto my-22 px-4">
+    <div className="max-w-7xl mx-auto my-22 px-4">
       <p className="text-4xl font-extrabold text-center text-gray-900 mb-6">
-        Newest
+        Mới nhất
       </p>
-      {/* Mobile View */}
+      {/* Chế độ xem trên di động */}
       <div className="flex sm:hidden gap-4 overflow-x-auto scroll-snap-x">
         {isLoading
           ? [...Array(productsPerPage)].map((_, index) => (
-              <div
-                key={index}
-                className="min-w-[80%] flex-shrink-0 scroll-snap-align-start"
-              >
-                <ProductSkeleton />
-              </div>
-            ))
+            <div
+              key={index}
+              className="min-w-[80%] flex-shrink-0 scroll-snap-align-start"
+            >
+              <ProductSkeleton />
+            </div>
+          ))
           : product?.newProducts?.map((product: IProduct) => (
-              <div
-                key={product.id}
-                className="min-w-[80%] flex-shrink-0 scroll-snap-align-start"
-                onClick={() => navigate(`/products/${product.id}`)}
-              >
-                <div className="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 w-full">
-                  <div className="w-[380px] h-[250px] relative">
-                    <img
-                      src={product.thumbnail}
-                      alt={product.name}
-                      className="w-full h-full object-cover transform transition-all duration-500 hover:scale-110"
-                    />
-                    <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
-                      News
-                    </p>
+            <div
+              key={product.id}
+              className="min-w-[80%] flex-shrink-0 scroll-snap-align-start"
+              onClick={() => navigate(`/products/${product.id}`)}
+            >
+              <div className="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 w-full">
+                <div className="w-[380px] h-[250px] relative">
+                  <img
+                    src={product.thumbnail}
+                    alt={product.name}
+                    className="w-full h-full object-cover transform transition-all duration-500 hover:scale-110"
+                  />
+                  <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
+                    Mới
+                  </p>
+                </div>
+                <div className="p-4">
+                  <p className="text-lg font-semibold text-gray-800 hover:text-blue-500 transition-colors truncate">
+                    {product.name}
+                  </p>
+                  <div className="flex items-center gap-1 my-2 text-yellow-500">
+                    {[...Array(Math.floor(Number(product.rating_count)))].map(
+                      (_, i) => (
+                        <IoStar key={i} />
+                      )
+                    )}
                   </div>
-                  <div className="p-4">
-                    <p className="text-lg font-semibold text-gray-800 hover:text-blue-500 transition-colors truncate">
-                      {product.name}
-                    </p>
-                    <div className="flex items-center gap-1 my-2 text-yellow-500">
-                      {[...Array(Math.floor(Number(product.rating_count)))].map(
-                        (_, i) => (
-                          <IoStar key={i} />
-                        )
-                      )}
-                    </div>
-                    <div className="flex items-baseline justify-between">
+                  <div className="flex items-baseline justify-between">
+                    {product.promotional_price &&
+                      product.promotional_price > 0 ? (
+                      <>
+                        <p className="text-red-500 font-bold text-lg">
+                          {formatVNCurrency(
+                            Number(product.promotional_price)
+                          )}
+                        </p>
+                        <p className="text-gray-400 text-sm line-through">
+                          {formatVNCurrency(Number(product.price))}
+                        </p>
+                      </>
+                    ) : (
                       <p className="text-red-500 font-bold text-lg">
-                        {Number(product.promotional_price).toLocaleString(
-                          "vi-VN"
-                        )}{" "}
-                        ₫
+                        {formatVNCurrency(Number(product.price))}
                       </p>
-                      <p className="text-gray-400 text-sm line-through">
-                        {Number(product.price).toLocaleString("vi-VN")} ₫
-                      </p>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
       </div>
 
       <div className="hidden sm:block relative">
@@ -121,57 +130,64 @@ const NewestProducts = () => {
           <div
             className="flex transition-transform duration-500"
             style={{
-              transform: `translateX(-${
-                (currentIndex * 100) / productsPerPage
-              }%)`,
+              transform: `translateX(-${(currentIndex * 100) / productsPerPage
+                }%)`,
             }}
           >
             {isLoading
               ? [...Array(productsPerPage)].map((_, index) => (
-                  <ProductSkeleton key={index} />
-                ))
+                <ProductSkeleton key={index} />
+              ))
               : product?.newProducts?.map((product: IProduct) => (
-                  <div
-                    key={product.id}
-                    className="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 w-[200px] flex-shrink-0 mx-2"
-                    onClick={() => navigate(`/products/${product.id}`)}
-                  >
-                    <div className="w-full h-[250px] relative">
-                      <img
-                        src={product.thumbnail}
-                        alt={product.name}
-                        className="w-full h-full object-cover transform transition-all duration-500 hover:scale-110"
-                      />
-                      <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
-                        News
-                      </p>
-                    </div>
-                    <div className="p-4">
-                      <p className="text-lg font-semibold text-gray-800 hover:text-blue-500 transition-colors truncate">
-                        {product.name}
-                      </p>
+                <div
+                  key={product.id}
+                  className="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 w-[200px] flex-shrink-0 mx-2"
+                  onClick={() => navigate(`/products/${product.id}`)}
+                >
+                  <div className="w-full h-[250px] relative">
+                    <img
+                      src={product.thumbnail}
+                      alt={product.name}
+                      className="w-full h-full object-cover transform transition-all duration-500 hover:scale-110"
+                    />
+                    <p className="absolute top-2 right-2 text-white bg-red-600 text-xs font-semibold px-2 py-1 rounded-full z-10">
+                      Mới
+                    </p>
+                  </div>
+                  <div className="p-4">
+                    <p className="text-lg font-semibold text-gray-800 hover:text-blue-500 transition-colors truncate">
+                      {product.name}
+                    </p>
 
-                      <div className="flex items-center gap-1 my-2 text-yellow-500">
-                        {[
-                          ...Array(Math.floor(Number(product.rating_count))),
-                        ].map((_, i) => (
-                          <IoStar key={i} />
-                        ))}
-                      </div>
-                      <div className="flex items-baseline justify-between">
+                    <div className="flex items-center gap-1 my-2 text-yellow-500">
+                      {[
+                        ...Array(Math.floor(Number(product.rating_count))),
+                      ].map((_, i) => (
+                        <IoStar key={i} />
+                      ))}
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                      {product.promotional_price &&
+                        product.promotional_price > 0 ? (
+                        <>
+                          <p className="text-red-500 font-bold text-lg">
+                            {formatVNCurrency(
+                              Number(product.promotional_price)
+                            )}
+                          </p>
+                          <p className="text-gray-400 text-sm line-through">
+                            {formatVNCurrency(Number(product.price))}
+                          </p>
+                        </>
+                      ) : (
                         <p className="text-red-500 font-bold text-lg">
-                          {Number(product.promotional_price).toLocaleString(
-                            "vi-VN"
-                          )}{" "}
-                          ₫
+                          {formatVNCurrency(Number(product.price))}
                         </p>
-                        <p className="text-gray-400 text-sm line-through">
-                          {Number(product.price).toLocaleString("vi-VN")} ₫
-                        </p>
-                      </div>
+                      )}
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
           </div>
         </div>
         <button
