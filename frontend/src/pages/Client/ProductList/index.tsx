@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
 
 const ProductList = () => {
   const [layout, setLayout] = useState<"grid" | "list">("grid");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
   const [perPage, setPerPage] = useState(9);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<string>("newest");
@@ -51,6 +51,23 @@ const ProductList = () => {
     refetchOnWindowFocus: false,
     refetchOnMount: true,
   });
+
+  const maxPrice = useMemo(() => {
+    if (!products?.data?.length) return 0; // Không có sản phẩm
+    return (
+      Math.ceil(
+        Math.max(
+          ...products.data.map((product) => parseFloat(product.price || "0"))
+        ) / 50000
+      ) * 50000 // Làm tròn lên bội số 50.000
+    );
+  }, [products]);
+
+  useEffect(() => {
+    if (maxPrice > 0 && priceRange[1] !== maxPrice) {
+      setPriceRange((prevRange) => [prevRange[0], maxPrice]); // Giữ giá trị min, cập nhật max
+    }
+  }, [maxPrice]);
 
   const parsePrice = (price: string | undefined) => {
     if (!price) return 0;
@@ -109,9 +126,15 @@ const ProductList = () => {
 
   const handlePriceChange = (event: Event, newValue: number | number[]) => {
     if (Array.isArray(newValue)) {
-      setPriceRange(newValue as [number, number]);
-      setPage(0);
-      setPage(1);
+      const roundedValue = newValue.map(
+        (val) => Math.round(val / 50000) * 50000 // Làm tròn giá trị theo bước nhảy 50.000
+      ) as [number, number];
+
+      // Đảm bảo min luôn nhỏ hơn max và max không vượt quá maxPrice
+      setPriceRange([
+        Math.min(roundedValue[0], roundedValue[1]),
+        Math.min(roundedValue[1], maxPrice),
+      ]);
     }
   };
 
@@ -221,8 +244,8 @@ const ProductList = () => {
                 onChangeCommitted={handlePriceChangeCommitted}
                 valueLabelDisplay="off"
                 min={0}
-                max={10000000}
-                step={500000}
+                max={maxPrice}
+                step={50000}
                 sx={{
                   color: "#40BFFF",
                   height: 4,
