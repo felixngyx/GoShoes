@@ -18,30 +18,61 @@ type Product = {
 
 const createDiscountSchema = Joi.object({
   code: Joi.string()
-    .min(3).message('Discount code must be at least 3 characters')
-    .max(50).message('Discount code cannot exceed 50 characters')
-    .pattern(/^[A-Z0-9]+$/).message('Discount code can only contain uppercase letters and numbers')
-    .required(),
+    .min(3)
+    .max(50)
+    .pattern(/^[A-Z0-9]+$/)
+    .required().messages({
+      'string.pattern.base': 'Mã giảm giá chỉ chứa ký tự in hoa và số',
+      'string.empty': 'Mã giảm giá không được để trống',
+      'string.min': 'Mã giảm giá phải có ít nhất 3 ký tự',
+      'string.max': 'Mã giảm giá không được vượt quá 50 ký tự'
+    }),
   description: Joi.string()
-    .min(5).message('Description must be at least 5 characters')
-    .max(200).message('Description cannot exceed 200 characters')
-    .required(),
-  valid_from: Joi.string().required(),
-  valid_to: Joi.string(),
+    .min(5)
+    .max(200)
+    .required().messages({
+      'string.empty': 'Mô tả không được để trống',
+      'string.min': 'Mô tả phải có ít nhất 5 ký tự',
+      'string.max': 'Mô tả không được vượt quá 200 ký tự'
+    }),
+  valid_from: Joi.string().required().messages({
+    'string.empty': 'Ngày bắt đầu không được để trống',
+    'any.required': 'Ngày bắt đầu không được để trống',
+    'date.base': 'Ngày bắt đầu không hợp lệ'
+  }),
+  valid_to: Joi.string().allow(null, '').messages({
+    'date.base': 'Ngày kết thúc không hợp lệ',
+    'any.required': 'Ngày kết thúc không được để trống',
+    'string.empty': 'Ngày kết thúc không được để trống',
+  }),
   min_order_amount: Joi.number()
-    .min(0).message('Minimum order amount cannot be negative')
-    .max(99999999.99).message('Minimum order amount is too large')
+    .min(0)
+    .max(99999999.99)
     .precision(2)
-    .required(),
+    .required().messages({
+      'number.base': 'Số tiền đơn hàng tối thiểu phải là số',
+      'number.min': 'Số tiền đơn hàng tối thiểu phải lớn hơn hoặc bằng 0',
+      'number.max': 'Số tiền đơn hàng tối thiểu không được vượt quá 99999999.99',
+    }),
   usage_limit: Joi.number()
     .integer()
-    .min(1).message('Usage limit must be greater than 0')
-    .max(999999).message('Usage limit is too large')
-    .required(),
+    .min(1)
+    .max(999999)
+    .required().messages({
+      'number.base': 'Giới hạn sử dụng phải là số nguyên',
+      'number.min': 'Giới hạn sử dụng phải lớn hơn hoặc bằng 1',
+      'number.max': 'Giới hạn sử dụng không được vượt quá 999999',
+    }),
   percent: Joi.number()
-    .min(0).message('Discount percentage cannot be negative')
-    .max(100).message('Discount percentage cannot exceed 100%')
-    .required(),
+    .min(0)
+    .max(100)
+    .required().messages({
+      'number.base': 'Phần trăm giảm giá phải là số',
+      'number.min': 'Phần trăm giảm giá phải lớn hơn hoặc bằng 0',
+      'number.max': 'Phần trăm giảm giá không được vượt quá 100',
+      'number.empty': 'Phần trăm giảm giá không được để trống',
+      'number.required': 'Phần trăm giảm giá không được để trống'
+    }),
   product_ids: Joi.array().items(Joi.number()).allow(null)
 });
 
