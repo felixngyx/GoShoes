@@ -40,7 +40,7 @@ const VerifyEmail: React.FC = () => {
 
 	const handleVerifyResetToken = async (token: string) => {
 		try {
-			await axiosClient.post('/auth/verify-reset-token', { token });
+			await axios.post('/auth/verify-reset-token', { token });
 		} catch (error) {
 			console.error('Invalid token');
 		} finally {
@@ -115,10 +115,10 @@ const VerifyEmail: React.FC = () => {
 	};
 
 	useEffect(() => {
-		if ((!user || !access_token) && type !== 'reset-password') {
-			navigate('/signin');
-			return;
-		}
+		// if ((!user || !access_token) && type !== 'reset-password') {
+		// 	navigate('/signin');
+		// 	return;
+		// }
 
 		// Kiểm tra các loại khác như đăng ký hoặc thay đổi số điện thoại
 		if (type === 'register' && token) {

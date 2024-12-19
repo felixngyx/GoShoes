@@ -9,6 +9,7 @@ import ProductCard from "../ProductCard";
 import NewestProducts from "./NewestProducts";
 import SalesProducts from "./SaleProducts";
 import TopProducts from "./TopProducts";
+import { ArrowRight } from "lucide-react";
 // import { ColorExtractor } from 'color-thief-react';
 // import { motion } from "framer-motion";
 
@@ -233,7 +234,7 @@ const Homepage = () => {
   return (
     <>
       {/* Banner Header */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 px-4 md:px-6 mt-6 md:mt-10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 px-4 md:px-6 md:mt-10">
         {isLoading ? (
           <>
             <BannerSkeleton isLarge={true} />
@@ -278,9 +279,9 @@ const Homepage = () => {
                   onClick={() => handleShopNow(banner.url)}
                   className="text-white text-xl font-bold underline cursor-pointer hover:text-gray-200
                   transform translate-y-[100%] opacity-0 transition-all duration-300
-                  group-hover:translate-y-0 group-hover:opacity-100"
+                  group-hover:translate-y-0 group-hover:opacity-100 flex items-center gap-2"
                 >
-                  Mua ngay
+                  Xem ngay <ArrowRight />
                 </p>
               </div>
             </div>
@@ -289,7 +290,7 @@ const Homepage = () => {
       </div>
 
       {/* CTA */}
-      <div className="container max-w-5xl mx-auto bg-[#F1F1F1] p-6 md:p-12 my-6 md:my-10">
+      <div className="container max-w-5xl mx-auto bg-[#F1F1F1] p-6 md:p-12 my-28">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0">
           <div className="text-center md:text-left">
             <p className="text-xl md:text-2xl font-bold">
@@ -315,7 +316,7 @@ const Homepage = () => {
       />
 
       {/* Latest Product */}
-      <p className="text-2xl md:text-3xl font-bold text-center mt-10 md:mt-20 px-4">
+      <p className="text-2xl md:text-3xl font-bold text-center px-4">
         Danh sách sản phẩm
       </p>
       <div className="container max-w-7xl mx-auto px-4">
@@ -353,9 +354,9 @@ const Homepage = () => {
               <div className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-50">
                 <ImageWithFallback src={banner.image} alt={banner.title} />
               </div>
-              <div className="absolute inset-0 z-20 flex flex-col justify-between p-8">
+              <div className="absolute inset-0 z-20 flex flex-col justify-between p-8 items-start">
                 <p
-                  className="text-white text-5xl font-extrabold 
+                  className="text-white text-2xl font-extrabold 
                   transform translate-y-[-100%] opacity-0 transition-all duration-300 
                   group-hover:translate-y-0 group-hover:opacity-100"
                 >
@@ -372,9 +373,9 @@ const Homepage = () => {
                   onClick={() => handleShopNow(banner.url)}
                   className="text-white text-xl font-bold underline cursor-pointer hover:text-gray-200
                   transform translate-y-[100%] opacity-0 transition-all duration-300
-                  group-hover:translate-y-0 group-hover:opacity-100"
+                  group-hover:translate-y-0 group-hover:opacity-100 flex items-center gap-2"
                 >
-                  Mua ngay
+                  Mua ngay <ArrowRight />
                 </button>
               </div>
             </div>
